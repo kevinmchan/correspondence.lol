@@ -1,6 +1,6 @@
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_PLAYERS, MIN_PLAYERS, START_HEARTS,
-  applyMove, generatePuzzle, isLetterCell, lettersFound, newGame,
+  applyMove, canMove, generatePuzzle, isLetterCell, lettersFound, newGame,
 } from './game.js';
 import { rpc } from './api.js';
 
@@ -21,7 +21,7 @@ const el = {
   start: $('start'), setupError: $('setup-error'), recent: $('recent'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'),
   joinError: $('join-error'), watch: $('watch'),
-  play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
+  play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
   roster: $('roster'), share: $('share'), shareLink: $('share-link'), copyLink: $('copy-link'),
   tools: $('tools'), hint: $('hint'), message: $('message'), newGame: $('new-game'),
 };
@@ -63,6 +63,7 @@ let online = null; // { id, seats, you } when playing across devices; you is a s
 let watching = false; // chose to spectate rather than join
 let busy = false; // a move is on its way to the server
 let tool = 'mark';
+let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
 let pollTimer = null;
 
@@ -75,14 +76,22 @@ if (!onlineId) {
 function accept(view) {
   game = {
     v: 1, size: view.size, regions: view.regions, solution: view.solution, players: view.players,
-    turn: view.turn, cells: view.cells, hearts: view.hearts, moves: view.moves, status: view.status,
+    cells: view.cells, hearts: view.hearts, moves: view.moves, status: view.status,
     last: view.last,
   };
   online = { id: view.id, seats: view.seats, you: view.you };
 }
 
 const seatsOpen = () => Boolean(online) && game.players.length < online.seats;
-const myTurn = () => Boolean(online) && online.you !== null && online.you === game.turn;
+// Anyone may move except whoever moved last.
+const iCanMove = () => Boolean(online) && online.you !== null && canMove(game, online.you);
+
+// Pass-and-play: keep `mover` on someone allowed to move, defaulting to the
+// player after the last mover.
+function currentMover() {
+  if (!canMove(game, mover)) mover = game.last ? (game.last.player + 1) % game.players.length : 0;
+  return mover;
+}
 const canJoin = () => Boolean(online) && online.you === null && seatsOpen() && game.status === 'playing';
 const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
 
@@ -236,8 +245,8 @@ el.watch.addEventListener('click', () => {
 function schedulePoll() {
   clearTimeout(pollTimer);
   if (!online || game.status !== 'playing' || document.hidden) return;
-  // While it is my turn only a new player joining can change anything.
-  const delay = myTurn() ? (seatsOpen() ? 5000 : 15000) : 3000;
+  // In a full two-player game nothing can change while the move is mine.
+  const delay = iCanMove() && online.seats === 2 && !seatsOpen() ? 15000 : 3000;
   pollTimer = setTimeout(poll, delay);
 }
 
@@ -315,7 +324,7 @@ function show(section) {
 }
 
 function render() {
-  document.title = `${myTurn() && game.status === 'playing' ? '● Your turn · ' : ''}Postmarks · correspondence.lol`;
+  document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
 
   if (!game) {
     if (onlineId) {
@@ -365,7 +374,7 @@ function render() {
     button.classList.toggle('last', game.last?.cell === cell);
     button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
   }
-  el.board.setAttribute('aria-disabled', String(over || (Boolean(online) && !myTurn())));
+  el.board.setAttribute('aria-disabled', String(over || (Boolean(online) && !iCanMove())));
   el.board.classList.toggle('busy', busy);
 
   // Heads-up display
@@ -378,12 +387,37 @@ function render() {
     el.turn.textContent = 'All delivered — you win!';
   } else if (game.status === 'lost') {
     el.turn.textContent = 'Out of hearts.';
-  } else if (online && game.turn >= game.players.length) {
-    el.turn.textContent = `Waiting for player ${game.turn + 1} to join`;
-  } else {
+  } else if (!online) {
     const strong = document.createElement('strong');
-    strong.textContent = myTurn() ? 'Your' : `${game.players[game.turn]}’s`;
-    el.turn.append(strong, ' turn');
+    strong.textContent = `${game.players[currentMover()]}’s`;
+    el.turn.append(strong, ' move');
+  } else if (iCanMove()) {
+    const strong = document.createElement('strong');
+    strong.textContent = 'Your';
+    el.turn.append(strong, ' move');
+  } else if (spectator) {
+    el.turn.textContent = game.last ? `Anyone but ${game.players[game.last.player]} can move` : 'Anyone can move';
+  } else {
+    const others = game.players.filter((_, seat) => seat !== online.you);
+    el.turn.textContent = others.length === 0 ? 'Waiting for someone to join'
+      : others.length === 1 ? `Waiting for ${others[0]}`
+      : 'Waiting for someone else to move';
+  }
+
+  // Pass-and-play: choose who is moving. Whoever moved last sits this one out.
+  el.movers.hidden = Boolean(online) || over;
+  if (!el.movers.hidden) {
+    el.movers.replaceChildren(...game.players.map((name, player) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'radio');
+      button.dataset.player = player;
+      button.textContent = name;
+      button.disabled = !canMove(game, player);
+      button.setAttribute('aria-checked', String(player === currentMover()));
+      if (button.disabled) button.title = `${name} made the last move`;
+      return button;
+    }));
   }
 
   // Who is playing, and the invitation link while seats are open
@@ -395,7 +429,7 @@ function render() {
       span.textContent = seat < game.players.length
         ? game.players[seat] + (seat === online.you ? ' (you)' : '')
         : 'open seat';
-      if (!over && seat === game.turn) span.className = 'now';
+      if (canMove(game, seat)) span.className = 'now';
       parts.push(span, ' · ');
     }
     parts.pop();
@@ -416,7 +450,7 @@ function render() {
       : `The remaining letters are shown faded. ${found} of ${game.size} found.`;
   } else if (spectator) {
     el.hint.textContent = 'The board updates as the players take their turns.';
-  } else if (online && !myTurn()) {
+  } else if (online && !iCanMove()) {
     el.hint.textContent = 'You can close this page and come back; the game waits for you.';
   } else {
     el.hint.textContent = tool === 'guess'
@@ -429,10 +463,9 @@ function render() {
 // --- Taking a turn --------------------------------------------------------
 async function play(cell) {
   if (!game || game.status !== 'playing' || busy) return;
-  if (online && !myTurn()) {
+  if (online && !iCanMove()) {
     if (online.you === null) say('You are watching this game.');
-    else if (game.turn >= game.players.length) say(`Waiting for player ${game.turn + 1} to join.`);
-    else say(`It is ${game.players[game.turn]}’s turn.`);
+    else say('You made the last move, so someone else goes next.');
     return;
   }
   const type = tool === 'guess' ? 'guess' : game.cells[cell] === CROSS ? 'unmark' : 'mark';
@@ -458,12 +491,13 @@ async function play(cell) {
     return;
   }
 
-  const result = applyMove(game, { player: game.turn, type, cell });
+  const result = applyMove(game, { player: currentMover(), type, cell });
   if (!result.ok) {
     say(result.error, true);
     return;
   }
   game = result.state;
+  mover = null; // passes to the next player by default
   tool = 'mark'; // each turn starts on the safe tool, so a stray tap never costs a heart
   save(GAME_KEY, game);
   announceLast();
@@ -500,6 +534,13 @@ el.tools.addEventListener('click', (event) => {
   render();
 });
 
+el.movers.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-player]');
+  if (!button || button.disabled) return;
+  mover = Number(button.dataset.player);
+  render();
+});
+
 el.copyLink.addEventListener('click', async () => {
   const url = el.shareLink.value;
   try {
@@ -524,6 +565,7 @@ el.newGame.addEventListener('click', () => {
   }
   if (game?.status === 'playing' && game.moves > 0 && !confirm('Abandon this game and start a new one?')) return;
   game = null;
+  mover = null;
   builtFor = null;
   save(GAME_KEY, null);
   say('');

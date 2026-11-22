@@ -29,7 +29,7 @@ Then open <http://localhost:8000>. Service workers only run on `localhost` or HT
 Postmarks can be played on one device (saved in the browser only) or across
 devices. Cross-device games are stored in Supabase and reached only through four
 database functions (`postmarks_create`, `postmarks_get`, `postmarks_join`,
-`postmarks_move`) that enforce turn order and the rules; the table itself is not
+`postmarks_move`) that enforce the rules, including that nobody moves twice in a row; the table itself is not
 exposed. There are no accounts: a game's link lets anyone view or join it, and
 each device holds a random token (in `localStorage`) that proves which player it
 is. Browsers poll for the other players' moves. `postmarks/config.js` holds the

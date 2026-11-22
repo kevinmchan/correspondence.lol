@@ -220,12 +220,11 @@ export function newGame({ size, seed, players }) {
     regions: puzzle.regions,
     solution: puzzle.solution,
     players: names,
-    turn: 0, // index into players
     cells: new Array(size * size).fill(EMPTY),
     hearts: START_HEARTS,
     moves: 0,
     status: 'playing', // 'playing' | 'won' | 'lost'
-    last: null, // { player, type, cell, correct? }
+    last: null, // the latest move: { player, type, cell, correct? }
   };
 }
 
@@ -233,6 +232,12 @@ export const isLetterCell = (state, cell) =>
   state.solution[Math.floor(cell / state.size)] === cell % state.size;
 
 export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).length;
+
+// Anyone may take the next turn except the player who took the last one.
+export const canMove = (state, player) =>
+  state.status === 'playing' &&
+  Number.isInteger(player) && player >= 0 && player < state.players.length &&
+  state.last?.player !== player;
 
 // Apply one turn. A turn is exactly one action:
 //   { player, type: 'mark',   cell }  put a cross on an empty cell
@@ -242,7 +247,12 @@ export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).l
 export function applyMove(state, move) {
   const fail = (error) => ({ ok: false, error });
   if (state.status !== 'playing') return fail('The game is over.');
-  if (move.player !== state.turn) return fail(`It is ${state.players[state.turn]}'s turn.`);
+  if (!Number.isInteger(move.player) || move.player < 0 || move.player >= state.players.length) {
+    return fail('That is not a player in this game.');
+  }
+  if (state.last?.player === move.player) {
+    return fail(`${state.players[move.player]} made the last move, so someone else goes next.`);
+  }
   const { cell, type } = move;
   if (!Number.isInteger(cell) || cell < 0 || cell >= state.cells.length) {
     return fail('That square is not on the board.');
@@ -283,7 +293,6 @@ export function applyMove(state, move) {
       status,
       last,
       moves: state.moves + 1,
-      turn: (state.turn + 1) % state.players.length,
     },
   };
 }

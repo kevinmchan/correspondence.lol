@@ -259,3 +259,22 @@ button.quiet {
 .share div { display: flex; gap: 0.5rem; }
 .share button { padding: 0.5rem 1rem; font-family: inherit; font-size: 0.9375rem; }
 .board.busy { opacity: 0.75; }
+
+/* --- Who is moving (pass-and-play) ---------------------------------------- */
+
+.movers { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; font-family: system-ui, sans-serif; }
+.movers[hidden] { display: none; }
+
+.movers button {
+  background: none;
+  color: var(--ink);
+  border: 1.5px solid color-mix(in srgb, var(--muted) 50%, transparent);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.9375rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movers button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.movers button:disabled { opacity: 0.45; text-decoration: line-through; cursor: default; }
