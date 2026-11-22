@@ -25,6 +25,18 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. Service workers only run on `localhost` or HTTPS.
 
+## Game modes
+
+A Postmarks game in a room is one of three kinds, chosen when it is started:
+
+- **Together**: one board for the whole room, taking turns. Each move is drafted and then submitted. Turns only alternate when more than one person is in the room.
+- **Time trial**: a solo mode. Everyone solves their own copy of the same board; the clock starts when you press Start and the board is withheld until then. Three wrong guesses put you out. Results are ranked by time.
+- **Pass phrase**: a solo mode. Everyone solves their own copy of the same board, and each letter found turns over one word of a hidden phrase. You can guess the whole phrase at any point (right wins, wrong costs a heart). Results are ranked by how few letters were opened. Whoever starts the game may write the phrase, in which case they have no board and watch the results, or leave it empty for a random one. The board is sized to the phrase so each word has its own letter.
+
+In the solo modes there are no turns and no Submit: moves are played at once. Any game can be shared by its link: room members open it directly, and anyone else joins the room first and is then taken to the game.
+
+The board is generated in the browser of whoever starts the game, so that player's device briefly knows the solution. That is accepted for games among friends; it is not a defence against cheating.
+
 ## Rooms
 
 People gather in rooms. A room has members, a chat and games; any member can
@@ -34,7 +46,8 @@ A solo game needs no room and is saved in the browser only.
 
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_profile`, `room_say`,
-`postmarks_create`, `postmarks_get`, `postmarks_play`) that enforce membership and the rules; no
+`postmarks_start`, `postmarks_get`, `postmarks_play`, `postmarks_trial_start`,
+`postmarks_guess_phrase`) that enforce membership and the rules; no
 table is exposed. There are no accounts: a room's link lets anyone see its name
 and member names and join it, while chat and games are for members. Each device
 holds a random token (in `localStorage`) that proves which member it is, and

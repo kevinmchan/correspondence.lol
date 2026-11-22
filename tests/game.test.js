@@ -205,6 +205,27 @@ test('a solo player takes every turn', () => {
   assert.equal(canMove(s, 0), false, 'the game is over');
 });
 
+test('a time trial has no turns, and a phrase author sits out', () => {
+  const trial = { ...start(5, 1), free: true };
+  let s = play(trial, 'mark', emptyNonLetter(trial), 0);
+  assert.equal(canMove(s, 0), true, 'same player again in a time trial');
+  s = play(s, 'mark', emptyNonLetter(s), 0);
+  assert.equal(s.moves, 2);
+
+  // Ada wrote the phrase: Bo, the only solver, plays every turn
+  const phrase = { ...start(5, 1), author: 0 };
+  assert.equal(canMove(phrase, 0), false);
+  assert.equal(applyMove(phrase, { player: 0, type: 'mark', cell: emptyNonLetter(phrase) }).ok, false);
+  s = play(phrase, 'mark', emptyNonLetter(phrase), 1);
+  assert.equal(canMove(s, 1), true);
+  s = play(s, 'mark', emptyNonLetter(s), 1);
+
+  // with two solvers, turns alternate between them and still skip the author
+  const three = { ...newGame({ size: 5, seed: 1, players: ['Ada', 'Bo', 'Cy'] }), author: 0 };
+  s = play(three, 'mark', emptyNonLetter(three), 1);
+  assert.deepEqual([0, 1, 2].map((p) => canMove(s, p)), [false, false, true]);
+});
+
 test('newGame validates players and size', () => {
   assert.throws(() => newGame({ size: 6, seed: 1, players: [] }));
   assert.throws(() => newGame({ size: 6, seed: 1, players: ['a', 'b', 'c', 'd', 'e'] }));
