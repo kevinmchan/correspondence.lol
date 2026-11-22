@@ -116,7 +116,7 @@ test('wrong guesses cost hearts, are permanent, and three lose the game', () => 
   assert.equal(s.status, 'lost');
 });
 
-test('finding a letter crosses out the rest of its row, column and district', () => {
+test('finding a letter crosses out its row, column, district and the squares touching it', () => {
   let s = start(6, 3);
   const cell = letterCells(s)[2];
   const row = Math.floor(cell / s.size);
@@ -126,7 +126,8 @@ test('finding a letter crosses out the rest of its row, column and district', ()
   s = play(s, 'guess', cell);
   let expected = 0;
   s.cells.forEach((mark, i) => {
-    const shares = Math.floor(i / s.size) === row || i % s.size === col || s.regions[i] === s.regions[cell];
+    const touches = Math.abs(Math.floor(i / s.size) - row) <= 1 && Math.abs((i % s.size) - col) <= 1;
+    const shares = Math.floor(i / s.size) === row || i % s.size === col || s.regions[i] === s.regions[cell] || touches;
     if (i === cell) assert.equal(mark, LETTER);
     else if (i === miss) assert.equal(mark, MISS);
     else if (shares) { assert.equal(mark, CROSS, `square ${i} should be crossed`); expected++; }
@@ -136,6 +137,44 @@ test('finding a letter crosses out the rest of its row, column and district', ()
   assert.ok(expected >= 2 * (s.size - 1) - 1);
   // none of the automatic crosses landed on another letter
   for (const other of letterCells(s)) if (other !== cell) assert.equal(s.cells[other], EMPTY);
+});
+
+test('a letter away from the edge rules out all four diagonal neighbours', () => {
+  // find a seed whose puzzle has a letter with four diagonal neighbours outside its row/column/district
+  let s = start(7, 11);
+  const cell = letterCells(s).find((c) => {
+    const r = Math.floor(c / 7), col = c % 7;
+    return r > 0 && r < 6 && col > 0 && col < 6;
+  });
+  s = play(s, 'guess', cell);
+  for (const d of [-8, -6, 6, 8]) assert.equal(s.cells[cell + d], CROSS, `diagonal ${d}`);
+});
+
+test('one stroke can cross out or clear several squares as a single turn', () => {
+  let s = start(6, 3);
+  const free = s.cells.map((_, i) => i).filter((i) => !isLetterCell(s, i)).slice(0, 4);
+  let r = applyMove(s, { player: 0, type: 'mark', cells: free.slice(0, 3) });
+  assert.ok(r.ok, r.error);
+  s = r.state;
+  assert.deepEqual(free.map((c) => s.cells[c]), [CROSS, CROSS, CROSS, EMPTY]);
+  assert.equal(s.moves, 1, 'a stroke is one turn');
+  assert.deepEqual(s.last.cells, free.slice(0, 3));
+  // a stroke over a mix skips squares already crossed, and repeats are ignored
+  r = applyMove(s, { player: 1, type: 'mark', cells: [free[2], free[3], free[3]] });
+  assert.ok(r.ok, r.error);
+  s = r.state;
+  assert.deepEqual(s.last.cells, [free[3]]);
+  // clearing works the same way and skips squares with no cross
+  r = applyMove(s, { player: 0, type: 'unmark', cells: [free[0], free[1], letterCells(s)[0]] });
+  assert.ok(r.ok, r.error);
+  s = r.state;
+  assert.deepEqual(free.map((c) => s.cells[c]), [EMPTY, EMPTY, CROSS, CROSS]);
+  // a stroke that changes nothing, leaves the board, or is empty is rejected
+  assert.equal(applyMove(s, { player: 1, type: 'unmark', cells: [free[0]] }).ok, false);
+  assert.equal(applyMove(s, { player: 1, type: 'mark', cells: [free[0], 999] }).ok, false);
+  assert.equal(applyMove(s, { player: 1, type: 'mark', cells: [] }).ok, false);
+  // guesses stay one square at a time
+  assert.equal(applyMove(s, { player: 1, type: 'guess', cells: [free[0], free[1]] }).ok, false);
 });
 
 test('a crossed square can still be guessed', () => {

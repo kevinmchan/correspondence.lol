@@ -31,6 +31,8 @@ const onlineId = requested && UUID.test(requested) ? requested.toLowerCase() : n
 let game = null; // the game being shown, in the shape game.js uses
 let online = null; // { id, you, room, roomName } for a room game; you is this device's seat
 let busy = false; // a move is on its way to the server
+let resync = false; // the board shown may be ahead of the server: take its word next time
+let stroke = null; // a drag in progress: { type: 'mark' | 'unmark', cells: [] }
 let tool = 'mark';
 let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
@@ -140,8 +142,9 @@ async function poll() {
       game.status === 'playing' ? rpc('postmarks_get', { p_game: online.id, p_token: myToken() }) : null,
       rpc('room_get', { p_room: online.room, p_token: myToken(), p_after: chat ? chat.lastId : null }),
     ]);
-    if (view && !busy && (view.moves > game.moves || view.players.length !== game.players.length)) {
-      const moved = view.moves > game.moves;
+    if (view && !busy && (resync || view.moves > game.moves || view.players.length !== game.players.length)) {
+      const moved = !resync && view.moves > game.moves; // after a rejected move, keep its notice on screen
+      resync = false;
       accept(view);
       if (moved) announceLast();
       render();
@@ -204,8 +207,9 @@ function describeLast() {
   const { last } = game;
   if (!last) return '';
   const who = nameOf(last.player);
-  if (last.type === 'mark') return `${who} crossed out ${where(last.cell)}.`;
-  if (last.type === 'unmark') return `${who} removed the cross at ${where(last.cell)}.`;
+  const many = last.cells?.length > 1 ? `${last.cells.length} squares` : null;
+  if (last.type === 'mark') return `${who} crossed out ${many ?? where(last.cell)}.`;
+  if (last.type === 'unmark') return `${who} removed the ${many ? `crosses on ${many}` : `cross at ${where(last.cell)}`}.`;
   return last.correct
     ? `${who} found a letter at ${where(last.cell)}.${last.crossed ? ` ${last.crossed} more ${last.crossed === 1 ? 'square' : 'squares'} crossed out.` : ''}`
     : `${who} guessed ${where(last.cell)} — no letter there. A heart lost.`;
@@ -254,7 +258,8 @@ function render() {
   // Squares
   for (const button of el.board.children) {
     const cell = Number(button.dataset.cell);
-    const mark = game.cells[cell];
+    // a stroke being drawn is shown as if it had already been made
+    const mark = stroke?.cells.includes(cell) ? (stroke.type === 'mark' ? CROSS : EMPTY) : game.cells[cell];
     let name = 'empty';
     let content = '';
     let label = 'empty';
@@ -268,7 +273,8 @@ function render() {
       button.dataset.state = name;
       button.innerHTML = content;
     }
-    button.classList.toggle('last', game.last?.cell === cell);
+    button.classList.toggle('last', !stroke && (game.last?.cells ?? [game.last?.cell]).includes(cell));
+    button.classList.toggle('drawing', Boolean(stroke?.cells.includes(cell)));
     button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
   }
   el.board.setAttribute('aria-disabled', String(over || (Boolean(online) && !iCanMove())));
@@ -334,52 +340,112 @@ function render() {
 }
 
 // --- Taking a turn --------------------------------------------------------
-async function play(cell) {
-  if (!game || game.status !== 'playing' || busy) return;
+// May the person at this device act right now? Says why not if they can't.
+function ready() {
+  if (!game || game.status !== 'playing' || busy) return false;
   if (online && !iCanMove()) {
     say('You made the last move, so someone else goes next.');
+    return false;
+  }
+  return true;
+}
+
+// Take a turn: one stroke of crosses, one stroke clearing crosses, or a guess.
+async function play(type, cells) {
+  if (!ready()) return;
+  const move = { player: online ? online.you : currentMover(), type, cells };
+  // Crosses can be worked out here, so they appear at once; a guess in a room
+  // game has to wait for the server, which is the only one who knows the answer.
+  const local = type === 'guess' && online ? null : applyMove(game, move);
+  if (local && !local.ok) {
+    say(local.error);
     return;
   }
-  const type = tool === 'guess' ? 'guess' : game.cells[cell] === CROSS ? 'unmark' : 'mark';
-  if (type === 'mark' && game.cells[cell] !== EMPTY) {
+
+  if (!online) {
+    game = local.state;
+    mover = null; // passes to the next player by default
+    tool = 'mark'; // each turn starts on the safe tool, so a stray tap never costs a heart
+    save(GAME_KEY, game);
+    announceLast();
+    render();
+    return;
+  }
+
+  busy = true;
+  if (local) game = local.state; // show the crosses now; the server confirms below
+  render();
+  try {
+    accept(await rpc('postmarks_play', { p_game: online.id, p_token: myToken(), p_type: type, p_cells: cells }));
+    tool = 'mark';
+    announceLast();
+    watcher?.poke();
+  } catch (error) {
+    say(error.message);
+    resync = true; // undo anything shown early by taking the server's board
+  } finally {
+    busy = false;
+    render();
+    poll();
+  }
+}
+
+// --- Pointer input: tap a square, or drag across several ---------------------
+const cellAt = (x, y) => {
+  const button = document.elementFromPoint(x, y)?.closest?.('.cell');
+  return button && el.board.contains(button) ? Number(button.dataset.cell) : null;
+};
+
+el.board.addEventListener('pointerdown', (event) => {
+  if (tool !== 'mark' || !event.isPrimary || event.button !== 0) return;
+  const cell = cellAt(event.clientX, event.clientY);
+  if (cell === null || !ready()) return;
+  const mark = game.cells[cell];
+  if (mark !== EMPTY && mark !== CROSS) {
     say('That square is already settled.');
     return;
   }
-
-  if (online) {
-    busy = true;
-    render();
-    try {
-      accept(await rpc('postmarks_move', { p_game: online.id, p_token: myToken(), p_type: type, p_cell: cell }));
-      tool = 'mark';
-      announceLast();
-      watcher?.poke();
-    } catch (error) {
-      say(error.message);
-    } finally {
-      busy = false;
-      render();
-      poll(); // also resynchronises after a rejected move
-    }
-    return;
-  }
-
-  const result = applyMove(game, { player: currentMover(), type, cell });
-  if (!result.ok) {
-    say(result.error);
-    return;
-  }
-  game = result.state;
-  mover = null; // passes to the next player by default
-  tool = 'mark'; // each turn starts on the safe tool, so a stray tap never costs a heart
-  save(GAME_KEY, game);
-  announceLast();
+  say('');
+  // Starting on a cross clears crosses; starting on an empty square adds them.
+  stroke = { type: mark === CROSS ? 'unmark' : 'mark', cells: [cell] };
   render();
-}
+});
 
+window.addEventListener('pointermove', (event) => {
+  if (!stroke || !event.isPrimary) return;
+  const cell = cellAt(event.clientX, event.clientY);
+  if (cell === null || stroke.cells.includes(cell)) return;
+  if (game.cells[cell] !== (stroke.type === 'mark' ? EMPTY : CROSS)) return;
+  stroke.cells.push(cell);
+  render();
+});
+
+window.addEventListener('pointerup', (event) => {
+  if (!stroke || !event.isPrimary) return;
+  const { type, cells } = stroke;
+  stroke = null;
+  play(type, cells);
+});
+
+window.addEventListener('pointercancel', () => {
+  if (!stroke) return;
+  stroke = null;
+  render();
+});
+
+// Clicks cover what the pointer handlers above do not: guesses, and crosses
+// made from the keyboard (a keyboard "click" has detail 0).
 el.board.addEventListener('click', (event) => {
   const button = event.target.closest('.cell');
-  if (button) play(Number(button.dataset.cell));
+  if (!button) return;
+  const cell = Number(button.dataset.cell);
+  if (tool === 'guess') {
+    play('guess', [cell]);
+  } else if (event.detail === 0 && ready()) {
+    const mark = game.cells[cell];
+    if (mark === EMPTY || mark === CROSS) play(mark === CROSS ? 'unmark' : 'mark', [cell]);
+    else say('That square is already settled.');
+  }
 });
 
 // Arrow keys move between squares.
