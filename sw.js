@@ -1,6 +1,6 @@
 // Bump VERSION when the precache list changes shape; ordinary edits to the
 // files below are picked up automatically (see fetch strategies).
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
@@ -12,6 +12,10 @@ const PRECACHE = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
+  '/postmarks/',
+  '/postmarks/postmarks.css',
+  '/postmarks/game.js',
+  '/postmarks/ui.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -39,18 +43,18 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Pages: network first so deploys show up immediately; cached shell offline.
+  // Pages: network first so deploys show up immediately; cached copy offline.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok && url.pathname === '/') {
+          if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put('/', copy));
+            event.waitUntil(caches.open(CACHE).then((cache) => cache.put(url.pathname, copy)));
           }
           return response;
         })
-        .catch(() => caches.match('/'))
+        .catch(async () => (await caches.match(url.pathname)) || caches.match('/'))
     );
     return;
   }

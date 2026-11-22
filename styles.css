@@ -83,3 +83,20 @@ button:focus-visible {
   font-family: system-ui, sans-serif;
   font-size: 0.8125rem;
 }
+
+.games { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 22rem; }
+
+.games a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: 0.75rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.games a:hover, .games a:focus-visible { border-color: var(--accent); }
+.games strong { font-weight: 400; font-size: 1.25rem; }
+.games span { font-family: system-ui, sans-serif; font-size: 0.8125rem; color: var(--muted); }

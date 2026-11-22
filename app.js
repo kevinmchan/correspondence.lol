@@ -16,10 +16,10 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   deferredPrompt = event;
-  installBtn.hidden = false;
+  if (installBtn) installBtn.hidden = false;
 });
 
-installBtn.addEventListener('click', async () => {
+installBtn?.addEventListener('click', async () => {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
   await deferredPrompt.userChoice;
@@ -29,11 +29,12 @@ installBtn.addEventListener('click', async () => {
 
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
-  installBtn.hidden = true;
+  if (installBtn) installBtn.hidden = true;
 });
 
 // --- Connectivity ---------------------------------------------------------
 function renderConnectivity() {
+  if (!statusEl) return;
   statusEl.textContent = navigator.onLine ? '' : 'You are offline — showing the saved copy.';
 }
 

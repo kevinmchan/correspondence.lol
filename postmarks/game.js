@@ -1,0 +1,289 @@
+// Postmarks — pure game logic. No DOM access, so it runs in the browser and in
+// Node (tests), and can later be shared with a sync backend.
+//
+// Puzzle: an N×N grid split into N districts. Exactly one letter is hidden in
+// every row, every column and every district, and no two letters touch, not
+// even diagonally.
+
+export const EMPTY = 0; // nothing marked
+export const CROSS = 1; // a player's "no letter here" mark (removable)
+export const LETTER = 2; // a correct guess (permanent)
+export const MISS = 3; // a wrong guess (permanent, cost a heart)
+
+export const MIN_SIZE = 5;
+export const MAX_SIZE = 9;
+export const MIN_PLAYERS = 2;
+export const MAX_PLAYERS = 4;
+export const START_HEARTS = 3;
+
+// Small seeded PRNG (mulberry32) so a seed always yields the same puzzle.
+export function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffled(items, rand) {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+const range = (n) => Array.from({ length: n }, (_, i) => i);
+
+// One column per row, all different, with consecutive rows at least two
+// columns apart (which rules out diagonal contact).
+function randomSolution(size, rand) {
+  const cols = [];
+  const used = new Array(size).fill(false);
+  const place = (row) => {
+    if (row === size) return true;
+    for (const col of shuffled(range(size), rand)) {
+      if (used[col]) continue;
+      if (row > 0 && Math.abs(cols[row - 1] - col) <= 1) continue;
+      used[col] = true;
+      cols[row] = col;
+      if (place(row + 1)) return true;
+      used[col] = false;
+    }
+    return false;
+  };
+  return place(0) ? cols : null;
+}
+
+// Grow one district outward from each letter until the grid is full.
+function growRegions(size, solution, rand) {
+  const regions = new Array(size * size).fill(-1);
+  // Shuffle ids so a district's colour says nothing about its letter's row.
+  const ids = shuffled(range(size), rand);
+  solution.forEach((col, row) => {
+    regions[row * size + col] = ids[row];
+  });
+
+  const neighbours = (cell) => {
+    const row = Math.floor(cell / size);
+    const col = cell % size;
+    const out = [];
+    if (row > 0) out.push(cell - size);
+    if (row < size - 1) out.push(cell + size);
+    if (col > 0) out.push(cell - 1);
+    if (col < size - 1) out.push(cell + 1);
+    return out;
+  };
+
+  let remaining = size * size - size;
+  while (remaining > 0) {
+    const frontier = [];
+    for (let cell = 0; cell < regions.length; cell++) {
+      if (regions[cell] === -1 && neighbours(cell).some((n) => regions[n] !== -1)) {
+        frontier.push(cell);
+      }
+    }
+    const cell = frontier[Math.floor(rand() * frontier.length)];
+    const options = neighbours(cell).filter((n) => regions[n] !== -1);
+    regions[cell] = regions[options[Math.floor(rand() * options.length)]];
+    remaining--;
+  }
+  return regions;
+}
+
+// Find up to `limit` solutions of a district layout (each is a column per row).
+function findSolutions(size, regions, limit) {
+  const usedCol = new Array(size).fill(false);
+  const usedRegion = new Array(size).fill(false);
+  const cols = [];
+  const found = [];
+  const place = (row) => {
+    if (row === size) {
+      found.push(cols.slice());
+      return;
+    }
+    for (let col = 0; col < size && found.length < limit; col++) {
+      const region = regions[row * size + col];
+      if (usedCol[col] || usedRegion[region]) continue;
+      if (row > 0 && Math.abs(cols[row - 1] - col) <= 1) continue;
+      usedCol[col] = true;
+      usedRegion[region] = true;
+      cols[row] = col;
+      place(row + 1);
+      usedCol[col] = false;
+      usedRegion[region] = false;
+    }
+  };
+  place(0);
+  return found;
+}
+
+// Count solutions of a district layout, stopping once `limit` is reached.
+export function countSolutions(size, regions, limit = 2) {
+  return findSolutions(size, regions, limit).length;
+}
+
+function orthogonal(size, cell) {
+  const out = [];
+  if (cell >= size) out.push(cell - size);
+  if (cell < size * (size - 1)) out.push(cell + size);
+  if (cell % size > 0) out.push(cell - 1);
+  if (cell % size < size - 1) out.push(cell + 1);
+  return out;
+}
+
+// Would district `id` still be one connected piece without `removed`?
+function staysConnected(size, regions, id, removed) {
+  const cells = [];
+  for (let i = 0; i < regions.length; i++) if (regions[i] === id && i !== removed) cells.push(i);
+  if (cells.length === 0) return false;
+  const seen = new Set([cells[0]]);
+  const queue = [cells[0]];
+  while (queue.length) {
+    for (const n of orthogonal(size, queue.pop())) {
+      if (n !== removed && regions[n] === id && !seen.has(n)) {
+        seen.add(n);
+        queue.push(n);
+      }
+    }
+  }
+  return seen.size === cells.length;
+}
+
+function districtSizes(size, regions) {
+  const sizes = new Array(size).fill(0);
+  for (const id of regions) sizes[id]++;
+  return sizes;
+}
+
+// Generate a puzzle with exactly one solution.
+// Returns { size, regions, solution } where regions[cell] is a district id and
+// solution[row] is the column of that row's letter.
+//
+// Random district layouts rarely have a unique solution at larger sizes, so
+// after growing one we repair it: while an unintended solution exists, hand one
+// of its squares to a neighbouring district. That leaves the unintended
+// solution with two letters in one district and none in another, while the
+// intended solution is untouched.
+export function generatePuzzle(size, seed) {
+  if (!Number.isInteger(size) || size < MIN_SIZE || size > MAX_SIZE) {
+    throw new RangeError(`size must be an integer from ${MIN_SIZE} to ${MAX_SIZE}`);
+  }
+  const rand = rng(seed);
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    const solution = randomSolution(size, rand);
+    if (!solution) continue;
+    const regions = growRegions(size, solution, rand);
+
+    for (let step = 0; step < size * size * 4; step++) {
+      const other = findSolutions(size, regions, 2).find((s) => s.some((c, r) => c !== solution[r]));
+      if (!other) {
+        // A one-square district gives its letter away; try again instead.
+        if (districtSizes(size, regions).some((n) => n < 2)) break;
+        return { size, regions, solution };
+      }
+      const sizes = districtSizes(size, regions);
+
+      // Squares used only by the unintended solution, paired with a
+      // neighbouring district that could absorb them.
+      const fixes = [];
+      other.forEach((col, row) => {
+        if (col === solution[row]) return;
+        const cell = row * size + col;
+        const from = regions[cell];
+        const targets = [...new Set(orthogonal(size, cell).map((n) => regions[n]))].filter((id) => id !== from);
+        if (targets.length && sizes[from] > 2 && staysConnected(size, regions, from, cell)) {
+          for (const to of targets) fixes.push({ cell, to });
+        }
+      });
+      if (!fixes.length) break;
+      const fix = fixes[Math.floor(rand() * fixes.length)];
+      regions[fix.cell] = fix.to;
+    }
+  }
+  throw new Error('Could not generate a puzzle; try another seed');
+}
+
+export function newGame({ size, seed, players }) {
+  const names = players.map((name) => String(name).trim()).filter(Boolean);
+  if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) {
+    throw new RangeError(`Postmarks needs ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
+  }
+  const puzzle = generatePuzzle(size, seed);
+  return {
+    v: 1,
+    seed,
+    size,
+    regions: puzzle.regions,
+    solution: puzzle.solution,
+    players: names,
+    turn: 0, // index into players
+    cells: new Array(size * size).fill(EMPTY),
+    hearts: START_HEARTS,
+    moves: 0,
+    status: 'playing', // 'playing' | 'won' | 'lost'
+    last: null, // { player, type, cell, correct? }
+  };
+}
+
+export const isLetterCell = (state, cell) =>
+  state.solution[Math.floor(cell / state.size)] === cell % state.size;
+
+export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).length;
+
+// Apply one turn. A turn is exactly one action:
+//   { player, type: 'mark',   cell }  put a cross on an empty cell
+//   { player, type: 'unmark', cell }  remove a cross
+//   { player, type: 'guess',  cell }  claim a letter is here
+// Returns { ok: true, state } with a new state, or { ok: false, error }.
+export function applyMove(state, move) {
+  const fail = (error) => ({ ok: false, error });
+  if (state.status !== 'playing') return fail('The game is over.');
+  if (move.player !== state.turn) return fail(`It is ${state.players[state.turn]}'s turn.`);
+  const { cell, type } = move;
+  if (!Number.isInteger(cell) || cell < 0 || cell >= state.cells.length) {
+    return fail('That square is not on the board.');
+  }
+
+  const current = state.cells[cell];
+  const cells = state.cells.slice();
+  let { hearts, status } = state;
+  const last = { player: move.player, type, cell };
+
+  if (type === 'mark') {
+    if (current !== EMPTY) return fail('That square is already marked.');
+    cells[cell] = CROSS;
+  } else if (type === 'unmark') {
+    if (current !== CROSS) return fail('There is no cross to remove there.');
+    cells[cell] = EMPTY;
+  } else if (type === 'guess') {
+    if (current === LETTER || current === MISS) return fail('That square is already settled.');
+    last.correct = isLetterCell(state, cell);
+    if (last.correct) {
+      cells[cell] = LETTER;
+      if (cells.filter((c) => c === LETTER).length === state.size) status = 'won';
+    } else {
+      cells[cell] = MISS;
+      hearts -= 1;
+      if (hearts === 0) status = 'lost';
+    }
+  } else {
+    return fail('Unknown move.');
+  }
+
+  return {
+    ok: true,
+    state: {
+      ...state,
+      cells,
+      hearts,
+      status,
+      last,
+      moves: state.moves + 1,
+      turn: (state.turn + 1) % state.players.length,
+    },
+  };
+}

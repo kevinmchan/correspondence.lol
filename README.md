@@ -1,7 +1,7 @@
 # correspondence.lol
 
 A static, no-build progressive web app served from the repository root at
-<https://correspondence.lol>.
+<https://correspondence.lol>: games played by turns, together.
 
 ## Layout
 
@@ -10,6 +10,8 @@ A static, no-build progressive web app served from the repository root at
 | `index.html`, `styles.css`, `app.js` | The app shell |
 | `manifest.webmanifest` | Install metadata (name, colours, icons) |
 | `sw.js` | Service worker: offline support and caching |
+| `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
+| `tests/` | Tests for the game rules and puzzle generator (`npm test`, needs only Node) |
 | `icons/` | App icons, rendered from `icons/icon.svg` |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
