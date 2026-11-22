@@ -4,9 +4,10 @@ import {
 } from './game.js';
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
-import { UUID, load, myToken, roomUrl, save } from '/shared/identity.js';
+import { UUID, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
+import { avatar, openProfile } from '/shared/profile.js';
 
 // A game is either pass-and-play (saved on this device only) or belongs to a
 // room (?game=<id>, stored on the server and open to everyone in that room).
@@ -19,7 +20,7 @@ const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelo
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  back: $('back'), loading: $('loading'),
+  back: $('back'), profile: $('profile'), loading: $('loading'),
   setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'),
   play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
   roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
@@ -58,7 +59,7 @@ function accept(view) {
     v: 1, size: view.size, regions: view.regions, solution: view.solution, players: view.players,
     cells: view.cells, hearts: view.hearts, moves: view.moves, status: view.status, last: view.last,
   };
-  online = { id: view.id, you: view.you, room: view.room, roomName: view.room_name };
+  online = { id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people };
 }
 
 // Anyone may move except whoever moved last.
@@ -150,7 +151,7 @@ async function poll() {
       rpc('room_get', { p_room: online.room, p_token: myToken(), p_after: chat ? chat.lastId : null }),
     ]);
     // also picks up people joining the room or changing their name
-    if (view && !busy && (resync || view.moves > game.moves || view.players.join('\n') !== game.players.join('\n'))) {
+    if (view && !busy && (resync || view.moves > game.moves || JSON.stringify(view.people) !== JSON.stringify(online.people))) {
       const moved = !resync && view.moves > game.moves; // after a rejected move, keep its notice on screen
       resync = false;
       accept(view);
@@ -169,10 +170,10 @@ function feedChat(room) {
   const history = !chat; // the first batch is old messages, not news
   if (!chat) {
     chat = createChat(el.chat, {
-      roomId: room.id, you: room.you, members: room.members, onSent: () => watcher?.poke(),
+      roomId: room.id, you: room.you, people: room.people, onSent: () => watcher?.poke(),
     });
   }
-  chat.setMembers(room.members);
+  chat.setPeople(room.people);
   const fromOthers = chat.add(room.messages);
   if (!history && fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
   el.chatBox.hidden = false;
@@ -256,6 +257,8 @@ function render() {
   if (online) {
     el.back.href = roomUrl(online.room);
     el.back.textContent = `← ${online.roomName}`;
+    el.profile.hidden = false;
+    el.profile.replaceChildren(avatar(online.people[online.you]));
   }
   const boardKey = `${online ? online.id : game.seed}:${game.size}`;
   if (builtFor !== boardKey) buildBoard(boardKey);
@@ -329,18 +332,15 @@ function render() {
     }));
   }
 
-  // Room games: everyone in the room, with those who may move underlined
+  // Room games: everyone in the room; those who may move next stand out
   el.roster.hidden = !online;
   if (online) {
-    const parts = [];
-    game.players.forEach((name, seat) => {
-      const span = document.createElement('span');
-      span.textContent = name + (seat === online.you ? ' (you)' : '');
-      if (canMove(game, seat)) span.className = 'now';
-      parts.push(span, ' · ');
-    });
-    parts.pop();
-    el.roster.replaceChildren(...parts);
+    el.roster.replaceChildren(...online.people.map((person, seat) => {
+      const li = document.createElement('li');
+      li.append(avatar(person), person.name + (seat === online.you ? ' (you)' : ''));
+      if (canMove(game, seat)) li.className = 'now';
+      return li;
+    }));
   }
 
   // Tools, and the buttons that play or discard the draft
@@ -552,6 +552,19 @@ function greet() {
 }
 
 el.help.addEventListener('click', openHowTo);
+
+el.profile.addEventListener('click', () => {
+  openProfile({
+    person: online.people[online.you],
+    onSave: async ({ name, avatar: face, color }) => {
+      await rpc('room_profile', { p_room: online.room, p_token: myToken(), p_name: name, p_avatar: face, p_color: color });
+      setMyName(name);
+      resync = true; // take the server's view, which now has the new profile
+      watcher?.poke();
+      await poll();
+    },
+  });
+});
 
 el.newGame.addEventListener('click', () => {
   if (online) {

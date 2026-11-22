@@ -1,10 +1,11 @@
 import { rpc } from './api.js';
 import { gameUrl, myToken } from './identity.js';
+import { avatar, paint } from './profile.js';
 
 // A room's chat: a message log and a box to write in. The page feeds it
 // messages it has fetched with add(); sending is handled here.
-export function createChat(root, { roomId, you, members, onSent }) {
-  let names = members;
+export function createChat(root, { roomId, you, people, onSent }) {
+  let everyone = people; // [{ name, avatar, color }] by seat
   let lastId = 0;
   const seen = new Set();
 
@@ -59,12 +60,13 @@ export function createChat(root, { roomId, you, members, onSent }) {
         const who = document.createElement('span');
         who.className = 'who';
         who.dataset.seat = message.seat;
-        who.textContent = message.seat === you ? 'You' : names[message.seat] ?? 'Someone';
+        who.textContent = message.seat === you ? 'You' : everyone[message.seat]?.name ?? 'Someone';
         const time = document.createElement('time');
         time.dateTime = message.at;
         time.textContent = clock(message.at);
         const body = document.createElement('p');
         body.textContent = message.body; // textContent: messages are never treated as HTML
+        if (message.seat !== you) li.append(avatar(everyone[message.seat]), ' ');
         li.append(who, ' ', time, body);
       }
       log.append(li);
@@ -95,12 +97,15 @@ export function createChat(root, { roomId, you, members, onSent }) {
 
   return {
     add,
-    // Names can change; relabel what is already on screen to match.
-    setMembers(next) {
-      names = next;
+    // Names and avatars can change; relabel what is already on screen to match.
+    setPeople(next) {
+      everyone = next;
       for (const who of log.querySelectorAll('.who')) {
         const seat = Number(who.dataset.seat);
-        if (seat !== you) who.textContent = names[seat] ?? 'Someone';
+        if (seat === you) continue;
+        who.textContent = everyone[seat]?.name ?? 'Someone';
+        const face = who.parentElement.querySelector('.avatar');
+        if (face) paint(face, everyone[seat]);
       }
     },
     get lastId() { return lastId; },

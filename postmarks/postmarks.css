@@ -40,8 +40,8 @@
 
 #hearts { color: var(--accent); letter-spacing: 0.1em; }
 
-.roster { width: 100%; text-align: left; }
-.roster .now { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.roster { justify-content: flex-start; }
+.roster li.now { color: var(--ink); border-color: var(--accent); }
 
 .movers { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; font-family: system-ui, sans-serif; }
 

@@ -1,5 +1,6 @@
 import { rpc } from '/shared/api.js';
 import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
+import { savedLook } from '/shared/profile.js';
 
 const form = document.getElementById('create-room');
 const nameInput = document.getElementById('my-name');
@@ -39,6 +40,12 @@ form.addEventListener('submit', async (event) => {
     });
     setMyName(name);
     rememberRoom(room.id, room.name);
+    const look = savedLook(); // bring along the look chosen in an earlier room
+    if (look) {
+      await rpc('room_profile', {
+        p_room: room.id, p_token: myToken(), p_name: name, p_avatar: look.avatar, p_color: look.color,
+      }).catch(() => {});
+    }
     location.href = roomUrl(room.id);
   } catch (failure) {
     error.textContent = failure.message;

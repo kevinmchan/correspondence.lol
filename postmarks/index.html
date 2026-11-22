@@ -17,6 +17,7 @@
 <body class="page postmarks">
   <header class="topbar">
     <a id="back" href="/">← correspondence.lol</a>
+    <button type="button" id="profile" class="profile-button" aria-label="Your profile" title="Your profile" hidden></button>
   </header>
 
   <main>
@@ -46,7 +47,7 @@
       </div>
 
       <div id="movers" class="movers" role="radiogroup" aria-label="Who is moving" hidden></div>
-      <p id="roster" class="hint roster" hidden></p>
+      <ul id="roster" class="people roster" aria-label="Players" hidden></ul>
 
       <div id="board" class="board" role="group" aria-label="Puzzle grid"></div>
 

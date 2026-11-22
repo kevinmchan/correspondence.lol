@@ -122,6 +122,10 @@ button.quiet {
 [hidden] { display: none !important; }
 
 .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
   padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0;
   font-family: system-ui, sans-serif;
   font-size: 0.875rem;
@@ -301,5 +305,94 @@ input[type="text"]:focus-visible, select:focus-visible {
   border: 0;
 }
 
-.rename { width: 100%; }
-.rename button { padding: 0.5rem 1rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; }
+/* --- People: avatars, member chips, profile ------------------------------- */
+
+.avatar {
+  --bg: #c9d1d6;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.75em;
+  height: 1.75em;
+  border-radius: 50%;
+  background: var(--bg);
+  font-size: 0.9em;
+  line-height: 1;
+  font-style: normal;
+  vertical-align: middle;
+}
+
+.avatar.big { width: 4.5rem; height: 4.5rem; font-size: 2.4rem; }
+
+.people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.875rem;
+}
+
+.people li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem 0.15rem 0.15rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.profile-button {
+  padding: 0;
+  background: none;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--line);
+}
+
+.profile-button:hover { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--accent); }
+
+dialog.profile {
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1.25rem 1rem 1rem;
+  border: 0;
+  border-radius: 1.25rem;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.35);
+  text-align: center;
+}
+
+dialog.profile::backdrop { background: rgb(20 26 32 / 0.6); }
+dialog.profile form { margin-top: 0.9rem; }
+
+.picker { display: grid; gap: 0.35rem; }
+.picker.avatars { grid-template-columns: repeat(8, 1fr); }
+.picker.colours { grid-template-columns: repeat(8, 1fr); }
+
+.picker button {
+  aspect-ratio: 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: none;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.picker.colours button { background: var(--bg); }
+.picker button[aria-checked="true"] { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink); }
+.picker.avatars button[aria-checked="true"] { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+
+.row.end { justify-content: flex-end; }
+.row.end button { font-family: system-ui, sans-serif; font-size: 0.9375rem; padding: 0.55rem 1.2rem; }
+
+.chat-log .avatar { font-size: 0.8em; }
