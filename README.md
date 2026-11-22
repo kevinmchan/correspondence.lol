@@ -63,6 +63,16 @@ npx esbuild entry.js --bundle --format=esm --platform=browser --target=es2020 --
 
 Then restore the two comment lines at the top of the file and bump `VERSION` in `sw.js`.
 
+## Installing
+
+At startup, people who have not installed the app are shown an install guide
+(`app.js`) with a picture and steps for their device: iPhone and iPad (Safari
+and other browsers), Android, desktop Chrome and Edge, and Safari on a Mac.
+Where the browser offers a one-tap install the guide has an Install button
+instead of steps. "Not now" hides it for a week, and the home page keeps an
+Install button. It is not shown on game pages or in desktop Firefox, which
+cannot install web apps.
+
 ## Caching
 
 While online, the service worker fetches every page and file from the network
