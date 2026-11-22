@@ -265,8 +265,7 @@ function render() {
   }
 
   // Tools, and the buttons that play or discard the draft
-  const mine = !over && (!online || iCanMove());
-  el.actions.hidden = !mine;
+  el.actions.hidden = over || !online || !iCanMove(); // Submit belongs to room games only
   el.submit.disabled = !draft || busy;
   el.clear.disabled = !draft || busy;
   el.tools.hidden = over;
@@ -390,9 +389,8 @@ window.addEventListener('pointermove', (event) => {
   if (cell !== null && !draft.cells.includes(cell) && draftCross(cell)) render();
 });
 
-// Play the draft. In a room this is what Submit does. Alone, crosses are just
-// your own notes, so they are played as soon as the finger lifts; only a
-// guess, which can cost a heart, waits for Submit.
+// Play the draft. In a room this is what Submit does. Alone there is no turn
+// to end, so every move is played as soon as it is made and there is no Submit.
 function submitDraft() {
   if (!draft) return;
   const { type, cells } = draft;
@@ -401,7 +399,7 @@ function submitDraft() {
 }
 
 window.addEventListener('pointerup', () => {
-  if (dragging && !online && draft && draft.type !== 'guess') submitDraft();
+  if (dragging && !online) submitDraft();
   dragging = false;
 });
 
@@ -430,7 +428,7 @@ el.board.addEventListener('click', (event) => {
   } else {
     draftCross(cell);
   }
-  if (!online && draft && draft.type !== 'guess') submitDraft();
+  if (!online) submitDraft();
   else render();
 });
 
