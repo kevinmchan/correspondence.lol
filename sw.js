@@ -1,6 +1,7 @@
-// Bump VERSION when the precache list changes shape; ordinary edits to the
-// files below are picked up automatically (see fetch strategies).
-const VERSION = 'v9';
+// Online, every page and file is fetched from the network and revalidated, so a
+// deploy shows up on the next load. The cache is only what the app falls back
+// on when offline. Bump VERSION when the precache list changes.
+const VERSION = 'v10';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
@@ -52,37 +53,23 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Pages: network first so deploys show up immediately; cached copy offline.
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            event.waitUntil(caches.open(CACHE).then((cache) => cache.put(url.pathname, copy)));
-          }
-          return response;
-        })
-        .catch(async () => (await caches.match(url.pathname)) || caches.match('/'))
-    );
-    return;
-  }
+  // Pages are cached by path, so /room/?id=… falls back to the room page.
+  const key = request.mode === 'navigate' ? url.pathname : request;
 
-  // Assets: serve from cache instantly, refresh the cache in the background.
   event.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const cached = await cache.match(request);
-      const refresh = fetch(request)
-        .then((response) => {
-          if (response.ok) cache.put(request, response.clone());
-          return response;
-        })
-        .catch(() => cached);
-      if (cached) {
-        event.waitUntil(refresh);
-        return cached;
-      }
-      return refresh;
-    })
+    // 'no-cache' makes the browser check with the server instead of trusting
+    // its own HTTP cache, which GitHub Pages lets go ten minutes stale.
+    fetch(request, { cache: 'no-cache' })
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          event.waitUntil(caches.open(CACHE).then((cache) => cache.put(key, copy)));
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = (await caches.match(key)) || (request.mode === 'navigate' && (await caches.match('/')));
+        return cached || Response.error();
+      })
   );
 });
