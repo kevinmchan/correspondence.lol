@@ -163,10 +163,10 @@ function renderNotify() {
   el.notify.hidden = state === 'granted' || state === 'unsupported';
   el.notifyButton.hidden = state === 'denied';
   if (state === 'default') {
-    el.notifyText.textContent = 'Get a notification when a game starts, it’s your turn, or someone messages the room.';
+    el.notifyText.textContent = 'Get a notification when a game starts or it’s your turn.';
     el.notifyButton.textContent = 'Turn on';
   } else if (state === 'install-first') {
-    el.notifyText.textContent = 'Install the app to get a notification when a game starts, it’s your turn, or someone messages the room.';
+    el.notifyText.textContent = 'Install the app to get a notification when a game starts or it’s your turn.';
     el.notifyButton.textContent = 'Show me how';
   } else if (state === 'denied') {
     el.notifyText.textContent = 'Notifications are blocked for this site. You can allow them in your browser or system settings.';
