@@ -12,12 +12,17 @@ const el = {
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
   room: $('room'), members: $('members'), profile: $('profile'),
   notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
-  games: $('games'), noGames: $('no-games'), newGame: $('new-game'), gameError: $('game-error'),
+  games: $('games'), noGames: $('no-games'), newGame: $('new-game'),
+  mode: $('mode'), modeHint: $('mode-hint'), phraseText: $('phrase-text'), gameError: $('game-error'),
   chat: $('chat'),
 };
 
 const requested = new URLSearchParams(location.search).get('id');
 const roomId = requested && UUID.test(requested) ? requested.toLowerCase() : null;
+
+// Arriving from a shared game link: once in the room, go on to that game.
+const wantedGame = new URLSearchParams(location.search).get('game');
+const nextGame = wantedGame && UUID.test(wantedGame) ? wantedGame.toLowerCase() : null;
 
 let room = null; // the server's latest view of the room
 let chat = null;
@@ -40,8 +45,19 @@ function list(names) {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
+const MODE_NAMES = { coop: 'Postmarks', trial: 'Time trial', phrase: 'Pass phrase' };
+
 function gameStatus(game) {
+  if (game.mode === 'trial') {
+    const done = `${game.finished} finished`;
+    if (game.mine === 'won') return { text: `You finished · ${done}` };
+    if (game.mine === 'lost') return { text: `You ran out of hearts · ${done}` };
+    return { text: `${game.mine === 'playing' ? 'Your clock is running' : 'Not started'} · ${done}`, go: true };
+  }
   const hearts = '♥'.repeat(game.hearts) + '♡'.repeat(3 - game.hearts);
+  if (game.mode === 'phrase' && game.status === 'won') return { text: `Phrase solved · ${hearts}` };
+  if (game.mode === 'phrase' && game.status === 'lost') return { text: 'Phrase not solved' };
+  if (game.status === 'playing' && game.phrase_by === room.you) return { text: `You wrote this one · ${game.found}/${game.size} letters found` };
   if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}` };
   if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} letters found` };
   const progress = `${game.found}/${game.size} letters · ${hearts}`;
@@ -56,7 +72,9 @@ function render() {
 
   if (room.you === null) {
     const n = room.members.length;
-    el.joinText.textContent = `${list(room.members)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
+    el.joinText.textContent = nextGame
+      ? `${list(room.members)} invited you to a game. Join the room to play.`
+      : `${list(room.members)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
     if (!el.joinName.value) el.joinName.value = myName();
     el.join.hidden = false;
     el.room.hidden = true;
@@ -64,6 +82,10 @@ function render() {
     return;
   }
 
+  if (nextGame) {
+    location.replace(gameUrl('postmarks', nextGame)); // already a member: straight to the shared game
+    return;
+  }
   el.join.hidden = true;
   el.room.hidden = false;
   el.members.replaceChildren(...room.people.map((person, seat) => {
@@ -80,7 +102,7 @@ function render() {
     const a = document.createElement('a');
     a.href = gameUrl(game.kind, game.id);
     const title = document.createElement('strong');
-    title.textContent = `Postmarks ${game.size} × ${game.size}`;
+    title.textContent = `${MODE_NAMES[game.mode] ?? 'Postmarks'} ${game.size} × ${game.size}`;
     const status = gameStatus(game);
     const line = document.createElement('span');
     line.textContent = status.text;
@@ -150,6 +172,10 @@ el.joinForm.addEventListener('submit', async (event) => {
     const look = savedLook();
     if (look) await saveProfile({ name, ...look }).catch(() => {});
     rememberRoom(room.id, room.name);
+    if (nextGame) {
+      location.replace(gameUrl('postmarks', nextGame)); // the game they were invited to
+      return;
+    }
     render();
     refresh(); // restart polling at the live pace
   } catch (error) {
@@ -206,6 +232,21 @@ el.profile.addEventListener('click', () => {
   openProfile({ person: room.people[room.you], onSave: saveProfile });
 });
 
+// What each kind of game is, shown under the picker.
+const MODE_HINTS = {
+  coop: 'Solve one board together, taking turns.',
+  trial: 'Everyone solves the same board separately. Fastest time wins.',
+  phrase: 'Each letter you find reveals part of a hidden phrase. Guess it to win.',
+};
+
+function syncMode() {
+  el.modeHint.textContent = MODE_HINTS[el.mode.value];
+  el.phraseText.hidden = el.mode.value !== 'phrase';
+}
+
+el.mode.addEventListener('change', syncMode);
+syncMode();
+
 el.newGame.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = el.newGame.querySelector('button');
@@ -214,8 +255,10 @@ el.newGame.addEventListener('submit', async (event) => {
   try {
     const size = randomSize();
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
-    const game = await rpc('postmarks_create', {
-      p_room: roomId, p_token: myToken(), p_size: size, p_regions: puzzle.regions, p_solution: puzzle.solution,
+    const game = await rpc('postmarks_start', {
+      p_room: roomId, p_token: myToken(), p_mode: el.mode.value, p_size: size,
+      p_regions: puzzle.regions, p_solution: puzzle.solution,
+      p_phrase: el.mode.value === 'phrase' ? el.phraseText.value : null,
     });
     watcher?.poke();
     location.href = gameUrl('postmarks', game.id);

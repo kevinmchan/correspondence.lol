@@ -236,12 +236,19 @@ export const isLetterCell = (state, cell) =>
 
 export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).length;
 
-// Anyone may take the next turn except the player who took the last one.
-// Someone playing alone has nobody to wait for.
+// Turn-taking. Anyone may take the next turn except the player who took the
+// last one, but only when more than one person can play: someone alone has
+// nobody to wait for. Two optional flags on the state change who can play:
+//   state.free    no turns at all (a time trial, where each player has their own board)
+//   state.author  index of a player sitting out (they wrote the pass phrase)
+const mustAlternate = (state) =>
+  !state.free && state.players.length - (Number.isInteger(state.author) ? 1 : 0) > 1;
+
 export const canMove = (state, player) =>
   state.status === 'playing' &&
   Number.isInteger(player) && player >= 0 && player < state.players.length &&
-  (state.players.length === 1 || state.last?.player !== player);
+  player !== state.author &&
+  (!mustAlternate(state) || state.last?.player !== player);
 
 // Apply one turn. A turn is exactly one action:
 //   { player, type: 'mark',   cells }  cross out one or more empty squares
@@ -256,7 +263,8 @@ export function applyMove(state, move) {
   if (!Number.isInteger(move.player) || move.player < 0 || move.player >= state.players.length) {
     return fail('That is not a player in this game.');
   }
-  if (state.players.length > 1 && state.last?.player === move.player) {
+  if (move.player === state.author) return fail('You wrote this phrase, so you are watching this one.');
+  if (mustAlternate(state) && state.last?.player === move.player) {
     return fail(`${state.players[move.player]} made the last move, so someone else goes next.`);
   }
   const { type } = move;

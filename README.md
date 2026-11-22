@@ -25,6 +25,18 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. Service workers only run on `localhost` or HTTPS.
 
+## Game modes
+
+A Postmarks game in a room is one of three kinds, chosen when it is started:
+
+- **Together**: one board for the whole room, taking turns. Each move is drafted and then submitted.
+- **Time trial**: everyone solves the same board separately. Your clock starts when you press Start and the board is withheld until then; three wrong guesses put you out. Results are ranked by time.
+- **Pass phrase**: a shared board hiding a phrase. Each letter found reveals an equal share of it, and a turn can be spent guessing the whole phrase (right wins, wrong costs a heart). Whoever starts the game may write the phrase, in which case they watch, or leave it empty for a random one.
+
+Turns only alternate when more than one person can play, so someone alone in a room, or the only solver of a phrase, is not stuck. Any game can be shared by its link: room members open it directly, and anyone else joins the room first and is then taken to the game.
+
+The board is generated in the browser of whoever starts the game, so that player's device briefly knows the solution. That is accepted for games among friends; it is not a defence against cheating.
+
 ## Rooms
 
 People gather in rooms. A room has members, a chat and games; any member can
@@ -34,7 +46,8 @@ A solo game needs no room and is saved in the browser only.
 
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_profile`, `room_say`,
-`postmarks_create`, `postmarks_get`, `postmarks_play`) that enforce membership and the rules; no
+`postmarks_start`, `postmarks_get`, `postmarks_play`, `postmarks_trial_start`,
+`postmarks_guess_phrase`) that enforce membership and the rules; no
 table is exposed. There are no accounts: a room's link lets anyone see its name
 and member names and join it, while chat and games are for members. Each device
 holds a random token (in `localStorage`) that proves which member it is, and

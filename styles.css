@@ -534,3 +534,9 @@ main:has(.version) { position: relative; }
   color: var(--muted);
   opacity: 0.8;
 }
+
+/* --- Starting a game in a room ------------------------------------------------ */
+
+.newgame { display: flex; flex-direction: column; gap: 0.5rem; }
+.newgame .row button { flex: none; }
+.newgame .hint { font-size: 0.8125rem; }

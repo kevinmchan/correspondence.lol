@@ -17,12 +17,28 @@
 <body class="page postmarks">
   <header class="topbar">
     <a id="back" href="/">← correspondence.lol</a>
-    <button type="button" id="profile" class="profile-button" aria-label="Your profile" title="Your profile" hidden></button>
+    <div class="top-actions">
+      <button type="button" id="share-game" class="quiet round" aria-label="Share this game" title="Share this game" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M8 7l4-4 4 4M7 10.5H5.5v9.5h13v-9.5H17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" id="profile" class="profile-button" aria-label="Your profile" title="Your profile" hidden></button>
+    </div>
   </header>
 
   <main>
     <h1>Postmarks</h1>
     <p id="loading" class="lede" hidden>Opening game…</p>
+
+    <div id="trial" class="stack" hidden>
+      <p class="lede">Time trial</p>
+      <p class="hint">Everyone solves the same board on their own. Fastest time wins, and three wrong guesses put you out. Your clock starts when you press Start.</p>
+      <ol id="trial-runs" class="runs"></ol>
+      <div class="row">
+        <button type="button" id="trial-start" class="go">Start</button>
+        <button type="button" id="trial-share" class="quiet">Share this game</button>
+      </div>
+      <p id="trial-error" class="message bad" role="alert"></p>
+    </div>
 
     <div id="play" class="stack" hidden>
       <div class="hud">
@@ -35,6 +51,9 @@
 
       <ul id="roster" class="people roster" aria-label="Players" hidden></ul>
 
+      <div id="phrase" class="phrase" hidden></div>
+      <p id="phrase-note" class="hint" hidden></p>
+
       <div id="board" class="board" role="group" aria-label="Puzzle grid"></div>
 
       <div class="toolbar">
@@ -45,9 +64,14 @@
           <button type="button" role="radio" data-tool="guess" aria-checked="false">
             <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg> Letter
           </button>
+          <button type="button" role="radio" data-tool="phrase" aria-checked="false" hidden>
+            <span class="glyph" aria-hidden="true">Aa</span> Phrase
+          </button>
         </div>
         <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
       </div>
+      <input type="text" id="phrase-input" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="Type the whole phrase" aria-label="Your guess at the phrase" hidden>
       <div id="actions" class="actions" hidden>
         <button type="button" id="clear" class="quiet round" aria-label="Clear my move" title="Clear my move" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9a8 8 0 1 1 -1 6M5 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -61,6 +85,7 @@
       <p id="message" class="message bad" role="alert"></p>
 
       <button type="button" id="new-game" class="quiet">New game</button>
+      <ol id="runs" class="runs" hidden></ol>
 
       <details id="chat-box" class="panel" hidden>
         <summary>Room chat <span id="chat-unread"></span></summary>

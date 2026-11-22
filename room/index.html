@@ -55,10 +55,18 @@
         <h2 id="games-heading">Games</h2>
         <ul id="games" class="links"></ul>
         <p id="no-games" class="hint">No games yet. Start one below.</p>
-        <form id="new-game">
+        <form id="new-game" class="newgame">
           <div class="row">
-            <button type="submit">New Postmarks game</button>
+            <select id="mode" aria-label="Kind of Postmarks game">
+              <option value="coop" selected>Together</option>
+              <option value="trial">Time trial</option>
+              <option value="phrase">Pass phrase</option>
+            </select>
+            <button type="submit">New game</button>
           </div>
+          <p id="mode-hint" class="hint"></p>
+          <input type="text" id="phrase-text" maxlength="60" autocomplete="off" spellcheck="false"
+                 placeholder="Your phrase, or leave empty for a random one" aria-label="Pass phrase" hidden>
         </form>
         <p id="game-error" class="message bad" role="alert"></p>
       </section>
