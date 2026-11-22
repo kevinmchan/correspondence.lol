@@ -10,7 +10,7 @@ A static, no-build progressive web app served from the repository root at
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
-| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), chat component (`chat.js`) |
+| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
 | `tests/` | Tests for the game rules and puzzle generator (`npm test`, needs only Node) |
@@ -30,10 +30,10 @@ Then open <http://localhost:8000>. Service workers only run on `localhost` or HT
 People gather in rooms. A room has members, a chat and games; any member can
 start a game and every member can play in it, each on their own device. In
 Postmarks anyone may take the next turn except whoever took the last one.
-Pass-and-play on a single device needs no room and is saved in the browser only.
+A solo game needs no room and is saved in the browser only.
 
 Rooms live in Supabase and are reached only through database functions
-(`room_create`, `room_get`, `room_join`, `room_rename`, `room_say`,
+(`room_create`, `room_get`, `room_join`, `room_profile`, `room_say`,
 `postmarks_create`, `postmarks_get`, `postmarks_play`) that enforce membership and the rules; no
 table is exposed. There are no accounts: a room's link lets anyone see its name
 and member names and join it, while chat and games are for members. Each device

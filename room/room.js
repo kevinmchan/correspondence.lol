@@ -1,6 +1,7 @@
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
+import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { UUID, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { generatePuzzle, randomSize } from '/postmarks/game.js';
 
@@ -8,9 +9,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-  room: $('room'), members: $('members'),
-  renameOpen: $('rename-open'), renameForm: $('rename-form'), renameName: $('rename-name'),
-  renameCancel: $('rename-cancel'), renameError: $('rename-error'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
+  room: $('room'), members: $('members'), profile: $('profile'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'), newGame: $('new-game'), gameError: $('game-error'),
   chat: $('chat'),
 };
@@ -58,12 +57,19 @@ function render() {
     if (!el.joinName.value) el.joinName.value = myName();
     el.join.hidden = false;
     el.room.hidden = true;
+    el.profile.hidden = true;
     return;
   }
 
   el.join.hidden = true;
   el.room.hidden = false;
-  el.members.textContent = `In this room: ${list(room.members.map((name, seat) => (seat === room.you ? `${name} (you)` : name)))}`;
+  el.members.replaceChildren(...room.people.map((person, seat) => {
+    const li = document.createElement('li');
+    li.append(avatar(person), person.name + (seat === room.you ? ' (you)' : ''));
+    return li;
+  }));
+  el.profile.hidden = false;
+  el.profile.replaceChildren(avatar(room.people[room.you]));
   el.shareLink.value = location.origin + roomUrl(room.id);
 
   el.games.replaceChildren(...room.games.map((game) => {
@@ -85,10 +91,10 @@ function render() {
   if (!watcher) watcher = watchRoom(room.id, refresh);
   if (!chat) {
     chat = createChat(el.chat, {
-      roomId: room.id, you: room.you, members: room.members, onSent: () => watcher.poke(),
+      roomId: room.id, you: room.you, people: room.people, onSent: () => watcher.poke(),
     });
   }
-  chat.setMembers(room.members);
+  chat.setPeople(room.people);
   const fromOthers = chat.add(room.messages);
   if (document.hidden && fromOthers) {
     unread += fromOthers;
@@ -131,6 +137,9 @@ el.joinForm.addEventListener('submit', async (event) => {
   try {
     room = await rpc('room_join', { p_room: roomId, p_name: name, p_token: myToken() });
     setMyName(name);
+    // bring along the look chosen in an earlier room, if any
+    const look = savedLook();
+    if (look) await saveProfile({ name, ...look }).catch(() => {});
     rememberRoom(room.id, room.name);
     render();
     refresh(); // restart polling at the live pace
@@ -139,41 +148,20 @@ el.joinForm.addEventListener('submit', async (event) => {
   }
 });
 
-// --- Changing your name -----------------------------------------------------
-function showRename(open) {
-  el.renameForm.hidden = !open;
-  el.renameOpen.hidden = open;
-  el.renameError.textContent = '';
-  if (open) {
-    el.renameName.value = room.members[room.you];
-    el.renameName.focus();
-    el.renameName.select();
-  }
+// --- Your profile: name and avatar --------------------------------------------
+async function saveProfile({ name, avatar: face, color }) {
+  const view = await rpc('room_profile', {
+    p_room: roomId, p_token: myToken(), p_name: name, p_avatar: face, p_color: color,
+  });
+  // The reply carries the whole chat; keep only what this page has not shown yet.
+  room = { ...view, messages: view.messages.filter((message) => !chat || message.id > chat.lastId) };
+  setMyName(name); // also the default the next time a room is opened or joined
+  render();
+  watcher?.poke();
 }
 
-el.renameOpen.addEventListener('click', () => showRename(true));
-el.renameCancel.addEventListener('click', () => showRename(false));
-
-el.renameForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const name = el.renameName.value.trim();
-  if (!name) return;
-  const button = el.renameForm.querySelector('button[type=submit]');
-  button.disabled = true;
-  el.renameError.textContent = '';
-  try {
-    const view = await rpc('room_rename', { p_room: roomId, p_token: myToken(), p_name: name });
-    // The reply carries the whole chat; keep only what this page has not shown yet.
-    room = { ...view, messages: view.messages.filter((message) => message.id > chat.lastId) };
-    setMyName(name); // also the default the next time a room is opened or joined
-    showRename(false);
-    render();
-    watcher?.poke();
-  } catch (error) {
-    el.renameError.textContent = error.message;
-  } finally {
-    button.disabled = false;
-  }
+el.profile.addEventListener('click', () => {
+  openProfile({ person: room.people[room.you], onSave: saveProfile });
 });
 
 el.newGame.addEventListener('submit', async (event) => {

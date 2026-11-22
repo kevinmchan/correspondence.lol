@@ -1,19 +1,5 @@
 /* Postmarks: the board and its controls. Shared pieces live in /styles.css. */
 
-/* --- Setup ------------------------------------------------------------- */
-
-#players {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-#players li { display: flex; gap: 0.5rem; }
-#players .remove { padding: 0.45rem 0.8rem; border-radius: 0.5rem; }
-
 /* --- Play -------------------------------------------------------------- */
 
 .hud {
@@ -40,24 +26,8 @@
 
 #hearts { color: var(--accent); letter-spacing: 0.1em; }
 
-.roster { width: 100%; text-align: left; }
-.roster .now { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
-
-.movers { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; font-family: system-ui, sans-serif; }
-
-.movers button {
-  background: none;
-  color: var(--ink);
-  border: 1.5px solid var(--line);
-  padding: 0.35rem 0.9rem;
-  font-size: 0.9375rem;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.movers button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-.movers button:disabled { opacity: 0.45; text-decoration: line-through; }
+.roster { justify-content: flex-start; }
+.roster li.now { color: var(--ink); border-color: var(--accent); }
 
 .board {
   --n: 6;

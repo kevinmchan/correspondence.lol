@@ -12,7 +12,7 @@ export const MISS = 3; // a wrong guess (permanent, cost a heart)
 
 export const MIN_SIZE = 5;
 export const MAX_SIZE = 9;
-export const MIN_PLAYERS = 2;
+export const MIN_PLAYERS = 1; // one player is a solo game
 export const MAX_PLAYERS = 4;
 export const START_HEARTS = 3;
 
@@ -213,7 +213,7 @@ export function generatePuzzle(size, seed) {
 export function newGame({ size, seed, players }) {
   const names = players.map((name) => String(name).trim()).filter(Boolean);
   if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) {
-    throw new RangeError(`Postmarks needs ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
+    throw new RangeError(`Postmarks takes ${MIN_PLAYERS} to ${MAX_PLAYERS} players`);
   }
   const puzzle = generatePuzzle(size, seed);
   return {
@@ -237,10 +237,11 @@ export const isLetterCell = (state, cell) =>
 export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).length;
 
 // Anyone may take the next turn except the player who took the last one.
+// Someone playing alone has nobody to wait for.
 export const canMove = (state, player) =>
   state.status === 'playing' &&
   Number.isInteger(player) && player >= 0 && player < state.players.length &&
-  state.last?.player !== player;
+  (state.players.length === 1 || state.last?.player !== player);
 
 // Apply one turn. A turn is exactly one action:
 //   { player, type: 'mark',   cells }  cross out one or more empty squares
@@ -255,7 +256,7 @@ export function applyMove(state, move) {
   if (!Number.isInteger(move.player) || move.player < 0 || move.player >= state.players.length) {
     return fail('That is not a player in this game.');
   }
-  if (state.last?.player === move.player) {
+  if (state.players.length > 1 && state.last?.player === move.player) {
     return fail(`${state.players[move.player]} made the last move, so someone else goes next.`);
   }
   const { type } = move;
