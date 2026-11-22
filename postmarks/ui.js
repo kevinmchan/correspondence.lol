@@ -1,6 +1,6 @@
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_PLAYERS, MIN_PLAYERS, START_HEARTS,
-  applyMove, canMove, isLetterCell, lettersFound, newGame,
+  applyMove, canMove, isLetterCell, lettersFound, newGame, randomSize,
 } from './game.js';
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
@@ -20,7 +20,7 @@ const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelo
 const $ = (id) => document.getElementById(id);
 const el = {
   back: $('back'), loading: $('loading'),
-  setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'), size: $('size'),
+  setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'),
   play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
   roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
   narration: $('narration'), message: $('message'), newGame: $('new-game'),
@@ -123,7 +123,7 @@ el.form.addEventListener('submit', (event) => {
   const names = [...el.players.querySelectorAll('input')].map((i) => i.value.trim());
   if (names.some((n) => !n)) return;
   const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-  game = newGame({ size: Number(el.size.value), seed, players: names });
+  game = newGame({ size: randomSize(), seed, players: names });
   tool = 'mark';
   mover = null;
   draft = null;

@@ -2,14 +2,14 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { UUID, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
-import { generatePuzzle } from '/postmarks/game.js';
+import { generatePuzzle, randomSize } from '/postmarks/game.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
   room: $('room'), members: $('members'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
-  games: $('games'), noGames: $('no-games'), newGame: $('new-game'), size: $('size'), gameError: $('game-error'),
+  games: $('games'), noGames: $('no-games'), newGame: $('new-game'), gameError: $('game-error'),
   chat: $('chat'),
 };
 
@@ -143,7 +143,7 @@ el.newGame.addEventListener('submit', async (event) => {
   button.disabled = true;
   el.gameError.textContent = '';
   try {
-    const size = Number(el.size.value);
+    const size = randomSize();
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_create', {
       p_room: roomId, p_token: myToken(), p_size: size, p_regions: puzzle.regions, p_solution: puzzle.solution,

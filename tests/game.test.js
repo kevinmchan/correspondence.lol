@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_SIZE, MIN_SIZE,
-  applyMove, canMove, countSolutions, generatePuzzle, isLetterCell, newGame,
+  applyMove, canMove, countSolutions, randomSize, generatePuzzle, isLetterCell, newGame,
 } from '../postmarks/game.js';
 
 const start = (size = 5, seed = 1) => newGame({ size, seed, players: ['Ada', 'Bo'] });
@@ -43,6 +43,14 @@ test('generated puzzles are valid and have exactly one solution', () => {
       }
     }
   }
+});
+
+test('random board sizes cover every size and nothing else', () => {
+  assert.equal(randomSize(() => 0), MIN_SIZE);
+  assert.equal(randomSize(() => 0.999999), MAX_SIZE);
+  const seen = new Set();
+  for (let i = 0; i < 500; i++) seen.add(randomSize());
+  assert.deepEqual([...seen].sort(), [5, 6, 7, 8, 9]);
 });
 
 test('the same seed gives the same puzzle', () => {
