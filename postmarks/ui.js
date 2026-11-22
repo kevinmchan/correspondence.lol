@@ -25,8 +25,10 @@ const el = {
   roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
   narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
-  trial: $('trial'), trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
-  runs: $('runs'), phrase: $('phrase'), phraseNote: $('phrase-note'), phraseInput: $('phrase-input'), shareGame: $('share-game'),
+  trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
+  trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
+  runs: $('runs'), phrase: $('phrase'), phraseNote: $('phrase-note'), phraseEntry: $('phrase-entry'), phraseInput: $('phrase-input'),
+  shareGame: $('share-game'),
 };
 
 // --- State ----------------------------------------------------------------
@@ -36,7 +38,7 @@ const onlineId = requested && UUID.test(requested) ? requested.toLowerCase() : n
 let game = null; // the game being shown, in the shape game.js uses
 let online = null; // { id, you, room, roomName } for a room game; you is this device's seat
 let busy = false; // a move is on its way to the server
-let pending = 0; // time trial crosses sent to the server but not yet confirmed
+let pending = 0; // solo-mode crosses sent to the server but not yet confirmed
 let sending = Promise.resolve(); // they go one after another, in order
 let resync = false; // the board shown may be ahead of the server: take its word next time
 // The move being put together, shown on the board but not yet played:
@@ -55,9 +57,11 @@ if (!onlineId) {
   if (!game || game.v !== 1 || game.players?.length !== 1) game = null;
 }
 
-// Adopt the server's view of a room game. Its mode is 'coop' (one shared
-// board), 'trial' (a time trial: your own board and clock, with everyone's
-// results in `runs`) or 'phrase' (a shared board hiding a pass phrase).
+// Adopt the server's view of a room game. Its mode is 'coop' (one board for
+// the room, taking turns) or one of the solo modes, where everyone solves
+// their own copy of the same board and results are listed in `runs`:
+// 'trial' (against the clock) and 'phrase' (each letter found reveals a word
+// of a hidden phrase, which can also be guessed outright).
 function accept(view) {
   const mode = view.mode ?? 'coop';
   const started = view.started !== false; // a time trial keeps its board back until you start
@@ -65,19 +69,19 @@ function accept(view) {
     v: 1, size: view.size, regions: view.regions ?? [], solution: view.solution ?? null, players: view.players,
     cells: view.cells ?? [], hearts: view.hearts ?? START_HEARTS, moves: view.moves ?? 0,
     status: started ? view.status : 'waiting', last: view.last ?? null,
-    free: mode === 'trial', author: view.phrase_by ?? null,
+    free: mode !== 'coop',
   };
   online = {
     id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people,
-    mode, started, runs: view.runs ?? [],
+    mode, started, runs: view.runs ?? [], author: view.phrase_by ?? null, // who wrote the phrase, if anyone
     phrase: mode === 'phrase' ? { shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
     // the clock: how long it had run when this view was made, and when that was
     clock: view.elapsed_ms == null ? null : { ms: Number(view.elapsed_ms), at: performance.now() },
   };
 }
 
-// In a room, moves need Submit, except in a time trial where you play alone.
-const immediate = () => !online || online.mode === 'trial';
+// Moves need Submit only when a board is shared; in the solo modes you play alone.
+const immediate = () => !online || online.mode !== 'coop';
 const iCanMove = () => Boolean(online) && canMove(game, online.you);
 const clockText = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 const elapsed = () => (game.status === 'playing' ? online.clock.ms + performance.now() - online.clock.at : online.clock.ms);
@@ -108,7 +112,7 @@ async function poll() {
   try {
     const [view, room] = await Promise.all([
       // a finished time trial still has a leaderboard to keep up with
-      game.status === 'playing' || online.mode === 'trial' ? rpc('postmarks_get', { p_game: online.id, p_token: myToken() }) : null,
+      game.status === 'playing' || online.mode !== 'coop' ? rpc('postmarks_get', { p_game: online.id, p_token: myToken() }) : null,
       rpc('room_get', { p_room: online.room, p_token: myToken(), p_after: chat ? chat.lastId : null }),
     ]);
     // also picks up people joining the room or changing their name
@@ -213,32 +217,34 @@ function leaderboard(list) {
     who.append(avatar(online.people[run.seat]), online.people[run.seat].name + (run.seat === online.you ? ' (you)' : ''));
     const result = document.createElement('span');
     result.className = `result ${run.status}`;
-    result.textContent = run.status === 'won' ? clockText(run.ms) : run.status === 'lost' ? 'out of hearts' : 'playing…';
+    result.textContent = run.status === 'lost' ? 'out of hearts' : run.status !== 'won' ? 'playing…'
+      : online.mode === 'trial' ? clockText(run.ms) : `${run.found} of ${game.size} opened`;
     li.append(who, result);
     return li;
   }));
   list.hidden = online.runs.length === 0;
 }
 
-// The pass phrase, one tile per character, wrapping between words.
-function renderPhrase() {
+// The pass phrase, one card per word. A word stays face down, showing only how
+// many letters it has, until the board letter holding it is found.
+function renderPhrase(target) {
   const words = online.phrase.shown.toUpperCase().split(' ');
-  el.phrase.replaceChildren(...words.map((word) => {
-    const group = document.createElement('span');
-    group.className = 'word';
-    for (const ch of word) {
-      const tile = document.createElement('span');
-      const hidden = ch === '_';
-      tile.className = hidden ? 'hidden' : /[A-Z0-9]/.test(ch) ? 'shown' : 'mark';
-      tile.textContent = hidden ? '' : ch;
-      group.append(tile);
-    }
-    return group;
-  }));
-  const hiddenCount = [...online.phrase.shown].filter((ch) => ch === '_').length;
-  el.phrase.setAttribute('aria-label', online.phrase.known
+  // Cards are updated in place, so a word turning over animates once and the
+  // rest stay still when the page refreshes.
+  while (target.children.length > words.length) target.lastElementChild.remove();
+  words.forEach((word, i) => {
+    const card = target.children[i] ?? target.appendChild(document.createElement('span'));
+    const hidden = word.includes('_');
+    const text = hidden ? word.replace(/_/g, '•') : word;
+    if (card.textContent !== text) card.textContent = text;
+    const className = hidden ? 'word hidden' : 'word';
+    if (card.className !== className) card.className = className;
+  });
+  const left = words.filter((word) => word.includes('_')).length;
+  target.setAttribute('aria-label', left === 0
     ? `The phrase: ${online.phrase.shown}`
-    : `The phrase so far: ${online.phrase.shown.replace(/_/g, ' blank ')}. ${hiddenCount} letters hidden.`);
+    : `The phrase so far: ${online.phrase.shown.replace(/_+/g, 'hidden word')}. ${left} of ${words.length} words hidden.`);
+  target.hidden = false;
 }
 
 function render() {
@@ -255,7 +261,21 @@ function render() {
     el.profile.hidden = false;
     el.profile.replaceChildren(avatar(online.people[online.you]));
   }
-  if (online?.mode === 'trial' && !online.started) {
+  if (online && online.mode !== 'coop' && !online.started) {
+    const wrote = online.author === online.you;
+    if (online.mode === 'phrase' && !wrote) {
+      startRun(); // nothing to wait for: straight to your own board
+      show(el.loading);
+      return;
+    }
+    // A time trial waits for Start. A phrase's author has no board: they watch the results.
+    el.trialTitle.textContent = online.mode === 'trial' ? 'Time trial' : 'Pass phrase';
+    el.trialHint.textContent = online.mode === 'trial'
+      ? 'Everyone solves the same board on their own. Fastest time wins, and three wrong guesses put you out. Your clock starts when you press Start.'
+      : 'You wrote this one. Everyone else solves the board on their own, and each letter they find shows them one word.';
+    el.trialStart.hidden = wrote;
+    if (online.phrase) renderPhrase(el.trialPhrase);
+    else el.trialPhrase.hidden = true;
     leaderboard(el.trialRuns);
     show(el.trial);
     return;
@@ -306,10 +326,8 @@ function render() {
   if (online?.mode === 'trial') {
     el.turn.textContent = game.status === 'won' ? `Finished in ${clockText(elapsed())}`
       : game.status === 'lost' ? 'Out of hearts.' : clockText(elapsed());
-  } else if (online?.mode === 'phrase' && game.status === 'won') {
-    el.turn.textContent = 'Phrase solved — you win!';
-  } else if (online && game.author === online.you && !over) {
-    el.turn.textContent = 'Watching';
+  } else if (online?.mode === 'phrase') {
+    el.turn.textContent = game.status === 'won' ? 'Phrase solved!' : game.status === 'lost' ? 'Out of hearts.' : '';
   } else if (game.status === 'won') {
     el.turn.textContent = 'All delivered — you win!';
   } else if (game.status === 'lost') {
@@ -321,48 +339,44 @@ function render() {
     strong.textContent = 'Your';
     el.turn.append(strong, ' move');
   } else {
-    const others = game.players.filter((_, seat) => seat !== online.you && seat !== game.author);
+    const others = game.players.filter((_, seat) => seat !== online.you);
     el.turn.textContent = others.length === 0 ? 'Waiting for someone to join the room'
       : others.length === 1 ? `Waiting for ${others[0]}`
       : 'Waiting for someone else to move';
   }
 
-  // Room games: everyone in the room; those who may move next stand out. A
-  // time trial shows its results instead.
-  const trial = online?.mode === 'trial';
-  el.roster.hidden = !online || trial;
-  if (online && !trial) {
+  // A shared game lists everyone in the room, with those who may move next
+  // standing out. The solo modes show results instead.
+  const solo = Boolean(online) && online.mode !== 'coop';
+  el.roster.hidden = !online || solo;
+  if (online && !solo) {
     el.roster.replaceChildren(...online.people.map((person, seat) => {
       const li = document.createElement('li');
-      const tag = seat === game.author ? ' (wrote it)' : seat === online.you ? ' (you)' : '';
-      li.append(avatar(person), person.name + tag);
+      li.append(avatar(person), person.name + (seat === online.you ? ' (you)' : ''));
       if (canMove(game, seat)) li.className = 'now';
       return li;
     }));
   }
-  el.runs.hidden = !trial;
-  if (trial) leaderboard(el.runs);
+  el.runs.hidden = !solo;
+  if (solo) leaderboard(el.runs);
 
-  // Pass phrase: the phrase so far, and a word to its author
+  // Pass phrase: the phrase so far, and who wrote it
   const phrase = online?.phrase;
   el.phrase.hidden = !phrase;
-  el.phraseNote.hidden = !(phrase && game.author !== null);
+  el.phraseNote.hidden = !(phrase && online.author !== null);
   if (phrase) {
-    renderPhrase();
-    el.phraseNote.textContent = game.author === online.you
-      ? 'You wrote this one, so you can watch the others work it out.'
-      : `${online.people[game.author]?.name ?? 'Someone'} wrote this phrase.`;
+    renderPhrase(el.phrase);
+    el.phraseNote.textContent = `${online.people[online.author]?.name ?? 'Someone'} wrote this phrase.`;
   }
   el.shareGame.hidden = !online;
 
   // Tools, and the buttons that play or discard the draft
   el.actions.hidden = over || immediate() || !iCanMove(); // Submit belongs to shared room games
-  const guessing = Boolean(phrase) && tool === 'phrase' && !over && iCanMove();
-  el.phraseInput.hidden = !guessing;
+  el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
   el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
   el.submit.disabled = !draft || busy;
   el.clear.disabled = !draft || busy;
-  el.tools.hidden = over || (online ? game.author === online.you : false);
+  el.tools.hidden = over;
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
   }
@@ -377,8 +391,7 @@ function render() {
 function ready() {
   if (!game || game.status !== 'playing' || busy) return false;
   if (online && !iCanMove()) {
-    say(game.author === online.you ? 'You wrote this phrase, so you are watching this one.'
-      : 'You made the last move, so someone else goes next.');
+    say('You made the last move, so someone else goes next.');
     return false;
   }
   return true;
@@ -405,9 +418,9 @@ async function play(type, cells, text) {
     return;
   }
 
-  // In a time trial every second counts: crosses are shown at once and sent in
-  // the background, so the next tap never waits on the last one.
-  if (online.mode === 'trial' && local) {
+  // Playing alone, crosses are shown at once and sent in the background, so the
+  // next tap never waits on the last one.
+  if (online.mode !== 'coop' && local) {
     game = local.state;
     render();
     pending++;
@@ -458,10 +471,6 @@ async function play(type, cells, text) {
 // because another player moved while it was being put together).
 function pruneDraft() {
   if (!draft) return;
-  if (draft.type === 'phrase') {
-    if (game.status !== 'playing' || !iCanMove() || tool !== 'phrase') draft = null;
-    return;
-  }
   const fits = (cell) => {
     const mark = game.cells[cell];
     if (draft.type === 'mark') return mark === EMPTY;
@@ -524,15 +533,11 @@ function submitDraft() {
   play(type, cells, text);
 }
 
-// Typing a guess at the phrase drafts it; Submit plays it like any other move.
-el.phraseInput.addEventListener('input', () => {
+// Pass phrase: guess the whole phrase. Played at once, like every solo move.
+el.phraseEntry.addEventListener('submit', (event) => {
+  event.preventDefault();
   const text = el.phraseInput.value.trim();
-  draft = text ? { type: 'phrase', cells: [], text } : null;
-  render();
-});
-
-el.phraseInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') submitDraft();
+  if (text) play('phrase', [], text);
 });
 
 window.addEventListener('pointerup', () => {
@@ -599,25 +604,35 @@ el.tools.addEventListener('click', (event) => {
   const button = event.target.closest('[data-tool]');
   if (!button) return;
   tool = button.dataset.tool;
-  if (tool !== 'phrase' && draft?.type === 'phrase') draft = null;
   render();
   if (tool === 'phrase') el.phraseInput.focus();
 });
 
-// --- Time trial -------------------------------------------------------------
-el.trialStart.addEventListener('click', async () => {
+// --- Solo modes: your own copy of the board ---------------------------------
+// A time trial starts when its Start button is pressed; a pass phrase starts
+// as soon as it is opened.
+let starting = false;
+
+async function startRun() {
+  if (starting) return;
+  starting = true;
   el.trialStart.disabled = true;
   el.trialError.textContent = '';
   try {
     accept(await rpc('postmarks_trial_start', { p_game: online.id, p_token: myToken() }));
     render();
+    greet();
     watcher?.poke();
   } catch (error) {
     el.trialError.textContent = error.message;
+    el.loading.textContent = error.message;
   } finally {
+    starting = false;
     el.trialStart.disabled = false;
   }
-});
+}
+
+el.trialStart.addEventListener('click', startRun);
 
 // The clock ticks on screen between updates from the server.
 setInterval(() => {

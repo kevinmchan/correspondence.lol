@@ -30,8 +30,9 @@
     <p id="loading" class="lede" hidden>Opening game…</p>
 
     <div id="trial" class="stack" hidden>
-      <p class="lede">Time trial</p>
-      <p class="hint">Everyone solves the same board on their own. Fastest time wins, and three wrong guesses put you out. Your clock starts when you press Start.</p>
+      <p id="trial-title" class="lede">Time trial</p>
+      <p id="trial-hint" class="hint"></p>
+      <div id="trial-phrase" class="phrase" hidden></div>
       <ol id="trial-runs" class="runs"></ol>
       <div class="row">
         <button type="button" id="trial-start" class="go">Start</button>
@@ -70,8 +71,11 @@
         </div>
         <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
       </div>
-      <input type="text" id="phrase-input" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false"
-             placeholder="Type the whole phrase" aria-label="Your guess at the phrase" hidden>
+      <form id="phrase-entry" class="row phrase-entry" hidden>
+        <input type="text" id="phrase-input" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="Type the whole phrase" aria-label="Your guess at the phrase" required>
+        <button type="submit">Guess</button>
+      </form>
       <div id="actions" class="actions" hidden>
         <button type="button" id="clear" class="quiet round" aria-label="Clear my move" title="Clear my move" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9a8 8 0 1 1 -1 6M5 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

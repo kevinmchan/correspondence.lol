@@ -29,11 +29,11 @@ Then open <http://localhost:8000>. Service workers only run on `localhost` or HT
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:
 
-- **Together**: one board for the whole room, taking turns. Each move is drafted and then submitted.
-- **Time trial**: everyone solves the same board separately. Your clock starts when you press Start and the board is withheld until then; three wrong guesses put you out. Results are ranked by time.
-- **Pass phrase**: a shared board hiding a phrase. Each letter found reveals an equal share of it, and a turn can be spent guessing the whole phrase (right wins, wrong costs a heart). Whoever starts the game may write the phrase, in which case they watch, or leave it empty for a random one.
+- **Together**: one board for the whole room, taking turns. Each move is drafted and then submitted. Turns only alternate when more than one person is in the room.
+- **Time trial**: a solo mode. Everyone solves their own copy of the same board; the clock starts when you press Start and the board is withheld until then. Three wrong guesses put you out. Results are ranked by time.
+- **Pass phrase**: a solo mode. Everyone solves their own copy of the same board, and each letter found turns over one word of a hidden phrase. You can guess the whole phrase at any point (right wins, wrong costs a heart). Results are ranked by how few letters were opened. Whoever starts the game may write the phrase, in which case they have no board and watch the results, or leave it empty for a random one. The board is sized to the phrase so each word has its own letter.
 
-Turns only alternate when more than one person can play, so someone alone in a room, or the only solver of a phrase, is not stuck. Any game can be shared by its link: room members open it directly, and anyone else joins the room first and is then taken to the game.
+In the solo modes there are no turns and no Submit: moves are played at once. Any game can be shared by its link: room members open it directly, and anyone else joins the room first and is then taken to the game.
 
 The board is generated in the browser of whoever starts the game, so that player's device briefly knows the solution. That is accepted for games among friends; it is not a defence against cheating.
 

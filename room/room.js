@@ -48,16 +48,16 @@ function list(names) {
 const MODE_NAMES = { coop: 'Postmarks', trial: 'Time trial', phrase: 'Pass phrase' };
 
 function gameStatus(game) {
-  if (game.mode === 'trial') {
+  if (game.mode === 'trial' || game.mode === 'phrase') {
+    // the solo modes: where you stand, and how many have finished
     const done = `${game.finished} finished`;
-    if (game.mine === 'won') return { text: `You finished · ${done}` };
+    if (game.phrase_by === room.you) return { text: `You wrote this one · ${done}` };
+    if (game.mine === 'won') return { text: `${game.mode === 'trial' ? 'You finished' : 'You solved it'} · ${done}` };
     if (game.mine === 'lost') return { text: `You ran out of hearts · ${done}` };
+    if (game.mode === 'phrase') return { text: `${game.mine === 'playing' ? 'In progress' : 'Not started'} · ${done}`, go: true };
     return { text: `${game.mine === 'playing' ? 'Your clock is running' : 'Not started'} · ${done}`, go: true };
   }
   const hearts = '♥'.repeat(game.hearts) + '♡'.repeat(3 - game.hearts);
-  if (game.mode === 'phrase' && game.status === 'won') return { text: `Phrase solved · ${hearts}` };
-  if (game.mode === 'phrase' && game.status === 'lost') return { text: 'Phrase not solved' };
-  if (game.status === 'playing' && game.phrase_by === room.you) return { text: `You wrote this one · ${game.found}/${game.size} letters found` };
   if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}` };
   if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} letters found` };
   const progress = `${game.found}/${game.size} letters · ${hearts}`;
@@ -73,7 +73,7 @@ function render() {
   if (room.you === null) {
     const n = room.members.length;
     el.joinText.textContent = nextGame
-      ? `${list(room.members)} invited you to a game. Join the room to play.`
+      ? 'You’ve been invited to a game here. Join the room to play.'
       : `${list(room.members)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
     if (!el.joinName.value) el.joinName.value = myName();
     el.join.hidden = false;
@@ -235,8 +235,8 @@ el.profile.addEventListener('click', () => {
 // What each kind of game is, shown under the picker.
 const MODE_HINTS = {
   coop: 'Solve one board together, taking turns.',
-  trial: 'Everyone solves the same board separately. Fastest time wins.',
-  phrase: 'Each letter you find reveals part of a hidden phrase. Guess it to win.',
+  trial: 'Everyone solves the same board on their own. Fastest time wins.',
+  phrase: 'Everyone solves the same board on their own. Each letter found reveals one word of a hidden phrase.',
 };
 
 function syncMode() {
@@ -253,7 +253,12 @@ el.newGame.addEventListener('submit', async (event) => {
   button.disabled = true;
   el.gameError.textContent = '';
   try {
-    const size = randomSize();
+    // A pass phrase hides one word in each letter, so the board is sized to
+    // the phrase: as many letters as words where possible.
+    const words = el.phraseText.value.trim().split(/\s+/).filter(Boolean).length;
+    const size = el.mode.value !== 'phrase' ? randomSize()
+      : words ? Math.min(9, Math.max(5, words))
+      : 5 + Math.floor(Math.random() * 3);
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_start', {
       p_room: roomId, p_token: myToken(), p_mode: el.mode.value, p_size: size,
