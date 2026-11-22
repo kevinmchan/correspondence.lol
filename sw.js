@@ -1,23 +1,28 @@
 // Bump VERSION when the precache list changes shape; ordinary edits to the
 // files below are picked up automatically (see fetch strategies).
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
   '/',
   '/styles.css',
   '/app.js',
+  '/home.js',
   '/manifest.webmanifest',
   '/icons/icon.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
+  '/shared/api.js',
+  '/shared/chat.js',
+  '/shared/config.js',
+  '/shared/identity.js',
+  '/room/',
+  '/room/room.js',
   '/postmarks/',
   '/postmarks/postmarks.css',
   '/postmarks/game.js',
   '/postmarks/ui.js',
-  '/postmarks/api.js',
-  '/postmarks/config.js',
 ];
 
 self.addEventListener('install', (event) => {

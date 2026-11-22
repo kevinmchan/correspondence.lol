@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>correspondence.lol</title>
-  <meta name="description" content="correspondence.lol">
+  <meta name="description" content="Games played by turns, together. Open a room, invite your friends, play and chat.">
   <link rel="canonical" href="https://correspondence.lol/">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#f6f1e7" media="(prefers-color-scheme: light)">
@@ -18,15 +18,42 @@
 </head>
 <body>
   <main>
-    <img class="mark" src="/icons/icon.svg" alt="" width="96" height="96">
+    <img class="mark" src="/icons/icon.svg" alt="" width="80" height="80">
     <h1>correspondence<span>.lol</span></h1>
     <p class="lede">Games played by turns, together.</p>
-    <nav class="games" aria-label="Games">
-      <a href="/postmarks/"><strong>Postmarks</strong><span>A co-operative logic puzzle for 2–4</span></a>
-    </nav>
-    <button id="install" type="button" hidden>Install app</button>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <div class="stack">
+      <div id="rooms" class="stack" hidden>
+        <h2>Your rooms</h2>
+        <ul class="links"></ul>
+      </div>
+
+      <form id="create-room" class="card">
+        <fieldset>
+          <legend>Open a room for you and your friends</legend>
+          <label class="field">
+            <span>Your name</span>
+            <input type="text" id="my-name" maxlength="20" required autocomplete="off">
+          </label>
+          <label class="field">
+            <span>Room name (optional)</span>
+            <input type="text" id="room-name" maxlength="40" autocomplete="off" placeholder="e.g. Tuesday club">
+          </label>
+          <button type="submit">Create room</button>
+          <p id="create-error" class="message bad" role="alert"></p>
+        </fieldset>
+      </form>
+
+      <h2>Sharing one device?</h2>
+      <ul class="links">
+        <li><a href="/postmarks/"><strong>Postmarks</strong><span>A co-operative logic puzzle — pass the device and take turns</span></a></li>
+      </ul>
+
+      <button id="install" type="button" class="quiet" hidden>Install app</button>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </div>
   </main>
+  <script type="module" src="/home.js"></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

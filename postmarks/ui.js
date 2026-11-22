@@ -1,90 +1,59 @@
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_PLAYERS, MIN_PLAYERS, START_HEARTS,
-  applyMove, canMove, generatePuzzle, isLetterCell, lettersFound, newGame,
+  applyMove, canMove, isLetterCell, lettersFound, newGame,
 } from './game.js';
-import { rpc } from './api.js';
+import { rpc } from '/shared/api.js';
+import { createChat } from '/shared/chat.js';
+import { UUID, load, myToken, roomUrl, save } from '/shared/identity.js';
 
-const GAME_KEY = 'postmarks:game:v1'; // the pass-and-play game on this device
+// A game is either pass-and-play (saved on this device only) or belongs to a
+// room (?game=<id>, stored on the server and open to everyone in that room).
+
+const GAME_KEY = 'postmarks:game:v1';
 const NAMES_KEY = 'postmarks:names:v1';
-const TOKEN_KEY = 'postmarks:token:v1'; // proves which player this device is
-const RECENT_KEY = 'postmarks:online:v1';
-const MY_NAME_KEY = 'postmarks:me:v1';
 const DISTRICTS = ['coral', 'amber', 'lime', 'mint', 'sky', 'periwinkle', 'orchid', 'tan', 'grey'];
 const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  loading: $('loading'),
+  back: $('back'), loading: $('loading'),
   setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'), size: $('size'),
-  localPlayers: $('local-players'), onlinePlayers: $('online-players'), myName: $('my-name'), seats: $('seats'),
-  start: $('start'), setupError: $('setup-error'), recent: $('recent'),
-  join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'),
-  joinError: $('join-error'), watch: $('watch'),
   play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
-  roster: $('roster'), share: $('share'), shareLink: $('share-link'), copyLink: $('copy-link'),
-  tools: $('tools'), hint: $('hint'), message: $('message'), newGame: $('new-game'),
+  roster: $('roster'), tools: $('tools'), hint: $('hint'), message: $('message'), newGame: $('new-game'),
+  chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
 };
-
-// --- Storage (the game must still work if storage is unavailable) ---------
-function load(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key));
-  } catch {
-    return null;
-  }
-}
-
-function save(key, value) {
-  try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* private mode or full storage: play on without saving */
-  }
-}
-
-// A random secret kept on this device. The server stores only a hash of it.
-function myToken() {
-  let token = load(TOKEN_KEY);
-  if (typeof token !== 'string' || token.length < 20) {
-    token = [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, '0')).join('');
-    save(TOKEN_KEY, token);
-  }
-  return token;
-}
 
 // --- State ----------------------------------------------------------------
 const requested = new URLSearchParams(location.search).get('game');
-let onlineId = requested && UUID.test(requested) ? requested.toLowerCase() : null;
+const onlineId = requested && UUID.test(requested) ? requested.toLowerCase() : null;
 
 let game = null; // the game being shown, in the shape game.js uses
-let online = null; // { id, seats, you } when playing across devices; you is a seat or null
-let watching = false; // chose to spectate rather than join
+let online = null; // { id, you, room, roomName } for a room game; you is this device's seat
 let busy = false; // a move is on its way to the server
 let tool = 'mark';
 let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
 let pollTimer = null;
+let chat = null;
+let unread = 0;
 
 if (!onlineId) {
   game = load(GAME_KEY);
   if (!game || game.v !== 1) game = null;
 }
 
-// Adopt the server's view of an online game.
+// Adopt the server's view of a room game.
 function accept(view) {
   game = {
     v: 1, size: view.size, regions: view.regions, solution: view.solution, players: view.players,
-    cells: view.cells, hearts: view.hearts, moves: view.moves, status: view.status,
-    last: view.last,
+    cells: view.cells, hearts: view.hearts, moves: view.moves, status: view.status, last: view.last,
   };
-  online = { id: view.id, seats: view.seats, you: view.you };
+  online = { id: view.id, you: view.you, room: view.room, roomName: view.room_name };
 }
 
-const seatsOpen = () => Boolean(online) && game.players.length < online.seats;
 // Anyone may move except whoever moved last.
-const iCanMove = () => Boolean(online) && online.you !== null && canMove(game, online.you);
+const iCanMove = () => Boolean(online) && canMove(game, online.you);
+const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
 
 // Pass-and-play: keep `mover` on someone allowed to move, defaulting to the
 // player after the last mover.
@@ -92,20 +61,10 @@ function currentMover() {
   if (!canMove(game, mover)) mover = game.last ? (game.last.player + 1) % game.players.length : 0;
   return mover;
 }
-const canJoin = () => Boolean(online) && online.you === null && seatsOpen() && game.status === 'playing';
-const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
 
-function rememberOnlineGame() {
-  if (!online || online.you === null) return;
-  const recent = (load(RECENT_KEY) || []).filter((g) => g && g.id !== online.id);
-  recent.unshift({ id: online.id, size: game.size, at: Date.now() });
-  save(RECENT_KEY, recent.slice(0, 8));
-}
-
-// --- Setup screen ---------------------------------------------------------
+// --- Setup screen (pass-and-play) -----------------------------------------
 function addPlayerRow(name = '') {
-  const count = el.players.children.length;
-  if (count >= MAX_PLAYERS) return;
+  if (el.players.children.length >= MAX_PLAYERS) return;
   const li = document.createElement('li');
   const input = document.createElement('input');
   input.type = 'text';
@@ -137,135 +96,78 @@ function syncPlayerControls() {
   el.addPlayer.hidden = rows.length >= MAX_PLAYERS;
 }
 
-function syncWhere() {
-  const isOnline = el.form.elements.where.value === 'online';
-  el.localPlayers.hidden = el.localPlayers.disabled = isOnline;
-  el.onlinePlayers.hidden = el.onlinePlayers.disabled = !isOnline;
-  el.start.textContent = isOnline ? 'Create game' : 'Start game';
-}
-
 function showSetup() {
-  if (!el.players.children.length) {
-    const names = load(NAMES_KEY);
-    const initial = Array.isArray(names) && names.length >= MIN_PLAYERS ? names.slice(0, MAX_PLAYERS) : ['', ''];
-    initial.forEach((name) => addPlayerRow(String(name)));
-    el.myName.value = String(load(MY_NAME_KEY) || '');
-  }
-  syncWhere();
-
-  const recent = (load(RECENT_KEY) || []).filter((g) => g && UUID.test(g.id));
-  const list = el.recent.querySelector('ul');
-  list.replaceChildren(...recent.map((g) => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = `/postmarks/?game=${g.id}`;
-    const day = new Date(g.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    a.textContent = `${g.size} × ${g.size} game, last opened ${day}`;
-    li.append(a);
-    return li;
-  }));
-  el.recent.hidden = recent.length === 0;
+  if (el.players.children.length) return;
+  const names = load(NAMES_KEY);
+  const initial = Array.isArray(names) && names.length >= MIN_PLAYERS ? names.slice(0, MAX_PLAYERS) : ['', ''];
+  initial.forEach((name) => addPlayerRow(String(name)));
 }
-
-el.form.addEventListener('change', (event) => {
-  if (event.target.name === 'where') syncWhere();
-});
 
 el.addPlayer.addEventListener('click', () => {
   addPlayerRow();
   el.players.lastElementChild.querySelector('input').focus();
 });
 
-el.form.addEventListener('submit', async (event) => {
+el.form.addEventListener('submit', (event) => {
   event.preventDefault();
-  el.setupError.textContent = '';
-  const size = Number(el.size.value);
-  const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-  tool = 'mark';
-  say('');
-
-  if (el.form.elements.where.value === 'online') {
-    const name = el.myName.value.trim();
-    if (!name) return;
-    el.start.disabled = true;
-    try {
-      const puzzle = generatePuzzle(size, seed);
-      const view = await rpc('postmarks_create', {
-        p_size: size, p_seats: Number(el.seats.value), p_regions: puzzle.regions, p_solution: puzzle.solution,
-        p_name: name, p_token: myToken(),
-      });
-      save(MY_NAME_KEY, name);
-      onlineId = view.id;
-      history.replaceState(null, '', `/postmarks/?game=${view.id}`);
-      accept(view);
-      rememberOnlineGame();
-      render();
-      schedulePoll();
-    } catch (error) {
-      el.setupError.textContent = error.message;
-    } finally {
-      el.start.disabled = false;
-    }
-    return;
-  }
-
   const names = [...el.players.querySelectorAll('input')].map((i) => i.value.trim());
   if (names.some((n) => !n)) return;
-  game = newGame({ size, seed, players: names });
+  const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+  game = newGame({ size: Number(el.size.value), seed, players: names });
+  tool = 'mark';
+  mover = null;
   save(NAMES_KEY, names);
   save(GAME_KEY, game);
+  say('');
   render();
   el.board.querySelector('.cell')?.focus();
 });
 
-// --- Joining a friend's game ------------------------------------------------
-el.joinForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const name = el.joinName.value.trim();
-  if (!name) return;
-  el.joinError.textContent = '';
-  try {
-    accept(await rpc('postmarks_join', { p_game: onlineId, p_name: name, p_token: myToken() }));
-    save(MY_NAME_KEY, name);
-    rememberOnlineGame();
-    render();
-    schedulePoll();
-  } catch (error) {
-    el.joinError.textContent = error.message;
-    poll();
-  }
-});
-
-el.watch.addEventListener('click', () => {
-  watching = true;
-  render();
-});
-
-// --- Keeping in step with the server --------------------------------------
+// --- Keeping in step with the server (room games) -------------------------
 function schedulePoll() {
   clearTimeout(pollTimer);
-  if (!online || game.status !== 'playing' || document.hidden) return;
-  // In a full two-player game nothing can change while the move is mine.
-  const delay = iCanMove() && online.seats === 2 && !seatsOpen() ? 15000 : 3000;
-  pollTimer = setTimeout(poll, delay);
+  if (!online || document.hidden) return;
+  pollTimer = setTimeout(poll, game.status === 'playing' ? 3000 : 6000);
 }
 
 async function poll() {
   clearTimeout(pollTimer);
-  if (!onlineId) return;
+  if (!online) return;
   try {
-    const view = await rpc('postmarks_get', { p_game: onlineId, p_token: myToken() });
-    if (!busy && (!game || view.moves > game.moves || view.players.length !== game.players.length)) {
-      const moved = !game || view.moves > game.moves;
+    const [view, room] = await Promise.all([
+      game.status === 'playing' ? rpc('postmarks_get', { p_game: online.id, p_token: myToken() }) : null,
+      rpc('room_get', { p_room: online.room, p_token: myToken(), p_after: chat ? chat.lastId : null }),
+    ]);
+    if (view && !busy && (view.moves > game.moves || view.players.length !== game.players.length)) {
+      const moved = view.moves > game.moves;
       accept(view);
       if (moved) announceLast();
       render();
     }
+    feedChat(room);
   } catch {
     /* offline or a blip: keep showing what we have and try again */
   }
   schedulePoll();
 }
+
+function feedChat(room) {
+  if (!room || room.you === null) return;
+  if (!chat) chat = createChat(el.chat, { roomId: room.id, you: room.you, members: room.members });
+  chat.setMembers(room.members);
+  const fromOthers = chat.add(room.messages);
+  if (fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
+  el.chatBox.hidden = false;
+  el.chatUnread.textContent = unread ? `· ${unread} new` : '';
+}
+
+el.chatBox.addEventListener('toggle', () => {
+  if (!el.chatBox.open) return;
+  unread = 0;
+  el.chatUnread.textContent = '';
+  const log = el.chat.querySelector('.chat-log');
+  if (log) log.scrollTop = log.scrollHeight;
+});
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && online) poll();
@@ -320,7 +222,7 @@ function say(text, bad = false) {
 }
 
 function show(section) {
-  for (const candidate of [el.loading, el.setup, el.join, el.play]) candidate.hidden = candidate !== section;
+  for (const candidate of [el.loading, el.setup, el.play]) candidate.hidden = candidate !== section;
 }
 
 function render() {
@@ -336,23 +238,16 @@ function render() {
     return;
   }
 
-  if (canJoin() && !watching) {
-    const open = online.seats - game.players.length;
-    el.joinText.textContent =
-      `${game.players.join(' and ')} invited you to a ${game.size} × ${game.size} game of Postmarks. ` +
-      `${open === 1 ? 'One seat is' : `${open} seats are`} open.`;
-    if (!el.joinName.value) el.joinName.value = String(load(MY_NAME_KEY) || '');
-    show(el.join);
-    return;
-  }
-
   show(el.play);
+  if (online) {
+    el.back.href = roomUrl(online.room);
+    el.back.textContent = `← ${online.roomName}`;
+  }
   const boardKey = `${online ? online.id : game.seed}:${game.size}`;
   if (builtFor !== boardKey) buildBoard(boardKey);
 
   const over = game.status !== 'playing';
   const found = lettersFound(game);
-  const spectator = Boolean(online) && online.you === null;
 
   // Squares
   for (const button of el.board.children) {
@@ -387,19 +282,13 @@ function render() {
     el.turn.textContent = 'All delivered — you win!';
   } else if (game.status === 'lost') {
     el.turn.textContent = 'Out of hearts.';
-  } else if (!online) {
+  } else if (!online || iCanMove()) {
     const strong = document.createElement('strong');
-    strong.textContent = `${game.players[currentMover()]}’s`;
+    strong.textContent = online ? 'Your' : `${game.players[currentMover()]}’s`;
     el.turn.append(strong, ' move');
-  } else if (iCanMove()) {
-    const strong = document.createElement('strong');
-    strong.textContent = 'Your';
-    el.turn.append(strong, ' move');
-  } else if (spectator) {
-    el.turn.textContent = game.last ? `Anyone but ${game.players[game.last.player]} can move` : 'Anyone can move';
   } else {
     const others = game.players.filter((_, seat) => seat !== online.you);
-    el.turn.textContent = others.length === 0 ? 'Waiting for someone to join'
+    el.turn.textContent = others.length === 0 ? 'Waiting for someone to join the room'
       : others.length === 1 ? `Waiting for ${others[0]}`
       : 'Waiting for someone else to move';
   }
@@ -420,27 +309,22 @@ function render() {
     }));
   }
 
-  // Who is playing, and the invitation link while seats are open
+  // Room games: everyone in the room, with those who may move underlined
   el.roster.hidden = !online;
   if (online) {
     const parts = [];
-    for (let seat = 0; seat < online.seats; seat++) {
+    game.players.forEach((name, seat) => {
       const span = document.createElement('span');
-      span.textContent = seat < game.players.length
-        ? game.players[seat] + (seat === online.you ? ' (you)' : '')
-        : 'open seat';
+      span.textContent = name + (seat === online.you ? ' (you)' : '');
       if (canMove(game, seat)) span.className = 'now';
       parts.push(span, ' · ');
-    }
+    });
     parts.pop();
-    if (spectator) parts.push(' — you are watching');
     el.roster.replaceChildren(...parts);
   }
-  el.share.hidden = !(online && seatsOpen() && !over);
-  if (!el.share.hidden) el.shareLink.value = `${location.origin}/postmarks/?game=${online.id}`;
 
   // Tools
-  el.tools.hidden = over || spectator;
+  el.tools.hidden = over;
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
   }
@@ -448,8 +332,6 @@ function render() {
     el.hint.textContent = game.status === 'won'
       ? `Solved together in ${game.moves} turns with ${game.hearts} ${game.hearts === 1 ? 'heart' : 'hearts'} to spare.`
       : `The remaining letters are shown faded. ${found} of ${game.size} found.`;
-  } else if (spectator) {
-    el.hint.textContent = 'The board updates as the players take their turns.';
   } else if (online && !iCanMove()) {
     el.hint.textContent = 'You can close this page and come back; the game waits for you.';
   } else {
@@ -457,15 +339,14 @@ function render() {
       ? 'Tap the square where you think a letter is. A wrong guess costs a heart.'
       : 'Tap a square to cross it out, or tap a cross to remove it.';
   }
-  el.newGame.textContent = online ? 'Leave game' : over ? 'Play again' : 'New game';
+  el.newGame.textContent = online ? 'Back to the room' : over ? 'Play again' : 'New game';
 }
 
 // --- Taking a turn --------------------------------------------------------
 async function play(cell) {
   if (!game || game.status !== 'playing' || busy) return;
   if (online && !iCanMove()) {
-    if (online.you === null) say('You are watching this game.');
-    else say('You made the last move, so someone else goes next.');
+    say('You made the last move, so someone else goes next.');
     return;
   }
   const type = tool === 'guess' ? 'guess' : game.cells[cell] === CROSS ? 'unmark' : 'mark';
@@ -541,26 +422,9 @@ el.movers.addEventListener('click', (event) => {
   render();
 });
 
-el.copyLink.addEventListener('click', async () => {
-  const url = el.shareLink.value;
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: 'Postmarks', text: 'Join my game of Postmarks', url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-    el.copyLink.textContent = 'Copied';
-  } catch (error) {
-    if (error?.name === 'AbortError') return; // share sheet dismissed
-    el.shareLink.select();
-    el.copyLink.textContent = 'Select & copy';
-  }
-  setTimeout(() => { el.copyLink.textContent = 'Copy'; }, 2000);
-});
-
 el.newGame.addEventListener('click', () => {
   if (online) {
-    location.href = '/postmarks/'; // the game stays on the server; the link still works
+    location.href = roomUrl(online.room);
     return;
   }
   if (game?.status === 'playing' && game.moves > 0 && !confirm('Abandon this game and start a new one?')) return;
@@ -577,19 +441,21 @@ render();
 if (onlineId) {
   rpc('postmarks_get', { p_game: onlineId, p_token: myToken() })
     .then((view) => {
+      if (view.you === null) {
+        location.replace(roomUrl(view.room)); // games are for room members: join first
+        return;
+      }
       accept(view);
-      rememberOnlineGame();
       announceLast();
       render();
-      schedulePoll();
+      poll();
     })
     .catch((error) => {
       el.loading.textContent = `${error.message} `;
-      const back = document.createElement('a');
-      back.href = '/postmarks/';
-      back.textContent = 'Start a new game';
-      el.loading.append(back);
-      if (!/not found/i.test(error.message)) pollTimer = setTimeout(poll, 5000);
+      const home = document.createElement('a');
+      home.href = '/';
+      home.textContent = 'Back to the start';
+      el.loading.append(home);
     });
 } else if (game) {
   announceLast();

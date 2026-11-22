@@ -1,68 +1,10 @@
-.postmarks main {
-  justify-content: flex-start;
-  min-height: 0;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-}
-
-.postmarks h1 { font-size: clamp(1.6rem, 6vw, 2.25rem); }
-
-.postmarks section {
-  width: 100%;
-  max-width: 30rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.postmarks section[hidden] { display: none; }
-
-.topbar {
-  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
-}
-
-.topbar a { color: var(--muted); text-decoration: none; }
-.topbar a:hover { color: var(--ink); }
-
-button.quiet {
-  background: none;
-  color: var(--muted);
-  border: 1px solid color-mix(in srgb, var(--muted) 50%, transparent);
-  padding: 0.45rem 1rem;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
-}
+/* Postmarks: the board and its controls. Shared pieces live in /styles.css. */
 
 /* --- Setup ------------------------------------------------------------- */
 
-#setup-form, #join-form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  text-align: left;
-  font-family: system-ui, sans-serif;
-}
-
-#setup-form fieldset {
-  border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem 1rem;
-  margin: 0;
-}
-
-#setup-form legend, .field > span {
-  font-size: 0.8125rem;
-  color: var(--muted);
-  padding: 0 0.25rem;
-}
-
 #players {
   list-style: none;
-  margin: 0 0 0.75rem;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -70,27 +12,7 @@ button.quiet {
 }
 
 #players li { display: flex; gap: 0.5rem; }
-
-.postmarks input[type="text"], .postmarks select {
-  font: inherit;
-  font-size: 1rem;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ink) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--muted) 50%, transparent);
-  border-radius: 0.5rem;
-  padding: 0.55rem 0.7rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.postmarks input[type="text"]:focus-visible, .postmarks select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
 #players .remove { padding: 0.45rem 0.8rem; border-radius: 0.5rem; }
-
-.field { display: flex; flex-direction: column; gap: 0.3rem; }
 
 /* --- Play -------------------------------------------------------------- */
 
@@ -118,6 +40,25 @@ button.quiet {
 
 #hearts { color: var(--accent); letter-spacing: 0.1em; }
 
+.roster { width: 100%; text-align: left; }
+.roster .now { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+.movers { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; font-family: system-ui, sans-serif; }
+
+.movers button {
+  background: none;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.9375rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movers button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.movers button:disabled { opacity: 0.45; text-decoration: line-through; }
+
 .board {
   --n: 6;
   --ink-line: #22303c;
@@ -131,6 +72,8 @@ button.quiet {
   background: var(--ink-line);
   container-type: inline-size;
 }
+
+.board.busy { opacity: 0.75; }
 
 .cell {
   aspect-ratio: 1;
@@ -175,11 +118,7 @@ button.quiet {
 .cell:focus-visible { outline: 3px solid #c8442e; outline-offset: -3px; z-index: 1; }
 .board[aria-disabled="true"] .cell { cursor: default; }
 
-.tools {
-  display: flex;
-  gap: 0.5rem;
-  font-family: system-ui, sans-serif;
-}
+.tools { display: flex; gap: 0.5rem; font-family: system-ui, sans-serif; }
 
 .tools button {
   display: inline-flex;
@@ -187,7 +126,7 @@ button.quiet {
   gap: 0.4rem;
   background: none;
   color: var(--ink);
-  border: 1.5px solid color-mix(in srgb, var(--muted) 50%, transparent);
+  border: 1.5px solid var(--line);
   padding: 0.55rem 1.1rem;
 }
 
@@ -199,82 +138,22 @@ button.quiet {
 
 .tools .glyph { width: 1.2em; height: 1.2em; font-size: 1.2em; line-height: 1; display: inline-grid; place-items: center; }
 
-.hint, .message {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
-  color: var(--muted);
-  min-height: 1.25rem;
-}
+#hint, #message { min-height: 1.25rem; }
+#message:empty { display: block; }
 
-.message { color: var(--ink); font-size: 1rem; }
-.message.bad { color: var(--accent); }
+#chat-box summary { cursor: pointer; font-size: 0.875rem; color: var(--muted); }
+#chat-box[open] summary { margin-bottom: 0.5rem; }
+#chat-unread { color: var(--accent); }
+#chat-box .chat-log { height: 12rem; }
 
 .rules {
-  width: 100%;
-  max-width: 30rem;
   text-align: left;
   font-family: system-ui, sans-serif;
   font-size: 0.9375rem;
   color: var(--muted);
+  align-items: stretch;
 }
 
 .rules summary { cursor: pointer; text-align: center; }
-.rules ul { padding-left: 1.2rem; line-height: 1.5; }
+.rules ul { padding-left: 1.2rem; line-height: 1.5; margin: 0; }
 .rules strong { color: var(--ink); }
-
-.tools[hidden] { display: none; }
-
-/* --- Playing across devices ---------------------------------------------- */
-
-#setup-form fieldset[hidden] { display: none; }
-#setup-form fieldset { display: flex; flex-direction: column; gap: 0.6rem; }
-.where label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; }
-.where input { accent-color: var(--accent); width: 1.1rem; height: 1.1rem; margin: 0; }
-#setup-form .message, #join-form .message { text-align: center; min-height: 0; }
-
-.recent { width: 100%; text-align: left; font-family: system-ui, sans-serif; }
-.recent h2 { font-size: 0.8125rem; font-weight: 400; color: var(--muted); margin: 0.5rem 0 0.25rem; }
-.recent ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
-.recent a { color: var(--ink); font-size: 0.9375rem; }
-
-.roster { min-height: 0; }
-.roster .now { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
-
-.share {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  text-align: left;
-  font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
-  color: var(--muted);
-  border: 1px dashed color-mix(in srgb, var(--muted) 60%, transparent);
-  border-radius: 0.75rem;
-  padding: 0.7rem 0.8rem;
-}
-
-.share[hidden] { display: none; }
-.share div { display: flex; gap: 0.5rem; }
-.share button { padding: 0.5rem 1rem; font-family: inherit; font-size: 0.9375rem; }
-.board.busy { opacity: 0.75; }
-
-/* --- Who is moving (pass-and-play) ---------------------------------------- */
-
-.movers { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; font-family: system-ui, sans-serif; }
-.movers[hidden] { display: none; }
-
-.movers button {
-  background: none;
-  color: var(--ink);
-  border: 1.5px solid color-mix(in srgb, var(--muted) 50%, transparent);
-  padding: 0.35rem 0.9rem;
-  font-size: 0.9375rem;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.movers button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-.movers button:disabled { opacity: 0.45; text-decoration: line-through; cursor: default; }
