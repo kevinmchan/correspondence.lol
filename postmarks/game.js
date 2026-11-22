@@ -224,7 +224,7 @@ export function newGame({ size, seed, players }) {
     hearts: START_HEARTS,
     moves: 0,
     status: 'playing', // 'playing' | 'won' | 'lost'
-    last: null, // the latest move: { player, type, cell, correct?, crossed? }
+    last: null, // the latest move: { player, type, cell, cells?, correct?, crossed? }
   };
 }
 
@@ -240,9 +240,11 @@ export const canMove = (state, player) =>
   state.last?.player !== player;
 
 // Apply one turn. A turn is exactly one action:
-//   { player, type: 'mark',   cell }  put a cross on an empty cell
-//   { player, type: 'unmark', cell }  remove a cross
-//   { player, type: 'guess',  cell }  claim a letter is here
+//   { player, type: 'mark',   cells }  cross out one or more empty squares
+//   { player, type: 'unmark', cells }  remove one or more crosses
+//   { player, type: 'guess',  cell }   claim a letter is here
+// `cells` is one stroke; squares in it that are not in the right state are
+// skipped. `cell` is accepted in place of a one-square `cells`.
 // Returns { ok: true, state } with a new state, or { ok: false, error }.
 export function applyMove(state, move) {
   const fail = (error) => ({ ok: false, error });
@@ -253,42 +255,50 @@ export function applyMove(state, move) {
   if (state.last?.player === move.player) {
     return fail(`${state.players[move.player]} made the last move, so someone else goes next.`);
   }
-  const { cell, type } = move;
-  if (!Number.isInteger(cell) || cell < 0 || cell >= state.cells.length) {
+  const { type } = move;
+  const stroke = [...new Set(Array.isArray(move.cells) ? move.cells : [move.cell])];
+  if (!stroke.length || stroke.some((c) => !Number.isInteger(c) || c < 0 || c >= state.cells.length)) {
     return fail('That square is not on the board.');
   }
 
-  const current = state.cells[cell];
+  const { size, regions } = state;
   const cells = state.cells.slice();
   let { hearts, status } = state;
-  const last = { player: move.player, type, cell };
+  const last = { player: move.player, type, cell: stroke[0] };
 
-  if (type === 'mark') {
-    if (current !== EMPTY) return fail('That square is already marked.');
-    cells[cell] = CROSS;
-  } else if (type === 'unmark') {
-    if (current !== CROSS) return fail('There is no cross to remove there.');
-    cells[cell] = EMPTY;
+  if (type === 'mark' || type === 'unmark') {
+    const [from, to] = type === 'mark' ? [EMPTY, CROSS] : [CROSS, EMPTY];
+    const changed = stroke.filter((c) => cells[c] === from);
+    if (!changed.length) {
+      return fail(type === 'mark' ? 'That square is already marked.' : 'There is no cross to remove there.');
+    }
+    for (const c of changed) cells[c] = to;
+    last.cell = changed[0];
+    last.cells = changed;
   } else if (type === 'guess') {
-    if (current === LETTER || current === MISS) return fail('That square is already settled.');
+    if (stroke.length !== 1) return fail('Guess one square at a time.');
+    const cell = stroke[0];
+    if (cells[cell] === LETTER || cells[cell] === MISS) return fail('That square is already settled.');
     last.correct = isLetterCell(state, cell);
     if (last.correct) {
       cells[cell] = LETTER;
-      // No other letter can share this one's row, column or district, so
-      // cross those squares out to save everyone the busywork.
-      const { size, regions } = state;
+      // No other letter can share this one's row, column or district, or touch
+      // it even diagonally, so cross those squares out to save the busywork.
+      const row = Math.floor(cell / size);
+      const col = cell % size;
       last.crossed = 0;
       for (let other = 0; other < cells.length; other++) {
-        const shares =
-          Math.floor(other / size) === Math.floor(cell / size) ||
-          other % size === cell % size ||
-          regions[other] === regions[cell];
-        if (shares && cells[other] === EMPTY) {
+        const r = Math.floor(other / size);
+        const c = other % size;
+        const ruledOut =
+          r === row || c === col || regions[other] === regions[cell] ||
+          (Math.abs(r - row) <= 1 && Math.abs(c - col) <= 1);
+        if (ruledOut && cells[other] === EMPTY) {
           cells[other] = CROSS;
           last.crossed++;
         }
       }
-      if (cells.filter((c) => c === LETTER).length === state.size) status = 'won';
+      if (cells.filter((c) => c === LETTER).length === size) status = 'won';
     } else {
       cells[cell] = MISS;
       hearts -= 1;
@@ -300,13 +310,6 @@ export function applyMove(state, move) {
 
   return {
     ok: true,
-    state: {
-      ...state,
-      cells,
-      hearts,
-      status,
-      last,
-      moves: state.moves + 1,
-    },
+    state: { ...state, cells, hearts, status, last, moves: state.moves + 1 },
   };
 }
