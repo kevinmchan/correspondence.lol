@@ -1,5 +1,6 @@
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
+import { pollDelay, watchRoom } from '/shared/live.js';
 import { UUID, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { generatePuzzle } from '/postmarks/game.js';
 
@@ -19,6 +20,7 @@ let room = null; // the server's latest view of the room
 let chat = null;
 let unread = 0;
 let timer = null;
+let watcher = null; // live updates, once we are a member
 
 function fail(text) {
   el.loading.hidden = false;
@@ -78,7 +80,12 @@ function render() {
   }));
   el.noGames.hidden = room.games.length > 0;
 
-  if (!chat) chat = createChat(el.chat, { roomId: room.id, you: room.you, members: room.members });
+  if (!watcher) watcher = watchRoom(room.id, refresh);
+  if (!chat) {
+    chat = createChat(el.chat, {
+      roomId: room.id, you: room.you, members: room.members, onSent: () => watcher.poke(),
+    });
+  }
   chat.setMembers(room.members);
   const fromOthers = chat.add(room.messages);
   if (document.hidden && fromOthers) {
@@ -103,7 +110,7 @@ async function refresh() {
       if (/not found/i.test(error.message)) return;
     }
   }
-  if (!document.hidden) timer = setTimeout(refresh, 3000);
+  if (!document.hidden) timer = setTimeout(refresh, pollDelay(watcher));
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -124,6 +131,7 @@ el.joinForm.addEventListener('submit', async (event) => {
     setMyName(name);
     rememberRoom(room.id, room.name);
     render();
+    refresh(); // restart polling at the live pace
   } catch (error) {
     el.joinError.textContent = error.message;
   }
@@ -140,6 +148,7 @@ el.newGame.addEventListener('submit', async (event) => {
     const game = await rpc('postmarks_create', {
       p_room: roomId, p_token: myToken(), p_size: size, p_regions: puzzle.regions, p_solution: puzzle.solution,
     });
+    watcher?.poke();
     location.href = gameUrl('postmarks', game.id);
   } catch (error) {
     el.gameError.textContent = error.message;

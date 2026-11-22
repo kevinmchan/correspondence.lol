@@ -5,6 +5,7 @@ import {
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { UUID, load, myToken, roomUrl, save } from '/shared/identity.js';
+import { pollDelay, watchRoom } from '/shared/live.js';
 
 // A game is either pass-and-play (saved on this device only) or belongs to a
 // room (?game=<id>, stored on the server and open to everyone in that room).
@@ -35,6 +36,7 @@ let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
 let pollTimer = null;
 let chat = null;
+let watcher = null; // live updates for the game's room
 let unread = 0;
 
 if (!onlineId) {
@@ -127,7 +129,7 @@ el.form.addEventListener('submit', (event) => {
 function schedulePoll() {
   clearTimeout(pollTimer);
   if (!online || document.hidden) return;
-  pollTimer = setTimeout(poll, game.status === 'playing' ? 3000 : 6000);
+  pollTimer = setTimeout(poll, pollDelay(watcher, game.status === 'playing' ? 3000 : 6000));
 }
 
 async function poll() {
@@ -153,10 +155,15 @@ async function poll() {
 
 function feedChat(room) {
   if (!room || room.you === null) return;
-  if (!chat) chat = createChat(el.chat, { roomId: room.id, you: room.you, members: room.members });
+  const history = !chat; // the first batch is old messages, not news
+  if (!chat) {
+    chat = createChat(el.chat, {
+      roomId: room.id, you: room.you, members: room.members, onSent: () => watcher?.poke(),
+    });
+  }
   chat.setMembers(room.members);
   const fromOthers = chat.add(room.messages);
-  if (fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
+  if (!history && fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
   el.chatBox.hidden = false;
   el.chatUnread.textContent = unread ? `· ${unread} new` : '';
 }
@@ -362,6 +369,7 @@ async function play(cell) {
       accept(await rpc('postmarks_move', { p_game: online.id, p_token: myToken(), p_type: type, p_cell: cell }));
       tool = 'mark';
       announceLast();
+      watcher?.poke();
     } catch (error) {
       say(error.message, true);
     } finally {
@@ -446,6 +454,7 @@ if (onlineId) {
         return;
       }
       accept(view);
+      watcher = watchRoom(view.room, poll);
       announceLast();
       render();
       poll();
