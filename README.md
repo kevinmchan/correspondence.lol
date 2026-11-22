@@ -65,10 +65,11 @@ Then restore the two comment lines at the top of the file and bump `VERSION` in 
 
 ## Caching
 
-Pages are fetched network-first, so a deploy shows up on the next load. Other
-same-origin assets are served from cache and refreshed in the background, so an
-asset change appears on the second load. When adding a file the app needs
-offline, add it to `PRECACHE` in `sw.js` and bump `VERSION`.
+While online, the service worker fetches every page and file from the network
+and revalidates it, so a deploy shows up on the next load; the cache is only the
+offline fallback. When `sw.js` itself changes, open pages reload once to pick up
+the new version. When adding a file the app needs offline, add it to `PRECACHE`
+in `sw.js` and bump `VERSION`.
 
 ## Deploy (GitHub Pages)
 

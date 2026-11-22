@@ -3,6 +3,16 @@ const installBtn = document.getElementById('install');
 
 // --- Service worker -------------------------------------------------------
 if ('serviceWorker' in navigator) {
+  // When an updated service worker takes over, reload once so the page is not
+  // left running the previous version's scripts.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
       console.error('Service worker registration failed:', err);
