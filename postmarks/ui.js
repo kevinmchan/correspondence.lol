@@ -352,7 +352,10 @@ function render() {
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
   }
-  el.newGame.textContent = online ? 'Back to the room' : over ? 'Play again' : 'New game';
+  // Room games go back to the room with the arrow at the top; only
+  // pass-and-play needs a way to start over.
+  el.newGame.hidden = Boolean(online);
+  el.newGame.textContent = over ? 'Play again' : 'New game';
 }
 
 // --- Taking a turn --------------------------------------------------------
@@ -567,10 +570,6 @@ el.profile.addEventListener('click', () => {
 });
 
 el.newGame.addEventListener('click', () => {
-  if (online) {
-    location.href = roomUrl(online.room);
-    return;
-  }
   if (game?.status === 'playing' && game.moves > 0 && !confirm('Abandon this game and start a new one?')) return;
   game = null;
   draft = null;
