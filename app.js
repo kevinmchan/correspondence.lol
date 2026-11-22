@@ -136,20 +136,18 @@ function openInstallGuide() {
     <p class="hint">Install to receive notifications from your friends.</p>
     ${steps}
     <div class="row end">
-      <button type="button" class="quiet" data-act="later">Not now</button>
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
     </div>`;
 
   dialog.addEventListener('click', async (event) => {
-    const act = event.target.closest('[data-act]')?.dataset.act ?? (event.target === dialog ? 'later' : null);
+    // a tap outside the guide closes it, the same as Got it
+    const act = event.target.closest('[data-act]')?.dataset.act ?? (event.target === dialog ? 'done' : null);
     if (!act) return;
     if (act === 'install' && deferredPrompt) {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice.catch(() => null);
       deferredPrompt = null;
       if (choice?.outcome !== 'accepted') dismissInstallBanner();
-    } else if (act === 'later') {
-      dismissInstallBanner();
     }
     dialog.close();
   });
