@@ -157,7 +157,12 @@ function openInstallGuide() {
   dialog.showModal();
 }
 
+// The home page always carries the banner until the app is installed; on other
+// pages it can be closed, which hides it there for a day.
+const onHomePage = location.pathname === '/' || location.pathname === '/index.html';
+
 function dismissInstallBanner() {
+  if (onHomePage) return;
   snooze(SNOOZE_DAYS);
   installBanner?.remove();
   installBanner = null;
@@ -173,7 +178,7 @@ function showInstallBanner() {
     <img src="/icons/icon.svg" alt="" width="36" height="36">
     <p>Install to receive notifications from your friends.</p>
     <button type="button" data-act="install">Install</button>
-    <button type="button" class="close" data-act="close" aria-label="Not now" title="Not now">×</button>`;
+    ${onHomePage ? '' : '<button type="button" class="close" data-act="close" aria-label="Not now" title="Not now">×</button>'}`;
   banner.addEventListener('click', async (event) => {
     const act = event.target.closest('[data-act]')?.dataset.act;
     if (act === 'close') {
@@ -205,9 +210,10 @@ window.addEventListener('appinstalled', () => {
 
 window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
 
-// Show the banner unless the app is installed, the banner was closed in the
-// last day, or the page is a game (where the board needs the room).
-if (!installed() && Date.now() >= readSnooze() && !location.pathname.startsWith('/postmarks')) {
+// Show the banner unless the app is installed. Away from the home page it also
+// stays hidden for a day after being closed, and never appears on a game
+// (where the board needs the room).
+if (!installed() && (onHomePage || (Date.now() >= readSnooze() && !location.pathname.startsWith('/postmarks')))) {
   showInstallBanner();
 }
 
