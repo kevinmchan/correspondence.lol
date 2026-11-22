@@ -20,7 +20,7 @@ const el = {
   back: $('back'), loading: $('loading'),
   setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'), size: $('size'),
   play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
-  roster: $('roster'), tools: $('tools'), hint: $('hint'), message: $('message'), newGame: $('new-game'),
+  roster: $('roster'), tools: $('tools'), narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
 };
 
@@ -211,13 +211,16 @@ function describeLast() {
     : `${who} guessed ${where(last.cell)} — no letter there. A heart lost.`;
 }
 
+// The board shows the latest move by itself; this describes it for screen
+// readers only.
 function announceLast() {
-  say(describeLast(), game.last?.type === 'guess' && game.last.correct === false);
+  el.narration.textContent = describeLast();
+  say('');
 }
 
-function say(text, bad = false) {
+// A visible notice, used only when a tap could not be carried out.
+function say(text) {
   el.message.textContent = text;
-  el.message.classList.toggle('bad', bad);
 }
 
 function show(section) {
@@ -327,17 +330,6 @@ function render() {
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
   }
-  if (over) {
-    el.hint.textContent = game.status === 'won'
-      ? `Solved together in ${game.moves} turns with ${game.hearts} ${game.hearts === 1 ? 'heart' : 'hearts'} to spare.`
-      : `The remaining letters are shown faded. ${found} of ${game.size} found.`;
-  } else if (online && !iCanMove()) {
-    el.hint.textContent = 'You can close this page and come back; the game waits for you.';
-  } else {
-    el.hint.textContent = tool === 'guess'
-      ? 'Tap the square where you think a letter is. A wrong guess costs a heart.'
-      : 'Tap a square to cross it out, or tap a cross to remove it.';
-  }
   el.newGame.textContent = online ? 'Back to the room' : over ? 'Play again' : 'New game';
 }
 
@@ -350,7 +342,7 @@ async function play(cell) {
   }
   const type = tool === 'guess' ? 'guess' : game.cells[cell] === CROSS ? 'unmark' : 'mark';
   if (type === 'mark' && game.cells[cell] !== EMPTY) {
-    say('That square is already settled.', true);
+    say('That square is already settled.');
     return;
   }
 
@@ -363,7 +355,7 @@ async function play(cell) {
       announceLast();
       watcher?.poke();
     } catch (error) {
-      say(error.message, true);
+      say(error.message);
     } finally {
       busy = false;
       render();
@@ -374,7 +366,7 @@ async function play(cell) {
 
   const result = applyMove(game, { player: currentMover(), type, cell });
   if (!result.ok) {
-    say(result.error, true);
+    say(result.error);
     return;
   }
   game = result.state;
