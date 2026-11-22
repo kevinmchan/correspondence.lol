@@ -38,7 +38,7 @@ let resync = false; // the board shown may be ahead of the server: take its word
 // The move being put together, shown on the board but not yet played:
 // { type: 'mark' | 'unmark' | 'guess', cells: [] }. Nothing counts until Submit.
 let draft = null;
-let dragging = null; // a drag in progress is 'add'ing squares to the draft or 'remove'ing them
+let dragging = false; // a drag is in progress, adding the squares it passes to the draft
 let tool = 'mark';
 let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
@@ -447,42 +447,34 @@ const cellAt = (x, y) => {
   return button && el.board.contains(button) ? Number(button.dataset.cell) : null;
 };
 
+// Each new press starts the move over: a tap drafts one square, a drag drafts
+// every square it passes, and whatever was drafted before is discarded.
 el.board.addEventListener('pointerdown', (event) => {
   if (tool !== 'mark' || !event.isPrimary || event.button !== 0) return;
   const cell = cellAt(event.clientX, event.clientY);
   if (cell === null || !ready()) return;
   say('');
-  if (draft?.type !== 'guess' && draft?.cells.includes(cell)) {
-    undraft(cell); // tapping a drafted square takes it back out
-    dragging = 'remove';
-  } else if (draftCross(cell)) {
-    dragging = 'add';
-  } else if (game.cells[cell] === LETTER || game.cells[cell] === MISS) {
-    say('That square is already settled.');
-  }
+  draft = null;
+  if (draftCross(cell)) dragging = true;
+  else say('That square is already settled.');
   render();
 });
 
 window.addEventListener('pointermove', (event) => {
   if (!dragging || !event.isPrimary) return;
   const cell = cellAt(event.clientX, event.clientY);
-  if (cell === null) return;
-  const inDraft = Boolean(draft?.cells.includes(cell));
-  if (dragging === 'add' && !inDraft && draftCross(cell)) render();
-  else if (dragging === 'remove' && inDraft) {
-    undraft(cell);
-    render();
-  }
+  if (cell !== null && !draft.cells.includes(cell) && draftCross(cell)) render();
 });
 
 for (const type of ['pointerup', 'pointercancel']) {
   window.addEventListener(type, () => {
-    dragging = null;
+    dragging = false;
   });
 }
 
 // Clicks cover what the pointer handlers above do not: guesses, and crosses
-// made from the keyboard (a keyboard "click" has detail 0).
+// made from the keyboard (a keyboard "click" has detail 0). The keyboard has
+// no drag, so there each press adds a square to the draft or takes it back.
 el.board.addEventListener('click', (event) => {
   const button = event.target.closest('.cell');
   if (!button) return;
