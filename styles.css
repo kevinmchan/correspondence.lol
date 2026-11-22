@@ -504,6 +504,10 @@ dialog.install .icon svg { width: 100%; height: 100%; display: block; }
   text-align: left;
 }
 
+/* On a room page the banner is for members: not while the room is loading, and
+   not on the join screen, where being asked to install first makes no sense. */
+body[data-page="room"]:not([data-view="room"]) .install-banner { display: none; }
+
 .install-banner img { flex: none; border-radius: 22%; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.25); }
 .install-banner p { margin: 0; flex: 1; min-width: 0; }
 

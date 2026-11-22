@@ -71,8 +71,8 @@ friends." Its Install button triggers the browser's one-tap install where there
 is one. Elsewhere it opens a guide with a picture and steps for the device:
 iPhone and iPad (Safari and other browsers), Android, desktop Chrome and Edge,
 and Safari on a Mac. The banner stays until the app is installed and cannot be
-dismissed. It is not shown on game pages, in desktop Firefox (which cannot
-install web apps), or once the app is installed.
+dismissed. It is not shown on the join screen of a room, on game pages, in
+desktop Firefox (which cannot install web apps), or once the app is installed.
 
 ## Notifications
 
