@@ -68,10 +68,22 @@
           <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg> Letter
         </button>
       </div>
+      <div id="actions" class="actions" hidden>
+        <button type="button" id="clear" class="quiet round" aria-label="Clear my move" title="Clear my move" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9a8 8 0 1 1 -1 6M5 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" id="submit" class="go" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Submit
+        </button>
+      </div>
       <p id="narration" class="sr-only" role="status" aria-live="polite"></p>
       <p id="message" class="message bad" role="alert"></p>
 
-      <button type="button" id="new-game" class="quiet">New game</button>
+      <div class="row">
+        <button type="button" id="new-game" class="quiet">New game</button>
+        <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
+      </div>
 
       <details id="chat-box" class="panel" hidden>
         <summary>Room chat <span id="chat-unread"></span></summary>
@@ -79,17 +91,6 @@
       </details>
     </div>
 
-    <details class="rules stack">
-      <summary>How to play</summary>
-      <ul>
-        <li>The grid is split into coloured districts. One letter is hidden in every <strong>row</strong>, every <strong>column</strong> and every <strong>district</strong>.</li>
-        <li>Letters never touch each other, not even diagonally.</li>
-        <li>Players take turns, in any order: anyone may go next except the player who just moved. A turn is one action: cross out squares where a letter can't be (tap one, or drag across several), remove crosses the same way, or guess where a letter is.</li>
-        <li>A right guess stays on the board, and the rest of its row, column and district, plus the squares touching it, are crossed out for you. A wrong guess costs the team one of its three hearts.</li>
-        <li>Find every letter before the hearts run out and you all win.</li>
-        <li>In a room, everyone in the room can play, each on their own device, and the game waits between turns for as long as you like.</li>
-      </ul>
-    </details>
   </main>
 
   <svg width="0" height="0" aria-hidden="true" style="position:absolute">

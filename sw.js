@@ -1,7 +1,7 @@
 // Online, every page and file is fetched from the network and revalidated, so a
 // deploy shows up on the next load. The cache is only what the app falls back
 // on when offline. Bump VERSION when the precache list changes.
-const VERSION = 'v11';
+const VERSION = 'v12';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
@@ -25,6 +25,7 @@ const PRECACHE = [
   '/postmarks/',
   '/postmarks/postmarks.css',
   '/postmarks/game.js',
+  '/postmarks/howto.js',
   '/postmarks/ui.js',
 ];
 

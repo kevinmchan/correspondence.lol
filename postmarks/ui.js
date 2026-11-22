@@ -6,12 +6,14 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { UUID, load, myToken, roomUrl, save } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
+import { openHowTo } from './howto.js';
 
 // A game is either pass-and-play (saved on this device only) or belongs to a
 // room (?game=<id>, stored on the server and open to everyone in that room).
 
 const GAME_KEY = 'postmarks:game:v1';
 const NAMES_KEY = 'postmarks:names:v1';
+const HOWTO_KEY = 'postmarks:howto:v1'; // the last game this device showed the how-to for
 const DISTRICTS = ['coral', 'amber', 'lime', 'mint', 'sky', 'periwinkle', 'orchid', 'tan', 'grey'];
 const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
 
@@ -20,7 +22,8 @@ const el = {
   back: $('back'), loading: $('loading'),
   setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'), size: $('size'),
   play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
-  roster: $('roster'), tools: $('tools'), narration: $('narration'), message: $('message'), newGame: $('new-game'),
+  roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
+  narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
 };
 
@@ -32,7 +35,10 @@ let game = null; // the game being shown, in the shape game.js uses
 let online = null; // { id, you, room, roomName } for a room game; you is this device's seat
 let busy = false; // a move is on its way to the server
 let resync = false; // the board shown may be ahead of the server: take its word next time
-let stroke = null; // a drag in progress: { type: 'mark' | 'unmark', cells: [] }
+// The move being put together, shown on the board but not yet played:
+// { type: 'mark' | 'unmark' | 'guess', cells: [] }. Nothing counts until Submit.
+let draft = null;
+let dragging = null; // a drag in progress is 'add'ing squares to the draft or 'remove'ing them
 let tool = 'mark';
 let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
@@ -120,11 +126,12 @@ el.form.addEventListener('submit', (event) => {
   game = newGame({ size: Number(el.size.value), seed, players: names });
   tool = 'mark';
   mover = null;
+  draft = null;
   save(NAMES_KEY, names);
   save(GAME_KEY, game);
   say('');
   render();
-  el.board.querySelector('.cell')?.focus();
+  greet();
 });
 
 // --- Keeping in step with the server (room games) -------------------------
@@ -252,20 +259,24 @@ function render() {
   const boardKey = `${online ? online.id : game.seed}:${game.size}`;
   if (builtFor !== boardKey) buildBoard(boardKey);
 
+  pruneDraft();
   const over = game.status !== 'playing';
   const found = lettersFound(game);
 
   // Squares
   for (const button of el.board.children) {
     const cell = Number(button.dataset.cell);
-    // a stroke being drawn is shown as if it had already been made
-    const mark = stroke?.cells.includes(cell) ? (stroke.type === 'mark' ? CROSS : EMPTY) : game.cells[cell];
+    // squares in the draft are shown as they would be once submitted
+    const drafted = Boolean(draft?.cells.includes(cell));
+    const mark = drafted && draft.type !== 'guess' ? (draft.type === 'mark' ? CROSS : EMPTY) : game.cells[cell];
     let name = 'empty';
     let content = '';
     let label = 'empty';
     if (mark === CROSS) [name, content, label] = ['cross', '×', 'crossed out'];
     else if (mark === MISS) [name, content, label] = ['miss', '×', 'wrong guess'];
     else if (mark === LETTER) [name, content, label] = ['letter', ENVELOPE, 'letter found'];
+    if (drafted && draft.type === 'guess') [name, content, label] = ['guess', ENVELOPE, 'your guess, not yet submitted'];
+    else if (drafted) label += ', not yet submitted';
     if (game.status === 'lost' && game.solution && mark !== LETTER && isLetterCell(game, cell)) {
       [name, content, label] = ['reveal', ENVELOPE, 'a letter was here'];
     }
@@ -273,8 +284,8 @@ function render() {
       button.dataset.state = name;
       button.innerHTML = content;
     }
-    button.classList.toggle('last', !stroke && (game.last?.cells ?? [game.last?.cell]).includes(cell));
-    button.classList.toggle('drawing', Boolean(stroke?.cells.includes(cell)));
+    button.classList.toggle('last', !draft && (game.last?.cells ?? [game.last?.cell]).includes(cell));
+    button.classList.toggle('drawing', drafted);
     button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
   }
   el.board.setAttribute('aria-disabled', String(over || (Boolean(online) && !iCanMove())));
@@ -331,7 +342,11 @@ function render() {
     el.roster.replaceChildren(...parts);
   }
 
-  // Tools
+  // Tools, and the buttons that play or discard the draft
+  const mine = !over && (!online || iCanMove());
+  el.actions.hidden = !mine;
+  el.submit.disabled = !draft || busy;
+  el.clear.disabled = !draft || busy;
   el.tools.hidden = over;
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
@@ -390,7 +405,43 @@ async function play(type, cells) {
   }
 }
 
-// --- Pointer input: tap a square, or drag across several ---------------------
+// --- Putting a move together -------------------------------------------------
+// Tapping and dragging only edit the draft. A draft is either crosses to add,
+// crosses to remove, or one guess; Submit plays it and ends the turn.
+
+// Drop anything from the draft that the board no longer allows (for instance
+// because another player moved while it was being put together).
+function pruneDraft() {
+  if (!draft) return;
+  const fits = (cell) => {
+    const mark = game.cells[cell];
+    if (draft.type === 'mark') return mark === EMPTY;
+    if (draft.type === 'unmark') return mark === CROSS;
+    return mark === EMPTY || mark === CROSS;
+  };
+  const allowed = game.status === 'playing' && (!online || iCanMove());
+  draft.cells = allowed ? draft.cells.filter(fits) : [];
+  if (!draft.cells.length) draft = null;
+}
+
+// Add a square to a draft of crosses, starting one if need be. Returns whether
+// the square went in.
+function draftCross(cell) {
+  const mark = game.cells[cell];
+  const type = mark === EMPTY ? 'mark' : mark === CROSS ? 'unmark' : null;
+  if (!type) return false;
+  if (draft?.type === 'guess') draft = null; // crosses replace a drafted guess
+  if (draft && draft.type !== type) return false; // one kind of change per turn
+  draft ??= { type, cells: [] };
+  if (!draft.cells.includes(cell)) draft.cells.push(cell);
+  return true;
+}
+
+function undraft(cell) {
+  draft.cells = draft.cells.filter((c) => c !== cell);
+  if (!draft.cells.length) draft = null;
+}
+
 const cellAt = (x, y) => {
   const button = document.elementFromPoint(x, y)?.closest?.('.cell');
   return button && el.board.contains(button) ? Number(button.dataset.cell) : null;
@@ -400,38 +451,35 @@ el.board.addEventListener('pointerdown', (event) => {
   if (tool !== 'mark' || !event.isPrimary || event.button !== 0) return;
   const cell = cellAt(event.clientX, event.clientY);
   if (cell === null || !ready()) return;
-  const mark = game.cells[cell];
-  if (mark !== EMPTY && mark !== CROSS) {
-    say('That square is already settled.');
-    return;
-  }
   say('');
-  // Starting on a cross clears crosses; starting on an empty square adds them.
-  stroke = { type: mark === CROSS ? 'unmark' : 'mark', cells: [cell] };
+  if (draft?.type !== 'guess' && draft?.cells.includes(cell)) {
+    undraft(cell); // tapping a drafted square takes it back out
+    dragging = 'remove';
+  } else if (draftCross(cell)) {
+    dragging = 'add';
+  } else if (game.cells[cell] === LETTER || game.cells[cell] === MISS) {
+    say('That square is already settled.');
+  }
   render();
 });
 
 window.addEventListener('pointermove', (event) => {
-  if (!stroke || !event.isPrimary) return;
+  if (!dragging || !event.isPrimary) return;
   const cell = cellAt(event.clientX, event.clientY);
-  if (cell === null || stroke.cells.includes(cell)) return;
-  if (game.cells[cell] !== (stroke.type === 'mark' ? EMPTY : CROSS)) return;
-  stroke.cells.push(cell);
-  render();
+  if (cell === null) return;
+  const inDraft = Boolean(draft?.cells.includes(cell));
+  if (dragging === 'add' && !inDraft && draftCross(cell)) render();
+  else if (dragging === 'remove' && inDraft) {
+    undraft(cell);
+    render();
+  }
 });
 
-window.addEventListener('pointerup', (event) => {
-  if (!stroke || !event.isPrimary) return;
-  const { type, cells } = stroke;
-  stroke = null;
-  play(type, cells);
-});
-
-window.addEventListener('pointercancel', () => {
-  if (!stroke) return;
-  stroke = null;
-  render();
-});
+for (const type of ['pointerup', 'pointercancel']) {
+  window.addEventListener(type, () => {
+    dragging = null;
+  });
+}
 
 // Clicks cover what the pointer handlers above do not: guesses, and crosses
 // made from the keyboard (a keyboard "click" has detail 0).
@@ -439,13 +487,34 @@ el.board.addEventListener('click', (event) => {
   const button = event.target.closest('.cell');
   if (!button) return;
   const cell = Number(button.dataset.cell);
-  if (tool === 'guess') {
-    play('guess', [cell]);
-  } else if (event.detail === 0 && ready()) {
-    const mark = game.cells[cell];
-    if (mark === EMPTY || mark === CROSS) play(mark === CROSS ? 'unmark' : 'mark', [cell]);
-    else say('That square is already settled.');
+  if (tool !== 'guess' && event.detail !== 0) return;
+  if (!ready()) return;
+  say('');
+  const settled = game.cells[cell] === LETTER || game.cells[cell] === MISS;
+  if (settled) {
+    say('That square is already settled.');
+  } else if (tool === 'guess') {
+    const same = draft?.type === 'guess' && draft.cells[0] === cell;
+    draft = same ? null : { type: 'guess', cells: [cell] }; // a guess replaces whatever was drafted
+  } else if (draft?.type !== 'guess' && draft?.cells.includes(cell)) {
+    undraft(cell);
+  } else {
+    draftCross(cell);
   }
+  render();
+});
+
+el.submit.addEventListener('click', () => {
+  if (!draft) return;
+  const { type, cells } = draft;
+  draft = null;
+  play(type, cells);
+});
+
+el.clear.addEventListener('click', () => {
+  draft = null;
+  say('');
+  render();
 });
 
 // Arrow keys move between squares.
@@ -477,8 +546,19 @@ el.movers.addEventListener('click', (event) => {
   const button = event.target.closest('[data-player]');
   if (!button || button.disabled) return;
   mover = Number(button.dataset.player);
+  draft = null;
   render();
 });
+
+// The animated how-to opens the first time this device shows a given game.
+function greet() {
+  const key = online ? online.id : String(game.seed);
+  if (load(HOWTO_KEY) === key) return;
+  save(HOWTO_KEY, key);
+  if (game.status === 'playing') openHowTo();
+}
+
+el.help.addEventListener('click', openHowTo);
 
 el.newGame.addEventListener('click', () => {
   if (online) {
@@ -487,6 +567,7 @@ el.newGame.addEventListener('click', () => {
   }
   if (game?.status === 'playing' && game.moves > 0 && !confirm('Abandon this game and start a new one?')) return;
   game = null;
+  draft = null;
   mover = null;
   builtFor = null;
   save(GAME_KEY, null);
@@ -507,6 +588,7 @@ if (onlineId) {
       watcher = watchRoom(view.room, poll);
       announceLast();
       render();
+      greet();
       poll();
     })
     .catch((error) => {
