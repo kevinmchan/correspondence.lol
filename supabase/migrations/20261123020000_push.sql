@@ -24,7 +24,8 @@ create table rooms.push_subscriptions (
   token_hash text not null,
   p256dh text not null check (char_length(p256dh) between 20 and 200),
   auth text not null check (char_length(auth) between 8 and 100),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  gone_at timestamptz -- set when the device unsubscribes or the push service reports it gone
 );
 
 create index push_subscriptions_token_idx on rooms.push_subscriptions (token_hash);
@@ -53,7 +54,7 @@ begin
   select jsonb_agg(jsonb_build_object('endpoint', s.endpoint, 'p256dh', s.p256dh, 'auth', s.auth))
   into v_subs
   from rooms.members m
-  join rooms.push_subscriptions s on s.token_hash = m.token_hash
+  join rooms.push_subscriptions s on s.token_hash = m.token_hash and s.gone_at is null
   where m.room_id = p_room
     and m.seat is distinct from p_actor
     and (m.seen_at is null or m.seen_at < now() - interval '45 seconds');
@@ -103,13 +104,13 @@ begin
   insert into rooms.push_subscriptions (endpoint, token_hash, p256dh, auth)
   values (p_endpoint, rooms.token_hash(p_token), p_p256dh, p_auth)
   on conflict (endpoint) do update
-    set token_hash = excluded.token_hash, p256dh = excluded.p256dh, auth = excluded.auth;
+    set token_hash = excluded.token_hash, p256dh = excluded.p256dh, auth = excluded.auth, gone_at = null;
 end;
 $$;
 
 create function public.push_unsubscribe(p_token text, p_endpoint text) returns void
 language sql security definer set search_path = '' as $$
-  delete from rooms.push_subscriptions
+  update rooms.push_subscriptions set gone_at = now()
   where endpoint = p_endpoint and token_hash = rooms.token_hash(p_token);
 $$;
 
@@ -146,14 +147,14 @@ begin
 end;
 $$;
 
--- Forget subscriptions the push service says no longer exist.
+-- Retire subscriptions the push service says no longer exist.
 create function public.push_gone(p_secret text, p_endpoints text[]) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   if not public.push_check(p_secret) then
     raise exception 'Not allowed.' using errcode = '42501';
   end if;
-  delete from rooms.push_subscriptions where endpoint = any (p_endpoints);
+  update rooms.push_subscriptions set gone_at = now() where endpoint = any (p_endpoints);
 end;
 $$;
 
