@@ -5,6 +5,7 @@ import {
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { UUID, load, myToken, roomUrl, save } from '/shared/identity.js';
+import { pollDelay, watchRoom } from '/shared/live.js';
 
 // A game is either pass-and-play (saved on this device only) or belongs to a
 // room (?game=<id>, stored on the server and open to everyone in that room).
@@ -19,7 +20,7 @@ const el = {
   back: $('back'), loading: $('loading'),
   setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'), size: $('size'),
   play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
-  roster: $('roster'), tools: $('tools'), hint: $('hint'), message: $('message'), newGame: $('new-game'),
+  roster: $('roster'), tools: $('tools'), narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
 };
 
@@ -35,6 +36,7 @@ let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
 let pollTimer = null;
 let chat = null;
+let watcher = null; // live updates for the game's room
 let unread = 0;
 
 if (!onlineId) {
@@ -127,7 +129,7 @@ el.form.addEventListener('submit', (event) => {
 function schedulePoll() {
   clearTimeout(pollTimer);
   if (!online || document.hidden) return;
-  pollTimer = setTimeout(poll, game.status === 'playing' ? 3000 : 6000);
+  pollTimer = setTimeout(poll, pollDelay(watcher, game.status === 'playing' ? 3000 : 6000));
 }
 
 async function poll() {
@@ -153,10 +155,15 @@ async function poll() {
 
 function feedChat(room) {
   if (!room || room.you === null) return;
-  if (!chat) chat = createChat(el.chat, { roomId: room.id, you: room.you, members: room.members });
+  const history = !chat; // the first batch is old messages, not news
+  if (!chat) {
+    chat = createChat(el.chat, {
+      roomId: room.id, you: room.you, members: room.members, onSent: () => watcher?.poke(),
+    });
+  }
   chat.setMembers(room.members);
   const fromOthers = chat.add(room.messages);
-  if (fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
+  if (!history && fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
   el.chatBox.hidden = false;
   el.chatUnread.textContent = unread ? `· ${unread} new` : '';
 }
@@ -182,18 +189,10 @@ function buildBoard(key) {
   el.board.style.setProperty('--n', size);
   el.board.replaceChildren();
   for (let cell = 0; cell < size * size; cell++) {
-    const row = Math.floor(cell / size);
-    const col = cell % size;
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.cell = cell;
-    const edges = [
-      row > 0 && regions[cell - size] !== regions[cell] && 'et',
-      col < size - 1 && regions[cell + 1] !== regions[cell] && 'er',
-      row < size - 1 && regions[cell + size] !== regions[cell] && 'eb',
-      col > 0 && regions[cell - 1] !== regions[cell] && 'el',
-    ].filter(Boolean);
-    button.className = ['cell', `d${regions[cell]}`, ...edges].join(' ');
+    button.className = `cell d${regions[cell]}`;
     el.board.append(button);
   }
   builtFor = key;
@@ -208,17 +207,20 @@ function describeLast() {
   if (last.type === 'mark') return `${who} crossed out ${where(last.cell)}.`;
   if (last.type === 'unmark') return `${who} removed the cross at ${where(last.cell)}.`;
   return last.correct
-    ? `${who} found a letter at ${where(last.cell)}.`
+    ? `${who} found a letter at ${where(last.cell)}.${last.crossed ? ` ${last.crossed} more ${last.crossed === 1 ? 'square' : 'squares'} crossed out.` : ''}`
     : `${who} guessed ${where(last.cell)} — no letter there. A heart lost.`;
 }
 
+// The board shows the latest move by itself; this describes it for screen
+// readers only.
 function announceLast() {
-  say(describeLast(), game.last?.type === 'guess' && game.last.correct === false);
+  el.narration.textContent = describeLast();
+  say('');
 }
 
-function say(text, bad = false) {
+// A visible notice, used only when a tap could not be carried out.
+function say(text) {
   el.message.textContent = text;
-  el.message.classList.toggle('bad', bad);
 }
 
 function show(section) {
@@ -328,17 +330,6 @@ function render() {
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
   }
-  if (over) {
-    el.hint.textContent = game.status === 'won'
-      ? `Solved together in ${game.moves} turns with ${game.hearts} ${game.hearts === 1 ? 'heart' : 'hearts'} to spare.`
-      : `The remaining letters are shown faded. ${found} of ${game.size} found.`;
-  } else if (online && !iCanMove()) {
-    el.hint.textContent = 'You can close this page and come back; the game waits for you.';
-  } else {
-    el.hint.textContent = tool === 'guess'
-      ? 'Tap the square where you think a letter is. A wrong guess costs a heart.'
-      : 'Tap a square to cross it out, or tap a cross to remove it.';
-  }
   el.newGame.textContent = online ? 'Back to the room' : over ? 'Play again' : 'New game';
 }
 
@@ -351,7 +342,7 @@ async function play(cell) {
   }
   const type = tool === 'guess' ? 'guess' : game.cells[cell] === CROSS ? 'unmark' : 'mark';
   if (type === 'mark' && game.cells[cell] !== EMPTY) {
-    say('That square is already settled.', true);
+    say('That square is already settled.');
     return;
   }
 
@@ -362,8 +353,9 @@ async function play(cell) {
       accept(await rpc('postmarks_move', { p_game: online.id, p_token: myToken(), p_type: type, p_cell: cell }));
       tool = 'mark';
       announceLast();
+      watcher?.poke();
     } catch (error) {
-      say(error.message, true);
+      say(error.message);
     } finally {
       busy = false;
       render();
@@ -374,7 +366,7 @@ async function play(cell) {
 
   const result = applyMove(game, { player: currentMover(), type, cell });
   if (!result.ok) {
-    say(result.error, true);
+    say(result.error);
     return;
   }
   game = result.state;
@@ -446,6 +438,7 @@ if (onlineId) {
         return;
       }
       accept(view);
+      watcher = watchRoom(view.room, poll);
       announceLast();
       render();
       poll();

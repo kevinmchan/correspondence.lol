@@ -224,7 +224,7 @@ export function newGame({ size, seed, players }) {
     hearts: START_HEARTS,
     moves: 0,
     status: 'playing', // 'playing' | 'won' | 'lost'
-    last: null, // the latest move: { player, type, cell, correct? }
+    last: null, // the latest move: { player, type, cell, correct?, crossed? }
   };
 }
 
@@ -274,6 +274,20 @@ export function applyMove(state, move) {
     last.correct = isLetterCell(state, cell);
     if (last.correct) {
       cells[cell] = LETTER;
+      // No other letter can share this one's row, column or district, so
+      // cross those squares out to save everyone the busywork.
+      const { size, regions } = state;
+      last.crossed = 0;
+      for (let other = 0; other < cells.length; other++) {
+        const shares =
+          Math.floor(other / size) === Math.floor(cell / size) ||
+          other % size === cell % size ||
+          regions[other] === regions[cell];
+        if (shares && cells[other] === EMPTY) {
+          cells[other] = CROSS;
+          last.crossed++;
+        }
+      }
       if (cells.filter((c) => c === LETTER).length === state.size) status = 'won';
     } else {
       cells[cell] = MISS;

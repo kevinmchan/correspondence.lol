@@ -116,6 +116,28 @@ test('wrong guesses cost hearts, are permanent, and three lose the game', () => 
   assert.equal(s.status, 'lost');
 });
 
+test('finding a letter crosses out the rest of its row, column and district', () => {
+  let s = start(6, 3);
+  const cell = letterCells(s)[2];
+  const row = Math.floor(cell / s.size);
+  const col = cell % s.size;
+  const miss = s.cells.findIndex((c, i) => !isLetterCell(s, i) && Math.floor(i / s.size) === row);
+  s = play(s, 'guess', miss); // a wrong guess in the same row stays a wrong guess
+  s = play(s, 'guess', cell);
+  let expected = 0;
+  s.cells.forEach((mark, i) => {
+    const shares = Math.floor(i / s.size) === row || i % s.size === col || s.regions[i] === s.regions[cell];
+    if (i === cell) assert.equal(mark, LETTER);
+    else if (i === miss) assert.equal(mark, MISS);
+    else if (shares) { assert.equal(mark, CROSS, `square ${i} should be crossed`); expected++; }
+    else assert.equal(mark, EMPTY, `square ${i} should be untouched`);
+  });
+  assert.equal(s.last.crossed, expected);
+  assert.ok(expected >= 2 * (s.size - 1) - 1);
+  // none of the automatic crosses landed on another letter
+  for (const other of letterCells(s)) if (other !== cell) assert.equal(s.cells[other], EMPTY);
+});
+
 test('a crossed square can still be guessed', () => {
   let s = start();
   const cell = letterCells(s)[0];

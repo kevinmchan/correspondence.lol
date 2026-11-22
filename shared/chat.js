@@ -3,7 +3,7 @@ import { gameUrl, myToken } from './identity.js';
 
 // A room's chat: a message log and a box to write in. The page feeds it
 // messages it has fetched with add(); sending is handled here.
-export function createChat(root, { roomId, you, members }) {
+export function createChat(root, { roomId, you, members, onSent }) {
   let names = members;
   let lastId = 0;
   const seen = new Set();
@@ -83,6 +83,7 @@ export function createChat(root, { roomId, you, members }) {
       input.value = '';
       add([message]);
       log.scrollTop = log.scrollHeight;
+      onSent?.();
     } catch (failure) {
       error.textContent = failure.message;
     } finally {

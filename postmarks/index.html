@@ -68,8 +68,8 @@
           <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg> Letter
         </button>
       </div>
-      <p id="hint" class="hint"></p>
-      <p id="message" class="message" role="status" aria-live="polite"></p>
+      <p id="narration" class="sr-only" role="status" aria-live="polite"></p>
+      <p id="message" class="message bad" role="alert"></p>
 
       <button type="button" id="new-game" class="quiet">New game</button>
 
@@ -85,7 +85,7 @@
         <li>The grid is split into coloured districts. One letter is hidden in every <strong>row</strong>, every <strong>column</strong> and every <strong>district</strong>.</li>
         <li>Letters never touch each other, not even diagonally.</li>
         <li>Players take turns, in any order: anyone may go next except the player who just moved. A turn is one action: add a cross where a letter can't be, remove a cross, or guess where a letter is.</li>
-        <li>A right guess stays on the board. A wrong guess costs the team one of its three hearts.</li>
+        <li>A right guess stays on the board, and the rest of its row, column and district is crossed out for you. A wrong guess costs the team one of its three hearts.</li>
         <li>Find every letter before the hearts run out and you all win.</li>
         <li>In a room, everyone in the room can play, each on their own device, and the game waits between turns for as long as you like.</li>
       </ul>

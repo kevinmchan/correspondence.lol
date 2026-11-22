@@ -1,6 +1,6 @@
 // Bump VERSION when the precache list changes shape; ordinary edits to the
 // files below are picked up automatically (see fetch strategies).
-const VERSION = 'v5';
+const VERSION = 'v8';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
@@ -17,6 +17,8 @@ const PRECACHE = [
   '/shared/chat.js',
   '/shared/config.js',
   '/shared/identity.js',
+  '/shared/live.js',
+  '/vendor/realtime.js',
   '/room/',
   '/room/room.js',
   '/postmarks/',
