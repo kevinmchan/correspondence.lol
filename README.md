@@ -70,9 +70,10 @@ and room pages (`app.js`): "Install to receive notifications from your
 friends." Its Install button triggers the browser's one-tap install where there
 is one. Elsewhere it opens a guide with a picture and steps for the device:
 iPhone and iPad (Safari and other browsers), Android, desktop Chrome and Edge,
-and Safari on a Mac. Closing the banner hides it for a day. It is not shown on
-game pages, in desktop Firefox (which cannot install web apps), or once the app
-is installed.
+and Safari on a Mac. On the home page the banner is always there until the app
+is installed. On room pages it can be closed, which hides it there for a day.
+It is not shown on game pages, in desktop Firefox (which cannot install web
+apps), or once the app is installed.
 
 ## Notifications
 
