@@ -37,13 +37,16 @@
 
       <div id="board" class="board" role="group" aria-label="Puzzle grid"></div>
 
-      <div id="tools" class="tools" role="radiogroup" aria-label="What your turn does">
-        <button type="button" role="radio" data-tool="mark" aria-checked="true">
-          <span class="glyph" aria-hidden="true">×</span> Cross
-        </button>
-        <button type="button" role="radio" data-tool="guess" aria-checked="false">
-          <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg> Letter
-        </button>
+      <div class="toolbar">
+        <div id="tools" class="tools" role="radiogroup" aria-label="What your turn does">
+          <button type="button" role="radio" data-tool="mark" aria-checked="true">
+            <span class="glyph" aria-hidden="true">×</span> Cross
+          </button>
+          <button type="button" role="radio" data-tool="guess" aria-checked="false">
+            <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg> Letter
+          </button>
+        </div>
+        <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
       </div>
       <div id="actions" class="actions" hidden>
         <button type="button" id="clear" class="quiet round" aria-label="Clear my move" title="Clear my move" disabled>
@@ -57,10 +60,7 @@
       <p id="narration" class="sr-only" role="status" aria-live="polite"></p>
       <p id="message" class="message bad" role="alert"></p>
 
-      <div class="row">
-        <button type="button" id="new-game" class="quiet">New game</button>
-        <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
-      </div>
+      <button type="button" id="new-game" class="quiet">New game</button>
 
       <details id="chat-box" class="panel" hidden>
         <summary>Room chat <span id="chat-unread"></span></summary>
