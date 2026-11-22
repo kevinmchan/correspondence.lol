@@ -11,6 +11,7 @@ A static, no-build progressive web app served from the repository root at
 | `manifest.webmanifest` | Install metadata (name, colours, icons) |
 | `sw.js` | Service worker: offline support and caching |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
+| `supabase/migrations/` | Database schema for cross-device games (Supabase project `correspondence`) |
 | `tests/` | Tests for the game rules and puzzle generator (`npm test`, needs only Node) |
 | `icons/` | App icons, rendered from `icons/icon.svg` |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
@@ -22,6 +23,17 @@ python3 -m http.server 8000
 ```
 
 Then open <http://localhost:8000>. Service workers only run on `localhost` or HTTPS.
+
+## Cross-device games
+
+Postmarks can be played on one device (saved in the browser only) or across
+devices. Cross-device games are stored in Supabase and reached only through four
+database functions (`postmarks_create`, `postmarks_get`, `postmarks_join`,
+`postmarks_move`) that enforce turn order and the rules; the table itself is not
+exposed. There are no accounts: a game's link lets anyone view or join it, and
+each device holds a random token (in `localStorage`) that proves which player it
+is. Browsers poll for the other players' moves. `postmarks/config.js` holds the
+project URL and its publishable key, which is safe to publish.
 
 ## Caching
 

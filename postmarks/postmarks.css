@@ -38,7 +38,7 @@ button.quiet {
 
 /* --- Setup ------------------------------------------------------------- */
 
-#setup-form {
+#setup-form, #join-form {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -71,7 +71,7 @@ button.quiet {
 
 #players li { display: flex; gap: 0.5rem; }
 
-#setup-form input, #setup-form select {
+.postmarks input[type="text"], .postmarks select {
   font: inherit;
   font-size: 1rem;
   color: var(--ink);
@@ -83,7 +83,7 @@ button.quiet {
   flex: 1;
 }
 
-#setup-form input:focus-visible, #setup-form select:focus-visible {
+.postmarks input[type="text"]:focus-visible, .postmarks select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -224,3 +224,38 @@ button.quiet {
 .rules strong { color: var(--ink); }
 
 .tools[hidden] { display: none; }
+
+/* --- Playing across devices ---------------------------------------------- */
+
+#setup-form fieldset[hidden] { display: none; }
+#setup-form fieldset { display: flex; flex-direction: column; gap: 0.6rem; }
+.where label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; }
+.where input { accent-color: var(--accent); width: 1.1rem; height: 1.1rem; margin: 0; }
+#setup-form .message, #join-form .message { text-align: center; min-height: 0; }
+
+.recent { width: 100%; text-align: left; font-family: system-ui, sans-serif; }
+.recent h2 { font-size: 0.8125rem; font-weight: 400; color: var(--muted); margin: 0.5rem 0 0.25rem; }
+.recent ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.recent a { color: var(--ink); font-size: 0.9375rem; }
+
+.roster { min-height: 0; }
+.roster .now { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+.share {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+  font-family: system-ui, sans-serif;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  border: 1px dashed color-mix(in srgb, var(--muted) 60%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.share[hidden] { display: none; }
+.share div { display: flex; gap: 0.5rem; }
+.share button { padding: 0.5rem 1rem; font-family: inherit; font-size: 0.9375rem; }
+.board.busy { opacity: 0.75; }

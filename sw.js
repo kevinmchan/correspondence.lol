@@ -1,6 +1,6 @@
 // Bump VERSION when the precache list changes shape; ordinary edits to the
 // files below are picked up automatically (see fetch strategies).
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
@@ -16,6 +16,8 @@ const PRECACHE = [
   '/postmarks/postmarks.css',
   '/postmarks/game.js',
   '/postmarks/ui.js',
+  '/postmarks/api.js',
+  '/postmarks/config.js',
 ];
 
 self.addEventListener('install', (event) => {
