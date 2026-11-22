@@ -532,3 +532,5 @@ dialog.install .icon svg { width: 100%; height: 100%; display: block; }
 
 /* with the banner above it, the page no longer needs to fill the whole screen */
 .install-banner ~ main { min-height: calc(100% - 4rem); }
+
+.version { margin: 0.5rem 0 0; font-family: system-ui, sans-serif; font-size: 0.6875rem; color: var(--muted); opacity: 0.8; }

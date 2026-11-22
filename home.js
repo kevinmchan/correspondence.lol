@@ -52,3 +52,6 @@ form.addEventListener('submit', async (event) => {
     button.disabled = false;
   }
 });
+
+// The version, small and out of the way at the bottom of the page.
+document.getElementById('version').textContent = self.APP_VERSION ?? '';

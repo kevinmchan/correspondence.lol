@@ -61,7 +61,7 @@ echo "export { RealtimeClient } from '@supabase/realtime-js';" > entry.js
 npx esbuild entry.js --bundle --format=esm --platform=browser --target=es2020 --minify --legal-comments=none --outfile=vendor/realtime.js
 ```
 
-Then restore the two comment lines at the top of the file and bump `VERSION` in `sw.js`.
+Then restore the two comment lines at the top of the file and bump the version in `version.js`.
 
 ## Installing
 
@@ -97,8 +97,10 @@ function itself the first time, so no secret needs to be configured by hand.
 While online, the service worker fetches every page and file from the network
 and revalidates it, so a deploy shows up on the next load; the cache is only the
 offline fallback. When `sw.js` itself changes, open pages reload once to pick up
-the new version. When adding a file the app needs offline, add it to `PRECACHE`
-in `sw.js` and bump `VERSION`.
+the new version. The app's version is set in `version.js`: bump it with every
+release. It names the offline cache and is shown at the bottom of the home
+page. When adding a file the app needs offline, also add it to `PRECACHE` in
+`sw.js`.
 
 ## Deploy (GitHub Pages)
 

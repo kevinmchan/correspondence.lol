@@ -1,13 +1,14 @@
 // Online, every page and file is fetched from the network and revalidated, so a
 // deploy shows up on the next load. The cache is only what the app falls back
-// on when offline. Bump VERSION when the precache list changes.
-const VERSION = 'v25';
-const CACHE = `correspondence-${VERSION}`;
+// on when offline. The version lives in version.js; bump it there.
+importScripts('/version.js');
+const CACHE = `correspondence-${self.APP_VERSION}`;
 
 const PRECACHE = [
   '/',
   '/styles.css',
   '/app.js',
+  '/version.js',
   '/home.js',
   '/manifest.webmanifest',
   '/icons/icon.svg',
