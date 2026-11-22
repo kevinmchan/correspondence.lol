@@ -66,13 +66,14 @@ Then restore the two comment lines at the top of the file and bump the version i
 ## Installing
 
 People who have not installed the app see a banner across the top of the home
-and room pages (`app.js`): "Install to receive notifications from your
-friends." Its Install button triggers the browser's one-tap install where there
-is one. Elsewhere it opens a guide with a picture and steps for the device:
-iPhone and iPad (Safari and other browsers), Android, desktop Chrome and Edge,
-and Safari on a Mac. The banner stays until the app is installed and cannot be
-dismissed. It is not shown on the join screen of a room, on game pages, in
-desktop Firefox (which cannot install web apps), or once the app is installed.
+page (`app.js`): "Install to receive notifications from your friends." Its
+Install button triggers the browser's one-tap install where there is one.
+Elsewhere it opens a guide with a picture and steps for the device: iPhone and
+iPad (Safari and other browsers), Android, desktop Chrome and Edge, and Safari
+on a Mac. The banner stays until the app is installed and cannot be dismissed.
+It is not shown in desktop Firefox, which cannot install web apps. Room pages
+have no banner; where installing is needed for notifications, the room's
+notification prompt says so and opens the same guide.
 
 ## Notifications
 
