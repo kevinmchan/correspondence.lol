@@ -27,7 +27,7 @@ if ('serviceWorker' in navigator) {
 // elsewhere it shows the steps to follow in the browser's own menus.
 
 const INSTALL_KEY = 'correspondence:install:v1'; // { until: time before which not to ask again }
-const SNOOZE_DAYS = 7;
+const SNOOZE_DAYS = 1;
 let deferredPrompt = null; // the browser's own install prompt, when it offers one
 let installGuide = null;
 
@@ -133,7 +133,7 @@ function openInstallGuide() {
   dialog.innerHTML = `
     ${picture}
     <h2 id="install-title">Install correspondence.lol</h2>
-    <p class="hint">Keep it on your ${guide?.picture.shape === 'window' || (!guide && !/Android/.test(navigator.userAgent)) ? 'computer' : 'home screen'} and open it like any other app.</p>
+    <p class="hint">Install to receive notifications from your friends.</p>
     ${steps}
     <div class="row end">
       <button type="button" class="quiet" data-act="later">Not now</button>
@@ -169,6 +169,8 @@ window.addEventListener('appinstalled', () => {
   if (installBtn) installBtn.hidden = true;
   snooze(3650);
 });
+
+window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
 
 // The home page keeps an Install button for coming back to this later.
 if (installBtn && !installed() && installPlatform()) {
