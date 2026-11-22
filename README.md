@@ -33,8 +33,8 @@ Postmarks anyone may take the next turn except whoever took the last one.
 Pass-and-play on a single device needs no room and is saved in the browser only.
 
 Rooms live in Supabase and are reached only through database functions
-(`room_create`, `room_get`, `room_join`, `room_say`, `postmarks_create`,
-`postmarks_get`, `postmarks_move`) that enforce membership and the rules; no
+(`room_create`, `room_get`, `room_join`, `room_rename`, `room_say`,
+`postmarks_create`, `postmarks_get`, `postmarks_play`) that enforce membership and the rules; no
 table is exposed. There are no accounts: a room's link lets anyone see its name
 and member names and join it, while chat and games are for members. Each device
 holds a random token (in `localStorage`) that proves which member it is, and

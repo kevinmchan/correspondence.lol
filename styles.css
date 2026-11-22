@@ -300,3 +300,6 @@ input[type="text"]:focus-visible, select:focus-visible {
   white-space: nowrap;
   border: 0;
 }
+
+.rename { width: 100%; }
+.rename button { padding: 0.5rem 1rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; }

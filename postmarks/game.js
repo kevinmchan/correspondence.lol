@@ -16,6 +16,9 @@ export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 4;
 export const START_HEARTS = 3;
 
+// Board sizes are not chosen by players: each game gets one at random.
+export const randomSize = (random = Math.random) => MIN_SIZE + Math.floor(random() * (MAX_SIZE - MIN_SIZE + 1));
+
 // Small seeded PRNG (mulberry32) so a seed always yields the same puzzle.
 export function rng(seed) {
   let a = seed >>> 0;

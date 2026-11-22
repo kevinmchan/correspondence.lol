@@ -58,6 +58,7 @@ export function createChat(root, { roomId, you, members, onSent }) {
         else fromOthers++;
         const who = document.createElement('span');
         who.className = 'who';
+        who.dataset.seat = message.seat;
         who.textContent = message.seat === you ? 'You' : names[message.seat] ?? 'Someone';
         const time = document.createElement('time');
         time.dateTime = message.at;
@@ -94,7 +95,14 @@ export function createChat(root, { roomId, you, members, onSent }) {
 
   return {
     add,
-    setMembers(next) { names = next; },
+    // Names can change; relabel what is already on screen to match.
+    setMembers(next) {
+      names = next;
+      for (const who of log.querySelectorAll('.who')) {
+        const seat = Number(who.dataset.seat);
+        if (seat !== you) who.textContent = names[seat] ?? 'Someone';
+      }
+    },
     get lastId() { return lastId; },
   };
 }

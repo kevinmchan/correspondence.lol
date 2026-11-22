@@ -2,14 +2,16 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { UUID, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
-import { generatePuzzle } from '/postmarks/game.js';
+import { generatePuzzle, randomSize } from '/postmarks/game.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-  room: $('room'), members: $('members'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
-  games: $('games'), noGames: $('no-games'), newGame: $('new-game'), size: $('size'), gameError: $('game-error'),
+  room: $('room'), members: $('members'),
+  renameOpen: $('rename-open'), renameForm: $('rename-form'), renameName: $('rename-name'),
+  renameCancel: $('rename-cancel'), renameError: $('rename-error'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
+  games: $('games'), noGames: $('no-games'), newGame: $('new-game'), gameError: $('game-error'),
   chat: $('chat'),
 };
 
@@ -137,13 +139,50 @@ el.joinForm.addEventListener('submit', async (event) => {
   }
 });
 
+// --- Changing your name -----------------------------------------------------
+function showRename(open) {
+  el.renameForm.hidden = !open;
+  el.renameOpen.hidden = open;
+  el.renameError.textContent = '';
+  if (open) {
+    el.renameName.value = room.members[room.you];
+    el.renameName.focus();
+    el.renameName.select();
+  }
+}
+
+el.renameOpen.addEventListener('click', () => showRename(true));
+el.renameCancel.addEventListener('click', () => showRename(false));
+
+el.renameForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const name = el.renameName.value.trim();
+  if (!name) return;
+  const button = el.renameForm.querySelector('button[type=submit]');
+  button.disabled = true;
+  el.renameError.textContent = '';
+  try {
+    const view = await rpc('room_rename', { p_room: roomId, p_token: myToken(), p_name: name });
+    // The reply carries the whole chat; keep only what this page has not shown yet.
+    room = { ...view, messages: view.messages.filter((message) => message.id > chat.lastId) };
+    setMyName(name); // also the default the next time a room is opened or joined
+    showRename(false);
+    render();
+    watcher?.poke();
+  } catch (error) {
+    el.renameError.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
 el.newGame.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = el.newGame.querySelector('button');
   button.disabled = true;
   el.gameError.textContent = '';
   try {
-    const size = Number(el.size.value);
+    const size = randomSize();
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_create', {
       p_room: roomId, p_token: myToken(), p_size: size, p_regions: puzzle.regions, p_solution: puzzle.solution,

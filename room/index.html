@@ -35,6 +35,13 @@
 
     <div id="room" class="stack" hidden>
       <p id="members" class="hint"></p>
+      <button type="button" id="rename-open" class="quiet">Change my name</button>
+      <form id="rename-form" class="row rename" hidden>
+        <input type="text" id="rename-name" maxlength="20" required autocomplete="off" aria-label="Your name">
+        <button type="submit">Save</button>
+        <button type="button" id="rename-cancel" class="quiet">Cancel</button>
+      </form>
+      <p id="rename-error" class="message bad" role="alert"></p>
 
       <div class="share">
         <label for="share-link">Send this link to invite people to the room</label>
@@ -51,13 +58,6 @@
         <p id="no-games" class="hint">No games yet. Start one below.</p>
         <form id="new-game">
           <div class="row">
-            <select id="size" aria-label="Grid size">
-              <option value="5">5 × 5 · gentle</option>
-              <option value="6" selected>6 × 6</option>
-              <option value="7">7 × 7</option>
-              <option value="8">8 × 8</option>
-              <option value="9">9 × 9 · thorny</option>
-            </select>
             <button type="submit">New Postmarks game</button>
           </div>
         </form>
