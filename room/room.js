@@ -2,6 +2,7 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
+import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { UUID, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { generatePuzzle, randomSize } from '/postmarks/game.js';
 
@@ -9,7 +10,8 @@ const $ = (id) => document.getElementById(id);
 const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-  room: $('room'), members: $('members'), profile: $('profile'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
+  room: $('room'), members: $('members'), profile: $('profile'),
+  notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'), newGame: $('new-game'), gameError: $('game-error'),
   chat: $('chat'),
 };
@@ -22,6 +24,7 @@ let chat = null;
 let unread = 0;
 let timer = null;
 let watcher = null; // live updates, once we are a member
+let present = false; // telling the server this room is on screen
 
 function fail(text) {
   el.loading.hidden = false;
@@ -89,6 +92,12 @@ function render() {
   el.noGames.hidden = room.games.length > 0;
 
   if (!watcher) watcher = watchRoom(room.id, refresh);
+  if (!present) {
+    present = true;
+    watchPresence(room.id);
+    syncPush().catch(() => {}); // re-register this device if notifications are already on
+    renderNotify();
+  }
   if (!chat) {
     chat = createChat(el.chat, {
       roomId: room.id, you: room.you, people: room.people, onSent: () => watcher.poke(),
@@ -146,6 +155,39 @@ el.joinForm.addEventListener('submit', async (event) => {
   } catch (error) {
     el.joinError.textContent = error.message;
   }
+});
+
+// --- Notifications ------------------------------------------------------------
+function renderNotify() {
+  const state = pushState();
+  el.notify.hidden = state === 'granted' || state === 'unsupported';
+  el.notifyButton.hidden = state === 'denied';
+  if (state === 'default') {
+    el.notifyText.textContent = 'Get a notification when a game starts or it’s your turn.';
+    el.notifyButton.textContent = 'Turn on';
+  } else if (state === 'install-first') {
+    el.notifyText.textContent = 'Install the app to get a notification when a game starts or it’s your turn.';
+    el.notifyButton.textContent = 'Show me how';
+  } else if (state === 'denied') {
+    el.notifyText.textContent = 'Notifications are blocked for this site. You can allow them in your browser or system settings.';
+  }
+}
+
+el.notifyButton.addEventListener('click', async () => {
+  if (pushState() === 'install-first') {
+    window.openInstallGuide?.();
+    return;
+  }
+  el.notifyButton.disabled = true;
+  try {
+    await enablePush();
+  } catch (error) {
+    el.notifyText.textContent = `Couldn’t turn on notifications: ${error.message}`;
+    el.notifyButton.disabled = false;
+    return;
+  }
+  el.notifyButton.disabled = false;
+  renderNotify();
 });
 
 // --- Your profile: name and avatar --------------------------------------------

@@ -8,6 +8,7 @@ import { UUID, load, myToken, roomUrl, save, setMyName } from '/shared/identity.
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
 import { avatar, openProfile } from '/shared/profile.js';
+import { watchPresence } from '/shared/push.js';
 
 // A game is either a solo game (saved on this device only) or belongs to a
 // room (?game=<id>, stored on the server and open to everyone in that room).
@@ -506,6 +507,7 @@ if (onlineId) {
       }
       accept(view);
       watcher = watchRoom(view.room, poll);
+      watchPresence(view.room); // no notifications about a game that is on screen
       announceLast();
       render();
       greet();
