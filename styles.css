@@ -239,6 +239,7 @@ input[type="text"]:focus-visible, select:focus-visible {
 
 .share div { display: flex; gap: 0.5rem; }
 .share button { padding: 0.5rem 1rem; font-size: 0.9375rem; }
+.share input { min-width: 4rem; }
 
 /* --- Chat ----------------------------------------------------------------- */
 

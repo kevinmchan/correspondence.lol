@@ -1,6 +1,6 @@
 // Bump VERSION when the precache list changes shape; ordinary edits to the
 // files below are picked up automatically (see fetch strategies).
-const VERSION = 'v8';
+const VERSION = 'v9';
 const CACHE = `correspondence-${VERSION}`;
 
 const PRECACHE = [
