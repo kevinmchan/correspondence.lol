@@ -8,7 +8,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-  room: $('room'), members: $('members'), shareLink: $('share-link'), copyLink: $('copy-link'),
+  room: $('room'), members: $('members'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'), newGame: $('new-game'), size: $('size'), gameError: $('game-error'),
   chat: $('chat'),
 };
@@ -156,22 +156,33 @@ el.newGame.addEventListener('submit', async (event) => {
   }
 });
 
+// Copy puts exactly the room link on the clipboard.
 el.copyLink.addEventListener('click', async () => {
-  const url = el.shareLink.value;
   try {
-    if (navigator.share) {
-      await navigator.share({ title: room.name, text: `Join me in ${room.name} on correspondence.lol`, url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(el.shareLink.value);
     el.copyLink.textContent = 'Copied';
-  } catch (error) {
-    if (error?.name === 'AbortError') return; // share sheet dismissed
+  } catch {
     el.shareLink.select();
     el.copyLink.textContent = 'Select & copy';
   }
   setTimeout(() => { el.copyLink.textContent = 'Copy'; }, 2000);
 });
+
+// Share hands the link to the device's share sheet. Only the link is shared:
+// extra text mentioning the site's name gets turned into a second link, to the
+// home page, by messaging apps, and some share targets drop the real link.
+if (navigator.share) {
+  el.shareButton.hidden = false;
+  el.shareButton.addEventListener('click', async () => {
+    try {
+      await navigator.share({ url: el.shareLink.value });
+    } catch {
+      /* share sheet dismissed or unavailable: Copy is still there */
+    }
+  });
+}
+
+el.shareLink.addEventListener('focus', () => el.shareLink.select());
 
 if (roomId) refresh();
 else fail('That room link doesn’t look right.');
