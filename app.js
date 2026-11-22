@@ -1,5 +1,4 @@
 const statusEl = document.getElementById('status');
-const installBtn = document.getElementById('install');
 
 // --- Service worker -------------------------------------------------------
 if ('serviceWorker' in navigator) {
@@ -21,15 +20,16 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- Installing the app -----------------------------------------------------
-// On startup, people who have not installed the app are shown how, with
-// pictures that match their device. Where the browser offers a one-tap install
-// (Chrome, Edge and other Chromium browsers) the guide has an Install button;
-// elsewhere it shows the steps to follow in the browser's own menus.
+// People who have not installed the app get a banner across the top of the
+// page. Its Install button uses the browser's own one-tap install where there
+// is one (Chrome, Edge and other Chromium browsers); elsewhere it opens a
+// guide with pictures and steps that match the device.
 
 const INSTALL_KEY = 'correspondence:install:v1'; // { until: time before which not to ask again }
 const SNOOZE_DAYS = 1;
 let deferredPrompt = null; // the browser's own install prompt, when it offers one
 let installGuide = null;
+let installBanner = null;
 
 const installed = () =>
   matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -147,46 +147,69 @@ function openInstallGuide() {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice.catch(() => null);
       deferredPrompt = null;
-      if (choice?.outcome !== 'accepted') snooze(SNOOZE_DAYS);
-    } else {
-      snooze(SNOOZE_DAYS);
+      if (choice?.outcome !== 'accepted') dismissInstallBanner();
+    } else if (act === 'later') {
+      dismissInstallBanner();
     }
     dialog.close();
   });
-  dialog.addEventListener('cancel', () => snooze(SNOOZE_DAYS)); // Escape
   document.body.append(dialog);
   dialog.showModal();
 }
 
+function dismissInstallBanner() {
+  snooze(SNOOZE_DAYS);
+  installBanner?.remove();
+  installBanner = null;
+}
+
+function showInstallBanner() {
+  if (installBanner || installed() || !installPlatform()) return;
+  const banner = document.createElement('aside');
+  installBanner = banner;
+  banner.className = 'install-banner';
+  banner.setAttribute('aria-label', 'Install the app');
+  banner.innerHTML = `
+    <img src="/icons/icon.svg" alt="" width="36" height="36">
+    <p>Install to receive notifications from your friends.</p>
+    <button type="button" data-act="install">Install</button>
+    <button type="button" class="close" data-act="close" aria-label="Not now" title="Not now">×</button>`;
+  banner.addEventListener('click', async (event) => {
+    const act = event.target.closest('[data-act]')?.dataset.act;
+    if (act === 'close') {
+      dismissInstallBanner();
+    } else if (act === 'install' && deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice.catch(() => null);
+      deferredPrompt = null;
+      if (choice?.outcome !== 'accepted') dismissInstallBanner();
+    } else if (act === 'install') {
+      openInstallGuide(); // no one-tap install here: show the steps
+    }
+  });
+  document.body.prepend(banner);
+}
+
 window.addEventListener('beforeinstallprompt', (event) => {
-  event.preventDefault(); // keep the browser's own banner back; the guide offers it instead
+  event.preventDefault(); // keep the browser's own banner back; ours offers it instead
   deferredPrompt = event;
 });
 
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   installGuide?.close();
-  if (installBtn) installBtn.hidden = true;
+  installBanner?.remove();
+  installBanner = null;
   snooze(3650);
 });
 
 window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
 
-// The home page keeps an Install button for coming back to this later.
-if (installBtn && !installed() && installPlatform()) {
-  installBtn.hidden = false;
-  installBtn.addEventListener('click', openInstallGuide);
+// Show the banner unless the app is installed, the banner was closed in the
+// last day, or the page is a game (where the board needs the room).
+if (!installed() && Date.now() >= readSnooze() && !location.pathname.startsWith('/postmarks')) {
+  showInstallBanner();
 }
-
-// Ask at startup, unless it is installed, was put off recently, or the page is
-// a game (which opens with its own how-to). The short wait gives the browser
-// time to say whether it can install with one tap.
-window.addEventListener('load', () => {
-  if (installed() || Date.now() < readSnooze() || location.pathname.startsWith('/postmarks')) return;
-  setTimeout(() => {
-    if (!document.querySelector('dialog[open]')) openInstallGuide();
-  }, 1200);
-});
 
 // --- Connectivity ---------------------------------------------------------
 function renderConnectivity() {

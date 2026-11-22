@@ -65,13 +65,14 @@ Then restore the two comment lines at the top of the file and bump `VERSION` in 
 
 ## Installing
 
-At startup, people who have not installed the app are shown an install guide
-(`app.js`) with a picture and steps for their device: iPhone and iPad (Safari
-and other browsers), Android, desktop Chrome and Edge, and Safari on a Mac.
-Where the browser offers a one-tap install the guide has an Install button
-instead of steps. "Not now" hides it for a day, and the home page keeps an
-Install button. It is not shown on game pages or in desktop Firefox, which
-cannot install web apps.
+People who have not installed the app see a banner across the top of the home
+and room pages (`app.js`): "Install to receive notifications from your
+friends." Its Install button triggers the browser's one-tap install where there
+is one. Elsewhere it opens a guide with a picture and steps for the device:
+iPhone and iPad (Safari and other browsers), Android, desktop Chrome and Edge,
+and Safari on a Mac. Closing the banner hides it for a day. It is not shown on
+game pages, in desktop Firefox (which cannot install web apps), or once the app
+is installed.
 
 ## Notifications
 
