@@ -8,7 +8,9 @@ const $ = (id) => document.getElementById(id);
 const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-  room: $('room'), members: $('members'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
+  room: $('room'), members: $('members'),
+  renameOpen: $('rename-open'), renameForm: $('rename-form'), renameName: $('rename-name'),
+  renameCancel: $('rename-cancel'), renameError: $('rename-error'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'), newGame: $('new-game'), gameError: $('game-error'),
   chat: $('chat'),
 };
@@ -134,6 +136,43 @@ el.joinForm.addEventListener('submit', async (event) => {
     refresh(); // restart polling at the live pace
   } catch (error) {
     el.joinError.textContent = error.message;
+  }
+});
+
+// --- Changing your name -----------------------------------------------------
+function showRename(open) {
+  el.renameForm.hidden = !open;
+  el.renameOpen.hidden = open;
+  el.renameError.textContent = '';
+  if (open) {
+    el.renameName.value = room.members[room.you];
+    el.renameName.focus();
+    el.renameName.select();
+  }
+}
+
+el.renameOpen.addEventListener('click', () => showRename(true));
+el.renameCancel.addEventListener('click', () => showRename(false));
+
+el.renameForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const name = el.renameName.value.trim();
+  if (!name) return;
+  const button = el.renameForm.querySelector('button[type=submit]');
+  button.disabled = true;
+  el.renameError.textContent = '';
+  try {
+    const view = await rpc('room_rename', { p_room: roomId, p_token: myToken(), p_name: name });
+    // The reply carries the whole chat; keep only what this page has not shown yet.
+    room = { ...view, messages: view.messages.filter((message) => message.id > chat.lastId) };
+    setMyName(name); // also the default the next time a room is opened or joined
+    showRename(false);
+    render();
+    watcher?.poke();
+  } catch (error) {
+    el.renameError.textContent = error.message;
+  } finally {
+    button.disabled = false;
   }
 });
 

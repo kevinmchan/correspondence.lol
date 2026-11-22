@@ -149,7 +149,8 @@ async function poll() {
       game.status === 'playing' ? rpc('postmarks_get', { p_game: online.id, p_token: myToken() }) : null,
       rpc('room_get', { p_room: online.room, p_token: myToken(), p_after: chat ? chat.lastId : null }),
     ]);
-    if (view && !busy && (resync || view.moves > game.moves || view.players.length !== game.players.length)) {
+    // also picks up people joining the room or changing their name
+    if (view && !busy && (resync || view.moves > game.moves || view.players.join('\n') !== game.players.join('\n'))) {
       const moved = !resync && view.moves > game.moves; // after a rejected move, keep its notice on screen
       resync = false;
       accept(view);
