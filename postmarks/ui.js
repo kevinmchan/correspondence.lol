@@ -1,5 +1,5 @@
 import {
-  CROSS, EMPTY, LETTER, MISS, MAX_PLAYERS, MIN_PLAYERS, START_HEARTS,
+  CROSS, EMPTY, LETTER, MISS, START_HEARTS,
   applyMove, canMove, isLetterCell, lettersFound, newGame, randomSize,
 } from './game.js';
 import { rpc } from '/shared/api.js';
@@ -9,11 +9,10 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
 import { avatar, openProfile } from '/shared/profile.js';
 
-// A game is either pass-and-play (saved on this device only) or belongs to a
+// A game is either a solo game (saved on this device only) or belongs to a
 // room (?game=<id>, stored on the server and open to everyone in that room).
 
-const GAME_KEY = 'postmarks:game:v1';
-const NAMES_KEY = 'postmarks:names:v1';
+const GAME_KEY = 'postmarks:solo:v1';
 const HOWTO_KEY = 'postmarks:howto:v1'; // the last game this device showed the how-to for
 const DISTRICTS = ['coral', 'amber', 'lime', 'mint', 'sky', 'periwinkle', 'orchid', 'tan', 'grey'];
 const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
@@ -21,8 +20,7 @@ const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelo
 const $ = (id) => document.getElementById(id);
 const el = {
   back: $('back'), profile: $('profile'), loading: $('loading'),
-  setup: $('setup'), form: $('setup-form'), players: $('players'), addPlayer: $('add-player'),
-  play: $('play'), turn: $('turn'), movers: $('movers'), hearts: $('hearts'), found: $('found'), board: $('board'),
+  play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
   roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
   narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
@@ -41,7 +39,6 @@ let resync = false; // the board shown may be ahead of the server: take its word
 let draft = null;
 let dragging = false; // a drag is in progress, adding the squares it passes to the draft
 let tool = 'mark';
-let mover = null; // pass-and-play: which player is holding the device
 let builtFor = null;
 let pollTimer = null;
 let chat = null;
@@ -50,7 +47,7 @@ let unread = 0;
 
 if (!onlineId) {
   game = load(GAME_KEY);
-  if (!game || game.v !== 1) game = null;
+  if (!game || game.v !== 1 || game.players?.length !== 1) game = null;
 }
 
 // Adopt the server's view of a room game.
@@ -66,74 +63,17 @@ function accept(view) {
 const iCanMove = () => Boolean(online) && canMove(game, online.you);
 const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
 
-// Pass-and-play: keep `mover` on someone allowed to move, defaulting to the
-// player after the last mover.
-function currentMover() {
-  if (!canMove(game, mover)) mover = game.last ? (game.last.player + 1) % game.players.length : 0;
-  return mover;
-}
-
-// --- Setup screen (pass-and-play) -----------------------------------------
-function addPlayerRow(name = '') {
-  if (el.players.children.length >= MAX_PLAYERS) return;
-  const li = document.createElement('li');
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.maxLength = 20;
-  input.required = true;
-  input.autocomplete = 'off';
-  input.value = name;
-  const remove = document.createElement('button');
-  remove.type = 'button';
-  remove.className = 'quiet remove';
-  remove.textContent = '−';
-  remove.addEventListener('click', () => {
-    li.remove();
-    syncPlayerControls();
-  });
-  li.append(input, remove);
-  el.players.append(li);
-  syncPlayerControls();
-}
-
-function syncPlayerControls() {
-  const rows = [...el.players.children];
-  rows.forEach((li, i) => {
-    li.querySelector('input').placeholder = `Player ${i + 1}`;
-    li.querySelector('input').setAttribute('aria-label', `Player ${i + 1} name`);
-    li.querySelector('.remove').setAttribute('aria-label', `Remove player ${i + 1}`);
-    li.querySelector('.remove').hidden = rows.length <= MIN_PLAYERS;
-  });
-  el.addPlayer.hidden = rows.length >= MAX_PLAYERS;
-}
-
-function showSetup() {
-  if (el.players.children.length) return;
-  const names = load(NAMES_KEY);
-  const initial = Array.isArray(names) && names.length >= MIN_PLAYERS ? names.slice(0, MAX_PLAYERS) : ['', ''];
-  initial.forEach((name) => addPlayerRow(String(name)));
-}
-
-el.addPlayer.addEventListener('click', () => {
-  addPlayerRow();
-  el.players.lastElementChild.querySelector('input').focus();
-});
-
-el.form.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const names = [...el.players.querySelectorAll('input')].map((i) => i.value.trim());
-  if (names.some((n) => !n)) return;
+// --- Solo games -----------------------------------------------------------
+function startSolo() {
   const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-  game = newGame({ size: randomSize(), seed, players: names });
+  game = newGame({ size: randomSize(), seed, players: ['You'] });
   tool = 'mark';
-  mover = null;
   draft = null;
-  save(NAMES_KEY, names);
+  builtFor = null;
   save(GAME_KEY, game);
   say('');
-  render();
-  greet();
-});
+  el.narration.textContent = '';
+}
 
 // --- Keeping in step with the server (room games) -------------------------
 function schedulePoll() {
@@ -237,19 +177,14 @@ function say(text) {
 }
 
 function show(section) {
-  for (const candidate of [el.loading, el.setup, el.play]) candidate.hidden = candidate !== section;
+  for (const candidate of [el.loading, el.play]) candidate.hidden = candidate !== section;
 }
 
 function render() {
   document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
 
   if (!game) {
-    if (onlineId) {
-      show(el.loading);
-    } else {
-      showSetup();
-      show(el.setup);
-    }
+    show(el.loading);
     return;
   }
 
@@ -305,31 +240,17 @@ function render() {
     el.turn.textContent = 'All delivered — you win!';
   } else if (game.status === 'lost') {
     el.turn.textContent = 'Out of hearts.';
-  } else if (!online || iCanMove()) {
+  } else if (!online) {
+    el.turn.textContent = ''; // playing alone: it is always your move
+  } else if (iCanMove()) {
     const strong = document.createElement('strong');
-    strong.textContent = online ? 'Your' : `${game.players[currentMover()]}’s`;
+    strong.textContent = 'Your';
     el.turn.append(strong, ' move');
   } else {
     const others = game.players.filter((_, seat) => seat !== online.you);
     el.turn.textContent = others.length === 0 ? 'Waiting for someone to join the room'
       : others.length === 1 ? `Waiting for ${others[0]}`
       : 'Waiting for someone else to move';
-  }
-
-  // Pass-and-play: choose who is moving. Whoever moved last sits this one out.
-  el.movers.hidden = Boolean(online) || over;
-  if (!el.movers.hidden) {
-    el.movers.replaceChildren(...game.players.map((name, player) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.setAttribute('role', 'radio');
-      button.dataset.player = player;
-      button.textContent = name;
-      button.disabled = !canMove(game, player);
-      button.setAttribute('aria-checked', String(player === currentMover()));
-      if (button.disabled) button.title = `${name} made the last move`;
-      return button;
-    }));
   }
 
   // Room games: everyone in the room; those who may move next stand out
@@ -352,8 +273,8 @@ function render() {
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
   }
-  // Room games go back to the room with the arrow at the top; only
-  // pass-and-play needs a way to start over.
+  // Room games go back to the room with the arrow at the top; only a solo
+  // game needs a way to start over.
   el.newGame.hidden = Boolean(online);
   el.newGame.textContent = over ? 'Play again' : 'New game';
 }
@@ -372,7 +293,7 @@ function ready() {
 // Take a turn: one stroke of crosses, one stroke clearing crosses, or a guess.
 async function play(type, cells) {
   if (!ready()) return;
-  const move = { player: online ? online.you : currentMover(), type, cells };
+  const move = { player: online ? online.you : 0, type, cells };
   // Crosses can be worked out here, so they appear at once; a guess in a room
   // game has to wait for the server, which is the only one who knows the answer.
   const local = type === 'guess' && online ? null : applyMove(game, move);
@@ -383,7 +304,6 @@ async function play(type, cells) {
 
   if (!online) {
     game = local.state;
-    mover = null; // passes to the next player by default
     tool = 'mark'; // each turn starts on the safe tool, so a stray tap never costs a heart
     save(GAME_KEY, game);
     announceLast();
@@ -470,11 +390,24 @@ window.addEventListener('pointermove', (event) => {
   if (cell !== null && !draft.cells.includes(cell) && draftCross(cell)) render();
 });
 
-for (const type of ['pointerup', 'pointercancel']) {
-  window.addEventListener(type, () => {
-    dragging = false;
-  });
+// Play the draft. In a room this is what Submit does. Alone, crosses are just
+// your own notes, so they are played as soon as the finger lifts; only a
+// guess, which can cost a heart, waits for Submit.
+function submitDraft() {
+  if (!draft) return;
+  const { type, cells } = draft;
+  draft = null;
+  play(type, cells);
 }
+
+window.addEventListener('pointerup', () => {
+  if (dragging && !online && draft && draft.type !== 'guess') submitDraft();
+  dragging = false;
+});
+
+window.addEventListener('pointercancel', () => {
+  dragging = false;
+});
 
 // Clicks cover what the pointer handlers above do not: guesses, and crosses
 // made from the keyboard (a keyboard "click" has detail 0). The keyboard has
@@ -497,15 +430,11 @@ el.board.addEventListener('click', (event) => {
   } else {
     draftCross(cell);
   }
-  render();
+  if (!online && draft && draft.type !== 'guess') submitDraft();
+  else render();
 });
 
-el.submit.addEventListener('click', () => {
-  if (!draft) return;
-  const { type, cells } = draft;
-  draft = null;
-  play(type, cells);
-});
+el.submit.addEventListener('click', submitDraft);
 
 el.clear.addEventListener('click', () => {
   draft = null;
@@ -538,14 +467,6 @@ el.tools.addEventListener('click', (event) => {
   render();
 });
 
-el.movers.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-player]');
-  if (!button || button.disabled) return;
-  mover = Number(button.dataset.player);
-  draft = null;
-  render();
-});
-
 // The animated how-to opens the first time this device shows a given game.
 function greet() {
   const key = online ? online.id : String(game.seed);
@@ -571,13 +492,9 @@ el.profile.addEventListener('click', () => {
 
 el.newGame.addEventListener('click', () => {
   if (game?.status === 'playing' && game.moves > 0 && !confirm('Abandon this game and start a new one?')) return;
-  game = null;
-  draft = null;
-  mover = null;
-  builtFor = null;
-  save(GAME_KEY, null);
-  say('');
+  startSolo();
   render();
+  greet();
 });
 
 // --- Start ----------------------------------------------------------------
@@ -605,4 +522,8 @@ if (onlineId) {
     });
 } else if (game) {
   announceLast();
+} else {
+  startSolo(); // nothing to set up: opening the page starts a puzzle
+  render();
+  greet();
 }

@@ -193,8 +193,20 @@ test('a crossed square can still be guessed', () => {
   assert.equal(s.cells[cell], LETTER);
 });
 
+test('a solo player takes every turn', () => {
+  let s = newGame({ size: 5, seed: 1, players: ['You'] });
+  assert.equal(canMove(s, 0), true);
+  s = play(s, 'mark', emptyNonLetter(s), 0);
+  assert.equal(canMove(s, 0), true, 'no waiting for anyone else');
+  s = play(s, 'guess', emptyNonLetter(s), 0);
+  assert.equal(s.hearts, 2);
+  for (const cell of letterCells(s)) s = play(s, 'guess', cell, 0);
+  assert.equal(s.status, 'won');
+  assert.equal(canMove(s, 0), false, 'the game is over');
+});
+
 test('newGame validates players and size', () => {
-  assert.throws(() => newGame({ size: 6, seed: 1, players: ['Solo'] }));
+  assert.throws(() => newGame({ size: 6, seed: 1, players: [] }));
   assert.throws(() => newGame({ size: 6, seed: 1, players: ['a', 'b', 'c', 'd', 'e'] }));
   assert.throws(() => newGame({ size: 4, seed: 1, players: ['a', 'b'] }));
 });

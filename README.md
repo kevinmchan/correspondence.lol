@@ -30,7 +30,7 @@ Then open <http://localhost:8000>. Service workers only run on `localhost` or HT
 People gather in rooms. A room has members, a chat and games; any member can
 start a game and every member can play in it, each on their own device. In
 Postmarks anyone may take the next turn except whoever took the last one.
-Pass-and-play on a single device needs no room and is saved in the browser only.
+A solo game needs no room and is saved in the browser only.
 
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_profile`, `room_say`,

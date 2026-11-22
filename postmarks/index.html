@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Postmarks · correspondence.lol</title>
-  <meta name="description" content="Postmarks: a co-operative logic puzzle. Take turns marking the grid to find every letter.">
+  <meta name="description" content="Postmarks: a logic puzzle to play alone or together. Find the letter hidden in every row, column and colour.">
   <link rel="canonical" href="https://correspondence.lol/postmarks/">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#f6f1e7" media="(prefers-color-scheme: light)">
@@ -24,19 +24,6 @@
     <h1>Postmarks</h1>
     <p id="loading" class="lede" hidden>Opening game…</p>
 
-    <div id="setup" class="stack" hidden>
-      <p class="lede">A co-operative puzzle. Pass the device and take turns.</p>
-      <form id="setup-form" class="card">
-        <fieldset>
-          <legend>Players</legend>
-          <ol id="players"></ol>
-          <button type="button" id="add-player" class="quiet">+ Add a player</button>
-        </fieldset>
-        <button type="submit">Start game</button>
-      </form>
-      <p class="hint">Each on your own device? <a href="/">Open a room</a> and start a game there.</p>
-    </div>
-
     <div id="play" class="stack" hidden>
       <div class="hud">
         <p id="turn" class="turn"></p>
@@ -46,7 +33,6 @@
         </p>
       </div>
 
-      <div id="movers" class="movers" role="radiogroup" aria-label="Who is moving" hidden></div>
       <ul id="roster" class="people roster" aria-label="Players" hidden></ul>
 
       <div id="board" class="board" role="group" aria-label="Puzzle grid"></div>
