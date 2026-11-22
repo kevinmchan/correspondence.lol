@@ -75,8 +75,9 @@ cannot install web apps.
 
 ## Notifications
 
-Room members can get a push notification when a game is started in their room
-or when someone else has moved and it is their turn. A device registers for
+Room members can get a push notification when a game is started in their room,
+when someone else has moved and it is their turn, and when someone says
+something in the room's chat. A device registers for
 push from the room page (`shared/push.js`); on iPhone and iPad that is only
 possible once the app is installed. The service worker shows the notification
 and opens the game when it is tapped.
