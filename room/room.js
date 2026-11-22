@@ -58,14 +58,12 @@ function render() {
     const n = room.members.length;
     el.joinText.textContent = `${list(room.members)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
     if (!el.joinName.value) el.joinName.value = myName();
-    document.body.dataset.view = 'join';
     el.join.hidden = false;
     el.room.hidden = true;
     el.profile.hidden = true;
     return;
   }
 
-  document.body.dataset.view = 'room'; // members only: this is where the install banner may show
   el.join.hidden = true;
   el.room.hidden = false;
   el.members.replaceChildren(...room.people.map((person, seat) => {

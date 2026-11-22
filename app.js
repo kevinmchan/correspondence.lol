@@ -21,7 +21,7 @@ if ('serviceWorker' in navigator) {
 
 // --- Installing the app -----------------------------------------------------
 // People who have not installed the app get a banner across the top of the
-// page. Its Install button uses the browser's own one-tap install where there
+// home page. Its Install button uses the browser's own one-tap install where there
 // is one (Chrome, Edge and other Chromium browsers); elsewhere it opens a
 // guide with pictures and steps that match the device.
 
@@ -191,9 +191,10 @@ window.addEventListener('appinstalled', () => {
 
 window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
 
-// Show the banner on every page except a game (where the board needs the
-// room), until the app is installed. It cannot be dismissed.
-if (!installed() && Date.now() >= readSnooze() && !location.pathname.startsWith('/postmarks')) {
+// The banner belongs to the home page, where it stays until the app is
+// installed. Rooms make the same offer in their notification prompt instead.
+const onHomePage = location.pathname === '/' || location.pathname === '/index.html';
+if (onHomePage && !installed() && Date.now() >= readSnooze()) {
   showInstallBanner();
 }
 
