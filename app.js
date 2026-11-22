@@ -25,8 +25,7 @@ if ('serviceWorker' in navigator) {
 // is one (Chrome, Edge and other Chromium browsers); elsewhere it opens a
 // guide with pictures and steps that match the device.
 
-const INSTALL_KEY = 'correspondence:install:v1'; // { until: time before which not to ask again }
-const SNOOZE_DAYS = 1;
+const INSTALL_KEY = 'correspondence:install:v2'; // { until }: set far ahead once this browser has installed the app
 let deferredPrompt = null; // the browser's own install prompt, when it offers one
 let installGuide = null;
 let installBanner = null;
@@ -147,23 +146,11 @@ function openInstallGuide() {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice.catch(() => null);
       deferredPrompt = null;
-      if (choice?.outcome !== 'accepted') dismissInstallBanner();
     }
     dialog.close();
   });
   document.body.append(dialog);
   dialog.showModal();
-}
-
-// The home page always carries the banner until the app is installed; on other
-// pages it can be closed, which hides it there for a day.
-const onHomePage = location.pathname === '/' || location.pathname === '/index.html';
-
-function dismissInstallBanner() {
-  if (onHomePage) return;
-  snooze(SNOOZE_DAYS);
-  installBanner?.remove();
-  installBanner = null;
 }
 
 function showInstallBanner() {
@@ -175,17 +162,13 @@ function showInstallBanner() {
   banner.innerHTML = `
     <img src="/icons/icon.svg" alt="" width="36" height="36">
     <p>Install to receive notifications from your friends.</p>
-    <button type="button" data-act="install">Install</button>
-    ${onHomePage ? '' : '<button type="button" class="close" data-act="close" aria-label="Not now" title="Not now">×</button>'}`;
+    <button type="button" data-act="install">Install</button>`;
   banner.addEventListener('click', async (event) => {
     const act = event.target.closest('[data-act]')?.dataset.act;
-    if (act === 'close') {
-      dismissInstallBanner();
-    } else if (act === 'install' && deferredPrompt) {
+    if (act === 'install' && deferredPrompt) {
       deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice.catch(() => null);
+      await deferredPrompt.userChoice.catch(() => null);
       deferredPrompt = null;
-      if (choice?.outcome !== 'accepted') dismissInstallBanner();
     } else if (act === 'install') {
       openInstallGuide(); // no one-tap install here: show the steps
     }
@@ -208,10 +191,9 @@ window.addEventListener('appinstalled', () => {
 
 window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
 
-// Show the banner unless the app is installed. Away from the home page it also
-// stays hidden for a day after being closed, and never appears on a game
-// (where the board needs the room).
-if (!installed() && (onHomePage || (Date.now() >= readSnooze() && !location.pathname.startsWith('/postmarks')))) {
+// Show the banner on every page except a game (where the board needs the
+// room), until the app is installed. It cannot be dismissed.
+if (!installed() && Date.now() >= readSnooze() && !location.pathname.startsWith('/postmarks')) {
   showInstallBanner();
 }
 
