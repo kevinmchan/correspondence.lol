@@ -1,0 +1,85 @@
+:root {
+  --paper: #f6f1e7;
+  --ink: #22303c;
+  --muted: #6b7680;
+  --accent: #c8442e;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #161d24;
+    --ink: #f1ebdf;
+    --muted: #96a0a9;
+    --accent: #e8664f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  padding:
+    max(1.5rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.mark { border-radius: 22%; }
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 7vw, 3rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+h1 span { color: var(--accent); }
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.125rem;
+}
+
+button {
+  font: inherit;
+  color: var(--paper);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.status {
+  margin: 0;
+  min-height: 1.25rem;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.8125rem;
+}

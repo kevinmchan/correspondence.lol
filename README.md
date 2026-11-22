@@ -1,1 +1,38 @@
 # correspondence.lol
+
+A static, no-build progressive web app served from the repository root at
+<https://correspondence.lol>.
+
+## Layout
+
+| File | Purpose |
+| --- | --- |
+| `index.html`, `styles.css`, `app.js` | The app shell |
+| `manifest.webmanifest` | Install metadata (name, colours, icons) |
+| `sw.js` | Service worker: offline support and caching |
+| `icons/` | App icons, rendered from `icons/icon.svg` |
+| `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
+
+## Run locally
+
+```sh
+python3 -m http.server 8000
+```
+
+Then open <http://localhost:8000>. Service workers only run on `localhost` or HTTPS.
+
+## Caching
+
+Pages are fetched network-first, so a deploy shows up on the next load. Other
+same-origin assets are served from cache and refreshed in the background, so an
+asset change appears on the second load. When adding a file the app needs
+offline, add it to `PRECACHE` in `sw.js` and bump `VERSION`.
+
+## Deploy (GitHub Pages)
+
+1. Repository **Settings → Pages**: source *Deploy from a branch*, branch `main`, folder `/ (root)`.
+2. At the DNS provider for `correspondence.lol`, add `A` records for the apex pointing to
+   `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+   (and optionally a `CNAME` for `www` to `kevinmchan.github.io`).
+3. Back in **Settings → Pages**, confirm the custom domain and tick **Enforce HTTPS**
+   once the certificate is issued. HTTPS is required for the app to be installable.
