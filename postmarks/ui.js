@@ -189,18 +189,10 @@ function buildBoard(key) {
   el.board.style.setProperty('--n', size);
   el.board.replaceChildren();
   for (let cell = 0; cell < size * size; cell++) {
-    const row = Math.floor(cell / size);
-    const col = cell % size;
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.cell = cell;
-    const edges = [
-      row > 0 && regions[cell - size] !== regions[cell] && 'et',
-      col < size - 1 && regions[cell + 1] !== regions[cell] && 'er',
-      row < size - 1 && regions[cell + size] !== regions[cell] && 'eb',
-      col > 0 && regions[cell - 1] !== regions[cell] && 'el',
-    ].filter(Boolean);
-    button.className = ['cell', `d${regions[cell]}`, ...edges].join(' ');
+    button.className = `cell d${regions[cell]}`;
     el.board.append(button);
   }
   builtFor = key;
@@ -215,7 +207,7 @@ function describeLast() {
   if (last.type === 'mark') return `${who} crossed out ${where(last.cell)}.`;
   if (last.type === 'unmark') return `${who} removed the cross at ${where(last.cell)}.`;
   return last.correct
-    ? `${who} found a letter at ${where(last.cell)}.`
+    ? `${who} found a letter at ${where(last.cell)}.${last.crossed ? ` ${last.crossed} more ${last.crossed === 1 ? 'square' : 'squares'} crossed out.` : ''}`
     : `${who} guessed ${where(last.cell)} — no letter there. A heart lost.`;
 }
 
