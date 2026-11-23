@@ -234,5 +234,11 @@ export function openProfile({ person, onSave }) {
     if (event.target === dialog) dialog.close();
   });
   document.body.append(dialog);
+  // Opening a dialog puts the cursor in its first field, which on a phone
+  // brings the keyboard up over everything. The name is edited by choice, not
+  // by default: hold the focus on the dialog itself instead.
+  dialog.tabIndex = -1;
   dialog.showModal();
+  dialog.focus({ preventScroll: true });
+  dialog.scrollTop = 0;
 }

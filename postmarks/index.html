@@ -34,7 +34,7 @@
     // for anyone who has asked their device for less motion.
     // It belongs to the home screen: an address that opens a room or a game skips it.
     try {
-      if ((location.pathname !== '/' && location.pathname !== '/index.html') || sessionStorage.getItem('correspondence:splash') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join)\b/.test(location.search) || sessionStorage.getItem('correspondence:splash') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
         document.documentElement.classList.add('no-splash');
       } else {
         sessionStorage.setItem('correspondence:splash', '1');
@@ -105,14 +105,14 @@
         </div>
 
         <nav id="menu" class="menu" aria-label="Play" hidden>
-          <button type="button" id="menu-open" class="menu-button" style="--tile: #f08a76">
+          <a href="/?open" id="menu-open" class="menu-button" style="--tile: #f08a76">
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg></span>
             <span class="words"><strong>Open a room</strong></span>
-          </button>
-          <button type="button" id="menu-join" class="menu-button" style="--tile: #9ad3f7">
+          </a>
+          <a href="/?join" id="menu-join" class="menu-button" style="--tile: #9ad3f7">
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15.5" r="4"/><path d="M11 12.5L20 3.5M16.5 7l2.5 2.5M14 9.5l2 2"/></svg></span>
             <span class="words"><strong>Join a room</strong></span>
-          </button>
+          </a>
           <a href="/postmarks/" class="menu-button" style="--tile: #f8d95a">
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#mini-envelope"/></svg></span>
             <span class="words"><strong>Play solo</strong></span>
@@ -154,40 +154,50 @@
         </svg>
       </div>
     </main>
+  </template>
 
-    <dialog id="open-dialog" class="sheet" aria-labelledby="open-title">
-      <form id="create-room" class="card">
-        <h2 id="open-title" class="sheet-title">Open a room</h2>
-        <label class="field" id="my-name-field">
-          <span>Your name</span>
-          <input type="text" id="my-name" maxlength="20" required autocomplete="off">
-        </label>
-        <label class="field">
-          <span>Room name (optional)</span>
-          <input type="text" id="room-name" maxlength="40" autocomplete="off" placeholder="e.g. Tuesday club">
-        </label>
-        <p id="create-error" class="message bad" role="alert"></p>
-        <div class="row end">
-          <button type="button" class="quiet" data-close>Cancel</button>
+  <template id="screen-open">
+    <header class="topbar">
+      <a href="/">← correspondence.lol</a>
+    </header>
+
+    <main>
+      <span class="hero-tile" style="--tile: #f08a76" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg></span>
+      <h1>Open a room</h1>
+      <p class="lede">A place for you and your friends to play.</p>
+      <form id="create-room" class="card stack">
+        <fieldset>
+          <label class="field">
+            <span>Room name (optional)</span>
+            <input type="text" id="room-name" maxlength="40" autocomplete="off" enterkeyhint="go">
+          </label>
           <button type="submit">Open room</button>
-        </div>
+          <p id="create-error" class="message bad" role="alert"></p>
+        </fieldset>
       </form>
-    </dialog>
+    </main>
+  </template>
 
-    <dialog id="join-dialog" class="sheet" aria-labelledby="join-title">
-      <form id="join-room" class="card">
-        <h2 id="join-title" class="sheet-title">Join a room</h2>
-        <label class="field">
-          <span>Room code, from a friend in the room</span>
-          <input type="text" id="join-code" class="code-input" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC-123" required>
-        </label>
-        <p id="join-error" class="message bad" role="alert"></p>
-        <div class="row end">
-          <button type="button" class="quiet" data-close>Cancel</button>
+  <template id="screen-join">
+    <header class="topbar">
+      <a href="/">← correspondence.lol</a>
+    </header>
+
+    <main>
+      <span class="hero-tile" style="--tile: #9ad3f7" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15.5" r="4"/><path d="M11 12.5L20 3.5M16.5 7l2.5 2.5M14 9.5l2 2"/></svg></span>
+      <h1>Join a room</h1>
+      <p class="lede">Ask a friend in the room for its code.</p>
+      <form id="join-room" class="card stack">
+        <fieldset>
+          <label class="field">
+            <span>Room code</span>
+            <input type="text" id="join-code" class="code-input" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC-123" enterkeyhint="go" required>
+          </label>
           <button type="submit">Join room</button>
-        </div>
+          <p id="join-error" class="message bad" role="alert"></p>
+        </fieldset>
       </form>
-    </dialog>
+    </main>
   </template>
 
   <template id="screen-room">

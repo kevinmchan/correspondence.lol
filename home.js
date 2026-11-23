@@ -1,7 +1,7 @@
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
 import { play as sfx } from '/postmarks/sound.js';
-import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
+import { myName, recentRooms, roomUrl } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
@@ -14,10 +14,6 @@ export function mount(root, life) {
   document.title = 'correspondence.lol';
   window.homeBanner?.(root); // the install banner belongs to this screen
 
-  const form = $('create-room');
-  const nameInput = $('my-name');
-  const roomInput = $('room-name');
-  const error = $('create-error');
   const rooms = $('rooms');
 
   // --- Who this device is -------------------------------------------------------
@@ -41,23 +37,8 @@ export function mount(root, life) {
     const profile = cachedProfile();
     return Boolean(profile.signed_out) || (!profile.signed_in && !myName() && recentRooms().length === 0);
   };
-  const nameField = $('my-name-field');
-  const joinForm = $('join-room');
-  // The lobby: big buttons, and a sheet for each thing that needs a word typed in.
+  // The lobby: big tiles. Opening and joining a room each have a screen of their own (rooms.js).
   const menu = $('menu');
-  const sheets = { open: $('open-dialog'), join: $('join-dialog') };
-  for (const [name, sheet] of Object.entries(sheets)) {
-    $(`menu-${name}`).addEventListener('click', () => {
-      sheet.querySelector('.message').textContent = '';
-      sheet.showModal();
-      sheet.querySelector('input:not([hidden])')?.focus();
-    });
-    sheet.addEventListener('click', (event) => {
-      if (event.target === sheet || event.target.closest('[data-close]')) sheet.close();
-    });
-  }
-  const joinCode = $('join-code');
-  const joinError = $('join-error');
   const look = () => savedLook() ?? { avatar: '🙂', color: 0 };
   // Sent here from a room's join screen to sync an account first: go back after.
   const next = new URLSearchParams(location.search).get('next');
@@ -79,10 +60,6 @@ export function mount(root, life) {
     me.name.textContent = name || 'You';
     const n = recentRooms().length;
     me.kind.textContent = n === 0 ? 'No rooms yet' : n === 1 ? '1 room' : `${n} rooms`;
-    // the name is asked for when opening a first room, and lives on the profile after that
-    nameField.hidden = Boolean(name);
-    nameInput.required = !name;
-    nameInput.value = name;
   }
 
   async function refresh() {
@@ -165,27 +142,6 @@ export function mount(root, life) {
   showMe();
   if (!noProfile()) showRooms();
 
-  // --- Joining a room with its code -----------------------------------------------
-  joinForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const code = joinCode.value.replace(/[^0-9a-z]/gi, '');
-    joinError.textContent = '';
-    if (code.length !== 6) {
-      joinError.textContent = 'A room code is six letters and digits, like ABC-123.';
-      return;
-    }
-    const button = joinForm.querySelector('button[type="submit"]');
-    button.disabled = true;
-    try {
-      const room = await rpc('room_join_code', { p_code: code, p_name: myName(), p_token: myToken() });
-      rememberRoom(room.id, room.name);
-      go(roomUrl(room.id));
-    } catch (failure) {
-      joinError.textContent = failure.message;
-      button.disabled = false;
-    }
-  });
-
   // --- Arriving from the Home Screen icon ---------------------------------------
   async function bringAcross(code) {
     try {
@@ -207,28 +163,6 @@ export function mount(root, life) {
   } else {
     refresh();
   }
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const name = myName() || nameInput.value.trim();
-    if (!name) return;
-    const button = form.querySelector('button[type="submit"]');
-    button.disabled = true;
-    error.textContent = '';
-    try {
-      const room = await rpc('room_create', {
-        p_room_name: roomInput.value.trim() || `${name}’s room`.slice(0, 40),
-        p_name: name,
-        p_token: myToken(),
-      });
-      setMyName(name);
-      rememberRoom(room.id, room.name);
-      go(roomUrl(room.id));
-    } catch (failure) {
-      error.textContent = failure.message;
-      button.disabled = false;
-    }
-  });
 
   // The version, small and out of the way at the bottom of the page.
   $('version').textContent = self.APP_VERSION ?? '';
