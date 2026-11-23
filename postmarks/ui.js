@@ -1,3 +1,4 @@
+import { go } from '/shared/nav.js';
 import {
   CROSS, EMPTY, LETTER, MISS, START_HEARTS,
   applyMove, canMove, isLetterCell, lettersFound, newGame, randomSize,
@@ -410,7 +411,7 @@ function finale() {
     leave: online ? 'Back to the room' : 'Close',
     celebrate: confetti,
     onDone: () => {
-      if (online) location.href = roomUrl(online.room);
+      if (online) go(roomUrl(online.room));
     },
   });
 }

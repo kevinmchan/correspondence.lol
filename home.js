@@ -1,4 +1,5 @@
 import { rpc } from '/shared/api.js';
+import { go } from '/shared/nav.js';
 import { play as sfx } from '/postmarks/sound.js';
 import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
@@ -103,7 +104,7 @@ welcome.form.addEventListener('submit', async (event) => {
     await saveProfile({ name, avatar: started.avatar, color: started.color });
     welcome.name.value = '';
     const to = onward();
-    if (to) location.href = to;
+    if (to) go(to);
     else {
       showMe();
       showRooms();
@@ -130,7 +131,7 @@ welcome.codeForm.addEventListener('submit', async (event) => {
     welcome.code.value = '';
     await refresh();
     const to = onward();
-    if (to) location.href = to;
+    if (to) go(to);
   } catch (failure) {
     welcome.codeNote.textContent = failure.message;
   }
@@ -170,7 +171,7 @@ joinForm.addEventListener('submit', async (event) => {
   try {
     const room = await rpc('room_join_code', { p_code: code, p_name: myName(), p_token: myToken() });
     rememberRoom(room.id, room.name);
-    location.href = roomUrl(room.id);
+    go(roomUrl(room.id));
   } catch (failure) {
     joinError.textContent = failure.message;
     button.disabled = false;
@@ -214,7 +215,7 @@ form.addEventListener('submit', async (event) => {
     });
     setMyName(name);
     rememberRoom(room.id, room.name);
-    location.href = roomUrl(room.id);
+    go(roomUrl(room.id));
   } catch (failure) {
     error.textContent = failure.message;
     button.disabled = false;
