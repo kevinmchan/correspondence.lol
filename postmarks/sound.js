@@ -14,14 +14,19 @@ try {
 let ctx = null;
 let out = null;
 
+// Start the engine, or wake it. Safari on iPhone only lets this happen at the
+// end of a tap (touchend, click), not the start, and puts the engine back to
+// sleep ("suspended" or "interrupted") whenever the app goes to the background
+// or a call comes in: so every touch tries again.
 function unlock() {
   if (ctx) {
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') ctx.resume().catch(() => {});
     return;
   }
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) return;
   ctx = new AudioContext();
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
   // a gentle compressor keeps stacked notes from clipping
   const squash = ctx.createDynamicsCompressor();
   out = ctx.createGain();
@@ -29,9 +34,12 @@ function unlock() {
   out.connect(squash).connect(ctx.destination);
 }
 
-for (const type of ['pointerdown', 'keydown', 'touchstart']) {
+for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click', 'keydown']) {
   window.addEventListener(type, unlock, { capture: true, passive: true });
 }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+});
 
 export const isMuted = () => muted;
 
@@ -166,8 +174,18 @@ const SOUNDS = {
 
 // Play a named sound, optionally `delay` milliseconds from now.
 export function play(name, options = {}) {
-  if (muted || !ctx || ctx.state !== 'running' || !SOUNDS[name]) return;
+  if (muted || !ctx || !SOUNDS[name]) return;
   const { delay = 0, ...rest } = options;
-  if (delay) setTimeout(() => play(name, rest), delay);
-  else SOUNDS[name](rest);
+  if (delay) {
+    setTimeout(() => play(name, rest), delay);
+  } else if (ctx.state === 'running') {
+    SOUNDS[name](rest);
+  } else {
+    // still waking up (the very first tap, or just back from the background):
+    // play as soon as it is, unless that takes so long the moment has passed
+    const asked = performance.now();
+    ctx.resume().then(() => {
+      if (ctx.state === 'running' && performance.now() - asked < 400) SOUNDS[name](rest);
+    }).catch(() => {});
+  }
 }
