@@ -579,3 +579,14 @@ button.go { font-family: system-ui, sans-serif; }
     100% { opacity: 0; }
   }
 }
+
+/* A move is drawn but not sent: Submit nudges every few seconds until it is */
+.toolbar #submit:not(:disabled) { animation: nudge 3.2s ease-in-out 1.2s infinite; }
+@keyframes nudge {
+  0%, 68%, 100% { transform: none; box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  74% { transform: scale(1.07) rotate(-2deg); }
+  80% { transform: scale(0.98) rotate(1.5deg); }
+  86% { transform: scale(1.04); box-shadow: 0 0 0 0.6rem transparent; }
+  92% { transform: none; box-shadow: 0 0 0 0.6rem transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .toolbar #submit:not(:disabled) { animation: none; } }
