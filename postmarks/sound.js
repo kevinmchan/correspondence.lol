@@ -155,6 +155,15 @@ const SOUNDS = {
       bell(0, scale[Math.min(streak + 1, scale.length - 1)], 0.15);
     }
   },
+  // pressing a button or a tile of the menus: the lightest touch of the bell
+  tap() {
+    bell(0, NOTE.E5, 0.07, 0.11);
+  },
+  // one of the home page's two residents, tapped
+  squeak() {
+    bell(0, NOTE.A5, 0.11, 0.12);
+    bell(0.07, NOTE.E6, 0.1, 0.2);
+  },
   // taking a cross back: the cross's two notes in reverse, quieter, stepping down
   clear() {
     bell(0, NOTE.G5, 0.11);
@@ -319,3 +328,12 @@ function startMusic() {
     }
   }, 150);
 }
+
+// Every button and menu tile gives a small tap, so the whole app answers to the
+// touch the way the board does. (The board, the code buttons and the switches
+// have sounds of their own.)
+document.addEventListener('click', (event) => {
+  const target = event.target.closest?.('button, a.menu-button, .links a, .critters .penny, .critters .dot');
+  if (!target || target.closest('#board, .tools, .setting') || target.classList.contains('code') || target.disabled) return;
+  play(target.closest('.critters') ? 'squeak' : 'tap');
+}, { capture: true });
