@@ -194,6 +194,27 @@ export function mount(root, life) {
       button.className = `cell d${regions[cell]}`;
       el.board.append(button);
     }
+    // Links between neighbouring squares of the same district, drawn across the
+    // gap in the district's colour. They stay at full strength whatever state
+    // the squares are in, so a district still reads as one piece once some of
+    // it is crossed out or solved. (Added after the squares, so a square's
+    // place among the board's children is still its number.)
+    const links = document.createElement('div');
+    links.className = 'links-layer';
+    links.setAttribute('aria-hidden', 'true');
+    for (let cell = 0; cell < size * size; cell++) {
+      const row = Math.floor(cell / size);
+      const col = cell % size;
+      for (const [way, other] of [['across', col < size - 1 ? cell + 1 : -1], ['down', row < size - 1 ? cell + size : -1]]) {
+        if (other < 0 || regions[other] !== regions[cell]) continue;
+        const link = document.createElement('i');
+        link.className = `bridge ${way} d${regions[cell]}`;
+        link.style.setProperty('--r', row);
+        link.style.setProperty('--c', col);
+        links.append(link);
+      }
+    }
+    el.board.append(links);
     builtFor = key;
     fresh = true;
   }
@@ -482,7 +503,7 @@ export function mount(root, life) {
     // Squares: work out what each should show, then apply it, animating what changed
     const quiet = fresh; // a board arriving on screen does so without fanfare
     fresh = false;
-    const squares = [...el.board.children].map((button) => {
+    const squares = [...el.board.querySelectorAll('.cell')].map((button) => {
       const cell = Number(button.dataset.cell);
       // squares in the draft are shown as they would be once submitted
       const drafted = Boolean(draft?.cells.includes(cell));
