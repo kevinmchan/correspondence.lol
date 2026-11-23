@@ -187,7 +187,7 @@ form.card legend, .field > span {
 
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 
-input[type="text"], select {
+input[type="text"], input[type="email"], select {
   font: inherit;
   font-family: system-ui, sans-serif;
   font-size: 1rem;
@@ -200,7 +200,7 @@ input[type="text"], select {
   flex: 1;
 }
 
-input[type="text"]:focus-visible, select:focus-visible {
+input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -618,3 +618,22 @@ main:has(.version) { position: relative; }
 /* the code that brings a browser's rooms across to the installed app */
 dialog.install .move { margin: 0.9rem 0 0; text-align: center; }
 dialog.install .move b { display: block; margin-top: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.35rem; letter-spacing: 0.08em; color: var(--ink); user-select: all; }
+
+/* --- Your profile, on the home page ---------------------------------------- */
+.me { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.2rem 0.8rem; }
+.me .profile-button { width: 3rem; height: 3rem; padding: 0; background: none; }
+.me .profile-button .avatar { width: 100%; height: 100%; font-size: 1.6rem; }
+.me .who { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+.me .who strong { font-family: Georgia, serif; font-size: 1.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me .who span { font-family: system-ui, sans-serif; font-size: 0.9375rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me .row { grid-column: 1 / -1; flex-wrap: wrap; margin-top: 0.5rem; }
+.me .row button { font-family: system-ui, sans-serif; font-size: 0.9375rem; padding: 0.5rem 1rem; }
+dialog.account h2 { font-family: Georgia, serif; font-size: 1.35rem; color: var(--ink); margin: 0 0 0.3rem; text-transform: none; letter-spacing: 0; }
+dialog.account .card { text-align: left; display: flex; flex-direction: column; gap: 0.7rem; }
+dialog.account .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.8rem; letter-spacing: 0.08em; margin: 0.8rem 0; user-select: all; }
+dialog.account .row.end { margin-top: 0.8rem; }
+section.card { width: 100%; text-align: left; font-family: system-ui, sans-serif; box-sizing: border-box; }
+section.card.me { border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.9rem 1rem; }
+section.card fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
+section.card legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
+dialog.account form.card { margin-top: 0.6rem; }
