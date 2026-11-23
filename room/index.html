@@ -57,10 +57,9 @@
       <ul id="members" class="people" aria-label="In this room"></ul>
 
       <div class="share">
-        <label for="share-link">Send this link to invite people to the room</label>
+        <span id="share-label">Friends join this room with its code</span>
         <div>
-          <input type="text" id="share-link" readonly>
-          <button type="button" id="copy-link">Copy</button>
+          <button type="button" id="room-code" class="code" aria-describedby="share-label"></button>
           <button type="button" id="share-button" class="quiet" hidden>Share</button>
         </div>
       </div>

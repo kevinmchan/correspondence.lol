@@ -21,8 +21,8 @@ export const asCode = (text) => {
 };
 
 // Show a code as a button: a tap copies it, and says so for a moment.
-export function copyable(button, code) {
-  const shown = prettyCode(code);
+// `shown` is the code as people read it, e.g. K7M2-QP4X.
+export function copyable(button, shown) {
   button.textContent = shown;
   button.title = 'Copy the code';
   button.setAttribute('aria-label', `${shown.split('').join(' ')}. Copy the code`);

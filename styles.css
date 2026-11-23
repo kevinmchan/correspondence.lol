@@ -650,3 +650,9 @@ dialog.account form.card { margin-top: 0.6rem; }
 div.card.plain { width: 100%; text-align: left; font-family: system-ui, sans-serif; }
 div.card.plain fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
 div.card.plain legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
+
+/* --- Room codes -------------------------------------------------------------- */
+.share > span { display: block; }
+.share .code { font-size: 1.35rem; flex: 1; }
+input.code-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.25rem; letter-spacing: 0.12em; text-transform: uppercase; }
+input.code-input::placeholder { letter-spacing: 0.12em; opacity: 0.45; }

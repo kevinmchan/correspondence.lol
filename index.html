@@ -82,6 +82,18 @@
         </fieldset>
       </form>
 
+      <form id="join-room" class="card">
+        <fieldset>
+          <legend>Join a friend’s room</legend>
+          <label class="field">
+            <span>Room code</span>
+            <input type="text" id="join-code" class="code-input" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC-123" required>
+          </label>
+          <button type="submit">Join room</button>
+          <p id="join-error" class="message bad" role="alert"></p>
+        </fieldset>
+      </form>
+
       <h2>On your own?</h2>
       <ul class="links">
         <li><a href="/postmarks/"><strong>Postmarks</strong><span>A logic puzzle — play a game by yourself</span></a></li>

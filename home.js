@@ -33,6 +33,9 @@ const noProfile = () => {
   return Boolean(profile.signed_out) || (!profile.signed_in && !myName() && recentRooms().length === 0);
 };
 const nameField = document.getElementById('my-name-field');
+const joinForm = document.getElementById('join-room');
+const joinCode = document.getElementById('join-code');
+const joinError = document.getElementById('join-error');
 const look = () => savedLook() ?? { avatar: '🙂', color: 0 };
 // Sent here from a room's join screen to sync an account first: go back after.
 const next = new URLSearchParams(location.search).get('next');
@@ -45,6 +48,7 @@ function showMe() {
   welcome.note.hidden = !profile.signed_out;
   me.card.hidden = none;
   form.hidden = none;
+  joinForm.hidden = none;
   if (none) {
     rooms.hidden = true;
     return;
@@ -140,6 +144,27 @@ function showRooms() {
 }
 showMe();
 if (!noProfile()) showRooms();
+
+// --- Joining a room with its code -----------------------------------------------
+joinForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const code = joinCode.value.replace(/[^0-9a-z]/gi, '');
+  joinError.textContent = '';
+  if (code.length !== 6) {
+    joinError.textContent = 'A room code is six letters and digits, like ABC-123.';
+    return;
+  }
+  const button = joinForm.querySelector('button');
+  button.disabled = true;
+  try {
+    const room = await rpc('room_join_code', { p_code: code, p_name: myName(), p_token: myToken() });
+    rememberRoom(room.id, room.name);
+    location.href = roomUrl(room.id);
+  } catch (failure) {
+    joinError.textContent = failure.message;
+    button.disabled = false;
+  }
+});
 
 // --- Arriving from the Home Screen icon ---------------------------------------
 async function bringAcross(code) {
