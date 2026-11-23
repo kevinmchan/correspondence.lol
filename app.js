@@ -137,7 +137,7 @@ function openInstallGuide() {
     <h2 id="install-title">Install correspondence.lol</h2>
     <p class="hint">Install to receive notifications from your friends.</p>
     ${steps}
-    <p class="hint move" hidden>Your account comes with you. If the app opens without it, enter this code there: <b></b></p>
+    <p class="hint move" hidden>Your account comes with you. If the app opens without it, enter this code there: <button type="button" class="code"></button></p>
     <div class="row end">
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
     </div>`;
@@ -159,7 +159,7 @@ function openInstallGuide() {
   // Where the installed app starts with empty storage, show the code that
   // brings this browser's rooms across (see shared/handoff.js).
   if (separateStorage(platform)) {
-    import('/shared/handoff.js').then(async ({ moveCode, prettyCode }) => {
+    import('/shared/handoff.js').then(async ({ moveCode, copyable }) => {
       const line = dialog.querySelector('.move');
       let account = null;
       try {
@@ -173,7 +173,7 @@ function openInstallGuide() {
       }
       const code = await moveCode();
       if (!code || !line) return;
-      line.querySelector('b').textContent = prettyCode(code);
+      copyable(line.querySelector('.code'), code);
       line.hidden = false;
     }).catch(() => {});
   }

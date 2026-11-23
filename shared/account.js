@@ -10,7 +10,7 @@
 import { auth, rpc } from './api.js';
 import { load, myToken, resetIdentity, save, setMyName, setRooms } from './identity.js';
 import { saveLook } from './profile.js';
-import { prettyCode } from './handoff.js';
+import { copyable } from './handoff.js';
 
 const PROFILE_KEY = 'correspondence:profile:v1'; // { signed_in, email, signed_out }
 
@@ -166,7 +166,10 @@ export async function openDeviceCode() {
   const dialog = sheet('Use this account on another device');
   const title = make('h2', null, 'Use on another device');
   const lede = make('p', 'hint', 'On the other device, open correspondence.lol and enter this code under “Sync account”. It works once, for ten minutes.');
-  const code = make('p', 'code', '…');
+  const code = make('button', 'code', '…');
+  code.type = 'button';
+  code.disabled = true;
+  const tip = make('p', 'hint tip', 'Tap the code to copy it.');
   const error = make('p', 'message bad');
   error.setAttribute('role', 'alert');
   const done = make('button', null, 'Done');
@@ -174,12 +177,14 @@ export async function openDeviceCode() {
   done.addEventListener('click', () => dialog.close());
   const foot = make('div', 'row end');
   foot.append(done);
-  dialog.append(title, lede, code, error, foot);
+  dialog.append(title, lede, code, tip, error, foot);
   dialog.showModal();
   try {
-    code.textContent = prettyCode(await rpc('profile_code', { p_token: myToken() }));
+    copyable(code, await rpc('profile_code', { p_token: myToken() }));
+    code.disabled = false;
   } catch (failure) {
-    code.textContent = '';
+    code.hidden = true;
+    tip.hidden = true;
     error.textContent = failure.message;
   }
 }
