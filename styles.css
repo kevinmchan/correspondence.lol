@@ -615,9 +615,6 @@ main:has(.version) { position: relative; }
 #games .delete svg { width: 1.15rem; height: 1.15rem; }
 #games .delete:hover, #games .delete:focus-visible { color: var(--accent); border-color: var(--accent); }
 
-/* the code that brings a browser's rooms across to the installed app */
-dialog.install .move { margin: 0.9rem 0 0; text-align: center; }
-dialog.install .move .code { display: block; margin: 0.4rem auto 0; font-size: 1.35rem; }
 
 /* --- Your profile, on the home page ---------------------------------------- */
 .me { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.2rem 0.8rem; }
