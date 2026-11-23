@@ -330,7 +330,7 @@ export function applyMove(state, move) {
     return fail('That is not a player in this game.');
   }
   if (move.player === state.author) return fail('You wrote this phrase, so you are watching this one.');
-  if (mustAlternate(state) && state.last?.player === move.player) {
+  if (takesTurns(state) && state.last?.player === move.player) {
     return fail(`${state.players[move.player]} made the last move, so someone else goes next.`);
   }
   const { type } = move;
