@@ -70,6 +70,7 @@ function accept(view) {
     cells: view.cells ?? [], hearts: view.hearts ?? START_HEARTS, moves: view.moves ?? 0,
     status: started ? view.status : 'waiting', last: view.last ?? null,
     free: mode !== 'coop',
+    absent: view.people.flatMap((person, seat) => (person.left ? [seat] : [])), // they left the room
   };
   online = {
     id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people,
@@ -339,7 +340,7 @@ function render() {
     strong.textContent = 'Your';
     el.turn.append(strong, ' move');
   } else {
-    const others = game.players.filter((_, seat) => seat !== online.you);
+    const others = game.players.filter((_, seat) => seat !== online.you && !game.absent.includes(seat));
     el.turn.textContent = others.length === 0 ? 'Waiting for someone to join the room'
       : others.length === 1 ? `Waiting for ${others[0]}`
       : 'Waiting for someone else to move';
@@ -350,11 +351,12 @@ function render() {
   const solo = Boolean(online) && online.mode !== 'coop';
   el.roster.hidden = !online || solo;
   if (online && !solo) {
-    el.roster.replaceChildren(...online.people.map((person, seat) => {
+    el.roster.replaceChildren(...online.people.flatMap((person, seat) => {
+      if (person.left) return []; // no longer in the room
       const li = document.createElement('li');
       li.append(avatar(person), person.name + (seat === online.you ? ' (you)' : ''));
       if (canMove(game, seat)) li.className = 'now';
-      return li;
+      return [li];
     }));
   }
   el.runs.hidden = !solo;

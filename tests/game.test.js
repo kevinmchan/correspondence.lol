@@ -226,6 +226,19 @@ test('a time trial has no turns, and a phrase author sits out', () => {
   assert.deepEqual([0, 1, 2].map((p) => canMove(s, p)), [false, false, true]);
 });
 
+test('players who have left no longer count towards turn-taking', () => {
+  // Ada, Bo and Cy; Bo has left. Ada and Cy alternate; Bo cannot move.
+  const three = { ...newGame({ size: 5, seed: 1, players: ['Ada', 'Bo', 'Cy'] }), absent: [1] };
+  assert.deepEqual([0, 1, 2].map((p) => canMove(three, p)), [true, false, true]);
+  let s = play(three, 'mark', emptyNonLetter(three), 0);
+  assert.deepEqual([0, 1, 2].map((p) => canMove(s, p)), [false, false, true]);
+  // Cy leaves as well: Ada is alone and may move again straight away
+  s = { ...s, absent: [1, 2] };
+  assert.equal(canMove(s, 0), true);
+  s = play(s, 'mark', emptyNonLetter(s), 0);
+  assert.equal(s.moves, 2);
+});
+
 test('newGame validates players and size', () => {
   assert.throws(() => newGame({ size: 6, seed: 1, players: [] }));
   assert.throws(() => newGame({ size: 6, seed: 1, players: ['a', 'b', 'c', 'd', 'e'] }));

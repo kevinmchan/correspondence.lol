@@ -535,8 +535,30 @@ main:has(.version) { position: relative; }
   opacity: 0.8;
 }
 
-/* --- Starting a game in a room ------------------------------------------------ */
+/* --- Starting a game in a room: one tile per kind of game ---------------------- */
 
-.newgame { display: flex; flex-direction: column; gap: 0.5rem; }
-.newgame .row button { flex: none; }
-.newgame .hint { font-size: 0.8125rem; }
+.modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+
+.mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.9rem 0.4rem 0.8rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: 1.5px solid transparent;
+  color: var(--ink);
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.mode:hover, .mode:focus-visible, .mode[aria-expanded="true"] { border-color: var(--accent); }
+.mode .icon { width: 1.75rem; height: 1.75rem; color: var(--muted); }
+.mode:hover .icon, .mode:focus-visible .icon, .mode[aria-expanded="true"] .icon { color: var(--accent); }
+.mode strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; }
+.modes[data-busy] .mode { opacity: 0.6; cursor: progress; }
+
+#phrase-form button { flex: none; padding: 0.5rem 1.1rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; }
+#no-games + h2, #games + h2, .panel h2 + .modes { margin-top: 0.1rem; }
+

@@ -51,5 +51,9 @@ export function rememberRoom(id, name) {
   save(ROOMS_KEY, rooms.slice(0, 12));
 }
 
+export function forgetRoom(id) {
+  save(ROOMS_KEY, recentRooms().filter((r) => r.id !== id));
+}
+
 export const roomUrl = (id) => `/room/?id=${id}`;
 export const gameUrl = (kind, id) => (kind === 'postmarks' ? `/postmarks/?game=${id}` : null);
