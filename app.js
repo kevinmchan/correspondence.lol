@@ -1,20 +1,11 @@
 
 // --- Service worker -------------------------------------------------------
 if ('serviceWorker' in navigator) {
-  // When an updated service worker takes over, reload once so the page is not
-  // left running the previous version's scripts.
-  const hadController = Boolean(navigator.serviceWorker.controller);
-  let reloaded = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!hadController || reloaded) return;
-    reloaded = true;
-    // the page that comes back should simply be there, not make its entrance a second time
-    try {
-      sessionStorage.setItem('correspondence:quiet', '1');
-    } catch { /* it will animate again; no harm */ }
-    location.reload();
-  });
-
+  // A new version of the service worker takes over quietly. The page is not
+  // reloaded for it: every file is fetched from the network first (see sw.js),
+  // so a page that has just opened is already running the newest code, and a
+  // reload would only cut across whatever is on screen, the opening animation
+  // included.
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
       console.error('Service worker registration failed:', err);
