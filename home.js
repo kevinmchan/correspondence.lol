@@ -1,5 +1,5 @@
 import { rpc } from '/shared/api.js';
-import { UUID, myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
+import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, openDeviceCode, saveProfile, startAfresh } from '/shared/account.js';
@@ -27,7 +27,6 @@ const welcome = {
   codeForm: document.getElementById('welcome-code'), code: document.getElementById('welcome-code-text'),
   codeNote: document.getElementById('welcome-code-note'),
 };
-const joinRoom = document.getElementById('join-room');
 // No profile: signed out, or a device that has never had a name, a room or a sign-in.
 const noProfile = () => {
   const profile = cachedProfile();
@@ -46,7 +45,6 @@ function showMe() {
   welcome.note.hidden = !profile.signed_out;
   me.card.hidden = none;
   form.hidden = none;
-  joinRoom.hidden = none;
   if (none) {
     rooms.hidden = true;
     return;
@@ -143,64 +141,24 @@ function showRooms() {
 showMe();
 if (!noProfile()) showRooms();
 
-// --- Getting into a room that already exists --------------------------------
-// With an invite link, pasted here (the installed app has no address bar to
-// paste it into), or with a code from another device, which puts this
-// device in that device's account (see shared/account.js).
-const joinForm = document.getElementById('join-room');
-const joinInput = document.getElementById('join-text');
-const joinNote = document.getElementById('join-note');
-
-async function bringAcross(code, quietly = false) {
+// --- Arriving from the Home Screen icon ---------------------------------------
+async function bringAcross(code) {
   try {
-    const moved = await claim(code);
+    await claim(code);
     await refresh();
-    // On a quiet start, speak up only when something new came across.
-    // On a quiet start, speak up only when something new came across.
-    const n = moved.rooms.length;
-    joinNote.className = 'message';
-    joinNote.textContent = quietly && moved.fresh.length === 0 ? ''
-      : `Welcome back${moved.name ? `, ${moved.name}` : ''}. ${n === 0 ? 'This device is in your account now.' : `Your ${n === 1 ? 'room is' : `${n} rooms are`} here.`}`;
     return true;
   } catch (failure) {
-    const offline = failure.message.startsWith('Can’t reach');
-    if (quietly && !offline) giveUpOn(code); // expired or another device's: stop trying on every start
-    if (!quietly) {
-      joinNote.className = 'message bad';
-      joinNote.textContent = failure.message;
-    }
+    if (!failure.message.startsWith('Can’t reach')) giveUpOn(code); // expired or another device's: stop trying on every start
     return false;
   }
 }
-
-joinForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const text = joinInput.value.trim();
-  joinNote.textContent = '';
-  const room = text.match(/[?&]id=([0-9a-f-]{36})/i)?.[1] ?? (UUID.test(text) ? text : null);
-  if (room && UUID.test(room)) {
-    const game = text.match(/[?&]game=([0-9a-f-]{36})/i)?.[1];
-    location.href = roomUrl(room) + (game && UUID.test(game) ? `&game=${game}` : '');
-    return;
-  }
-  const code = asCode(text);
-  if (!code) {
-    joinNote.className = 'message bad';
-    joinNote.textContent = 'That doesn’t look like an invite link or a code.';
-    return;
-  }
-  const button = joinForm.querySelector('button');
-  button.disabled = true;
-  if (await bringAcross(code)) joinInput.value = '';
-  button.disabled = false;
-});
 
 // The installed app, opened from an icon that carries a code: hand it in.
 // After that the two share a profile, and the server's list of rooms is enough.
 const carried = codeInAddress();
 if (carried) {
   history.replaceState(null, '', location.pathname + location.search);
-  bringAcross(carried, true).then((ok) => { if (!ok) refresh(); });
+  bringAcross(carried).then((ok) => { if (!ok) refresh(); });
 } else {
   refresh();
 }
