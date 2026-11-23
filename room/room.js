@@ -3,6 +3,7 @@ import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
+import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, randomSize, tokenize } from '/postmarks/game.js';
 
@@ -11,7 +12,7 @@ const el = {
   name: $('room-name'), loading: $('loading'),
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
   room: $('room'), members: $('members'), profile: $('profile'),
-  notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
+  notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), roomCode: $('room-code'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'),
   modes: $('modes'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
   phraseError: $('phrase-error'), phraseBack: $('phrase-back'), tokens: $('tokens'), tokenNote: $('token-note'), gameError: $('game-error'),
@@ -110,7 +111,11 @@ function render() {
   }));
   el.profile.hidden = false;
   el.profile.replaceChildren(avatar(room.people[room.you]));
-  el.shareLink.value = location.origin + roomUrl(room.id);
+  const code = `${room.code.slice(0, 3)}-${room.code.slice(3)}`;
+  if (el.roomCode.dataset.code !== code) {
+    el.roomCode.dataset.code = code;
+    copyable(el.roomCode, code);
+  }
 
   el.games.replaceChildren(...room.games.map((game) => {
     const li = document.createElement('li');
@@ -374,33 +379,19 @@ el.phraseForm.addEventListener('submit', (event) => {
   startGame('phrase', el.phraseText.value);
 });
 
-// Copy puts exactly the room link on the clipboard.
-el.copyLink.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(el.shareLink.value);
-    el.copyLink.textContent = 'Copied';
-  } catch {
-    el.shareLink.select();
-    el.copyLink.textContent = 'Select & copy';
-  }
-  setTimeout(() => { el.copyLink.textContent = 'Copy'; }, 2000);
-});
-
-// Share hands the link to the device's share sheet. Only the link is shared:
-// extra text mentioning the site's name gets turned into a second link, to the
-// home page, by messaging apps, and some share targets drop the real link.
+// Share hands the code to the device's share sheet, with a line saying what
+// it is for. (Tapping the code itself copies it.)
 if (navigator.share) {
   el.shareButton.hidden = false;
   el.shareButton.addEventListener('click', async () => {
     try {
-      await navigator.share({ url: el.shareLink.value });
+      await navigator.share({ text: `Join my room “${room.name}” on correspondence.lol with the code ${el.roomCode.dataset.code}` });
     } catch {
-      /* share sheet dismissed or unavailable: Copy is still there */
+      /* share sheet dismissed or unavailable: the code can still be copied */
     }
   });
 }
 
-el.shareLink.addEventListener('focus', () => el.shareLink.select());
 
 if (location.hash === '#phrase') history.replaceState(null, '', location.pathname + location.search);
 if (roomId) refresh();

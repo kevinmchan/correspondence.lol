@@ -10,7 +10,7 @@
 import { auth, rpc } from './api.js';
 import { load, myToken, resetIdentity, save, setMyName, setRooms } from './identity.js';
 import { saveLook } from './profile.js';
-import { copyable } from './handoff.js';
+import { copyable, prettyCode } from './handoff.js';
 
 const PROFILE_KEY = 'correspondence:profile:v1'; // { signed_in, email, signed_out }
 
@@ -180,7 +180,7 @@ export async function openDeviceCode() {
   dialog.append(title, lede, code, tip, error, foot);
   dialog.showModal();
   try {
-    copyable(code, await rpc('profile_code', { p_token: myToken() }));
+    copyable(code, prettyCode(await rpc('profile_code', { p_token: myToken() })));
     code.disabled = false;
   } catch (failure) {
     code.hidden = true;
