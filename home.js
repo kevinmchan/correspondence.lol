@@ -1,4 +1,5 @@
 import { rpc } from '/shared/api.js';
+import { play as sfx } from '/postmarks/sound.js';
 import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
@@ -274,4 +275,56 @@ if (critters && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const far = Math.hypot(dx, dy) || 1;
     for (const eyes of critters.querySelectorAll('.eyes')) eyes.style.translate = `${(dx / far) * 1.6}px ${(dy / far) * 1.2}px`;
   }, { passive: true });
+}
+
+// --- The mark and the background ----------------------------------------------------
+// Quieter than Penny and Dot, in that order: the mark stirs every twenty
+// seconds or so and opens its flap when tapped; the background shows a faint
+// tile where it is tapped, and one somewhere by itself only rarely.
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const mark = document.querySelector('svg.mark');
+  const act = (name) => {
+    mark.classList.remove('stir', 'open');
+    void mark.getBoundingClientRect();
+    mark.classList.add(name);
+    setTimeout(() => mark.classList.remove(name), 1300);
+  };
+  mark.addEventListener('click', () => {
+    act('open');
+    sfx('token'); // paper, then two bells: a letter opened
+  });
+  const stir = () => {
+    if (document.visibilityState === 'visible' && !mark.classList.contains('open')) act('stir');
+    setTimeout(stir, 18000 + Math.random() * 12000);
+  };
+  setTimeout(stir, 11000);
+
+  const TILES = ['#f08a76', '#f8d95a', '#7cc46a', '#2aa198', '#9ad3f7', '#736dd0', '#f3b3e6', '#9c6f4b', '#cdd6dd'];
+  // The dots behind the page are 1.75rem apart: a tile sits on that grid, two dots wide.
+  const pitch = 1.75 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const ghost = (pageX, pageY, faint) => {
+    const tile = document.createElement('div');
+    tile.className = faint ? 'ghost-tile faint' : 'ghost-tile';
+    const size = pitch * 2 - 6;
+    tile.style.width = tile.style.height = `${size}px`;
+    tile.style.left = `${Math.floor(pageX / (pitch * 2)) * pitch * 2 + pitch / 2 + 3}px`;
+    tile.style.top = `${Math.floor(pageY / (pitch * 2)) * pitch * 2 + pitch / 2 + 3}px`;
+    tile.style.setProperty('--tile', TILES[Math.floor(Math.random() * TILES.length)]);
+    document.body.append(tile);
+    setTimeout(() => tile.remove(), faint ? 2700 : 1600);
+  };
+  // a tap that lands on nothing in particular
+  document.addEventListener('pointerdown', (event) => {
+    if (!event.isPrimary || document.querySelector('dialog[open], #splash')) return;
+    if (event.target.closest('button, a, input, textarea, label, form, section, li, nav, svg, .critters, .install-banner, h1')) return;
+    ghost(event.pageX, event.pageY, false);
+    sfx('pick');
+  });
+  const drift = () => {
+    if (document.visibilityState === 'visible' && !document.querySelector('dialog[open], #splash')) {
+      ghost(Math.random() * innerWidth, scrollY + Math.random() * innerHeight, true);
+    }
+    setTimeout(drift, 30000 + Math.random() * 20000);
+  };
+  setTimeout(drift, 22000);
 }
