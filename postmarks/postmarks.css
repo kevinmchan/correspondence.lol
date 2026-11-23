@@ -84,6 +84,22 @@
 .cell.d7 { --tile: #8a5a36; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
 .cell.d8 { --tile: #cdd6dd; }
 
+/* On a dark background the same hues are drawn in a narrower band of
+   lightness: nothing near white (it glares) and nothing near the background
+   (it sinks), and a little less saturated. */
+@media (prefers-color-scheme: dark) {
+  .cell { --pc: rgb(0 0 0 / 0.2); }
+  .cell.d0 { --tile: #d98572; }
+  .cell.d1 { --tile: #d6ba5c; }
+  .cell.d2 { --tile: #72ad66; }
+  .cell.d3 { --tile: #3f9d95; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d4 { --tile: #82b7da; }
+  .cell.d5 { --tile: #736dd0; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d6 { --tile: #d09ac6; }
+  .cell.d7 { --tile: #9c6f4b; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d8 { --tile: #a9b3bc; }
+}
+
 /* Patterns, for anyone who would rather not tell districts apart by colour
    alone. Off unless switched on in the profile menu. */
 .patterns .cell.d0 { --pat: repeating-linear-gradient(45deg, var(--pc) 0 0.07em, transparent 0.07em 0.26em); }
@@ -118,6 +134,24 @@
   color: #b3261e;
   font-weight: 600;
   box-shadow: none;
+}
+
+/* Faded toward near-black, colours go muddy (yellow to olive, coral to brown).
+   In the dark they are dimmed with their hue kept instead, and the cross is
+   drawn in the district's own colour. */
+@media (prefers-color-scheme: dark) {
+  .cell[data-state="cross"] {
+    background: color-mix(in oklch, var(--tile) 36%, #1f272e);
+    background-image: var(--pat, none);
+    background-size: var(--pat-size, auto);
+    color: color-mix(in srgb, var(--tile) 80%, #fff);
+  }
+  .cell[data-state="miss"] {
+    background:
+      repeating-linear-gradient(45deg, rgb(232 102 79 / 0.3) 0 4px, transparent 4px 8px),
+      color-mix(in oklch, var(--tile) 36%, #1f272e);
+    color: #f08a76;
+  }
 }
 
 .cell[data-state="letter"] {
