@@ -40,6 +40,21 @@ export function applyPatterns() {
   document.documentElement.classList.toggle('patterns', patternsOn());
 }
 
+// Light or dark. 'auto' follows the device; the others hold whatever it says.
+const THEME_KEY = 'correspondence:theme:v1';
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+export const themeChoice = () => {
+  const kept = load(THEME_KEY);
+  return kept === 'light' || kept === 'dark' ? kept : 'auto';
+};
+export function applyTheme() {
+  const choice = themeChoice();
+  const dark = choice === 'dark' || (choice === 'auto' && systemDark.matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#161d24' : '#f6f1e7');
+}
+systemDark.addEventListener('change', applyTheme); // on 'auto', follow the device as it changes
+
 let dialog = null;
 
 // Open the profile editor. onSave({ name, avatar, color }) should return a
@@ -147,7 +162,32 @@ export function openProfile({ person, onSave }) {
     row.append(label, input);
     return row;
   };
+  // light, dark, or as the device has it
+  const theme = document.createElement('div');
+  theme.className = 'setting choice';
+  const themeLabel = document.createElement('span');
+  themeLabel.textContent = 'Appearance';
+  const segments = document.createElement('div');
+  segments.className = 'segments';
+  segments.setAttribute('role', 'radiogroup');
+  segments.setAttribute('aria-label', 'Appearance');
+  for (const [value, text] of [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]) {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.textContent = text;
+    option.setAttribute('role', 'radio');
+    option.setAttribute('aria-checked', String(themeChoice() === value));
+    option.addEventListener('click', () => {
+      save(THEME_KEY, value === 'auto' ? null : value);
+      applyTheme();
+      for (const other of segments.children) other.setAttribute('aria-checked', String(other === option));
+    });
+    segments.append(option);
+  }
+  theme.append(themeLabel, segments);
+
   settings.append(
+    theme,
     toggle('Music', !isMusicOff(), (on) => {
       setMusicOff(!on);
       document.dispatchEvent(new Event('soundchange'));

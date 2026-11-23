@@ -7,8 +7,19 @@
   <meta name="description" content="Games played by turns, together. Open a room, invite your friends, play and chat.">
   <link rel="canonical" href="https://correspondence.lol/">
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#f6f1e7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#161d24" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f1e7">
+  <script>
+    // Light or dark: the choice made in the profile menu, or else whatever the
+    // device says. Set before anything is painted; kept up to date by
+    // shared/profile.js.
+    (function () {
+      var choice = null;
+      try { choice = JSON.parse(localStorage.getItem('correspondence:theme:v1')); } catch (e) {}
+      var dark = choice === 'dark' || (choice !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.querySelector('meta[name="theme-color"]').content = dark ? '#161d24' : '#f6f1e7';
+    })();
+  </script>
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">

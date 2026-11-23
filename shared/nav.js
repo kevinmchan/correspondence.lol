@@ -37,7 +37,8 @@ async function show(url, { announce }) {
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
 
   const root = document.createElement('div');
-  root.className = `screen screen-${screen.name}${screen.depth > 0 ? ' page' : ''}`;
+  // 'opening' marks the screen the app starts on, whose contents rise into place
+  root.className = `screen screen-${screen.name}${screen.depth > 0 ? ' page' : ''}${current ? '' : ' opening'}`;
   root.append(document.getElementById(`screen-${screen.name}`).content.cloneNode(true));
   const life = newLife();
   const leaving = current;
