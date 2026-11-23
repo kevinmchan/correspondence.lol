@@ -70,8 +70,78 @@ function gameStatus(game) {
   return { text: `Your move · ${progress}`, go: true };
 }
 
+// The room's name. For a member it is a button: a tap turns it into a field,
+// Enter (or leaving the field) saves, Escape puts it back.
+let renaming = false;
+
+function showName() {
+  if (renaming) return; // do not pull the field out from under someone typing
+  if (room.you === null) {
+    el.name.textContent = room.name;
+    return;
+  }
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'rename';
+  button.textContent = room.name;
+  button.title = 'Rename the room';
+  button.setAttribute('aria-label', `${room.name}. Rename the room`);
+  button.addEventListener('click', editName);
+  el.name.replaceChildren(button);
+}
+
+function editName() {
+  renaming = true;
+  const form = document.createElement('form');
+  form.className = 'rename';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.maxLength = 40;
+  input.required = true;
+  input.autocomplete = 'off';
+  input.enterKeyHint = 'done';
+  input.value = room.name;
+  input.setAttribute('aria-label', 'Room name');
+  form.append(input);
+  el.name.replaceChildren(form);
+  input.focus();
+  input.select();
+
+  let done = false;
+  const finish = async (save) => {
+    if (done) return;
+    done = true;
+    const name = input.value.trim();
+    if (save && name && name !== room.name) {
+      input.disabled = true;
+      try {
+        const view = await rpc('room_title', { p_room: roomId, p_token: myToken(), p_name: name });
+        room = { ...view, messages: view.messages.filter((message) => !chat || message.id > chat.lastId) };
+        rememberRoom(room.id, room.name);
+        watcher?.poke();
+        renaming = false;
+        render();
+        return;
+      } catch (failure) {
+        el.gameError.textContent = failure.message;
+      }
+    }
+    renaming = false;
+    showName();
+    el.name.querySelector('button')?.focus();
+  };
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    finish(true);
+  });
+  input.addEventListener('blur', () => finish(true));
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') finish(false);
+  });
+}
+
 function render() {
-  el.name.textContent = room.name;
+  showName();
   setTitle();
   el.loading.hidden = true;
 
