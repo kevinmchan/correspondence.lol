@@ -150,6 +150,13 @@ the square under your finger comes from two things and nothing else.
   by on that side, or far off, or Penny cannot tell and says so. Fewer posts
   are loud in each place, and in the last none is.
 
+What Penny hears is shown on the square that was touched as well as on Penny,
+because that is where anyone is looking: a faint warm edge for something far
+off, a glow for something close, a beating light for a post right there, a
+moment's greying for nothing. It fades, except "right there", which stays
+until the post is opened. Penny comes right up for anything close, and a
+finger sliding across the map is answered square by square.
+
 So a rule is learnt by Penny no longer needing to listen. Penny can be unsure,
 and can be outdone: open a post it had no idea about and it is amazed at you.
 

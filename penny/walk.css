@@ -119,6 +119,18 @@
 .walk-board .cell.ringing.sought { --ring: #f8d95a; }
 @keyframes ringing { 0% { outline-color: var(--ring); outline-offset: 0; filter: brightness(1.25); } 100% { outline-color: transparent; outline-offset: 0.42em; filter: none; } }
 
+/* What Penny hears, on the square that was touched (walk.js warm()): waiting
+   while it listens; then its warmth, by how close the sound is; or a moment's
+   greying for nothing heard. */
+.walk-board .cell.asking { z-index: 3; outline: 0.07em solid color-mix(in srgb, var(--ink) 40%, transparent); outline-offset: 1px; }
+.walk-board .cell.heard {
+  z-index: 3; --heat: 0.5;
+  box-shadow: 0 0 0 0.08em rgb(246 150 96 / calc(0.4 + var(--heat) * 0.6)), 0 0 calc(var(--heat) * 0.9em) calc(var(--heat) * 0.24em) rgb(248 176 100 / calc(var(--heat) * 0.95)), inset 0 -0.14em 0 rgb(0 0 0 / 0.14);
+  filter: brightness(calc(1 + var(--heat) * 0.14));
+}
+.walk-board .cell.cold { animation: cold 900ms ease-out; }
+@keyframes cold { 0%, 55% { filter: saturate(0.35) brightness(0.9); } 100% { filter: none; } }
+
 /* One tap leaves a square ajar, for as long as a second tap would count. */
 .walk-board .cell.ajar { z-index: 3; filter: brightness(1.1); box-shadow: 0 0 0 0.06em var(--paper), 0 0.16em 0.3em rgb(0 0 0 / 0.28), inset 0 -0.14em 0 rgb(0 0 0 / 0.14); }
 /* The squares that would have had nowhere, when it can see why a cross is right; and the crosses it cannot answer for, when something has. */
@@ -134,6 +146,8 @@
   .walk-board .cell.why svg { animation: why 700ms ease-in-out; }
   .walk-board .cell.ajar { transform: translateY(-6%) scale(1.05); }
   .walk-board .cell.fx-knock { animation: knock 220ms ease-out; }
+  .walk-board .cell.asking { animation: asking 620ms ease-in-out infinite; }
+  .walk-board .cell.heard.here { animation: here 760ms ease-in-out infinite; }
   .walk-board .cell.starve { animation: starve 600ms ease-in-out both; }
   .walk-board .cell.stir { animation: stir 700ms ease-in-out; }
   /* through a portal: the map rushes up through it, then settles, from high above, on the next place */
@@ -142,6 +156,8 @@
   .walk.arriving .walk-ground { transform-origin: var(--lit-x, 50%) var(--lit-y, 50%); animation: map-settle 620ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 }
 @keyframes why { 0%, 100% { transform: none; } 30% { transform: scale(1.28) rotate(-8deg); } 60% { transform: scale(1.1) rotate(6deg); } }
+@keyframes asking { 0%, 100% { outline-offset: 1px; } 50% { outline-offset: 0.12em; } }
+@keyframes here { 0%, 100% { transform: none; } 50% { transform: scale(1.06); } }
 @keyframes knock { 0%, 100% { transform: none; } 40% { transform: scale(0.93); } }
 @keyframes starve { 0%, 100% { transform: none; outline-color: transparent; } 15%, 45%, 75% { transform: translateX(-2.5%); outline-color: var(--ink); } 30%, 60% { transform: translateX(2.5%); } }
 @keyframes stir { 0%, 100% { transform: none; filter: none; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14); } 40% { transform: scale(1.04); filter: brightness(1.15); box-shadow: 0 0 0 0.06em #f6a070, inset 0 -0.14em 0 rgb(0 0 0 / 0.14); } }
