@@ -8,12 +8,13 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
+| `penny/` | Penny: its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and Penny's story at `/?penny` (`story.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
-| `tests/` | Tests for the game rules and puzzle generator (`npm test`, needs only Node) |
+| `tests/` | Tests for the game rules, the puzzle generator and Penny's places (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
@@ -38,6 +39,164 @@ device for reduced motion.
 
 The envelopes on the board are called posts, so that "letters" only ever means
 the letters of a phrase. A double tap on a square guesses a post there.
+
+## Penny
+
+Penny is a letter. Penny cannot speak, read or write, so nothing Penny is part
+of uses words (the lines for screen readers aside). What Penny has is a voice,
+a closed-mouth hum that comes from its seal (`penny/penny.js`), and feelings,
+which show.
+
+**Penny feels things hard.** Its highs are very high and its lows go all the
+way down, and both pass quickly. That intensity is what the adventure looks
+like: on the map, what Penny feels colours what Penny sees.
+
+**Penny's life is finite, and it is finding that out.** It was posted long ago
+and never delivered; the rain that smudged its address did not come off. A
+sound is heard once and is over. A day goes one way. This is meant to be both
+things at once, beautiful and painful, and nothing should resolve it.
+
+### The adventure
+
+Only the first quarter is built. The shape of the whole:
+
+| Mark | What happens | State |
+| --- | --- | --- |
+| The start | Penny, alone, wants to take you through a portal. It is looking for someone, and all it knows of them is a sound. | built |
+| To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them. | built |
+| **A quarter** | **Penny finds a friend, Dot**, a stamp, in the last post of the fifth place. From here on Penny is not alone. | built |
+| To a half | The search goes on, with Dot. | not written |
+| **A half** | **Who Penny is searching for is revealed.** | not written, and not decided |
+| The second half | | not written |
+
+**Who or what makes the sound is not decided, and nothing in the app says or
+hints.** Dot is a friend met on the way, not the one being looked for.
+
+### Where Penny is
+
+The screen is a map seen from far above, and Penny is not on it. Penny stands
+at the bottom edge of the window, in the viewer's own space, life size, and
+looks up at the map with you (`penny/pal.js`). It is one layer over the whole
+app, so screens slide past and Penny stays; a screen that wants Penny asks,
+and Penny goes back under the edge when no screen does. At present the home
+page and the map ask. Once Dot has been found, Dot stands tucked in beside it.
+
+Everything Penny says is a feeling. A mood sets its face and how it holds
+itself (the point of its flap works as a brow); a gesture is one movement; it
+looks at things, leans towards them, and walks along the edge to stand under
+whatever it wants you to see, which is the nearest it has to pointing. It
+rests low and comes up for what matters, so rising is itself a feeling. Its
+seal glows with how warm it feels and brightens with every note it hums, so
+its voice can be seen with sound off. On the map, its mood also throws a
+light of its own colour up the screen, and the strongest feelings make the
+map itself richer or drain it.
+
+Penny never blocks the page. It ducks down to the top of its flap where
+something that can be pressed is under it, a tap that lands on it over a button
+goes to the button, it gets out of the way at once if the page is pressed or
+scrolled while it is up, and while something is being typed it goes right
+under.
+
+### What Penny wants
+
+On the home page, which is the same map seen from much further up, Penny wants
+two things, and shows them by coming up and standing under them.
+
+- **The portal**, top left, the one place marked on the map. Until the first
+  places have been walked Penny keeps coming back to it: it calls, walks under
+  the portal, looks up at it and back at you. The first time in a visit, and
+  sometimes after, it shuts its eyes first and what it remembers of the sound
+  can be heard, a long way off: at the start that is one note, the beginning,
+  which is all Penny has. Going through is a rush up through the portal, not a
+  slide to another screen.
+- **The app installed.** Once you have been through a portal with it, Penny
+  stands under the Install button and pleads. It asks at most three times in a
+  visit, however often the home page is come back to, leaving it twice as long
+  each time; a no to the browser's prompt is a no for the rest of the visit,
+  and Penny lets it be. Nothing waits on it. When
+  the app is installed, and the first time it is opened as an app, Penny is as
+  glad as it gets. (`app.js` tells it where installing stands through
+  `installState()`, `requestInstall()` and an `install` event.)
+
+A tap on Penny while it is asking for the app to be installed is a yes to
+that. Any other tap goes through the portal with it, until the first places
+have been walked, and after that opens Penny's story.
+
+### Walking the map
+
+Through the portal is the map itself (`/?walk`, `penny/walk.js`): a few
+districts lit, the rest faint all round. The way on is always up the screen,
+and the places already walked stay on the map, flat, below. There is no
+tutorial, and nothing is shown to be copied: no ring, no arrow, no lit square,
+no rhythm in a hum. There are five places, each a small piece of the game with
+one more rule than the last (`penny/places.js`), and you play them while Penny
+stands beside you:
+
+1. a double tap opens a post
+2. one post per colour
+3. one post per row and column
+4. posts cannot touch
+5. a tap or a drag crosses squares out
+
+Penny does not know where the posts are; it is looking too. How it feels about
+the square under your finger comes from two things and nothing else.
+
+- **Its head: the rules.** A square that the posts already found rule out gets
+  a shake of the head and a glance at the post that says so. A colour, row or
+  column with one square left gets a yes Penny is sure of. Both are instant.
+- **Its ear.** Some posts are loud enough to be heard through the map by a
+  finger close to them; the rest are quiet until opened. To hear, Penny shuts
+  its eyes and listens for a moment, and then the post is right here, or close
+  by on that side, or far off, or Penny cannot tell and says so. Fewer posts
+  are loud in each place, and in the last none is.
+
+So a rule is learnt by Penny no longer needing to listen. Penny can be unsure,
+and can be outdone: open a post it had no idea about and it is amazed at you.
+
+One tap leaves a square ajar for as long as a second tap would count, and if
+Penny thinks there is a post in it, Penny holds its breath for exactly that
+long. In the first place the wait grows with each tap left alone.
+
+When a post is opened, the squares the place's newest rule takes away light up
+one after another, so the rule is seen as a shape, and Penny's eyes follow it.
+Then, every time, this could be the one: Penny can hardly bear it, and holds
+still to listen. If it is somebody else's mail, that goes all the way down, and
+then Penny is glad for them. In the second, third and fourth places the last
+post found has a piece of the sound Penny is after; it hums the piece back,
+holds on to it a moment longer than it lasts, and looks a long way up the map.
+What has been heard is drawn at the top of the map, a mark a note, and can be
+played again from there, always further off than it was when it was heard.
+
+A guess that finds nothing leaves a cross and costs nothing; Penny flinches,
+and it is over. In the last place a finger makes crosses, as in the game, and
+there your crosses are Penny's memory: a cross it can see the reason for gets
+a nod, one it cannot gets its doubt, and one on a square it was sure of
+frightens it. It cannot take any of them off.
+
+Left alone, Penny does not point. If the rules have made a square certain its
+eyes find the square, and later it goes and stands underneath. Otherwise it
+waits for your finger, and now and then a loud post stirs of its own accord.
+
+One day passes over the five places: early light in the first, evening by the
+last. In the last post of the last place there is no sound. There is Dot, who
+looks out, map-small, and then crosses over to stand beside Penny. The portal
+that opens after that leads out to a real solo game.
+
+The places can be walked again afterwards, from the same portal, now quieter.
+Dot is beside Penny from the start then, and is not found a second time: that
+last post is somebody's ordinary mail. Nothing already heard is lost.
+
+### Penny's story
+
+Once the first places have been walked, a tap on Penny (when it is not asking
+for the app to be installed) opens its story
+(`/?penny`, `penny/story.js`), where the only sound is Penny's voice. Penny is
+alone in the rain, feels something warm inside that it cannot read, calls out
+and hears nothing; morning comes, and a post box with it, and Penny hums into
+the post. After that it waits, and the story does not go on by itself: it
+waits for a touch. Then an answer comes, a light from a long way off. Whose it
+is the story does not say; it is why Penny is searching. Dot is not in this
+story: Dot is met later. The app's music stands aside while the screen is up.
 
 ## Game modes
 
@@ -101,7 +260,9 @@ Then restore the two comment lines at the top of the file and bump the version i
 ## Installing
 
 People who have not installed the app see a banner across the top of the home
-page (`app.js`): "Install to receive notifications from your friends." Its
+page (`app.js`): "Install for the full view, and notifications from your
+friends." It gives both reasons to install: the app gets the whole screen,
+with no browser round it, and the device can be told when a friend has moved. Its
 Install button triggers the browser's one-tap install where there is one.
 Elsewhere it opens a guide with a picture and steps for the device: iPhone and
 iPad (Safari and other browsers), Android, desktop Chrome and Edge, and Safari

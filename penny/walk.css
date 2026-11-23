@@ -1,0 +1,173 @@
+/* Walking the map with Penny: the portals, the map, and the places on it. */
+
+/* --- A portal: a ring of the game's colours turning round a dark middle ------------ */
+.portal {
+  position: relative; display: block; flex: none;
+  width: 3.6rem; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer; isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+.portal::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(#f08a76, #f8d95a, #7cc46a, #2aa198, #9ad3f7, #736dd0, #f3b3e6, #f08a76);
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0.9rem color-mix(in srgb, #9ad3f7 55%, transparent);
+}
+.portal::after {
+  content: ""; position: absolute; inset: 15%; border-radius: 50%;
+  background: radial-gradient(circle at 50% 46%, #fff 0 5%, #3b4d63 12%, #1b2732 46%, #0c1217 100%);
+  box-shadow: inset 0 0 0.5rem #000;
+}
+.portal svg { position: absolute; inset: 27%; width: 46%; height: 46%; z-index: 1; display: none; }
+.portal.last svg { display: block; }
+.portal.last::after { background: radial-gradient(circle, #3b4d63 0, #1b2732 60%, #0c1217 100%); }
+.portal:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.portal.calm { opacity: 0.6; }
+@media (prefers-reduced-motion: no-preference) {
+  .portal::before { animation: portal-turn 7s linear infinite; }
+  .portal:not(.calm) { animation: portal-breathe 2.2s ease-in-out infinite; }
+  .portal.called { animation: portal-call 700ms ease-out; }
+  /* (the screen the app opens on raises its contents into place: not this) */
+  .screen.opening main > .portal { animation: none; }
+  .screen.opening main > .portal:not(.calm) { animation: portal-breathe 2.2s ease-in-out infinite; }
+  .screen.opening main > .portal.called { animation: portal-call 700ms ease-out; }
+  .walk .portal:not([hidden]) { animation: portal-open 520ms cubic-bezier(0.3, 1.5, 0.5, 1) both, portal-breathe 2.2s ease-in-out 520ms infinite; }
+}
+@keyframes portal-turn { to { transform: rotate(1turn); } }
+@keyframes portal-breathe { 0%, 100% { transform: none; } 50% { transform: scale(1.07); } }
+@keyframes portal-call { 0% { transform: none; filter: none; } 35% { transform: scale(1.28); filter: brightness(1.3); } 100% { transform: none; filter: none; } }
+@keyframes portal-open { from { transform: scale(0) rotate(-120deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* --- The map ---------------------------------------------------------------------
+   Squares all the way out, faint, lined up with the lit ones of the place and
+   fading with distance from it: the place is a few districts of something much
+   larger, looked at from a long way up. */
+.map-far {
+  position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  --tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='4.3' y='4.3' width='91.4' height='91.4' rx='20'/%3E%3C/svg%3E");
+  /* strongest near the lit place, and never quite gone: the map covers the whole window */
+  --fade: radial-gradient(circle at var(--lit-x, 50%) var(--lit-y, 40%), #000 0, rgb(0 0 0 / 0.75) calc(var(--pitch, 4rem) * 2.4), rgb(0 0 0 / 0.32) calc(var(--pitch, 4rem) * 6.2));
+  -webkit-mask-image: var(--tile), var(--fade);
+  mask-image: var(--tile), var(--fade);
+  -webkit-mask-size: var(--pitch, 4rem) var(--pitch, 4rem), 100% 100%;
+  mask-size: var(--pitch, 4rem) var(--pitch, 4rem), 100% 100%;
+  -webkit-mask-position: var(--map-x, 0) var(--map-y, 0), 0 0;
+  mask-position: var(--map-x, 0) var(--map-y, 0), 0 0;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* --- A place on it ------------------------------------------------------------------
+   Up the screen is far and onward; down is near and known. The place sits
+   just above Penny's head, the portal opens on the square above it, and the
+   places already walked lie flat below, mostly under the edge it stands at. */
+.screen-walk main.walk { position: relative; padding: 0; overflow: clip; }
+.walk .penny-back { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); z-index: 3; }
+.walk-ground {
+  --top: max(5.5rem, calc(env(safe-area-inset-top) + 5rem)); /* clear of the way back and the sound so far */
+  --bottom: calc(var(--pal-w) * 0.7 + env(safe-area-inset-bottom, 0px) + 1.6rem); /* clear of its face */
+  --avail: calc(100vh - var(--top) - var(--bottom));
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding: var(--top) 1rem var(--bottom);
+}
+@supports (height: 1dvh) { .walk-ground { --avail: calc(100dvh - var(--top) - var(--bottom)); } }
+/* never so big that the square above it, where the portal opens, has no room */
+.walk-board { position: relative; z-index: 1; width: min(100%, calc(var(--n) * 4.5rem), calc(var(--avail) * var(--n) / (var(--n) + 1))); }
+.walk-ground .portal { position: absolute; z-index: 2; }
+.walk-known { position: absolute; inset: 0; pointer-events: none; }
+.walk-known .cell { position: absolute; cursor: default; box-shadow: none; border-radius: 22%; background: color-mix(in srgb, var(--tile) 50%, var(--paper)); background-image: none; }
+.walk-known .cell.held { background: var(--tile); }
+
+/* One day passes over these places: early in the first, evening by the last.
+   It is only the colour of the light, and it only goes one way. */
+.walk-light { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1.4s ease; }
+.walk[data-hour="0"] .walk-light { opacity: 1; background: linear-gradient(to bottom, rgb(255 196 176 / 0.2), rgb(255 232 180 / 0.1)); }
+.walk[data-hour="1"] .walk-light { opacity: 1; background: rgb(255 246 206 / 0.07); }
+.walk[data-hour="3"] .walk-light { opacity: 1; background: linear-gradient(to bottom, rgb(255 178 70 / 0.1), rgb(255 140 60 / 0.2)); }
+.walk[data-hour="4"] .walk-light { opacity: 1; background: linear-gradient(to bottom, rgb(88 72 152 / 0.24), rgb(240 118 88 / 0.22)); }
+.walk-ground .portal { z-index: 3; }
+
+/* A phone held sideways: no room under the map, so Penny stands at its right-hand end. */
+@media (max-height: 30rem) and (orientation: landscape) {
+  .walk-ground { --top: 3.4rem; --bottom: 1rem; padding-left: 4rem; padding-right: calc(var(--pal-w) + 2rem); }
+}
+
+/* The sound so far: a mark a note, as high as the note, and a tail for the rest. */
+.walk-trail {
+  position: absolute; z-index: 3; top: max(1rem, calc(env(safe-area-inset-top) + 0.6rem)); left: 50%; translate: -50% 0;
+  display: flex; align-items: flex-end; gap: 0.32rem; height: 2.6rem; padding: 1.3rem 0.9rem 0.5rem;
+  border: 0; border-radius: 1.3rem; background: color-mix(in srgb, var(--ink) 6%, transparent); cursor: pointer;
+}
+.walk-trail[hidden] { display: none; }
+.walk-trail i { display: block; width: calc(0.45rem + var(--w, 0.3) * 1.1rem); height: 0.45rem; border-radius: 0.25rem; background: #d9962b; translate: 0 calc(var(--h, 0) * -1.1rem); }
+.walk-trail i.more { width: 0.3rem; height: 0.3rem; background: color-mix(in srgb, var(--ink) 30%, transparent); translate: 0 -0.5rem; }
+.walk-trail i.more:nth-last-child(2) { opacity: 0.6; }
+.walk-trail i.more:last-child { opacity: 0.3; }
+.walk-trail i.lit { animation: trail-lit 700ms ease-out; }
+@keyframes trail-lit { 0% { filter: none; box-shadow: 0 0 0 0 rgb(248 217 90 / 0.9); } 25% { filter: brightness(1.5); box-shadow: 0 0 0 0.3rem rgb(248 217 90 / 0.5); } 100% { filter: none; box-shadow: 0 0 0 0.6rem rgb(248 217 90 / 0); } }
+
+/* The squares a rule takes away, lit one after another, so the rule is seen as a shape. */
+.walk-board .cell.teach { z-index: 3; outline: 0.085em solid transparent; outline-offset: 1px; animation: teach 1100ms ease-out var(--d, 0ms) both; }
+.walk-board .cell.fx-cross.teach { animation: teach 1100ms ease-out var(--d, 0ms) both; }
+@keyframes teach { 0% { outline-color: transparent; } 18% { outline-color: var(--ink); } 70% { outline-color: var(--ink); } 100% { outline-color: transparent; } }
+
+/* A sound coming out of a post: the square rings, once a note. */
+.walk-board .cell.ringing { z-index: 4; outline: 0.1em solid transparent; animation: ringing 460ms ease-out both; --ring: #fff; }
+.walk-board .cell.ringing.sought { --ring: #f8d95a; }
+@keyframes ringing { 0% { outline-color: var(--ring); outline-offset: 0; filter: brightness(1.25); } 100% { outline-color: transparent; outline-offset: 0.42em; filter: none; } }
+
+/* One tap leaves a square ajar, for as long as a second tap would count. */
+.walk-board .cell.ajar { z-index: 3; filter: brightness(1.1); box-shadow: 0 0 0 0.06em var(--paper), 0 0.16em 0.3em rgb(0 0 0 / 0.28), inset 0 -0.14em 0 rgb(0 0 0 / 0.14); }
+/* The squares that would have had nowhere, when it can see why a cross is right; and the crosses it cannot answer for, when something has. */
+.walk-board .cell.starve { z-index: 3; outline: 0.07em dashed var(--ink); outline-offset: 1px; animation: starve-still 600ms ease-out both; }
+/* A loud post stirring of its own accord. */
+.walk-board .cell.stir { animation: stir-still 700ms ease-out; }
+@keyframes starve-still { 0%, 70% { outline-color: var(--ink); } 100% { outline-color: transparent; } }
+@keyframes stir-still { 0%, 100% { filter: none; } 40% { filter: brightness(1.18); } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .walk-board .cell.fx-cross.teach { animation: cross-tile 300ms ease-out var(--d, 0ms) both, teach 1100ms ease-out var(--d, 0ms) both; }
+  /* the post that says no stirs, when it glances at it */
+  .walk-board .cell.why svg { animation: why 700ms ease-in-out; }
+  .walk-board .cell.ajar { transform: translateY(-6%) scale(1.05); }
+  .walk-board .cell.fx-knock { animation: knock 220ms ease-out; }
+  .walk-board .cell.starve { animation: starve 600ms ease-in-out both; }
+  .walk-board .cell.stir { animation: stir 700ms ease-in-out; }
+  /* through a portal: the map rushes up through it, then settles, from high above, on the next place */
+  .walk.through .walk-ground { transform-origin: var(--through-x, 50%) var(--through-y, 50%); transform: scale(7); opacity: 0; transition: transform 520ms cubic-bezier(0.6, 0, 0.9, 0.5), opacity 380ms ease 140ms; }
+  .walk.through .walk-trail { opacity: 0; transition: opacity 300ms ease; }
+  .walk.arriving .walk-ground { transform-origin: var(--lit-x, 50%) var(--lit-y, 50%); animation: map-settle 620ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+}
+@keyframes why { 0%, 100% { transform: none; } 30% { transform: scale(1.28) rotate(-8deg); } 60% { transform: scale(1.1) rotate(6deg); } }
+@keyframes knock { 0%, 100% { transform: none; } 40% { transform: scale(0.93); } }
+@keyframes starve { 0%, 100% { transform: none; outline-color: transparent; } 15%, 45%, 75% { transform: translateX(-2.5%); outline-color: var(--ink); } 30%, 60% { transform: translateX(2.5%); } }
+@keyframes stir { 0%, 100% { transform: none; filter: none; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14); } 40% { transform: scale(1.04); filter: brightness(1.15); box-shadow: 0 0 0 0.06em #f6a070, inset 0 -0.14em 0 rgb(0 0 0 / 0.14); } }
+@keyframes map-settle { from { transform: scale(0.35); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* --- The home page: the same map, from much further up ---------------------------
+   Squares half the size of the page's dots, over the whole page, strongest
+   round the one place marked on it: the portal, top left. A square is about
+   the size of one of Penny's eyes. (home.js lines the squares up with the
+   dots.) */
+.home-map { --pitch: 0.875rem; --map-x: 0px; --lit-x: 2.625rem; --lit-y: calc(var(--map-y, 0px) + 3.5rem); }
+.home-map.map-far { --fade: radial-gradient(circle at var(--lit-x) var(--lit-y), #000 0, rgb(0 0 0 / 0.8) 3rem, rgb(0 0 0 / 0.3) 9rem); }
+/* the portal takes up one block of sixteen squares */
+.home-portal { position: absolute; z-index: 1; left: calc(0.875rem + 3px); top: calc(var(--map-y, 0px) + 1.75rem + 3px); width: calc(3.5rem - 6px); }
+/* the page ends above Penny's head, so that nothing has to be read or pressed through it */
+.screen-home main { padding-bottom: calc(var(--pal-w) * 0.6 + env(safe-area-inset-bottom, 0px) + 1.2rem); }
+
+/* Going through the home page's portal is not a slide to the next screen: the
+   map rushes up through the portal, and settles, from high above, on the
+   first place. Coming back, it falls away to where the portal is. */
+@media (prefers-reduced-motion: no-preference) {
+  .screen-home.leaving.forth:has(~ .screen-walk) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-rush 340ms cubic-bezier(0.6, 0, 0.9, 0.5) both; }
+  .screen-home.leaving.forth ~ .screen-walk.entering { animation: map-settle 360ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+  .screen-walk.leaving.back:has(~ .screen-home) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-fall 340ms cubic-bezier(0.4, 0, 0.8, 0.4) both; }
+  .screen-walk.leaving.back ~ .screen-home.entering { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-near 360ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+}
+@keyframes map-rush { to { transform: scale(7); opacity: 0; } }
+@keyframes map-fall { to { transform: scale(0.2); opacity: 0; } }
+@keyframes map-near { from { transform: scale(4.6); opacity: 0; } to { transform: none; opacity: 1; } }

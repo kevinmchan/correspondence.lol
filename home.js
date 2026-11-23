@@ -5,6 +5,16 @@ import { myName, recentRooms, roomUrl } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
+import { load, save } from '/shared/identity.js';
+import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
+import { claim as callPal } from '/penny/pal.js';
+import { notesHeard, playMail, remembered } from '/penny/mail.js';
+
+// How Penny's asking has gone this visit. It is kept here, outside the screen,
+// because the screen is made afresh every time the home page is come back to:
+// three asks for the app to be installed is three for the visit, not three for
+// each return from a room.
+const visit = { pleas: 0, gap: 20000, notBefore: 0, remembered: false };
 
 // The home screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -167,61 +177,266 @@ export function mount(root, life) {
   // The version, small and out of the way at the bottom of the page.
   $('version').textContent = self.APP_VERSION ?? '';
 
-  // --- Penny and Dot --------------------------------------------------------------
-  // The two in the bottom corner mostly just breathe and blink (that is all CSS).
-  // Every so often one of them does something small, they glance toward wherever
-  // the page was last touched, and a tap on either gets a hop and a heart.
-  const critters = $('critters');
-  if (critters && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const penny = critters.querySelector('.penny');
-    const dot = critters.querySelector('.dot');
-    const once = (who, name) => {
-      who.classList.remove('hop', 'wiggle', 'glow');
-      void who.getBoundingClientRect(); // so the same move can play twice running
-      who.classList.add(name);
-      who.addEventListener('animationend', () => who.classList.remove(name), { once: true });
-    };
-    const heart = (who) => {
-      const box = who.getBoundingClientRect();
-      const home = critters.getBoundingClientRect();
-      const span = document.createElement('span');
-      span.className = 'heart';
-      span.textContent = '♥';
-      span.style.left = `${box.left - home.left + box.width / 2 - 5}px`;
-      span.style.top = `${box.top - home.top - 6}px`;
-      critters.append(span);
-      setTimeout(() => span.remove(), 1400);
-    };
-    const idle = () => {
-      if (document.visibilityState === 'visible') {
-        const roll = Math.random();
-        if (roll < 0.3) once(penny, 'wiggle');
-        else if (roll < 0.5) once(dot, 'hop');
-        else if (roll < 0.7) once(penny, 'glow');
-        else if (roll < 0.85) once(dot, 'wiggle');
-        else { once(penny, 'hop'); setTimeout(() => once(dot, 'hop'), 180); } // one sets the other off
-      }
-      setTimeout(idle, 7000 + Math.random() * 9000);
-    };
-    setTimeout(idle, 5000);
-    for (const who of [penny, dot]) {
-      who.addEventListener('click', () => {
-        once(who, 'hop');
-        heart(who);
-      });
+  // --- Penny ----------------------------------------------------------------------
+  // Penny is not on the page. Penny stands at the bottom edge of the window
+  // (penny/pal.js), life size, and looks up at this page the way one looks at
+  // a map; once Dot has been found, Dot stands beside it. Mostly Penny just
+  // watches, eyes over the edge, ducked right down wherever something of the
+  // page's is under it. But there are two things Penny wants, and since it
+  // cannot say so, it comes up and shows them:
+  //
+  //   The portal, top left: a place on the map Penny wants to take you to
+  //   (penny/walk.js). Until the first places have been walked Penny keeps
+  //   coming back to it: calls, walks along the edge to stand under the
+  //   portal, looks up at it and back at you. The first time in a visit, and
+  //   sometimes after, Penny stops to remember the sound it is looking for,
+  //   and the sound can be heard, far off.
+  //
+  //   The app installed. Once you have been through a portal with Penny, it
+  //   stands under the Install button and pleads: three times in a visit at
+  //   most, twice as long apart each time, and not at all once the browser's
+  //   prompt has been turned down. Nothing waits on it.
+  //
+  // A tap on Penny while it is asking for the app to be installed is a yes to
+  // that. Any other tap goes through the portal with it, until the first
+  // places have been walked; and after that opens its story (penny/story.js).
+  // Those moves are made without the usual sound, so the next thing heard is
+  // Penny.
+  const portal = $('portal');
+  const pal = callPal(life, { x: 0.7, height: 'peek', mood: 'calm', dot: hasDot() }); // it is alone until Dot is found, a quarter of the way through (penny/walk.js)
+  const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+  const quiet = () => document.visibilityState !== 'visible' || Boolean(document.querySelector('dialog[open], #splash'));
+  const installButton = () => root.querySelector('.install-banner [data-act="install"]');
+  const canInstall = () => ['ready', 'guide'].includes(window.installState?.()) && Boolean(installButton());
+  const SAID_NO_KEY = 'penny:install-no'; // for this visit only
+  const saidNo = () => { try { return sessionStorage.getItem(SAID_NO_KEY) === '1'; } catch { return false; } };
+  let asking = null; // what it is doing just now: showing the 'portal', asking for the 'install', being 'glad'; or nothing
+  let turn = 0; // which of its wants is being shown: so that one does not start while another is going on
+
+  portal.classList.toggle('calm', hasWalked());
+  // The page is the map from far up: line its squares up with the dots behind
+  // the page, and note where the portal is, for the way through it (walk.css).
+  const map = root.querySelector('.home-map');
+  const lineUp = () => {
+    const main = map.parentElement.getBoundingClientRect();
+    const pitch = 0.875 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const top = main.top + window.scrollY;
+    map.parentElement.style.setProperty('--map-y', `${-(top % pitch)}px`);
+    const at = portal.getBoundingClientRect();
+    const frame = root.getBoundingClientRect();
+    document.documentElement.style.setProperty('--portal-x', `${at.left + at.width / 2 - frame.left}px`);
+    document.documentElement.style.setProperty('--portal-y', `${at.top + at.height / 2 - frame.top}px`);
+  };
+  lineUp();
+  setTimeout(lineUp, 400); // once the banner and whatever else has settled
+  life.on(window, 'resize', lineUp);
+  const flare = (what, name) => {
+    if (!what) return;
+    what.classList.remove(name);
+    void what.getBoundingClientRect();
+    what.classList.add(name);
+  };
+  // Back to waiting: its eyes over the edge, or ducked right down where
+  // something of the page's is under it.
+  const settle = () => {
+    asking = null;
+    pal.mood('calm').goTo(0.7).look(null).settle('peek');
+  };
+  setTimeout(() => { if (asking === null) pal.settle('peek'); }, 500);
+  // The page moving under it, or being pressed, while it is up over part of
+  // it: it gets out of the way at once.
+  let scrolled = null;
+  const mind = () => {
+    if (asking !== null && pal.inTheWay) {
+      turn += 1;
+      settle();
+    } else if (asking === null) {
+      pal.settle('peek');
     }
-    // a glance toward the last touch: the eyes shift a pixel or two that way
-    life.on(window, 'pointerdown', (event) => {
-      const home = critters.getBoundingClientRect();
-      const dx = event.clientX - (home.left + home.width / 2);
-      const dy = event.clientY - (home.top + home.height / 2);
-      const far = Math.hypot(dx, dy) || 1;
-      for (const eyes of critters.querySelectorAll('.eyes')) eyes.style.translate = `${(dx / far) * 1.6}px ${(dy / far) * 1.2}px`;
-    }, { passive: true });
+  };
+  life.on(window, 'scroll', () => {
+    clearTimeout(scrolled);
+    scrolled = setTimeout(mind, 140);
+  }, { passive: true });
+  life.on(window, 'resize', mind);
+
+  // What it is looking for: a sound, a long way off. It shuts its eyes to
+  // remember it, and for a moment it is there.
+  async function remember(mine) {
+    pal.mood('sleepy').look(null);
+    pal.look(pal.penny, 'dot');
+    await wait(500);
+    if (mine !== turn) return;
+    await playMail(life, remembered(0.92), () => { if (mine === turn) pal.glow(0.9); });
+    if (mine !== turn) return; // something else has come up meanwhile: it is not put back to hoping over that
+    pal.mood('hopeful').look(null, 'dot');
+    await wait(500);
   }
 
+  async function showPortal(mine) {
+    asking = 'portal';
+    pal.rise().mood('hopeful').look(null).gesture('hop');
+    pal.sing(HELLO, 0.85);
+    await wait(1300);
+    if (mine !== turn) return;
+    // the first time in a visit, and sometimes after, it stops to remember what it is looking for
+    if (!visit.remembered || Math.random() < 0.4) {
+      visit.remembered = true;
+      await remember(mine);
+    }
+    if (mine !== turn) return;
+    pal.mood('hopeful').pointAt(portal);
+    await wait(1500);
+    if (mine !== turn) return;
+    flare(portal, 'called');
+    pal.sing(ASK, 0.85);
+    await wait(1700);
+    if (mine !== turn) return;
+    pal.look(null).mood('warm').gesture('hop');
+    pal.sing(THIS_WAY, 0.85);
+    await wait(2400);
+    if (mine !== turn) return;
+    pal.look(portal);
+    await wait(2200);
+    if (mine === turn) settle();
+  }
+
+  async function plead(mine) {
+    const button = installButton();
+    if (!button) return;
+    asking = 'install';
+    visit.pleas += 1;
+    pal.rise().mood('pleading').pointAt(button);
+    await wait(1300);
+    if (mine !== turn) return;
+    flare(button, 'wanted');
+    pal.sing(PLEASE, 0.85);
+    await wait(1900);
+    if (mine !== turn) return;
+    pal.look(null).gesture('hop');
+    await wait(1700);
+    if (mine !== turn) return;
+    pal.look(button).gesture('hop');
+    flare(button, 'wanted');
+    await wait(2400);
+    if (mine === turn) settle();
+  }
+
+  // Being let in. It is as glad as it gets.
+  async function celebrate() {
+    const mine = ++turn;
+    asking = 'glad'; // (not nothing: nothing is what lets its other wants take a turn)
+    pal.rise().goTo(0.6).mood('thrilled').look(null).gesture('jump').hearts(3);
+    pal.sing(TRILL, 1);
+    await wait(700);
+    pal.gesture('hop', 'dot').hearts(1, 'dot');
+    await wait(900);
+    if (mine !== turn) return;
+    pal.gesture('jump');
+    pal.sing(THIS_WAY, 1);
+    await wait(2600);
+    if (mine !== turn) return;
+    asking = null;
+    pal.mood('glad').goTo(0.7).settle('peek');
+  }
+
+  life.on(window, 'install', (event) => {
+    const what = event.detail?.what;
+    if (what === 'installed') {
+      celebrate();
+    } else if (what === 'asked') {
+      // you pressed it: it can hardly look
+      const mine = ++turn;
+      asking = 'install';
+      pal.rise().mood('thrilled').gesture('jump');
+      // (should no answer ever come back from the browser, Penny does not wait on tiptoe for ever)
+      setTimeout(() => { if (mine === turn) settle(); }, 45000);
+    } else if (what === 'declined') {
+      // a no is a no: it feels it, and lets it be
+      turn += 1;
+      try { sessionStorage.setItem(SAID_NO_KEY, '1'); } catch { /* it will simply ask once more next time */ }
+      pal.mood('sad').gesture('sink');
+      pal.sing(SIGH, 0.6);
+      setTimeout(settle, 2600);
+    } else if (what === 'closed') {
+      // the steps have been read: it waits, hoping
+      turn += 1;
+      visit.pleas = 3;
+      pal.mood('hopeful').look(null);
+      setTimeout(settle, 3000);
+    }
+  });
+
+  // The first time the app is opened as an app.
+  const HOME_KEY = 'penny:at-home:v1';
+  if (window.installState?.() === 'installed' && load(HOME_KEY) !== true) {
+    setTimeout(() => {
+      if (quiet()) return; // not now: the next time the app is opened, then
+      save(HOME_KEY, true);
+      celebrate();
+    }, 2600);
+  }
+
+  // Its wants, one at a time, with long rests between.
+  (async () => {
+    await wait(3200);
+    let since = 0; // portal showings since it last pleaded
+    while (!life.over) {
+      if (!quiet() && asking === null) {
+        const been = hasWalked() || placeReached() > 0;
+        const mayPlead = canInstall() && !saidNo() && visit.pleas < 3 && been && performance.now() >= visit.notBefore;
+        const mine = ++turn;
+        if (mayPlead && (hasWalked() || since >= 1 || visit.pleas === 0)) {
+          since = 0;
+          await plead(mine);
+          visit.notBefore = performance.now() + visit.gap; // and twice as long before the next
+          visit.gap *= 2;
+        } else if (!hasWalked()) {
+          since += 1;
+          await showPortal(mine);
+        } else if (canInstall() && !saidNo() && Math.random() < 0.3) {
+          // at rest, a glance up at it now and then
+          pal.mood('hopeful').look(installButton());
+          await wait(1400);
+          if (mine === turn) pal.mood('calm').look(null);
+        } else {
+          // nothing wanted: the small life of two creatures waiting
+          const roll = Math.random();
+          if (roll < 0.35) pal.gesture('wiggle');
+          else if (roll < 0.6) pal.gesture('hop', 'dot');
+          else if (roll < 0.8) { pal.glow(0.8); setTimeout(() => { if (mine === turn) pal.mood('calm'); }, 900); }
+          else { pal.gesture('hop'); setTimeout(() => pal.gesture('hop', 'dot'), 180); } // one sets the other off
+        }
+      }
+      await wait(6000 + Math.random() * 5000);
+    }
+  })();
+
+  pal.onTap(() => {
+    turn += 1;
+    pal.gesture('hop');
+    if (asking === 'install') {
+      window.requestInstall?.();
+      return;
+    }
+    if (!hasWalked()) pal.sing(HELLO, 0.9);
+    setTimeout(() => go(hasWalked() ? '/?penny' : '/?walk', { quiet: true }), 300);
+  });
+  pal.onTap(() => pal.gesture('hop', 'dot').hearts(1, 'dot'), 'dot');
+  // they glance toward wherever the page was last touched
+  life.on(window, 'pointerdown', (event) => {
+    if (event.target.closest?.('.pal')) return;
+    if (asking !== null && pal.inTheWay) {
+      turn += 1;
+      settle();
+    }
+    const at = { x: event.clientX, y: event.clientY };
+    pal.look(at, 'dot');
+    if (asking === null) pal.look(at);
+  }, { passive: true });
+
   // --- The mark and the background ----------------------------------------------------
-  // Quieter than Penny and Dot, in that order: the mark stirs every twenty
+  // Quieter than Penny and Dot (who are not on the page at all), in that order: the mark stirs every twenty
   // seconds or so and opens its flap when tapped; the background shows a faint
   // tile where it is tapped, and one somewhere by itself only rarely.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -259,7 +474,7 @@ export function mount(root, life) {
     // a tap that lands on nothing in particular
     life.on(document, 'pointerdown', (event) => {
       if (!event.isPrimary || document.querySelector('dialog[open], #splash')) return;
-      if (event.target.closest('button, a, input, textarea, label, form, section, li, nav, svg, .critters, .install-banner, h1')) return;
+      if (event.target.closest('button, a, input, textarea, label, form, section, li, nav, svg, .pal, .install-banner, h1')) return;
       ghost(event.pageX, event.pageY, false);
       sfx('pick');
     });

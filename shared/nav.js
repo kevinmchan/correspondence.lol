@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: home (/), opening and joining a room (/?open, /?join), a room
+// The screens: home (/), opening and joining a room (/?open, /?join), the map walked with Penny and its story (/?walk, /?penny), a room
 // (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -20,6 +20,8 @@ const asks = (url, word) => isHome(url.pathname) && url.searchParams.has(word);
 const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
+  { name: 'penny', depth: 1, match: (path, url) => asks(url, 'penny'), load: () => import('/penny/story.js') },
+  { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },
   { name: 'game', depth: 2, match: (path) => path.startsWith('/postmarks'), load: () => import('/postmarks/ui.js') },
@@ -60,6 +62,8 @@ async function show(url, { announce }) {
   window.scrollTo(0, 0);
   current = { key: keyOf(url), screen, root, life };
   module[screen.mount ?? 'mount'](root, life);
+  // (Penny, who stands over all the screens, wants to know whose turn it is: penny/pal.js)
+  window.dispatchEvent(new CustomEvent('screen', { detail: { name: screen.name, life } }));
 
   if (!leaving) return;
   if (announce) play(direction);
@@ -94,8 +98,9 @@ async function move(url, options) {
   }
 }
 
-// Go to another screen of the app. `replace` keeps this one out of the history.
-export function go(target, { replace = false } = {}) {
+// Go to another screen of the app. `replace` keeps this one out of the history;
+// `quiet` makes the move without its sound.
+export function go(target, { replace = false, quiet = false } = {}) {
   const url = new URL(target, location.href);
   if (url.origin !== location.origin) {
     location.assign(url);
@@ -104,7 +109,7 @@ export function go(target, { replace = false } = {}) {
   if (keyOf(url) === keyOf(new URL(location.href)) && current) return;
   if (replace) history.replaceState(null, '', url);
   else history.pushState(null, '', url);
-  move(url, { announce: true });
+  move(url, { announce: !quiet });
 }
 
 // Links inside the app go the same way.

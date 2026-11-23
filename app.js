@@ -19,6 +19,9 @@ if ('serviceWorker' in navigator) {
 // is one (Chrome, Edge and other Chromium browsers); elsewhere it opens a
 // guide with pictures and steps that match the device.
 
+// What installing is for, in one line: the app gets the whole screen, with no
+// browser round it, and the device can be told when a friend has moved.
+const INSTALL_WHY = 'Install for the full view, and notifications from your friends.';
 const INSTALL_KEY = 'correspondence:install:v2'; // { until }: set far ahead once this browser has installed the app
 let deferredPrompt = null; // the browser's own install prompt, when it offers one
 let installGuide = null;
@@ -105,6 +108,43 @@ const snooze = (days) => {
   }
 };
 
+// --- What Penny needs of all this (home.js) -----------------------------------
+// It wants the app installed and cannot say so, so it has to know where
+// things stand and be told when they change.
+//   installState()   'installed' | 'ready' (the browser will do it in one tap)
+//                    | 'guide' (there are steps to follow) | 'none' (not on
+//                    offer here, or already done from this browser)
+//   requestInstall() what the banner's button does
+// and an 'install' event on the window, with detail.what one of:
+//   'ready'     a one-tap install has come on offer
+//   'asked'     the button was pressed
+//   'declined'  the browser's own prompt was turned down
+//   'closed'    the guide of steps was closed
+//   'installed'
+const tell = (what) => window.dispatchEvent(new CustomEvent('install', { detail: { what } }));
+
+window.installState = () => {
+  if (installed()) return 'installed';
+  if (Date.now() < readSnooze()) return 'none';
+  if (deferredPrompt) return 'ready';
+  return GUIDES[installPlatform()] ? 'guide' : 'none';
+};
+
+async function promptInstall() {
+  const prompt = deferredPrompt;
+  deferredPrompt = null;
+  prompt.prompt();
+  const choice = await prompt.userChoice.catch(() => null);
+  if (choice?.outcome !== 'accepted') tell('declined');
+}
+
+window.requestInstall = async () => {
+  if (installed()) return;
+  tell('asked');
+  if (deferredPrompt) await promptInstall();
+  else openInstallGuide(); // no one-tap install here: show the steps
+};
+
 function openInstallGuide() {
   const platform = installPlatform();
   const guide = GUIDES[platform];
@@ -126,7 +166,7 @@ function openInstallGuide() {
   dialog.innerHTML = `
     ${picture}
     <h2 id="install-title">Install correspondence.lol</h2>
-    <p class="hint">Install to receive notifications from your friends.</p>
+    <p class="hint">${INSTALL_WHY}</p>
     ${steps}
     <div class="row end">
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
@@ -136,13 +176,12 @@ function openInstallGuide() {
     // a tap outside the guide closes it, the same as Got it
     const act = event.target.closest('[data-act]')?.dataset.act ?? (event.target === dialog ? 'done' : null);
     if (!act) return;
-    if (act === 'install' && deferredPrompt) {
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice.catch(() => null);
-      deferredPrompt = null;
-    }
     dialog.close();
+    if (act === 'install' && deferredPrompt) await promptInstall();
+    else tell('closed');
   });
+  // (the Escape key closes it without a click)
+  dialog.addEventListener('cancel', () => tell('closed'));
   document.body.append(dialog);
   dialog.showModal();
 
@@ -157,17 +196,10 @@ function showInstallBanner(container) {
   banner.setAttribute('aria-label', 'Install the app');
   banner.innerHTML = `
     <img src="/icons/icon.svg" alt="" width="36" height="36">
-    <p>Install to receive notifications from your friends.</p>
+    <p>${INSTALL_WHY}</p>
     <button type="button" data-act="install">Install</button>`;
-  banner.addEventListener('click', async (event) => {
-    const act = event.target.closest('[data-act]')?.dataset.act;
-    if (act === 'install' && deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice.catch(() => null);
-      deferredPrompt = null;
-    } else if (act === 'install') {
-      openInstallGuide(); // no one-tap install here: show the steps
-    }
+  banner.addEventListener('click', (event) => {
+    if (event.target.closest('[data-act]')?.dataset.act === 'install') window.requestInstall();
   });
   container.prepend(banner);
 }
@@ -175,6 +207,7 @@ function showInstallBanner(container) {
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault(); // keep the browser's own banner back; ours offers it instead
   deferredPrompt = event;
+  tell('ready');
 });
 
 window.addEventListener('appinstalled', () => {
@@ -183,6 +216,7 @@ window.addEventListener('appinstalled', () => {
   installBanner?.remove();
   installBanner = null;
   snooze(3650);
+  tell('installed');
 });
 
 window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
