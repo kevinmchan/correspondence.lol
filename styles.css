@@ -1023,3 +1023,4 @@ dialog.ask .buttons .yes.danger:active { box-shadow: 0 0.04rem 0 color-mix(in sr
 /* The back arrow at the top of a screen: a bigger target than its text, without moving anything. */
 .topbar > a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 1.1rem 0.5rem 0.75rem; margin: -0.5rem -1.1rem -0.5rem -0.75rem; border-radius: 0.8rem; -webkit-tap-highlight-color: transparent; }
 .topbar > a:active { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.topbar { position: relative; z-index: 2; } /* so the target's lower edge is not covered by the screen below it */
