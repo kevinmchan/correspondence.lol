@@ -707,11 +707,12 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  main > * { animation: arrive 360ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
-  main > *:nth-child(2) { animation-delay: 40ms; }
-  main > *:nth-child(3) { animation-delay: 80ms; }
-  main > *:nth-child(n + 4) { animation-delay: 120ms; }
-  main > .critters, main > .version { animation: none; }
+  /* only the screen the app opens on rises in like this: the others slide in whole */
+  .screen.opening main > * { animation: arrive 360ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+  .screen.opening main > *:nth-child(2) { animation-delay: 40ms; }
+  .screen.opening main > *:nth-child(3) { animation-delay: 80ms; }
+  .screen.opening main > *:nth-child(n + 4) { animation-delay: 120ms; }
+  .screen.opening main > .critters, .screen.opening main > .version { animation: none; }
 }
 @keyframes arrive { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
 
@@ -938,7 +939,6 @@ section.card.me:active { transform: translateY(0.18rem); box-shadow: 0 0.04rem 0
 .screen.leaving.back { animation-name: leave-back; }
 .screen.entering { animation: enter-forth 360ms cubic-bezier(0.15, 0.85, 0.3, 1) both; }
 .screen.entering.back { animation-name: enter-back; }
-.screen.entering main > * { animation: none; }
 @keyframes leave-forth { to { transform: translateX(-30%); opacity: 0; } }
 @keyframes leave-back { to { transform: translateX(30%); opacity: 0; } }
 @keyframes enter-forth { from { transform: translateX(34%); opacity: 0; } to { transform: none; opacity: 1; } }
