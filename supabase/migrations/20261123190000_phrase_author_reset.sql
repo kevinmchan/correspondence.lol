@@ -1,0 +1,5 @@
+-- Pass phrase: the author's test run can be started over at any point (while
+-- playing, after solving it, after running out of hearts, after revealing).
+-- postmarks_retry skips its "only after a loss, and not once revealed" checks
+-- for a practice run, and clears revealed_at when it resets. For everyone else
+-- it is unchanged. (See the function as applied.)

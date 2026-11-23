@@ -717,7 +717,7 @@ export function mount(root, life) {
     el.phraseNote.hidden = !(phrase && online.author !== null);
     if (phrase) {
       renderPhrase(el.phrase);
-      el.phraseNote.textContent = online.practice ? 'You wrote this phrase. This is a test run: it isn’t on the leaderboard.'
+      el.phraseNote.textContent = online.practice ? 'You wrote this phrase.'
         : `${online.people[online.author]?.name ?? 'Someone'} wrote this phrase.`;
     }
     el.shareGame.hidden = !online;
@@ -741,7 +741,7 @@ export function mount(root, life) {
     el.lostChoice.hidden = !undecided();
     el.retryRun.disabled = el.revealRun.disabled = deciding;
     el.newGame.hidden = Boolean(online);
-    el.restart.hidden = Boolean(online) || !game || (game.moves === 0 && !over); // nothing to start over yet
+    el.restart.hidden = !game || (Boolean(online) && !online.practice) || (game.moves === 0 && !over); // nothing to start over yet
     el.newGame.textContent = over ? 'Play again' : 'New game';
   }
 
@@ -1147,11 +1147,32 @@ export function mount(root, life) {
   el.revealRun.addEventListener('click', () => decide('reveal'));
 
   // Start this same board over.
+  let resetting = false;
   el.restart.addEventListener('click', async () => {
-    if (!game || online) return;
+    if (!game || resetting || (online && !online.practice)) return;
     if (game.status === 'playing' && !(await ask('Start this board over?', { detail: 'Your marks and hearts go back to the start.', yes: 'Start over', no: 'Keep playing' }))) return;
     if (life.over) return;
-    startSolo({ size: game.size, seed: game.seed });
+    if (!online) {
+      startSolo({ size: game.size, seed: game.seed });
+      render();
+      return;
+    }
+    // The author's test run of their own pass phrase board.
+    resetting = true;
+    say('');
+    try {
+      const view = await rpc('postmarks_retry', { p_game: online.id, p_token: myToken() });
+      if (life.over) return;
+      accept(view);
+      hint = null;
+      draft = null;
+      tool = 'mark';
+      fresh = true;
+      watcher?.poke();
+    } catch (failure) {
+      say(failure.message);
+    }
+    resetting = false;
     render();
   });
 
