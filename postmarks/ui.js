@@ -75,7 +75,8 @@ function accept(view) {
   online = {
     id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people,
     mode, started, runs: view.runs ?? [], author: view.phrase_by ?? null, // who wrote the phrase, if anyone
-    phrase: mode === 'phrase' ? { shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
+    // tokens: [{ len, gap, t }] with t null until unlocked (games from before tokens have only `shown`)
+    phrase: mode === 'phrase' ? { tokens: view.tokens ?? null, shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
     // the clock: how long it had run when this view was made, and when that was
     clock: view.elapsed_ms == null ? null : { ms: Number(view.elapsed_ms), at: performance.now() },
   };
@@ -232,25 +233,29 @@ function leaderboard(list) {
   list.hidden = online.runs.length === 0;
 }
 
-// The pass phrase, one card per word. A word stays face down, showing only how
-// many letters it has, until the board letter holding it is found.
+// The pass phrase as a row of cards, one per token: each letter on the board
+// holds exactly one. A card stays face down, showing only how long its token
+// is, until that letter is found. Tokens that are parts of one word sit
+// joined together.
 function renderPhrase(target) {
-  const words = online.phrase.shown.toUpperCase().split(' ');
-  // Cards are updated in place, so a word turning over animates once and the
+  const tokens = online.phrase.tokens
+    // games from before tokens: one card per word
+    ?? online.phrase.shown.split(' ').map((word) => ({ len: word.length, gap: true, t: word.includes('_') ? null : word }));
+  // Cards are updated in place, so one turning over animates once and the
   // rest stay still when the page refreshes.
-  while (target.children.length > words.length) target.lastElementChild.remove();
-  words.forEach((word, i) => {
+  while (target.children.length > tokens.length) target.lastElementChild.remove();
+  tokens.forEach((token, i) => {
     const card = target.children[i] ?? target.appendChild(document.createElement('span'));
-    const hidden = word.includes('_');
-    const text = hidden ? word.replace(/_/g, '•') : word;
+    const text = token.t === null ? '•'.repeat(token.len) : token.t.toUpperCase();
     if (card.textContent !== text) card.textContent = text;
-    const className = hidden ? 'word hidden' : 'word';
+    const className = ['word', token.t === null && 'hidden', i > 0 && !tokens[i - 1].gap && 'join', !token.gap && i < tokens.length - 1 && 'cont']
+      .filter(Boolean).join(' ');
     if (card.className !== className) card.className = className;
   });
-  const left = words.filter((word) => word.includes('_')).length;
+  const left = tokens.filter((token) => token.t === null).length;
   target.setAttribute('aria-label', left === 0
     ? `The phrase: ${online.phrase.shown}`
-    : `The phrase so far: ${online.phrase.shown.replace(/_+/g, 'hidden word')}. ${left} of ${words.length} words hidden.`);
+    : `The phrase, ${tokens.length} tokens, ${left} still hidden: ${tokens.map((token) => (token.t ?? 'hidden') + (token.gap ? ',' : '')).join(' ')}`);
   target.hidden = false;
 }
 

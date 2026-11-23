@@ -4,7 +4,7 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
-import { generatePuzzle, randomSize } from '/postmarks/game.js';
+import { generatePuzzle, phraseBoardSize, randomSize, tokenize } from '/postmarks/game.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -296,8 +296,10 @@ async function startGame(mode, phrase = null) {
   try {
     // A pass phrase hides one word in each letter, so the board is sized to
     // the phrase: as many letters as words where possible.
-    const words = phraseWords(phrase ?? '').length;
-    const size = mode !== 'phrase' ? randomSize() : words ? phraseBoard(words) : 5 + Math.floor(Math.random() * 3);
+    // A written phrase gets a board with one letter per word where it can; the
+    // server then splits the phrase into exactly one token per letter.
+    const written = (phrase ?? '').trim();
+    const size = mode !== 'phrase' ? randomSize() : written ? phraseBoardSize(written) : 5 + Math.floor(Math.random() * 3);
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_start', {
       p_room: roomId, p_token: myToken(), p_mode: mode, p_size: size,
@@ -311,33 +313,31 @@ async function startGame(mode, phrase = null) {
   }
 }
 
-// A phrase is split into words, and each word is hidden in one letter of the
-// board as a token. The board has as many letters as there are words, within
-// its limits of 5 to 9; beyond 9 words, letters hold more than one.
-const phraseWords = (text) => text.trim().split(/\s+/).filter(Boolean);
-const phraseBoard = (words) => Math.min(9, Math.max(5, words));
-
-// Show the tokens the phrase turns into, as it is typed.
+// Show the tokens the phrase turns into, as it is typed: exactly one for each
+// letter of its board.
 function previewTokens() {
-  const words = phraseWords(el.phraseText.value);
-  const size = phraseBoard(words.length);
-  const tokens = [];
-  words.forEach((word, i) => {
-    (tokens[i % size] ??= []).push(word.toUpperCase());
-  });
-  // Cards are updated in place so that typing only animates a newly added token.
+  const phrase = el.phraseText.value;
+  const size = phraseBoardSize(phrase);
+  const tokens = tokenize(phrase, size);
+  // Cards are updated in place so that typing only animates what changed.
   while (el.tokens.children.length > tokens.length) el.tokens.lastElementChild.remove();
-  tokens.forEach((group, i) => {
-    const card = el.tokens.children[i] ?? el.tokens.appendChild(Object.assign(document.createElement('span'), { className: 'word' }));
-    const text = group.join(' + ');
+  tokens.forEach((token, i) => {
+    const card = el.tokens.children[i] ?? el.tokens.appendChild(document.createElement('span'));
+    const text = token.t.toUpperCase();
     if (card.textContent !== text) card.textContent = text;
+    const className = ['word', i > 0 && !tokens[i - 1].gap && 'join', !token.gap && i < tokens.length - 1 && 'cont']
+      .filter(Boolean).join(' ');
+    if (card.className !== className) card.className = className;
   });
-  const n = tokens.length;
-  el.tokenNote.textContent = n === 0 ? ''
-    : `${n} ${n === 1 ? 'token' : 'tokens'}, hidden in ${n === size ? 'the' : `${n} of the`} ${size} letters of a ${size} × ${size} board`;
+  el.tokenNote.textContent = tokens.length === 0 ? ''
+    : tokens.length < size ? `Too short: a ${size} × ${size} board needs at least ${size} letters`
+      : `${size} tokens, one in each letter of a ${size} × ${size} board`;
 }
 
-el.phraseText.addEventListener('input', previewTokens);
+el.phraseText.addEventListener('input', () => {
+  el.phraseError.textContent = ''; // an earlier complaint no longer applies to what is typed now
+  previewTokens();
+});
 
 // Pass phrase has a screen of its own for writing the phrase. It is a step in
 // the browser's history, so Back returns to the room.

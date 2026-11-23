@@ -600,6 +600,10 @@ main:has(.version) { position: relative; }
   }
 }
 
+/* tokens that are pieces of one word sit together, read as a single word */
+.phrase .word.cont { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: 0.4rem; }
+.phrase .word.join { border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; margin-left: calc(-0.4rem + 2px); }
+
 #tokens { min-height: 2.2rem; }
 #token-note { min-height: 1.1rem; font-size: 0.8125rem; text-align: center; }
 
