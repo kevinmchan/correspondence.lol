@@ -52,6 +52,7 @@ main {
 }
 
 .mark { border-radius: 22%; }
+svg.mark { border-radius: 0; overflow: visible; }
 
 h1 {
   margin: 0;
@@ -885,3 +886,38 @@ main:has(.critters) { padding-bottom: max(5.5rem, calc(env(safe-area-inset-botto
 @keyframes wiggle { 0%, 100% { transform: none; } 25% { transform: rotate(-6deg); } 55% { transform: rotate(5deg); } 80% { transform: rotate(-2deg); } }
 @keyframes seal-glow { 0%, 100% { transform: none; filter: none; } 45% { transform: scale(1.35); filter: brightness(1.25); } }
 @keyframes heart-up { from { transform: translateY(0) scale(0.6); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-2.4rem) scale(1.15); opacity: 0; } }
+
+/* --- The home page's quieter life: the mark, then the background ------------------
+   Three layers, each less busy than the one before: Penny and Dot are always
+   up to something; the mark stirs once in a while; the background hardly ever.
+   All three answer a tap. */
+svg.mark { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+svg.mark .seal, svg.mark .ring { transform-box: fill-box; transform-origin: center; }
+svg.mark .ring { opacity: 0; }
+svg.mark .flap { transform-box: fill-box; transform-origin: 50% 0; }
+@media (prefers-reduced-motion: no-preference) {
+  /* once in a while: the seal swells a touch and lets one ring go */
+  svg.mark.stir .seal { animation: mark-seal 1100ms ease-in-out; }
+  svg.mark.stir .ring { animation: mark-ring 1100ms ease-out; }
+  /* tapped: pressed like a tile, the flap lifts open and settles shut, a ring spreads */
+  svg.mark.open { animation: mark-press 420ms cubic-bezier(0.3, 0, 0.3, 1); }
+  svg.mark.open .flap { animation: mark-flap 900ms cubic-bezier(0.4, 0, 0.3, 1); }
+  svg.mark.open .seal { animation: mark-seal 700ms ease-in-out 120ms; }
+  svg.mark.open .ring { animation: mark-ring 900ms ease-out 120ms; }
+}
+@keyframes mark-seal { 0%, 100% { transform: none; } 40% { transform: scale(1.22); } }
+@keyframes mark-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.4); opacity: 0; } }
+@keyframes mark-press { 0%, 100% { transform: none; } 30% { transform: scale(0.93); } }
+@keyframes mark-flap { 0%, 100% { transform: none; } 35%, 60% { transform: scaleY(-0.5); } }
+
+/* the background: a tile of the board shows faintly where it is tapped, and
+   now and then somewhere by itself, then fades */
+main { position: relative; z-index: 1; }
+.ghost-tile {
+  position: absolute; z-index: 0; border-radius: 22%; pointer-events: none;
+  background: var(--tile); box-shadow: inset 0 -0.22rem 0 rgb(0 0 0 / 0.14);
+  opacity: 0; animation: ghost 1500ms ease-out forwards;
+}
+.ghost-tile.faint { animation-name: ghost-faint; animation-duration: 2600ms; }
+@keyframes ghost { 0% { opacity: 0; transform: scale(0.7); } 18% { opacity: 0.3; transform: none; } 100% { opacity: 0; transform: none; } }
+@keyframes ghost-faint { 0% { opacity: 0; } 35% { opacity: 0.14; } 100% { opacity: 0; } }
