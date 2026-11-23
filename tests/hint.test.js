@@ -59,3 +59,33 @@ test('hints do not lean on the player’s own crosses', () => {
   const hint = findHint(state);
   for (const cell of hint.cells) if (hint.kind === 'cross') assert.ok(!isPost(puzzle, cell));
 });
+
+// The promise the hints make: there is always a reason. Every puzzle the game
+// can make must be finishable by the explained rules alone, never by the
+// safety net that simply knows the answer.
+test('every hint comes with its reason, across many puzzles', () => {
+  const rules = {};
+  for (let size = 5; size <= 9; size++) {
+    for (let seed = 1; seed <= 30; seed++) {
+      const puzzle = generatePuzzle(size, seed * 104729 + size);
+      const state = blank(puzzle);
+      for (let turn = 0; turn < size * size * 3; turn++) {
+        const hint = findHint(state);
+        if (!hint) break;
+        rules[hint.rule] = (rules[hint.rule] ?? 0) + 1;
+        assert.notEqual(hint.rule, 'fallback', `size ${size} seed ${seed * 104729 + size}: no reason given (${hint.text})`);
+        if (hint.kind === 'cross') {
+          for (const cell of hint.cells) {
+            assert.ok(!isPost(puzzle, cell), `size ${size}: told to cross a post (${hint.text})`);
+            state.cells[cell] = CROSS;
+          }
+        } else {
+          assert.ok(isPost(puzzle, hint.cells[0]), `size ${size}: called a post where there is none`);
+          state.cells[hint.cells[0]] = LETTER;
+        }
+      }
+      assert.equal(state.cells.filter((mark) => mark === LETTER).length, size, `size ${size} seed ${seed}: finished`);
+    }
+  }
+  assert.ok(rules.confined > 0 && rules.single > 0, 'the everyday rules are in use');
+});
