@@ -297,12 +297,13 @@ function previewTokens() {
   words.forEach((word, i) => {
     (tokens[i % size] ??= []).push(word.toUpperCase());
   });
-  el.tokens.replaceChildren(...tokens.map((group) => {
-    const card = document.createElement('span');
-    card.className = 'word';
-    card.textContent = group.join(' + ');
-    return card;
-  }));
+  // Cards are updated in place so that typing only animates a newly added token.
+  while (el.tokens.children.length > tokens.length) el.tokens.lastElementChild.remove();
+  tokens.forEach((group, i) => {
+    const card = el.tokens.children[i] ?? el.tokens.appendChild(Object.assign(document.createElement('span'), { className: 'word' }));
+    const text = group.join(' + ');
+    if (card.textContent !== text) card.textContent = text;
+  });
   const n = tokens.length;
   el.tokenNote.textContent = n === 0 ? ''
     : `${n} ${n === 1 ? 'token' : 'tokens'}, hidden in ${n === size ? 'the' : `${n} of the`} ${size} letters of a ${size} × ${size} board`;

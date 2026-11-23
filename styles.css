@@ -601,4 +601,4 @@ main:has(.version) { position: relative; }
 }
 
 #tokens { min-height: 2.2rem; }
-#token-note { min-height: 1.1rem; font-size: 0.8125rem; }
+#token-note { min-height: 1.1rem; font-size: 0.8125rem; text-align: center; }
