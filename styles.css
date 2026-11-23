@@ -377,8 +377,7 @@ dialog.profile form { margin-top: 0.9rem; }
 
 .picker { display: grid; gap: 0.35rem; }
 .picker.avatars { grid-template-columns: repeat(8, 1fr); }
-.picker.colours { display: flex; justify-content: center; gap: 0.9rem; }
-.picker.colours button { width: 2.6rem; flex: none; }
+.picker.colours { grid-template-columns: repeat(8, 1fr); }
 
 .picker button {
   aspect-ratio: 1;
@@ -1010,5 +1009,13 @@ dialog.ask .buttons .yes.danger:active { box-shadow: 0 0.04rem 0 color-mix(in sr
 :root[data-theme="light"] input[type="text"], :root[data-theme="light"] input[type="email"], :root[data-theme="light"] .feedback textarea { background: var(--paper); border-color: #e3dccd; }
 :root[data-theme="light"] .people li { background: var(--card); }
 
-/* avatars: a soft disc with a hairline, so pale backgrounds hold their edge on the light theme */
-.avatar { box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.07); }
+/* Avatars are stickers: the face has a white edge and a soft shadow, so it
+   stands clear of any background colour, its own included. */
+.avatar { box-shadow: inset 0 -0.12em 0 rgb(0 0 0 / 0.12); }
+.avatar .face {
+  display: block; line-height: 1;
+  text-shadow:
+    0.055em 0 0 #fff, -0.055em 0 0 #fff, 0 0.055em 0 #fff, 0 -0.055em 0 #fff,
+    0.04em 0.04em 0 #fff, -0.04em 0.04em 0 #fff, 0.04em -0.04em 0 #fff, -0.04em -0.04em 0 #fff,
+    0 0.1em 0.08em rgb(0 0 0 / 0.22);
+}
