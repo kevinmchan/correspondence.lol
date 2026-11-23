@@ -1,4 +1,4 @@
-import { ask, tell } from '/shared/ask.js';
+import { ask, choose, tell } from '/shared/ask.js';
 import { go } from '/shared/nav.js';
 import {
   CROSS, EMPTY, LETTER, MISS, START_HEARTS,
@@ -35,7 +35,7 @@ export function mount(root, life) {
     back: $('back'), profile: $('profile'), loading: $('loading'),
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
     roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
-    narration: $('narration'), message: $('message'), newGame: $('new-game'), restart: $('restart'), hint: $('hint'), hintNote: $('hint-note'),
+    narration: $('narration'), message: $('message'), newGame: $('new-game'), restart: $('restart'), lostChoice: $('lost-choice'), retryRun: $('retry-run'), revealRun: $('reveal-run'), hint: $('hint'), hintNote: $('hint-note'),
     chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
     trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
     trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
@@ -90,6 +90,8 @@ export function mount(root, life) {
       id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people,
       mode, started, runs: view.runs ?? [], author: view.phrase_by ?? null, // who wrote the phrase, if anyone
       // tokens: [{ len, gap, t }] with t null until unlocked (games from before tokens have only `shown`)
+      // a pass phrase lost but not yet given up on: the player may still try it again
+      revealed: view.revealed !== false, tries: view.tries ?? 1,
       phrase: mode === 'phrase' ? { tokens: view.tokens ?? null, shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
       // the clock: how long it had run when this view was made, and when that was
       clock: view.elapsed_ms == null ? null : { ms: Number(view.elapsed_ms), at: performance.now() },
@@ -251,7 +253,8 @@ export function mount(root, life) {
       const result = document.createElement('span');
       result.className = `result ${run.status}`;
       result.textContent = run.status === 'lost' ? 'out of hearts' : run.status !== 'won' ? 'playing…'
-        : online.mode === 'trial' ? clockText(run.ms) : `${run.found} of ${game.size} posts opened`;
+        : online.mode === 'trial' ? clockText(run.ms)
+        : `${run.found} of ${game.size} posts opened${run.tries > 1 ? ` · ${ordinal(run.tries)} try` : ''}`;
       li.append(who, result);
       return li;
     }));
@@ -419,8 +422,48 @@ export function mount(root, life) {
   // The screen at the end of a game: a send-off that suits the mode, and a
   // chance to say how it went. Leaving it goes back to the room, or, playing
   // alone, on to a new puzzle.
+  // --- Pass phrase, out of hearts: try again, or see the phrase ---------------------
+  // Losing a pass phrase is not the end until the player says so. While they
+  // have not, the phrase and the posts stay hidden, and they may start the
+  // board again as often as they like. Choosing to see the phrase ends it.
+  const undecided = () => online?.mode === 'phrase' && game?.status === 'lost' && !online.revealed;
+  let deciding = false;
+
+  async function decide(choice) {
+    if (!undecided() || deciding) return;
+    deciding = true;
+    say('');
+    try {
+      const view = await rpc(choice === 'retry' ? 'postmarks_retry' : 'postmarks_reveal', { p_game: online.id, p_token: myToken() });
+      if (life.over) return;
+      accept(view);
+      hint = null;
+      draft = null;
+      tool = 'mark';
+      fresh = true; // show the board as it now is, without playing every change as an effect
+      watcher?.poke();
+    } catch (failure) {
+      say(failure.message);
+    }
+    deciding = false;
+    render();
+  }
+
+  async function offerChoice() {
+    if (!undecided() || document.querySelector('dialog.ask')) return;
+    const choice = await choose('Out of hearts', {
+      detail: 'Try the board again, or see the phrase? Once you have seen it, this one is finished.',
+      options: [{ label: 'Reveal', value: 'reveal' }, { label: 'Try again', value: 'retry', primary: true }],
+    });
+    if (choice && !life.over) decide(choice);
+  }
+
   function finale() {
     if (!game || !['won', 'lost'].includes(game.status)) return;
+    if (undecided()) {
+      offerChoice();
+      return;
+    }
     if (document.querySelector('dialog.finale')) return;
     const won = game.status === 'won';
     const mode = online?.mode ?? 'solo';
@@ -688,6 +731,8 @@ export function mount(root, life) {
     }
     // Room games go back to the room with the arrow at the top; only a solo
     // game needs a way to start over.
+    el.lostChoice.hidden = !undecided();
+    el.retryRun.disabled = el.revealRun.disabled = deciding;
     el.newGame.hidden = Boolean(online);
     el.restart.hidden = Boolean(online) || !game || (game.moves === 0 && !over); // nothing to start over yet
     el.newGame.textContent = over ? 'Play again' : 'New game';
@@ -1060,6 +1105,9 @@ export function mount(root, life) {
       },
     });
   });
+
+  el.retryRun.addEventListener('click', () => decide('retry'));
+  el.revealRun.addEventListener('click', () => decide('reveal'));
 
   // Start this same board over.
   el.restart.addEventListener('click', async () => {

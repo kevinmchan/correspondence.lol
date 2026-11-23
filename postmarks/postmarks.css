@@ -788,3 +788,7 @@ button.go { font-family: system-ui, sans-serif; }
   box-shadow: 0 0.24rem 0 color-mix(in srgb, var(--ink) 62%, #000); transition: transform 70ms ease, box-shadow 70ms ease;
 }
 .finale .again:active { transform: translateY(0.2rem); box-shadow: 0 0.04rem 0 color-mix(in srgb, var(--ink) 62%, #000); }
+
+/* pass phrase, out of hearts: the two ways on */
+.lost-choice { width: 100%; justify-content: center; align-items: center; gap: 0.7rem; }
+.lost-choice .quiet { min-height: 2.9rem; padding: 0 1rem; font-size: 0.9375rem; }
