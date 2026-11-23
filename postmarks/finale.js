@@ -1,13 +1,12 @@
 // The screen at the end of a game, and the feedback form it carries. The form
-// is optional: a rating out of five, a note, or nothing at all. It can also be
-// opened on its own from the how-to screen.
+// is optional: a note, or nothing at all. It can also be opened on its own from
+// the how-to screen.
 
 import { rpc } from '/shared/api.js';
 import { myToken } from '/shared/identity.js';
 import { avatar } from '/shared/profile.js';
 
 const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
-const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17.1 6.6 20l1.1-6.1-4.5-4.3 6.1-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
 
 const make = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -22,28 +21,10 @@ const make = (tag, className, text) => {
 function feedbackForm({ about, leave, done }) {
   const form = make('form', 'feedback');
   form.noValidate = true;
-  let rating = null;
-
-  const stars = make('div', 'stars');
-  stars.setAttribute('role', 'radiogroup');
-  stars.setAttribute('aria-label', 'Your rating, out of five');
-  for (let n = 1; n <= 5; n++) {
-    const star = make('button');
-    star.type = 'button';
-    star.setAttribute('role', 'radio');
-    star.setAttribute('aria-label', n === 1 ? '1 star' : `${n} stars`);
-    star.innerHTML = STAR;
-    star.addEventListener('click', () => {
-      rating = rating === n ? null : n; // a second tap takes it back
-      update();
-    });
-    stars.append(star);
-  }
-
   const note = make('textarea');
-  note.rows = 2;
+  note.rows = 3;
   note.maxLength = 2000;
-  note.placeholder = 'Anything you’d change? (optional)';
+  note.placeholder = 'Tell us anything (optional)';
   note.setAttribute('aria-label', 'Your feedback (optional)');
   note.addEventListener('input', () => update());
 
@@ -60,11 +41,7 @@ function feedbackForm({ about, leave, done }) {
   buttons.append(skip, send);
 
   function update() {
-    [...stars.children].forEach((star, i) => {
-      star.setAttribute('aria-checked', String(rating === i + 1));
-      star.classList.toggle('on', rating !== null && i < rating);
-    });
-    send.disabled = rating === null && note.value.trim() === '';
+    send.disabled = note.value.trim() === '';
   }
   update();
 
@@ -76,7 +53,7 @@ function feedbackForm({ about, leave, done }) {
     problem.hidden = true;
     try {
       await rpc('feedback_send', {
-        p_token: myToken(), p_rating: rating, p_message: note.value.trim() || null,
+        p_token: myToken(), p_message: note.value.trim(),
         p_game: about.game ?? null, p_mode: about.mode ?? null, p_outcome: about.outcome ?? null,
         p_version: self.APP_VERSION ?? null,
       });
@@ -90,7 +67,7 @@ function feedbackForm({ about, leave, done }) {
     }
   });
 
-  form.append(make('p', 'ask', 'How was it?'), stars, note, problem, buttons);
+  form.append(make('p', 'ask', 'How was it?'), note, problem, buttons);
   return form;
 }
 
