@@ -127,8 +127,8 @@ have been walked, and after that opens Penny's story.
 Through the portal is the map itself (`/?walk`, `penny/walk.js`): a few
 districts lit, the rest faint all round. The way on is always up the screen,
 and the places already walked stay on the map, flat, below. There is no
-tutorial, and nothing is shown to be copied: no ring, no arrow, no lit square,
-no rhythm in a hum. There are five places, each a small piece of the game that
+tutorial, nothing is told, and no gesture is shown to be copied: no ring, no
+arrow, no rhythm in a hum. There are five places, each a small piece of the game that
 asks one thing more than the last (`penny/places.js`), and you play them while
 Penny stands beside you:
 
@@ -138,10 +138,10 @@ Penny stands beside you:
 4. posts cannot touch
 5. nothing to hear: the rules alone
 
-The hand has the same three things to do as in the game. A double tap opens a
-square. From the second place on, a quick tap crosses a square out and takes
-the cross off again. And a finger held on a square, or slid across the map,
-asks Penny to listen there. Two arrows at the top right go back down the map
+The hand has the same things to do as in the game. A double tap opens a
+square. A finger on a square, or slid across the map, asks Penny to listen
+there. And from the second place on, a finger lifted again quickly leaves a
+cross as well, and the next quick tap takes it off. Two arrows at the top right go back down the map
 to a place already walked, and up again as far as has been reached.
 
 Penny does not know where the posts are; it is looking too. How it feels about
@@ -162,6 +162,20 @@ off, a glow for something close, a beating light for a post right there, a
 moment's greying for nothing. It fades, except "right there", which stays
 until the post is opened. Penny comes right up for anything close, and a
 finger sliding across the map is answered square by square.
+
+**This difference is what the places are for**, so it is put on the squares,
+where the eyes are, and the two are made to look nothing alike. What Penny
+hears is an amber warmth under your finger. What Penny knows is its own red
+seal, stamped on a square that nobody touched, the moment a rule leaves a
+colour, row or column with one square. The second place opens with it: one
+square is the only one of its colour, and the seal lands on it before anything
+is pressed, while every other square has to be listened at. After that, each
+time a post is opened and its crosses spread and a seal lands, that is a rule,
+seen. In the later places the seal holds back a while, to leave the working
+out to you.
+
+While Penny listens to what was inside a post, the map goes dim, so that for
+that moment the thing to look at is Penny.
 
 So a rule is learnt by Penny no longer needing to listen. Penny can be unsure,
 and can be outdone: open a post it had no idea about and it is amazed at you.
@@ -191,9 +205,9 @@ memory: a cross it can see the reason for gets a nod, and one it cannot gets
 its doubt. One cross in the right corner leaves a colour with a single square,
 and after the first post the rest follow one at a time.
 
-Left alone, Penny does not point. If the rules have made a square certain its
-eyes find the square, and later it goes and stands underneath. Otherwise it
-waits for your finger, and now and then a loud post stirs of its own accord.
+Left alone, Penny looks at whatever it has sealed, and later goes and stands
+underneath. With nothing known it waits for your finger, and now and then a
+loud post stirs of its own accord.
 
 One day passes over the five places: early light in the first, evening by the
 last. In the last post of the last place there is no sound. There is Dot, who

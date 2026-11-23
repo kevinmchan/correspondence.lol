@@ -162,7 +162,11 @@ async function main() {
       assert.equal(await page.locator('#walk-trail').isHidden(), true, 'nothing of the sound heard yet');
       await h.through();
 
-      // place 2: a quick tap crosses a square and takes the cross off; holding a finger down asks Penny instead
+      // place 2. What Penny knows is stamped on the map without anyone touching it: the one square of its colour
+      const known = () => page.evaluate(() => [...document.querySelectorAll('#walk-board .cell.known')].map((cell) => Number(cell.dataset.cell)));
+      await page.waitForFunction(() => document.querySelector('#walk-board .cell.known'), null, { timeout: 6000 });
+      assert.deepEqual(await known(), [14], 'the seal is on the only square of its colour, and nowhere else');
+      // a quick tap crosses a square and takes the cross off; holding a finger down only asks
       await h.tap(10);
       await sleep(600);
       assert.equal((await h.board())[10], 'x', 'a quick tap crosses the square');
@@ -174,7 +178,7 @@ async function main() {
       await h.says('close'); // the post is next door
       await page.mouse.up();
       assert.equal((await h.board())[0], '.', 'holding is listening: no cross');
-      assert.equal(await page.locator('#walk-board .cell.heard').count(), 1, 'what was heard shows on the square');
+      assert.equal(await page.locator('#walk-board .cell').nth(0).evaluate((cell) => cell.classList.contains('heard') && !cell.classList.contains('known')), true, 'what is heard shows on the square as warmth, not as a seal');
       // a cross over a post it can hear frightens it
       await h.tap(1);
       await h.says('alarmed');
@@ -192,8 +196,12 @@ async function main() {
       assert.equal(await h.stored('penny:sound:v1'), 1, 'the first piece of the sound');
       await h.through();
 
-      // place 3, place 4
-      for (const cell of [2, 4, 11, 13]) await h.open(cell);
+      // place 3: two posts by ear; then the rules leave two squares with nowhere else to be, and the seal lands on both
+      assert.deepEqual(await known(), [], 'nothing is known here to begin with');
+      for (const cell of [2, 4]) await h.open(cell);
+      await page.waitForFunction(() => document.querySelectorAll('#walk-board .cell.known').length === 2, null, { timeout: 8000 });
+      assert.deepEqual(await known(), [11, 13]);
+      for (const cell of [11, 13]) await h.open(cell);
       assert.equal(await h.board(), 'xxLxLxxxxxxLxLxx');
       assert.equal(await h.stored('penny:sound:v1'), 2);
       await h.through();

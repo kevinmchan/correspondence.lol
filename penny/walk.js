@@ -7,8 +7,8 @@
 // for a sound: every post has a sound inside, and one of them is the one
 // Penny is after (penny/mail.js). The way on is always up the map.
 //
-// Nothing here is taught, and nothing is shown to be copied: no ring, no
-// arrow, no lit square, no rhythm in a hum. You play, on five places each
+// Nothing here is told, and no gesture is shown to be copied: no ring, no
+// arrow, no rhythm in a hum. You play, on five places each
 // with one more rule than the last, and Penny is beside you while you do.
 // Penny does not know where the posts are. All Penny can give you is how it
 // feels about the square your finger is on, and that comes from its head and
@@ -21,7 +21,12 @@
 //   cannot tell, and says so.
 //
 // The difference between the two is how a rule gets learnt: the squares Penny
-// used to have to listen at, it now simply knows.
+// used to have to listen at, it now simply knows. So that difference is put
+// where the eyes are, on the squares, and the two look nothing alike: what is
+// heard is an amber warmth under your finger; what is known is Penny's own
+// red seal, stamped on a square nobody touched, the moment a rule settles it.
+// And while Penny listens to what was inside a post, the map goes dim, so
+// that for once the thing to look at is Penny.
 //
 // The hand has three things it can do, the same three as in the game. A
 // double tap opens a square. From the second place on, a quick tap crosses
@@ -121,6 +126,7 @@ export function mount(root, life) {
   // What it now knows: from the posts found, the guesses that found nothing,
   // and (the last place) whichever of your crosses it can see the reason for.
   function know() {
+    life.setTimeout(seals, 0); // (after whatever called this has finished drawing)
     good = place.crosses ? vouch(place, found, [...misses], [...byHand]) : new Set();
     squares = read(place, found, [...misses, ...good]);
     const trusting = place.crosses ? read(place, found, [...misses, ...byHand]) : squares;
@@ -135,7 +141,7 @@ export function mount(root, life) {
     button.dataset.state = state;
     button.innerHTML = state === 'letter' ? ENVELOPE : state === 'cross' ? '×' : '';
     button.setAttribute('aria-label', `row ${Math.floor(cell / n) + 1}, column ${(cell % n) + 1}, ${state === 'letter' ? 'post found' : state === 'cross' ? 'crossed out' : 'empty'}`);
-    button.classList.remove('asking', 'heard', 'here', 'cold', 'fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-knock', 'teach', 'why', 'ajar', 'stir', 'starve', 'ringing', 'sought');
+    button.classList.remove('known', 'asking', 'heard', 'here', 'cold', 'fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-knock', 'teach', 'why', 'ajar', 'stir', 'starve', 'ringing', 'sought');
     if (!fx && !taught) return;
     void button.getBoundingClientRect();
     button.style.setProperty('--d', `${delay}ms`);
@@ -230,6 +236,9 @@ export function mount(root, life) {
     misses = new Set();
     byHand = new Set();
     positive = new Set();
+    for (const timer of sealing.values()) clearTimeout(timer);
+    sealed = new Set();
+    sealing = new Map();
     done = false;
     setBusy(false);
     lone = 0;
@@ -257,6 +266,7 @@ export function mount(root, life) {
     lay();
     say('');
     // it looks the new place over, then at you
+    main.classList.remove('hush');
     main.dataset.hour = index; // each place is later in the one day (walk.css)
     pal.height('face').goTo(spot()).mood('curious').look(board);
     pal.gesture('hop');
@@ -282,6 +292,56 @@ export function mount(root, life) {
     pal.height('up');
     clearTimeout(lowering);
     lowering = life.setTimeout(() => { if (!busy || done) pal.height('face'); }, ms);
+  }
+
+  // --- What Penny knows, on the map ---------------------------------------------------
+  // This is what the places are for. There are two ways Penny can come to
+  // think a post is in a square, and they are made to look nothing alike.
+  //
+  //   Heard: your finger has to be there. The square waits, then warms: an
+  //   amber glow, soft, stronger the closer the sound is (warm(), below).
+  //   Known: nobody has to touch anything. The moment a rule leaves a colour,
+  //   a row or a column with one square, Penny stamps that square with its
+  //   own seal: red, crisp, and at once.
+  //
+  // So when a post is opened and its crosses spread, and then a seal lands on
+  // a square nobody touched, that is the rule, seen. In the first places the
+  // seal lands straight away; later it holds back a while, to leave the
+  // working out to you.
+  const SEAL_AFTER = [0, 700, 1200, 2600, 4200];
+  let sealed = new Set(); // squares that have Penny's seal on them
+  let sealing = new Map(); // and those about to: square -> timer
+  function seals() {
+    const sure = new Set(done ? [] : sureOnes());
+    for (const cell of [...sealed]) {
+      if (sure.has(cell) && cells[cell] !== 'letter') tile(cell)?.classList.add('known'); // (a cross of yours may have wiped it)
+      else {
+        sealed.delete(cell);
+        tile(cell)?.classList.remove('known');
+      }
+    }
+    for (const [cell, timer] of [...sealing]) {
+      if (sure.has(cell)) continue;
+      clearTimeout(timer);
+      sealing.delete(cell);
+    }
+    for (const cell of sure) {
+      if (sealed.has(cell) || sealing.has(cell)) continue;
+      sealing.set(cell, life.setTimeout(() => {
+        sealing.delete(cell);
+        if (done || squares[cell]?.is !== 'sure') return;
+        if (busy) { seals(); return; } // not across a post being opened: straight after
+        sealed.add(cell);
+        flash(tile(cell), 'known');
+        if (touching === null) {
+          // Penny, certain: no listening, no warmth. It simply knows
+          rise(1600);
+          pal.mood('sure').look(tile(cell)).gesture('hop');
+          hum(YES, 0.75, 'knows');
+        }
+        say('Penny knows there is a post in one square: the rules leave nowhere else');
+      }, SEAL_AFTER[index] + 500));
+    }
   }
 
   // --- A finger on a square: places with an ear -----------------------------------------
@@ -329,7 +389,8 @@ export function mount(root, life) {
       return;
     }
     if (mine.is === 'sure') {
-      // it knows, at once
+      // it knows, at once: the seal, not the glow
+      if (sealed.has(cell)) flash(tile(cell), 'known');
       pal.mood('sure');
       if (pressed) {
         pal.gesture('nod');
@@ -514,6 +575,7 @@ export function mount(root, life) {
   const open = (cell) => opening(cell).catch((error) => {
     console.error(error);
     if (life.over) return;
+    main.classList.remove('hush');
     setBusy(false);
     pal.height('face').mood('calm').look(null);
     if (!done) return;
@@ -635,6 +697,7 @@ export function mount(root, life) {
     // hardly bear it. Then it holds still to listen.
     await wait(Math.max(900, Math.min(at + 250, 1700)));
     const mail = mailIn(index, found.length - 1, place.posts.length, hasDot()); // (Dot is only there to be found once)
+    main.classList.add('hush'); // the map goes dim: for this moment the thing to watch is Penny
     if (mail.dot) {
       await findDot(cell);
     } else {
@@ -675,6 +738,7 @@ export function mount(root, life) {
       }
     }
     if (life.over) return;
+    main.classList.remove('hush');
     setBusy(false);
     if (done) {
       board.classList.add('won');
@@ -940,16 +1004,13 @@ export function mount(root, life) {
       return;
     }
     if (place.crosses) {
-      // A quick tap will be a cross (see lift). Held a moment, or slid, it is
-      // a question for Penny's ear instead.
+      // A finger on a square is a question, at once. Lifted again quickly it is
+      // also a cross (see lift); held, or slid on, it is only the question.
       press = { cell, held: false, moved: false };
       clearTimeout(holding);
-      holding = life.setTimeout(() => {
-        if (!press || press.cell !== cell || busy) return;
-        press.held = true;
-        if (cells[cell] === 'empty') knock(cell);
-        ask(cell);
-      }, 260);
+      holding = life.setTimeout(() => { if (press?.cell === cell) press.held = true; }, 260);
+      if (cells[cell] === 'empty') knock(cell);
+      ask(cell); // a finger on a square always asks; lifted quickly, it leaves a cross as well
       return;
     }
     if (cells[cell] === 'empty') {
