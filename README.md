@@ -8,6 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
+| `penny.js`, `penny.css` | Penny's story, a wordless scene at `/?penny` |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -38,6 +39,19 @@ device for reduced motion.
 
 The envelopes on the board are called posts, so that "letters" only ever means
 the letters of a phrase. A double tap on a square guesses a post there.
+
+## Penny's story
+
+Penny the letter and Dot the stamp live in the bottom corner of the home page.
+A tap on Penny opens her story (`/?penny`, `penny.js`). It has no words and no
+instructions, and the only sound on the screen is her voice: a closed-mouth hum
+that comes from her seal, which brightens with every note so the voice can be
+seen with sound off. She is alone in the rain, feels something warm inside her
+that she cannot read, calls out and hears nothing, and then hums into a post
+box that Dot leads her to. After that she waits, and the story does not go on
+by itself: the answer is a touch from whoever is watching, and it arrives in the
+colour of their avatar. Once the story is told, every touch is another answer.
+The app's music stands aside while the screen is up.
 
 ## Game modes
 

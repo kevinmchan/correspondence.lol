@@ -170,8 +170,12 @@ export function mount(root, life) {
   // --- Penny and Dot --------------------------------------------------------------
   // The two in the bottom corner mostly just breathe and blink (that is all CSS).
   // Every so often one of them does something small, they glance toward wherever
-  // the page was last touched, and a tap on either gets a hop and a heart.
+  // the page was last touched. A tap on Dot gets a hop and a heart; a tap on
+  // Penny, a hop, and then her story.
   const critters = $('critters');
+  // A tap on Penny opens her story (penny.js). The move is made without its
+  // usual sound: the first thing heard there should be her.
+  critters?.querySelector('.penny').addEventListener('click', () => setTimeout(() => go('/?penny', { quiet: true }), 260));
   if (critters && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const penny = critters.querySelector('.penny');
     const dot = critters.querySelector('.dot');
@@ -204,12 +208,11 @@ export function mount(root, life) {
       setTimeout(idle, 7000 + Math.random() * 9000);
     };
     setTimeout(idle, 5000);
-    for (const who of [penny, dot]) {
-      who.addEventListener('click', () => {
-        once(who, 'hop');
-        heart(who);
-      });
-    }
+    dot.addEventListener('click', () => {
+      once(dot, 'hop');
+      heart(dot);
+    });
+    penny.addEventListener('click', () => once(penny, 'hop'));
     // a glance toward the last touch: the eyes shift a pixel or two that way
     life.on(window, 'pointerdown', (event) => {
       const home = critters.getBoundingClientRect();

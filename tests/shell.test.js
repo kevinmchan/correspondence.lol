@@ -13,5 +13,5 @@ test('every address serves the same page', () => {
 
 test('the page has a template for each screen', () => {
   const shell = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  for (const name of ['home', 'open', 'join', 'room', 'game', 'jam']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
+  for (const name of ['home', 'open', 'join', 'penny', 'room', 'game', 'jam']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
 });

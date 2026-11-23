@@ -194,7 +194,7 @@ const SOUNDS = {
   tap() {
     bell(0, NOTE.E5, 0.07, 0.11);
   },
-  // one of the home page's two residents, tapped
+  // Dot, on the home page, tapped. (Penny has a voice of her own: see penny.js.)
   squeak() {
     bell(0, NOTE.A5, 0.11, 0.12);
     bell(0.07, NOTE.E6, 0.1, 0.2);
@@ -368,7 +368,7 @@ function startMusic() {
 // touch the way the board does. (The board, the code buttons and the switches
 // have sounds of their own.)
 document.addEventListener('click', (event) => {
-  const target = event.target.closest?.('button, .critters .penny, .critters .dot'); // links have the screen-change sound
+  const target = event.target.closest?.('button, .critters .dot'); // links have the screen-change sound
   if (!target || target.closest('#board, .tools, .setting, .jam') || target.classList.contains('code') || target.disabled) return;
   play(target.closest('.critters') ? 'squeak' : 'tap');
 }, { capture: true });
