@@ -960,6 +960,7 @@ document.addEventListener('keydown', (event) => {
     el.sound.focus();
   }
 });
+document.addEventListener('soundchange', showSound); // switched from the profile menu
 showSound();
 
 el.profile.addEventListener('click', () => {
