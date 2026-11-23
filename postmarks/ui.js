@@ -85,7 +85,7 @@ export function mount(root, life) {
       v: 1, size: view.size, regions: view.regions ?? [], solution: view.solution ?? null, players: view.players,
       cells: view.cells ?? [], hearts: view.hearts ?? START_HEARTS, moves: view.moves ?? 0,
       status: started ? view.status : 'waiting', last: view.last ?? null,
-      free: mode !== 'coop',
+      free: mode !== 'coop', shared: mode === 'coop',
       absent: view.people.flatMap((person, seat) => (person.left ? [seat] : [])), // they left the room
     };
     online = {
@@ -617,9 +617,10 @@ export function mount(root, life) {
           button.classList.add(effect.name);
         }
       }
-      // the outline marks someone else's last move on a shared board; playing alone it would only be clutter
-      const theirs = online?.mode === 'coop' && game.last && game.last.player !== online.you;
-      button.classList.toggle('last', Boolean(theirs) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
+      // the outline marks the last submitted move on a shared board, whoever made it;
+      // playing alone it would only be clutter
+      const shown = online?.mode === 'coop' && game.last;
+      button.classList.toggle('last', Boolean(shown) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
       button.classList.toggle('drawing', drafted);
       button.classList.toggle('guessing', guessing === cell);
       button.classList.toggle('hinted', Boolean(hint) && hint.cells.includes(cell));

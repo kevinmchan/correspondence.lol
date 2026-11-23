@@ -193,6 +193,19 @@ test('a crossed square can still be guessed', () => {
   assert.equal(s.cells[cell], LETTER);
 });
 
+test('on a room\'s board the last mover waits, even alone', () => {
+  let s = { ...newGame({ size: 5, seed: 1, players: ['A'] }), shared: true };
+  assert.equal(canMove(s, 0), true, 'the first move is open');
+  s = play(s, 'mark', emptyNonLetter(s), 0);
+  assert.equal(canMove(s, 0), false);
+  assert.equal(applyMove(s, { player: 0, type: 'mark', cell: emptyNonLetter(s) }).ok, false);
+  // someone joins and moves: the turn comes back
+  s = { ...s, players: ['A', 'B'] };
+  assert.equal(canMove(s, 1), true);
+  s = play(s, 'mark', emptyNonLetter(s), 1);
+  assert.equal(canMove(s, 0), true);
+});
+
 test('a solo player takes every turn', () => {
   let s = newGame({ size: 5, seed: 1, players: ['You'] });
   assert.equal(canMove(s, 0), true);
