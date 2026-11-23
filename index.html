@@ -16,8 +16,27 @@
   <meta name="apple-mobile-web-app-title" content="Correspondence">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="/styles.css">
+  <script>
+    // The splash plays once per visit (per tab or app launch), and not at all
+    // for anyone who has asked their device for less motion.
+    try {
+      if (sessionStorage.getItem('correspondence:splash') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('no-splash');
+      } else {
+        sessionStorage.setItem('correspondence:splash', '1');
+      }
+    } catch (e) { /* no storage: it simply plays */ }
+  </script>
 </head>
 <body>
+  <div id="splash" aria-hidden="true">
+    <canvas></canvas>
+    <div class="splash-text">
+      <p class="splash-name"><span class="word">correspondence</span><span class="dot">.lol</span></p>
+      <p class="splash-line">Games played by turns, together.</p>
+    </div>
+  </div>
+  <script src="/splash.js"></script>
   <main>
     <img class="mark" src="/icons/icon.svg" alt="" width="80" height="80">
     <h1>correspondence<span>.lol</span></h1>
