@@ -43,9 +43,9 @@ import { A4, A5, C5, C6, D4, D5, E4, E5, G4, G5 } from './notes.js';
 // take its one extra step of thought.
 export const PLACES = [
   { rows: ['A'], tiles: { A: 1 }, posts: [0], rules: [], loud: [0], reach: 0, listen: 250, twice: 500 },
-  { rows: ['AABB', 'AABB', 'CCBB', 'CCDB'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour'], loud: [1, 7, 8], reach: 2, listen: 450, twice: 450 },
-  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line'], loud: [2, 4], reach: 2, listen: 550, twice: 350 },
-  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], loud: [1], reach: 2, listen: 650, twice: 350 },
+  { rows: ['AABB', 'AABB', 'CCBB', 'CCDB'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour'], loud: [1, 7, 8], reach: 2, listen: 300, twice: 450 },
+  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line'], loud: [2, 4], reach: 2, listen: 380, twice: 350 },
+  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], loud: [1], reach: 2, listen: 460, twice: 350 },
   { rows: ['AABB', 'AAAB', 'DDCC', 'DDDC'], tiles: { A: 1, B: 0, C: 3, D: 6 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], loud: [], reach: 0, listen: 0, twice: 350, marks: true },
 ].map((place) => ({ ...place, n: place.rows.length, regions: place.rows.join('').split('').map((letter) => place.tiles[letter]) }));
 

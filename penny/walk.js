@@ -54,7 +54,7 @@ import { PLACES, groupsOf, hear, mailIn, read, ruledOut, vouch } from './places.
 import { claim } from './pal.js';
 import { heard, murmur, playMail, remembered, soundSoFar } from './mail.js';
 import {
-  ALARM, ASK, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, SIGH, THIS_WAY, TRILL, WONDER, YES,
+  ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, SIGH, THIS_WAY, TRILL, WONDER, YES,
   hasDot, placeReached, setDot, setPlaceReached, setWalked,
 } from './penny.js';
 
@@ -66,7 +66,7 @@ const AT = [[1, 0], [0, 2], [1, 7], [-1, 12], [0, 17]];
 // How long it waits, left alone, before its eyes go to a square the rules
 // have made certain; and before a loud post stirs. Seconds, a place each.
 const PATIENCE = [3, 3, 3, 5, 7];
-const STIRS = [9, 16, 22, 28, 0];
+const STIRS = [6, 9, 14, 20, 0];
 
 export function mount(root, life) {
   document.title = 'correspondence.lol';
@@ -125,7 +125,7 @@ export function mount(root, life) {
     button.dataset.state = state;
     button.innerHTML = state === 'letter' ? ENVELOPE : state === 'cross' ? '×' : '';
     button.setAttribute('aria-label', `row ${Math.floor(cell / n) + 1}, column ${(cell % n) + 1}, ${state === 'letter' ? 'post found' : state === 'cross' ? 'crossed out' : 'empty'}`);
-    button.classList.remove('fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-knock', 'teach', 'why', 'ajar', 'stir', 'starve', 'ringing', 'sought');
+    button.classList.remove('asking', 'heard', 'here', 'cold', 'fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-knock', 'teach', 'why', 'ajar', 'stir', 'starve', 'ringing', 'sought');
     if (!fx && !taught) return;
     void button.getBoundingClientRect();
     button.style.setProperty('--d', `${delay}ms`);
@@ -277,9 +277,33 @@ export function mount(root, life) {
   let asked = { times: 0 }; // how often it has had to say it cannot tell, here
   // `pressed` is false for a pointer or the keyboard's focus only resting on
   // the square: then it feels the same, without a sound.
-  function ask(cell, pressed = true) {
+  // What Penny hears is shown on the square itself as well as on Penny, since
+  // the square under the finger is where anyone is looking: its warmth falls
+  // on it, a faint edge for something far off, a glow for something close, a
+  // beating light for a post right there, and a moment's greying for nothing.
+  // It is only ever the square that was touched, and it fades, except "right
+  // here", which stays until the post is opened.
+  const cooling = new Map();
+  function warm(cell, heat) {
+    const button = tile(cell);
+    if (!button) return;
+    clearTimeout(cooling.get(cell));
+    button.classList.remove('asking', 'heard', 'here', 'cold');
+    if (heat === null) return;
+    if (heat === 0) {
+      flash(button, 'cold');
+      return;
+    }
+    button.style.setProperty('--heat', heat);
+    button.classList.add('heard');
+    button.classList.toggle('here', heat === 1);
+    if (heat < 1) cooling.set(cell, life.setTimeout(() => button.classList.remove('heard'), 3200));
+  }
+  // `quick`: a finger sliding across the map gets its answers sooner.
+  function ask(cell, pressed = true, quick = false) {
     if (done || busy) return;
     clearTimeout(listening);
+    for (const button of board.querySelectorAll('.asking')) button.classList.remove('asking');
     pal.look(tile(cell));
     const state = cells[cell];
     const mine = squares[cell];
@@ -313,32 +337,44 @@ export function mount(root, life) {
       return;
     }
     if (positive.has(cell)) {
-      here(pressed);
+      here(pressed, cell);
       return;
     }
-    // otherwise it has to listen: eyes shut, quite still
+    // otherwise it has to listen: eyes shut, quite still, and the square waits with it
     pal.mood('listening');
+    tile(cell).classList.add('asking');
     say('Penny is listening');
     listening = life.setTimeout(() => {
       const { strength, side } = hear(place, found, cell);
       if (strength === 1) {
         positive.add(cell);
-        here(pressed);
+        here(pressed, cell);
       } else if (strength > 0.4) {
-        pal.mood('hopeful').lean(side).glow(0.6);
-        if (pressed) hum(NEAR, 0.5, 'near');
+        // close: it comes right up, and leans the way the sound lies
+        warm(cell, 0.6);
+        rise(1500);
+        pal.mood('hopeful').lean(side).glow(0.7).gesture('hop');
+        if (pressed) hum(NEAR, 0.7, 'near');
         say(side < 0 ? 'Penny hears something close, to the left' : side > 0 ? 'Penny hears something close, to the right' : 'Penny hears something close');
       } else if (strength > 0) {
-        pal.mood('curious').lean(side).glow(0.3);
+        warm(cell, 0.25);
+        pal.mood('curious').lean(side).glow(0.35).gesture('nod');
+        if (pressed) hum(FAR, 0.55, 'far');
         say('Penny hears something far off');
       } else {
+        warm(cell, 0);
         cannotTell(pressed);
       }
-    }, 80 + place.listen);
+    }, quick ? 140 : 80 + place.listen);
   }
-  function here(pressed) {
+  function here(pressed, cell = lastTouched) {
+    if (cell !== null) warm(cell, 1);
+    rise(2200);
     pal.mood('warm').glow(1);
-    if (pressed) hum(GASP, 0.85, 'here');
+    if (pressed) {
+      pal.gesture('jump');
+      hum(GASP, 0.95, 'here');
+    }
     say('Penny hears something right here');
   }
   // It does not know, and says so: to you, not to the map. It is not a no.
@@ -920,7 +956,7 @@ export function mount(root, life) {
       if (mark(cell, stroke.to)) stroke.cells.push(cell);
     } else {
       shut();
-      ask(cell);
+      ask(cell, true, true);
     }
   });
   const lift = () => {
