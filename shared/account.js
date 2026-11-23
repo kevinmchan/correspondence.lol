@@ -10,7 +10,6 @@
 import { auth, rpc } from './api.js';
 import { load, myToken, resetIdentity, save, setMyName, setRooms } from './identity.js';
 import { saveLook } from './profile.js';
-import { copyable, prettyCode } from './handoff.js';
 
 const PROFILE_KEY = 'correspondence:profile:v1'; // { signed_in, email, signed_out }
 
@@ -159,32 +158,4 @@ export function openSignIn({ guest, onDone }) {
   dialog.append(title, lede, ask, check, error, foot);
   dialog.showModal();
   email.focus();
-}
-
-// A temporary code that lets another device into this guest profile.
-export async function openDeviceCode() {
-  const dialog = sheet('Use this account on another device');
-  const title = make('h2', null, 'Use on another device');
-  const lede = make('p', 'hint', 'On the other device, open correspondence.lol and enter this code under “Sync account”. It works once, for ten minutes.');
-  const code = make('button', 'code', '…');
-  code.type = 'button';
-  code.disabled = true;
-  const tip = make('p', 'hint tip', 'Tap the code to copy it.');
-  const error = make('p', 'message bad');
-  error.setAttribute('role', 'alert');
-  const done = make('button', null, 'Done');
-  done.type = 'button';
-  done.addEventListener('click', () => dialog.close());
-  const foot = make('div', 'row end');
-  foot.append(done);
-  dialog.append(title, lede, code, tip, error, foot);
-  dialog.showModal();
-  try {
-    copyable(code, prettyCode(await rpc('profile_code', { p_token: myToken() })));
-    code.disabled = false;
-  } catch (failure) {
-    code.hidden = true;
-    tip.hidden = true;
-    error.textContent = failure.message;
-  }
 }

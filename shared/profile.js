@@ -1,4 +1,6 @@
-import { load, save } from './identity.js';
+import { rpc } from './api.js';
+import { copyable, prettyCode } from './handoff.js';
+import { load, myToken, save } from './identity.js';
 
 // A profile is a name plus an avatar: an emoji on one of eight colours.
 export const AVATARS = [
@@ -121,7 +123,34 @@ export function openProfile({ person, onSave }) {
     }
   });
 
-  dialog.append(preview, form);
+  // The way on to another device: a link that makes a temporary account code.
+  const sync = document.createElement('div');
+  sync.className = 'sync';
+  const ask = document.createElement('button');
+  ask.type = 'button';
+  ask.className = 'link';
+  ask.textContent = 'Get account code';
+  const code = document.createElement('button');
+  code.type = 'button';
+  code.className = 'code';
+  code.hidden = true;
+  const note = document.createElement('p');
+  note.textContent = 'To use this account on another device.';
+  ask.addEventListener('click', async () => {
+    ask.disabled = true;
+    try {
+      copyable(code, prettyCode(await rpc('profile_code', { p_token: myToken() })));
+      code.hidden = false;
+      ask.textContent = 'Get a new code';
+      note.textContent = 'Enter it on the other device under “Sync account”. It works once, for ten minutes. Tap to copy.';
+    } catch (failure) {
+      note.textContent = failure.message;
+    }
+    ask.disabled = false;
+  });
+  sync.append(ask, code, note);
+
+  dialog.append(preview, form, sync);
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close();
   });

@@ -2,7 +2,7 @@ import { rpc } from '/shared/api.js';
 import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
-import { cachedProfile, fetchProfile, openDeviceCode, saveProfile, startAfresh } from '/shared/account.js';
+import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 
 const form = document.getElementById('create-room');
 const nameInput = document.getElementById('my-name');
@@ -16,7 +16,6 @@ const rooms = document.getElementById('rooms');
 const me = {
   card: document.getElementById('me'), edit: document.getElementById('me-edit'),
   name: document.getElementById('me-name'), kind: document.getElementById('me-kind'),
-  code: document.getElementById('me-code'),
 };
 // With no account on the device, the page is only the two ways to get one:
 // create one, or sync one with a code from another device.
@@ -77,7 +76,6 @@ async function refresh() {
 me.edit.addEventListener('click', () => {
   openProfile({ person: { name: myName(), ...look() }, onSave: async (person) => { await saveProfile(person); showMe(); } });
 });
-me.code.addEventListener('click', openDeviceCode);
 // Create an account, with a look to start with (it can be changed).
 welcome.form.addEventListener('submit', async (event) => {
   event.preventDefault();
