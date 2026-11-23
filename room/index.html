@@ -13,6 +13,10 @@
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
+  <script>
+    // which way the last screen was left, so this one can arrive from that side
+    try { var nav = sessionStorage.getItem('correspondence:nav'); if (nav) { document.documentElement.dataset.nav = nav; sessionStorage.removeItem('correspondence:nav'); } } catch (e) {}
+  </script>
 </head>
 <body class="page">
   <header class="topbar">

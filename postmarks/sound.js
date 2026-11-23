@@ -155,6 +155,27 @@ const SOUNDS = {
       bell(0, scale[Math.min(streak + 1, scale.length - 1)], 0.15);
     }
   },
+  // moving on to the next screen: a breath of air and two bells stepping up.
+  // (Short: the page it plays on is about to go.)
+  forth() {
+    noise({ dur: 0.16, from: 700, to: 3600, q: 0.9, gain: 0.05 });
+    bell(0, NOTE.E5, 0.09, 0.1);
+    bell(0.06, NOTE.A5, 0.09, 0.13);
+  },
+  // and coming back: the same, stepping down
+  back() {
+    noise({ dur: 0.16, from: 3200, to: 600, q: 0.9, gain: 0.045 });
+    bell(0, NOTE.A5, 0.09, 0.1);
+    bell(0.06, NOTE.E5, 0.09, 0.13);
+  },
+  // a sheet or dialog opening, and closing
+  sheet() {
+    noise({ dur: 0.1, from: 900, to: 2600, q: 1, gain: 0.035 });
+    bell(0.02, NOTE.G5, 0.08, 0.14);
+  },
+  shut() {
+    bell(0, NOTE.E5, 0.06, 0.1);
+  },
   // pressing a button or a tile of the menus: the lightest touch of the bell
   tap() {
     bell(0, NOTE.E5, 0.07, 0.11);
@@ -333,7 +354,7 @@ function startMusic() {
 // touch the way the board does. (The board, the code buttons and the switches
 // have sounds of their own.)
 document.addEventListener('click', (event) => {
-  const target = event.target.closest?.('button, a.menu-button, .links a, .critters .penny, .critters .dot');
+  const target = event.target.closest?.('button, .critters .penny, .critters .dot'); // links have the screen-change sound
   if (!target || target.closest('#board, .tools, .setting') || target.classList.contains('code') || target.disabled) return;
   play(target.closest('.critters') ? 'squeak' : 'tap');
 }, { capture: true });

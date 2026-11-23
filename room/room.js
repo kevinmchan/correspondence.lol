@@ -1,4 +1,5 @@
 import { rpc } from '/shared/api.js';
+import { go } from '/shared/nav.js';
 import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
@@ -323,7 +324,7 @@ el.leave.addEventListener('click', async () => {
     await rpc('room_leave', { p_room: roomId, p_token: myToken() });
     watcher?.poke();
     forgetRoom(roomId); // off this device's list of rooms
-    location.href = '/';
+    go('/');
   } catch (error) {
     el.leaveError.textContent = error.message;
     el.leave.disabled = false;
@@ -384,7 +385,7 @@ async function startGame(mode, phrase = null) {
       p_regions: puzzle.regions, p_solution: puzzle.solution, p_phrase: mode === 'phrase' ? phrase : null,
     });
     watcher?.poke();
-    location.href = gameUrl('postmarks', game.id);
+    go(gameUrl('postmarks', game.id));
   } catch (error) {
     (composing ? el.phraseError : el.gameError).textContent = error.message;
     delete el.modes.dataset.busy;
