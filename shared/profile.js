@@ -8,31 +8,18 @@ export const AVATARS = [
   '🦊', '🐼', '🐸', '🦉', '🐙', '🦄', '🐝', '🐢', '🦁', '🐧', '🐳', '🦋',
   '🐱', '🐶', '🐰', '🦔', '🌵', '🍄', '🌙', '⭐', '🚀', '🎈', '🎲', '☕',
 ];
-// Eight soft backgrounds: light enough that any of the faces stands out on them.
-export const COLORS = ['#fbd3c5', '#fbe7a1', '#cdeab5', '#bde7da', '#c6e3fa', '#d9d5fa', '#f8d3ef', '#ecdcc3'];
-//                       0 peach    1 butter   2 mint     3 aqua     4 sky      5 lavender 6 pink     7 sand
+// Eight backgrounds, from the same family as the game's tiles. Any face can go
+// on any of them: each face is drawn as a sticker, with a white edge and a
+// little shadow, so it stands clear of whatever colour is behind it (a yellow
+// bee on the marigold, a pink octopus on the orchid).
+export const COLORS = ['#f08a76', '#f6c453', '#7cc46a', '#3fa79b', '#6fb6ec', '#7a74d9', '#d98ad6', '#b98a63'];
+const COLOR_NAMES = ['Coral', 'Marigold', 'Leaf', 'Teal', 'Sky', 'Indigo', 'Orchid', 'Clay'];
 
-// Which backgrounds suit which face, best first. A face never sits on its own
-// colour (a yellow bee on butter, a pink octopus on pink): each gets
-// backgrounds that set it off. The picker offers only these, and a face shown
-// with any other colour (an older choice, or the server's default) is drawn on
-// its best one instead.
-const SUITS = {
-  '🦊': [4, 3, 5], '🐼': [2, 6, 1, 4], '🐸': [6, 0, 1], '🦉': [3, 4, 1], '🐙': [4, 3, 1], '🦄': [5, 4, 3],
-  '🐝': [4, 5, 2], '🐢': [1, 0, 6], '🦁': [3, 4, 5], '🐧': [4, 1, 6], '🐳': [1, 0, 6], '🦋': [2, 1, 6],
-  '🐱': [5, 4, 3], '🐶': [4, 2, 5], '🐰': [6, 5, 2], '🦔': [2, 3, 1], '🌵': [0, 7, 1], '🍄': [2, 3, 4],
-  '🌙': [5, 4, 6], '⭐': [5, 4, 3], '🚀': [5, 1, 3], '🎈': [4, 2, 1], '🎲': [3, 5, 0], '☕': [7, 0, 2],
-};
-const ANY = [4, 2, 5];
-export const suits = (face) => SUITS[face] ?? ANY;
-// The colour to draw a face on: the one asked for if it suits, else the face's best.
-export const suited = (face, color) => (suits(face).includes(color) ? color : suits(face)[0]);
-// A face and a background that go together, for someone new.
-export function randomLook() {
-  const face = AVATARS[Math.floor(Math.random() * AVATARS.length)];
-  const good = suits(face);
-  return { avatar: face, color: good[Math.floor(Math.random() * good.length)] };
-}
+// A face and a background for someone new: any of each.
+export const randomLook = () => ({
+  avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
+  color: Math.floor(Math.random() * COLORS.length),
+});
 
 // The look last chosen on this device, offered again in the next room.
 const LOOK_KEY = 'correspondence:look:v1';
@@ -53,8 +40,11 @@ export function avatar(person, extraClass = '') {
 }
 
 export function paint(span, person) {
-  span.textContent = person?.avatar ?? '🙂';
-  span.style.setProperty('--bg', COLORS[suited(person?.avatar, person?.color)]);
+  // the face sits in an element of its own, which carries the sticker's edge
+  const face = span.firstElementChild ?? span.appendChild(document.createElement('span'));
+  face.className = 'face';
+  face.textContent = person?.avatar ?? '🙂';
+  span.style.setProperty('--bg', COLORS[person?.color] ?? COLORS[4]);
 }
 
 // Patterns on the game's tiles, as well as colours: a choice kept on this device.
@@ -88,7 +78,7 @@ export function openProfile({ person, onSave }) {
   dialog = document.createElement('dialog');
   dialog.className = 'profile';
   dialog.setAttribute('aria-label', 'Your profile');
-  const choice = { avatar: person.avatar, color: suited(person.avatar, person.color) };
+  const choice = { avatar: person.avatar, color: person.color };
 
   const preview = avatar(choice, 'big');
 
@@ -130,38 +120,12 @@ export function openProfile({ person, onSave }) {
     return group;
   };
 
-  // The backgrounds on offer are the ones that suit the face chosen, so they
-  // are laid out afresh each time the face changes.
-  const colours = document.createElement('div');
-  colours.className = 'picker colours';
-  colours.setAttribute('role', 'radiogroup');
-  colours.setAttribute('aria-label', 'Background');
-  const NAMES = ['Peach', 'Butter', 'Mint', 'Aqua', 'Sky', 'Lavender', 'Pink', 'Sand'];
-  const offerColours = () => {
-    choice.color = suited(choice.avatar, choice.color);
-    colours.replaceChildren(...suits(choice.avatar).map((index) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.setAttribute('role', 'radio');
-      button.setAttribute('aria-checked', String(choice.color === index));
-      button.setAttribute('aria-label', NAMES[index]);
-      button.title = NAMES[index];
-      button.style.setProperty('--bg', COLORS[index]);
-      button.addEventListener('click', () => {
-        choice.color = index;
-        for (const other of colours.children) other.setAttribute('aria-checked', String(other === button));
-        paint(preview, choice);
-      });
-      return button;
-    }));
-  };
   const avatars = picker('Avatar', 'avatars', AVATARS, () => choice.avatar,
     (button, emoji) => { button.textContent = emoji; button.setAttribute('aria-label', emoji); },
-    (emoji) => {
-      choice.avatar = emoji;
-      offerColours(); // keeps the colour if it still suits, else moves to this face's best
-    });
-  offerColours();
+    (emoji) => { choice.avatar = emoji; });
+  const colours = picker('Background', 'colours', COLORS, () => choice.color,
+    (button, colour, index) => { button.style.setProperty('--bg', colour); button.setAttribute('aria-label', COLOR_NAMES[index]); button.title = COLOR_NAMES[index]; },
+    (_, index) => { choice.color = index; });
 
   const error = document.createElement('p');
   error.className = 'message bad';
