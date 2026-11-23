@@ -25,6 +25,20 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. Service workers only run on `localhost` or HTTPS.
 
+## Effects and sound
+
+Every event on the board has an animation and a sound (`postmarks/ui.js`
+decides which, `postmarks/postmarks.css` draws them, `postmarks/sound.js` plays
+them). Finding a post is the big one: the tile bursts open, a ring spreads
+across the board, and the crosses it brings ripple outwards with ticks that
+climb in pitch. Sounds are synthesised in the browser, so there are no audio
+files; they start after the first tap, as browsers require, and a button at the
+top of the game turns them off. Animations are skipped for people who ask their
+device for reduced motion.
+
+The envelopes on the board are called posts, so that "letters" only ever means
+the letters of a phrase. A double tap on a square guesses a post there.
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:

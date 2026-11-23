@@ -63,8 +63,8 @@ function gameStatus(game) {
   }
   const hearts = '♥'.repeat(game.hearts) + '♡'.repeat(3 - game.hearts);
   if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}` };
-  if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} letters found` };
-  const progress = `${game.found}/${game.size} letters · ${hearts}`;
+  if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} posts found` };
+  const progress = `${game.found}/${game.size} posts · ${hearts}`;
   if (game.last_player === room.you) return { text: `Waiting for someone else · ${progress}` };
   return { text: `Your move · ${progress}`, go: true };
 }
@@ -294,10 +294,8 @@ async function startGame(mode, phrase = null) {
   el.gameError.textContent = '';
   el.phraseError.textContent = '';
   try {
-    // A pass phrase hides one word in each letter, so the board is sized to
-    // the phrase: as many letters as words where possible.
-    // A written phrase gets a board with one letter per word where it can; the
-    // server then splits the phrase into exactly one token per letter.
+    // A written phrase gets a board with one post per word where it can; the
+    // server then splits the phrase into exactly one token per post.
     const written = (phrase ?? '').trim();
     const size = mode !== 'phrase' ? randomSize() : written ? phraseBoardSize(written) : 5 + Math.floor(Math.random() * 3);
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
@@ -314,7 +312,7 @@ async function startGame(mode, phrase = null) {
 }
 
 // Show the tokens the phrase turns into, as it is typed: exactly one for each
-// letter of its board.
+// post on its board.
 function previewTokens() {
   const phrase = el.phraseText.value;
   const size = phraseBoardSize(phrase);
@@ -331,7 +329,7 @@ function previewTokens() {
   });
   el.tokenNote.textContent = tokens.length === 0 ? ''
     : tokens.length < size ? `Too short: a ${size} × ${size} board needs at least ${size} letters`
-      : `${size} tokens, one in each letter of a ${size} × ${size} board`;
+      : `${size} tokens, one in each post of a ${size} × ${size} board`;
 }
 
 el.phraseText.addEventListener('input', () => {
