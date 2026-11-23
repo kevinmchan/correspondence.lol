@@ -20,6 +20,27 @@ export const asCode = (text) => {
   return code.length === 8 ? code : null;
 };
 
+// Show a code as a button: a tap copies it, and says so for a moment.
+export function copyable(button, code) {
+  const shown = prettyCode(code);
+  button.textContent = shown;
+  button.title = 'Copy the code';
+  button.setAttribute('aria-label', `${shown.split('').join(' ')}. Copy the code`);
+  button.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(shown);
+      button.textContent = 'Copied';
+    } catch {
+      button.textContent = 'Couldn’t copy';
+    }
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.textContent = shown;
+      button.classList.remove('copied');
+    }, 1400);
+  };
+}
+
 let asking = null;
 
 // This browser's code, or null if it has no rooms to bring along.

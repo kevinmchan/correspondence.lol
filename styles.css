@@ -615,9 +615,6 @@ main:has(.version) { position: relative; }
 #games .delete svg { width: 1.15rem; height: 1.15rem; }
 #games .delete:hover, #games .delete:focus-visible { color: var(--accent); border-color: var(--accent); }
 
-/* the code that brings a browser's rooms across to the installed app */
-dialog.install .move { margin: 0.9rem 0 0; text-align: center; }
-dialog.install .move b { display: block; margin-top: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.35rem; letter-spacing: 0.08em; color: var(--ink); user-select: all; }
 
 /* --- Your profile, on the home page ---------------------------------------- */
 .me { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.2rem 0.8rem; }
@@ -630,7 +627,16 @@ dialog.install .move b { display: block; margin-top: 0.25rem; font-family: ui-mo
 .me .row button { font-family: system-ui, sans-serif; font-size: 0.9375rem; padding: 0.5rem 1rem; }
 dialog.account h2 { font-family: Georgia, serif; font-size: 1.35rem; color: var(--ink); margin: 0 0 0.3rem; text-transform: none; letter-spacing: 0; }
 dialog.account .card { text-align: left; display: flex; flex-direction: column; gap: 0.7rem; }
-dialog.account .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.8rem; letter-spacing: 0.08em; margin: 0.8rem 0; user-select: all; }
+/* a code you tap to copy */
+button.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.08em; font-weight: 600;
+  color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: 1px dashed var(--line); border-radius: 0.75rem; padding: 0.5rem 1rem; cursor: pointer;
+}
+button.code:hover { border-color: var(--accent); }
+button.code.copied { color: var(--accent); border-style: solid; border-color: var(--accent); letter-spacing: 0.02em; }
+dialog.account .code { display: block; font-size: 1.8rem; margin: 0.8rem auto 0.3rem; min-width: 12rem; }
+dialog.account .tip { margin: 0; font-size: 0.875rem; }
 dialog.account .row.end { margin-top: 0.8rem; }
 section.card { width: 100%; text-align: left; font-family: system-ui, sans-serif; box-sizing: border-box; }
 section.card.me { border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.9rem 1rem; }
