@@ -241,13 +241,15 @@ export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).l
 // nobody to wait for. Two optional flags on the state change who can play:
 //   state.free    no turns at all (a time trial, where each player has their own board)
 //   state.author  index of a player sitting out (they wrote the pass phrase)
+//   state.absent  indexes of players no longer taking part (they left the room)
+const sittingOut = (state, player) => player === state.author || Boolean(state.absent?.includes(player));
 const mustAlternate = (state) =>
-  !state.free && state.players.length - (Number.isInteger(state.author) ? 1 : 0) > 1;
+  !state.free && state.players.filter((_, player) => !sittingOut(state, player)).length > 1;
 
 export const canMove = (state, player) =>
   state.status === 'playing' &&
   Number.isInteger(player) && player >= 0 && player < state.players.length &&
-  player !== state.author &&
+  !sittingOut(state, player) &&
   (!mustAlternate(state) || state.last?.player !== player);
 
 // Apply one turn. A turn is exactly one action:

@@ -45,7 +45,7 @@ Postmarks anyone may take the next turn except whoever took the last one.
 A solo game needs no room and is saved in the browser only.
 
 Rooms live in Supabase and are reached only through database functions
-(`room_create`, `room_get`, `room_join`, `room_profile`, `room_say`,
+(`room_create`, `room_get`, `room_join`, `room_leave`, `room_profile`, `room_say`,
 `postmarks_start`, `postmarks_get`, `postmarks_play`, `postmarks_trial_start`,
 `postmarks_guess_phrase`) that enforce membership and the rules; no
 table is exposed. There are no accounts: a room's link lets anyone see its name
@@ -53,6 +53,12 @@ and member names and join it, while chat and games are for members. Each device
 holds a random token (in `localStorage`) that proves which member it is, and
 only a hash of it is stored. `shared/config.js` holds the project URL and its publishable key, which
 is safe to publish.
+
+Members can leave a room. Their place is kept, marked as left, so their name
+still shows on old messages and results, but their device loses access, they
+stop being notified, and they no longer count towards turn-taking. Opening the
+room's link again lets them rejoin with the same place. Rooms are not removed
+when everyone has left.
 
 ## Real-time updates
 

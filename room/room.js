@@ -3,7 +3,7 @@ import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
-import { UUID, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
+import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { generatePuzzle, randomSize } from '/postmarks/game.js';
 
 const $ = (id) => document.getElementById(id);
@@ -14,7 +14,7 @@ const el = {
   notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'), newGame: $('new-game'),
   mode: $('mode'), modeHint: $('mode-hint'), phraseText: $('phrase-text'), gameError: $('game-error'),
-  chat: $('chat'),
+  chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'),
 };
 
 const requested = new URLSearchParams(location.search).get('id');
@@ -71,10 +71,13 @@ function render() {
   el.loading.hidden = true;
 
   if (room.you === null) {
-    const n = room.members.length;
+    // people still in the room (those who left keep their place in the list, marked)
+    const here = room.people.filter((person) => !person.left).map((person) => person.name);
+    const n = here.length;
     el.joinText.textContent = nextGame
       ? 'You’ve been invited to a game here. Join the room to play.'
-      : `${list(room.members)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
+      : n === 0 ? 'Nobody is here at the moment. Join to play and chat.'
+        : `${list(here)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
     if (!el.joinName.value) el.joinName.value = myName();
     el.join.hidden = false;
     el.room.hidden = true;
@@ -88,10 +91,11 @@ function render() {
   }
   el.join.hidden = true;
   el.room.hidden = false;
-  el.members.replaceChildren(...room.people.map((person, seat) => {
+  el.members.replaceChildren(...room.people.flatMap((person, seat) => {
+    if (person.left) return [];
     const li = document.createElement('li');
     li.append(avatar(person), person.name + (seat === room.you ? ' (you)' : ''));
-    return li;
+    return [li];
   }));
   el.profile.hidden = false;
   el.profile.replaceChildren(avatar(room.people[room.you]));
@@ -214,6 +218,22 @@ el.notifyButton.addEventListener('click', async () => {
   }
   el.notifyButton.disabled = false;
   renderNotify();
+});
+
+// --- Leaving ----------------------------------------------------------------------
+el.leave.addEventListener('click', async () => {
+  if (!confirm(`Leave ${room.name}? You can come back with the room's link.`)) return;
+  el.leave.disabled = true;
+  el.leaveError.textContent = '';
+  try {
+    await rpc('room_leave', { p_room: roomId, p_token: myToken() });
+    watcher?.poke();
+    forgetRoom(roomId); // off this device's list of rooms
+    location.href = '/';
+  } catch (error) {
+    el.leaveError.textContent = error.message;
+    el.leave.disabled = false;
+  }
 });
 
 // --- Your profile: name and avatar --------------------------------------------
