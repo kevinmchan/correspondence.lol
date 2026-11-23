@@ -696,6 +696,13 @@ h1 form.rename input { font-family: Georgia, serif; font-size: inherit; text-ali
    ============================================================================== */
 
 :root {
+  /* In the light theme a surface is a sheet of brighter paper lying on the
+     page, with a warm shadow under its lip. (Darkening the page colour for
+     cards, as the dark theme lightens it, only made them look grubby.) */
+  --card: #fffdf8;
+  --lip: #dcd2bf;
+}
+:root[data-theme="dark"] {
   --card: color-mix(in srgb, var(--ink) 5%, var(--paper));
   --lip: color-mix(in srgb, var(--ink) 16%, var(--paper));
 }
@@ -997,3 +1004,7 @@ dialog.ask .buttons .yes:active { transform: translateY(0.2rem); box-shadow: 0 0
 dialog.ask .buttons .yes.danger { background: var(--accent); color: #fff; box-shadow: 0 0.24rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
 dialog.ask .buttons .yes.danger:active { box-shadow: 0 0.04rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
 @media (prefers-reduced-motion: no-preference) { dialog.ask[open] { animation: pop-in 220ms cubic-bezier(0.2, 1.1, 0.3, 1); } dialog.ask[open]::backdrop { animation: fade-in 180ms ease; } }
+
+/* light theme: fields and inner tiles sit in the page colour, a step down from their card */
+:root[data-theme="light"] input[type="text"], :root[data-theme="light"] input[type="email"], :root[data-theme="light"] .feedback textarea { background: var(--paper); border-color: #e3dccd; }
+:root[data-theme="light"] .people li { background: var(--card); }
