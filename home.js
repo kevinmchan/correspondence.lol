@@ -33,6 +33,19 @@ const noProfile = () => {
 };
 const nameField = document.getElementById('my-name-field');
 const joinForm = document.getElementById('join-room');
+// The lobby: big buttons, and a sheet for each thing that needs a word typed in.
+const menu = document.getElementById('menu');
+const sheets = { open: document.getElementById('open-dialog'), join: document.getElementById('join-dialog') };
+for (const [name, sheet] of Object.entries(sheets)) {
+  document.getElementById(`menu-${name}`).addEventListener('click', () => {
+    sheet.querySelector('.message').textContent = '';
+    sheet.showModal();
+    sheet.querySelector('input:not([hidden])')?.focus();
+  });
+  sheet.addEventListener('click', (event) => {
+    if (event.target === sheet || event.target.closest('[data-close]')) sheet.close();
+  });
+}
 const joinCode = document.getElementById('join-code');
 const joinError = document.getElementById('join-error');
 const look = () => savedLook() ?? { avatar: '🙂', color: 0 };
@@ -46,8 +59,7 @@ function showMe() {
   welcome.section.hidden = !none;
   welcome.note.hidden = !profile.signed_out;
   me.card.hidden = none;
-  form.hidden = none;
-  joinForm.hidden = none;
+  menu.hidden = none;
   if (none) {
     rooms.hidden = true;
     return;
@@ -152,7 +164,7 @@ joinForm.addEventListener('submit', async (event) => {
     joinError.textContent = 'A room code is six letters and digits, like ABC-123.';
     return;
   }
-  const button = joinForm.querySelector('button');
+  const button = joinForm.querySelector('button[type="submit"]');
   button.disabled = true;
   try {
     const room = await rpc('room_join_code', { p_code: code, p_name: myName(), p_token: myToken() });
@@ -190,7 +202,7 @@ form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const name = myName() || nameInput.value.trim();
   if (!name) return;
-  const button = form.querySelector('button');
+  const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
   error.textContent = '';
   try {
@@ -210,3 +222,56 @@ form.addEventListener('submit', async (event) => {
 
 // The version, small and out of the way at the bottom of the page.
 document.getElementById('version').textContent = self.APP_VERSION ?? '';
+
+// --- Penny and Dot --------------------------------------------------------------
+// The two in the bottom corner mostly just breathe and blink (that is all CSS).
+// Every so often one of them does something small, they glance toward wherever
+// the page was last touched, and a tap on either gets a hop and a heart.
+const critters = document.getElementById('critters');
+if (critters && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const penny = critters.querySelector('.penny');
+  const dot = critters.querySelector('.dot');
+  const once = (who, name) => {
+    who.classList.remove('hop', 'wiggle', 'glow');
+    void who.getBoundingClientRect(); // so the same move can play twice running
+    who.classList.add(name);
+    who.addEventListener('animationend', () => who.classList.remove(name), { once: true });
+  };
+  const heart = (who) => {
+    const box = who.getBoundingClientRect();
+    const home = critters.getBoundingClientRect();
+    const span = document.createElement('span');
+    span.className = 'heart';
+    span.textContent = '♥';
+    span.style.left = `${box.left - home.left + box.width / 2 - 5}px`;
+    span.style.top = `${box.top - home.top - 6}px`;
+    critters.append(span);
+    setTimeout(() => span.remove(), 1400);
+  };
+  const idle = () => {
+    if (document.visibilityState === 'visible') {
+      const roll = Math.random();
+      if (roll < 0.3) once(penny, 'wiggle');
+      else if (roll < 0.5) once(dot, 'hop');
+      else if (roll < 0.7) once(penny, 'glow');
+      else if (roll < 0.85) once(dot, 'wiggle');
+      else { once(penny, 'hop'); setTimeout(() => once(dot, 'hop'), 180); } // one sets the other off
+    }
+    setTimeout(idle, 7000 + Math.random() * 9000);
+  };
+  setTimeout(idle, 5000);
+  for (const who of [penny, dot]) {
+    who.addEventListener('click', () => {
+      once(who, 'hop');
+      heart(who);
+    });
+  }
+  // a glance toward the last touch: the eyes shift a pixel or two that way
+  window.addEventListener('pointerdown', (event) => {
+    const home = critters.getBoundingClientRect();
+    const dx = event.clientX - (home.left + home.width / 2);
+    const dy = event.clientY - (home.top + home.height / 2);
+    const far = Math.hypot(dx, dy) || 1;
+    for (const eyes of critters.querySelectorAll('.eyes')) eyes.style.translate = `${(dx / far) * 1.6}px ${(dy / far) * 1.2}px`;
+  }, { passive: true });
+}
