@@ -1,8 +1,8 @@
 import { rpc } from '/shared/api.js';
 import { myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
-import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
+import { asCode, claim, codeInAddress, copyable, giveUpOn, prettyCode } from '/shared/handoff.js';
 import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
-import { cachedProfile, fetchProfile, openDeviceCode, saveProfile, startAfresh } from '/shared/account.js';
+import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 
 const form = document.getElementById('create-room');
 const nameInput = document.getElementById('my-name');
@@ -16,7 +16,7 @@ const rooms = document.getElementById('rooms');
 const me = {
   card: document.getElementById('me'), edit: document.getElementById('me-edit'),
   name: document.getElementById('me-name'), kind: document.getElementById('me-kind'),
-  code: document.getElementById('me-code'),
+  code: document.getElementById('me-code'), codeNote: document.getElementById('me-code-note'),
 };
 // With no account on the device, the page is only the two ways to get one:
 // create one, or sync one with a code from another device.
@@ -72,12 +72,33 @@ async function refresh() {
   }
   showMe();
   if (!noProfile()) showRooms();
+  showCode();
 }
 
 me.edit.addEventListener('click', () => {
   openProfile({ person: { name: myName(), ...look() }, onSave: async (person) => { await saveProfile(person); showMe(); } });
 });
-me.code.addEventListener('click', openDeviceCode);
+// The account code, on the card: a fresh one each time the page opens, and
+// again before it runs out (each is good for ten minutes, once).
+let codeTimer = null;
+async function showCode() {
+  clearTimeout(codeTimer);
+  if (noProfile()) return;
+  try {
+    copyable(me.code, prettyCode(await rpc('profile_code', { p_token: myToken() })));
+    me.code.disabled = false;
+    me.codeNote.textContent = 'Works once, for ten minutes. Tap to copy.';
+    codeTimer = setTimeout(showCode, 9 * 60 * 1000);
+  } catch (failure) {
+    me.code.disabled = true;
+    me.code.textContent = '—';
+    me.codeNote.textContent = failure.message;
+  }
+}
+// back on the page after a while: the code shown may have run out
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') showCode();
+});
 // Create an account, with a look to start with (it can be changed).
 welcome.form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -96,6 +117,7 @@ welcome.form.addEventListener('submit', async (event) => {
     else {
       showMe();
       showRooms();
+      showCode();
     }
   } catch (failure) {
     welcome.error.textContent = failure.message;

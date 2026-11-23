@@ -30,8 +30,10 @@
           <strong id="me-name"></strong>
           <span id="me-kind"></span>
         </div>
-        <div class="row">
-          <button type="button" id="me-code" class="quiet">Use on another device</button>
+        <div class="sync">
+          <span id="me-code-label">Account code, to sync another device</span>
+          <button type="button" id="me-code" class="code" aria-describedby="me-code-label" disabled>…</button>
+          <span id="me-code-note" class="note">Works once, for ten minutes. Tap to copy.</span>
         </div>
       </section>
 
@@ -52,7 +54,7 @@
           <fieldset>
             <legend>Have an account on another device?</legend>
             <label class="field">
-              <span>Its code (there: Use on another device)</span>
+              <span>Its account code, shown on its home page</span>
               <input type="text" id="welcome-code-text" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
             </label>
             <button type="submit">Sync account</button>

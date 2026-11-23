@@ -1,0 +1,4 @@
+-- The account code is now shown on the home page, so a fresh one is asked for
+-- each time the page opens: allow 300 a day per device instead of 20.
+-- (rooms.new_code is otherwise unchanged from the profiles migration; only
+-- the number in its daily limit differs.)

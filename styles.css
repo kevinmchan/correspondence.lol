@@ -656,3 +656,8 @@ div.card.plain legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.
 .share .code { font-size: 1.35rem; flex: 1; }
 input.code-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.25rem; letter-spacing: 0.12em; text-transform: uppercase; }
 input.code-input::placeholder { letter-spacing: 0.12em; opacity: 0.45; }
+
+/* the account code on the home page's card */
+.me .sync { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed var(--line); font-family: system-ui, sans-serif; font-size: 0.8125rem; color: var(--muted); }
+.me .sync .code { font-size: 1.35rem; }
+.me .sync .note { font-size: 0.8125rem; }
