@@ -1,4 +1,3 @@
-const statusEl = document.getElementById('status');
 
 // --- Service worker -------------------------------------------------------
 if ('serviceWorker' in navigator) {
@@ -154,8 +153,9 @@ function openInstallGuide() {
 
 }
 
-function showInstallBanner() {
-  if (installBanner || installed() || !installPlatform()) return;
+function showInstallBanner(container) {
+  if (installed() || !installPlatform()) return;
+  installBanner?.remove();
   const banner = document.createElement('aside');
   installBanner = banner;
   banner.className = 'install-banner';
@@ -174,7 +174,7 @@ function showInstallBanner() {
       openInstallGuide(); // no one-tap install here: show the steps
     }
   });
-  document.body.prepend(banner);
+  container.prepend(banner);
 }
 
 window.addEventListener('beforeinstallprompt', (event) => {
@@ -192,12 +192,13 @@ window.addEventListener('appinstalled', () => {
 
 window.openInstallGuide = openInstallGuide; // the room's notification prompt opens it too
 
-// The banner belongs to the home page, where it stays until the app is
+// The banner belongs to the home screen, where it stays until the app is
 // installed. Rooms make the same offer in their notification prompt instead.
-const onHomePage = location.pathname === '/' || location.pathname === '/index.html';
-if (onHomePage && !installed() && Date.now() >= readSnooze()) {
-  showInstallBanner();
-}
+// The home screen calls this each time it is put on the page.
+window.homeBanner = (screen) => {
+  if (!installed() && Date.now() >= readSnooze()) showInstallBanner(screen);
+  renderConnectivity();
+};
 
 // On an iPhone or iPad, attach the code to the Home Screen icon ahead of time:
 // people also install straight from the browser's own menu.
@@ -207,6 +208,7 @@ if (!installed() && installPlatform()?.startsWith('ios')) {
 
 // --- Connectivity ---------------------------------------------------------
 function renderConnectivity() {
+  const statusEl = document.getElementById('status'); // on the home screen, when it is up
   if (!statusEl) return;
   statusEl.textContent = navigator.onLine ? '' : 'You are offline — showing the saved copy.';
 }

@@ -13,11 +13,14 @@
 (function () {
   var root = document.getElementById('splash');
   if (!root) return;
-  var mark = document.querySelector('main .mark');
-  if (document.documentElement.classList.contains('no-splash') || !mark) {
+  if (document.documentElement.classList.contains('no-splash')) {
     root.remove();
     return;
   }
+  // the home screen is put on the page a moment after this starts: until its
+  // mark is there to pull back to, the screen simply stays red
+  var mark = null;
+  var waited = 0;
 
   var canvas = root.querySelector('canvas');
   var ctx = canvas.getContext('2d');
@@ -56,6 +59,15 @@
   var hurry = null; // set by a tap: when, and how far along it was
 
   function frame(now) {
+    if (!mark) {
+      mark = document.querySelector('#screens .mark');
+      if (!mark) {
+        if (++waited > 240) { root.remove(); return; } // it never came: get out of the way
+        requestAnimationFrame(frame);
+        return;
+      }
+      root.style.background = 'transparent'; // the canvas takes over from the plain red
+    }
     if (started === null) started = now;
     var p = clamp((now - started - HOLD) / MOVE);
     if (hurry) p = clamp(hurry.from + (1 - hurry.from) * (now - hurry.at) / 260);
@@ -116,15 +128,12 @@
   }
 
   root.addEventListener('pointerup', function () {
-    if (hurry || started === null) return;
+    if (hurry || started === null || !mark) return;
     var now = performance.now();
     hurry = { at: now, from: clamp((now - started - HOLD) / MOVE) };
   });
 
   window.addEventListener('resize', size);
   size();
-  requestAnimationFrame(function (now) {
-    root.style.background = 'transparent'; // the canvas takes over from the plain red
-    frame(now);
-  });
+  requestAnimationFrame(frame);
 })();

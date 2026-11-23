@@ -47,7 +47,11 @@ export async function enablePush() {
 }
 
 // While a room (or one of its games) is on screen, keep telling the server, so
-// it skips notifications about things happening in front of you.
+// it skips notifications about things happening in front of you. Returns a
+// function that stops it. Going from a room into one of its games, the two
+// screens overlap for a moment: "gone" is only said when the last one leaves.
+const watching = new Map(); // room id -> how many screens are showing it
+
 export function watchPresence(roomId) {
   let timer = null;
   const say = (here) => {
@@ -68,7 +72,17 @@ export function watchPresence(roomId) {
       timer = setInterval(() => say(true), 25000);
     }
   };
+  const gone = () => say(false);
+  watching.set(roomId, (watching.get(roomId) ?? 0) + 1);
   document.addEventListener('visibilitychange', update);
-  window.addEventListener('pagehide', () => say(false));
+  window.addEventListener('pagehide', gone);
   update();
+  return () => {
+    clearInterval(timer);
+    document.removeEventListener('visibilitychange', update);
+    window.removeEventListener('pagehide', gone);
+    const left = (watching.get(roomId) ?? 1) - 1;
+    watching.set(roomId, left);
+    if (left <= 0) say(false);
+  };
 }
