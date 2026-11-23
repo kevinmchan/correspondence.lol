@@ -12,8 +12,8 @@ const el = {
   join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
   room: $('room'), members: $('members'), profile: $('profile'),
   notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
-  games: $('games'), noGames: $('no-games'), newGame: $('new-game'),
-  mode: $('mode'), modeHint: $('mode-hint'), phraseText: $('phrase-text'), gameError: $('game-error'),
+  games: $('games'), noGames: $('no-games'),
+  modes: $('modes'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'), gameError: $('game-error'),
   chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'),
 };
 
@@ -252,45 +252,50 @@ el.profile.addEventListener('click', () => {
   openProfile({ person: room.people[room.you], onSave: saveProfile });
 });
 
-// What each kind of game is, shown under the picker.
-const MODE_HINTS = {
-  coop: 'Solve one board together, taking turns.',
-  trial: 'Everyone solves the same board on their own. Fastest time wins.',
-  phrase: 'Everyone solves the same board on their own. Each letter found reveals one word of a hidden phrase.',
-};
-
-function syncMode() {
-  el.modeHint.textContent = MODE_HINTS[el.mode.value];
-  el.phraseText.hidden = el.mode.value !== 'phrase';
-}
-
-el.mode.addEventListener('change', syncMode);
-syncMode();
-
-el.newGame.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const button = el.newGame.querySelector('button');
-  button.disabled = true;
+// --- Starting a game ----------------------------------------------------------------
+// One tile per kind of game. Together and Time trial start on a tap; Pass
+// phrase first offers a box for writing the phrase (left empty, a random one
+// is used and its starter can play too).
+async function startGame(mode, phrase = null) {
+  if (el.modes.dataset.busy) return;
+  el.modes.dataset.busy = 'true';
   el.gameError.textContent = '';
   try {
     // A pass phrase hides one word in each letter, so the board is sized to
     // the phrase: as many letters as words where possible.
-    const words = el.phraseText.value.trim().split(/\s+/).filter(Boolean).length;
-    const size = el.mode.value !== 'phrase' ? randomSize()
+    const words = (phrase ?? '').trim().split(/\s+/).filter(Boolean).length;
+    const size = mode !== 'phrase' ? randomSize()
       : words ? Math.min(9, Math.max(5, words))
       : 5 + Math.floor(Math.random() * 3);
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_start', {
-      p_room: roomId, p_token: myToken(), p_mode: el.mode.value, p_size: size,
-      p_regions: puzzle.regions, p_solution: puzzle.solution,
-      p_phrase: el.mode.value === 'phrase' ? el.phraseText.value : null,
+      p_room: roomId, p_token: myToken(), p_mode: mode, p_size: size,
+      p_regions: puzzle.regions, p_solution: puzzle.solution, p_phrase: mode === 'phrase' ? phrase : null,
     });
     watcher?.poke();
     location.href = gameUrl('postmarks', game.id);
   } catch (error) {
     el.gameError.textContent = error.message;
-    button.disabled = false;
+    delete el.modes.dataset.busy;
   }
+}
+
+el.modes.addEventListener('click', (event) => {
+  const tile = event.target.closest('[data-mode]');
+  if (!tile) return;
+  if (tile.dataset.mode !== 'phrase') {
+    startGame(tile.dataset.mode);
+    return;
+  }
+  const open = el.phraseForm.hidden;
+  el.phraseForm.hidden = !open;
+  tile.setAttribute('aria-expanded', String(open));
+  if (open) el.phraseText.focus();
+});
+
+el.phraseForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  startGame('phrase', el.phraseText.value);
 });
 
 // Copy puts exactly the room link on the clipboard.
