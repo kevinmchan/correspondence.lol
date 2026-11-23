@@ -5,7 +5,10 @@ import { myName, recentRooms, roomUrl } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
-import { ASK, HELLO, THIS_WAY, createVoice, hasLearned } from '/penny/penny.js';
+import { load, save } from '/shared/identity.js';
+import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasWalked, placeReached } from '/penny/penny.js';
+import { claim as callPal } from '/penny/pal.js';
+import { notesHeard, playMail, remembered } from '/penny/mail.js';
 
 // The home screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -169,134 +172,212 @@ export function mount(root, life) {
   $('version').textContent = self.APP_VERSION ?? '';
 
   // --- Penny and Dot --------------------------------------------------------------
-  // The two in the bottom corner mostly just breathe and blink (that is all CSS).
-  // Every so often one of them does something small, they glance toward wherever
-  // the page was last touched. A tap on Dot gets a hop and a heart; a tap on
-  // Penny, a hop, and then her story.
-  const critters = $('critters');
-  // Until her lessons have been taken (penny/learn.js), Penny wants one thing:
-  // to get you through the portal in the other corner. She has no words for
-  // it, so she does what a dog does: calls, runs to it, looks back, waits, and
-  // comes to fetch you again. A tap on her goes there. Once the lessons are
-  // done she is at rest, and a tap opens her story instead (penny/story.js).
-  // Either move is made without its usual sound: the next thing heard is her.
+  // They are not on the page. Penny stands at the bottom edge of the window
+  // (penny/pal.js), life size, with Dot beside her, and looks up at this page
+  // the way one looks at a map. Mostly she just watches, her eyes over the
+  // edge. But there are things she wants, and since she cannot say so, she
+  // comes up and shows it:
+  //
+  //   The portal, top left: a place on the map she wants to take you to
+  //   (penny/walk.js). Until the first places have been walked she keeps
+  //   coming back to it: she calls, walks along the edge to stand under it,
+  //   looks up at it and back at you. Now and then she stops to remember the
+  //   sound she is looking for, and it can be heard, far off.
+  //
+  //   The app installed. Once you have been through a portal with her, she
+  //   stands under the Install button and pleads. It is asked a few times, at
+  //   longer and longer intervals, then left alone; a no is taken as a no for
+  //   the rest of the visit. Nothing waits on it.
+  //
+  // A tap on her does whatever she is asking for at that moment; with nothing
+  // asked, it opens her story (penny/story.js). Those moves are made without
+  // the usual sound, so the next thing heard is her.
   const portal = $('portal');
-  const pennyHome = critters?.querySelector('.penny');
-  const voice = createVoice(life, {
-    onNote(pitch, dur) {
-      const seal = pennyHome?.querySelector('.seal');
-      if (!seal) return;
-      seal.classList.remove('sound');
-      void seal.getBoundingClientRect();
-      seal.style.setProperty('--d', `${Math.max(260, dur * 1000)}ms`);
-      seal.classList.add('sound');
-    },
-  });
-  portal.classList.toggle('calm', hasLearned());
-  pennyHome?.addEventListener('click', () => {
-    if (!hasLearned()) voice.sing(HELLO, 0.9);
-    setTimeout(() => go(hasLearned() ? '/?penny' : '/?learn', { quiet: true }), 300);
-  });
-  if (critters && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const penny = critters.querySelector('.penny');
-    const dot = critters.querySelector('.dot');
-    const once = (who, name) => {
-      who.classList.remove('hop', 'wiggle', 'glow');
-      void who.getBoundingClientRect(); // so the same move can play twice running
-      who.classList.add(name);
-      who.addEventListener('animationend', () => who.classList.remove(name), { once: true });
-    };
-    const heart = (who) => {
-      const box = who.getBoundingClientRect();
-      const home = critters.getBoundingClientRect();
-      const span = document.createElement('span');
-      span.className = 'heart';
-      span.textContent = '♥';
-      span.style.left = `${box.left - home.left + box.width / 2 - 5}px`;
-      span.style.top = `${box.top - home.top - 6}px`;
-      critters.append(span);
-      setTimeout(() => span.remove(), 1400);
-    };
-    const idle = () => {
-      if (document.visibilityState === 'visible') {
-        const roll = Math.random();
-        if (roll < 0.3) once(penny, 'wiggle');
-        else if (roll < 0.5) once(dot, 'hop');
-        else if (roll < 0.7) once(penny, 'glow');
-        else if (roll < 0.85) once(dot, 'wiggle');
-        else { once(penny, 'hop'); setTimeout(() => once(dot, 'hop'), 180); } // one sets the other off
-      }
-      setTimeout(idle, 7000 + Math.random() * 9000);
-    };
-    setTimeout(idle, 5000);
-    // --- Penny, wanting to show you something ---
-    const hers = critters.querySelector('.shade.hers');
-    const wait = (ms) => new Promise((done) => setTimeout(done, ms));
-    const gaze = (who, dx, dy) => { who.querySelector('.eyes').style.translate = `${dx}px ${dy}px`; };
-    // Move her along the bottom of the page: all the way to the portal, or home.
-    const run = (toPortal) => {
-      let by = 0;
-      if (toPortal) {
-        const scale = critters.querySelector('svg').getBoundingClientRect().width / 132; // screen pixels to a unit of the drawing
-        const gap = portal.getBoundingClientRect().right + 8 - critters.getBoundingClientRect().left;
-        by = Math.min(0, gap / scale - 60); // her left edge is 60 units into the drawing
-      }
-      penny.style.translate = hers.style.translate = `${by}px 0`;
-    };
-    const quiet = () => document.visibilityState !== 'visible' || document.querySelector('dialog[open], #splash');
-    (async () => {
-      await wait(3200);
-      while (!hasLearned()) {
-        if (!quiet()) {
-          // to you
-          gaze(penny, -0.8, -1.2);
-          once(penny, 'hop');
-          voice.sing(HELLO, 0.85);
-          await wait(1200);
-          // to the portal
-          run(true);
-          await wait(700);
-          once(penny, 'hop');
-          await wait(1000);
-          // and back at you: this way?
-          gaze(penny, 1.4, -1);
-          once(penny, 'wiggle');
-          voice.sing(ASK, 0.85);
-          portal.classList.remove('called');
-          void portal.getBoundingClientRect();
-          portal.classList.add('called');
-          await wait(1900);
-          gaze(penny, -1.6, 0.2); // into it
-          await wait(1500);
-          gaze(penny, 1.4, -1);
-          once(penny, 'hop');
-          voice.sing(THIS_WAY, 0.85);
-          await wait(3200);
-          // nobody came: back to fetch you
-          run(false);
-          await wait(1800);
-        }
-        await wait(5000 + Math.random() * 4000);
-      }
-    })();
+  const pal = callPal(life, { x: 0.7, height: 'peek', mood: 'calm' });
+  const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+  const quiet = () => document.visibilityState !== 'visible' || Boolean(document.querySelector('dialog[open], #splash'));
+  const installButton = () => root.querySelector('.install-banner [data-act="install"]');
+  const canInstall = () => ['ready', 'guide'].includes(window.installState?.()) && Boolean(installButton());
+  const SAID_NO_KEY = 'penny:install-no'; // for this visit only
+  const saidNo = () => { try { return sessionStorage.getItem(SAID_NO_KEY) === '1'; } catch { return false; } };
+  let asking = null; // what she is showing you just now: 'portal' | 'install' | null
+  let pleas = 0;
+  let turn = 0; // which of her wants is being shown: so that one does not start while another is going on
 
-    dot.addEventListener('click', () => {
-      once(dot, 'hop');
-      heart(dot);
-    });
-    penny.addEventListener('click', () => once(penny, 'hop'));
-    // a glance toward the last touch: the eyes shift a pixel or two that way
-    life.on(window, 'pointerdown', (event) => {
-      const home = critters.getBoundingClientRect();
-      const dx = event.clientX - (home.left + home.width / 2);
-      const dy = event.clientY - (home.top + home.height / 2);
-      const far = Math.hypot(dx, dy) || 1;
-      for (const eyes of critters.querySelectorAll('.eyes')) eyes.style.translate = `${(dx / far) * 1.6}px ${(dy / far) * 1.2}px`;
-    }, { passive: true });
+  portal.classList.toggle('calm', hasWalked());
+  const flare = (what, name) => {
+    if (!what) return;
+    what.classList.remove(name);
+    void what.getBoundingClientRect();
+    what.classList.add(name);
+  };
+  const settle = () => {
+    asking = null;
+    pal.mood('calm').height('peek').goTo(0.7).look(null);
+  };
+
+  // What she is looking for: a sound, a long way off. She shuts her eyes to
+  // remember it, and for a moment it is there.
+  async function remember() {
+    pal.mood('sleepy').look(null);
+    pal.look(pal.penny, 'dot');
+    await wait(500);
+    await playMail(life, remembered(0.92), () => pal.glow(0.9));
+    pal.mood('hopeful').look(null, 'dot');
+    await wait(500);
   }
 
+  async function showPortal(mine) {
+    asking = 'portal';
+    pal.rise().mood('hopeful').look(null).gesture('hop');
+    pal.sing(HELLO, 0.85);
+    await wait(1300);
+    if (mine !== turn) return;
+    if (notesHeard() === 0 || Math.random() < 0.4) await remember();
+    if (mine !== turn) return;
+    pal.mood('hopeful').pointAt(portal);
+    await wait(1500);
+    if (mine !== turn) return;
+    flare(portal, 'called');
+    pal.sing(ASK, 0.85);
+    await wait(1700);
+    if (mine !== turn) return;
+    pal.look(null).mood('warm').gesture('hop');
+    pal.sing(THIS_WAY, 0.85);
+    await wait(2400);
+    if (mine !== turn) return;
+    pal.look(portal);
+    await wait(2200);
+    if (mine === turn) settle();
+  }
+
+  async function plead(mine) {
+    const button = installButton();
+    if (!button) return;
+    asking = 'install';
+    pleas += 1;
+    pal.rise().mood('pleading').pointAt(button);
+    await wait(1300);
+    if (mine !== turn) return;
+    flare(button, 'wanted');
+    pal.sing(PLEASE, 0.85);
+    await wait(1900);
+    if (mine !== turn) return;
+    pal.look(null).gesture('hop');
+    await wait(1700);
+    if (mine !== turn) return;
+    pal.look(button).gesture('hop2');
+    flare(button, 'wanted');
+    await wait(2400);
+    if (mine === turn) settle();
+  }
+
+  // Being let in. She is as glad as she gets.
+  async function celebrate() {
+    const mine = ++turn;
+    asking = null;
+    pal.rise().goTo(0.6).mood('thrilled').look(null).gesture('jump').hearts(3);
+    pal.sing(TRILL, 1);
+    await wait(700);
+    pal.gesture('hop', 'dot').hearts(1, 'dot');
+    await wait(900);
+    if (mine !== turn) return;
+    pal.gesture('jump');
+    pal.sing(THIS_WAY, 1);
+    await wait(2600);
+    if (mine === turn) pal.mood('glad').height('peek').goTo(0.7);
+  }
+
+  life.on(window, 'install', (event) => {
+    const what = event.detail?.what;
+    if (what === 'installed') {
+      celebrate();
+    } else if (what === 'asked') {
+      // you pressed it: she can hardly look
+      turn += 1;
+      asking = 'install';
+      pal.rise().mood('thrilled').gesture('jump');
+    } else if (what === 'declined') {
+      // a no is a no: she feels it, and lets it be
+      turn += 1;
+      try { sessionStorage.setItem(SAID_NO_KEY, '1'); } catch { /* she will simply ask once more next time */ }
+      pal.mood('sad').gesture('sink');
+      pal.sing(SIGH, 0.6);
+      setTimeout(settle, 2600);
+    } else if (what === 'closed') {
+      // the steps have been read: she waits, hoping
+      turn += 1;
+      pleas = 3;
+      pal.mood('hopeful').look(null);
+      setTimeout(settle, 3000);
+    }
+  });
+
+  // The first time the app is opened as an app.
+  const HOME_KEY = 'penny:at-home:v1';
+  if (window.installState?.() === 'installed' && load(HOME_KEY) !== true) {
+    save(HOME_KEY, true);
+    setTimeout(() => { if (!quiet()) celebrate(); }, 2600);
+  }
+
+  // Her wants, one at a time, with long rests between.
+  (async () => {
+    await wait(3200);
+    let since = 0; // portal showings since she last pleaded
+    let gap = 20000; // how long she leaves it before pleading again: twice as long each time
+    let notBefore = 0;
+    for (;;) {
+      if (!quiet() && asking === null) {
+        const been = hasWalked() || placeReached() > 0;
+        const mayPlead = canInstall() && !saidNo() && pleas < 3 && been && performance.now() >= notBefore;
+        const mine = ++turn;
+        if (mayPlead && (hasWalked() || since >= 1 || pleas === 0)) {
+          since = 0;
+          await plead(mine);
+          notBefore = performance.now() + gap;
+          gap *= 2;
+        } else if (!hasWalked()) {
+          since += 1;
+          await showPortal(mine);
+        } else if (canInstall() && !saidNo() && Math.random() < 0.3) {
+          // at rest, a glance up at it now and then
+          pal.mood('hopeful').look(installButton());
+          await wait(1400);
+          if (mine === turn) pal.mood('calm').look(null);
+        } else {
+          // nothing wanted: the small life of two creatures waiting
+          const roll = Math.random();
+          if (roll < 0.35) pal.gesture('wiggle');
+          else if (roll < 0.6) pal.gesture('hop', 'dot');
+          else if (roll < 0.8) { pal.glow(0.8); setTimeout(() => { if (mine === turn) pal.mood('calm'); }, 900); }
+          else { pal.gesture('hop'); setTimeout(() => pal.gesture('hop', 'dot'), 180); } // one sets the other off
+        }
+      }
+      await wait(6000 + Math.random() * 5000);
+    }
+  })();
+
+  pal.onTap(() => {
+    turn += 1;
+    pal.gesture('hop');
+    if (asking === 'install' || (hasWalked() && canInstall() && !saidNo())) {
+      window.requestInstall?.();
+      return;
+    }
+    if (!hasWalked()) pal.sing(HELLO, 0.9);
+    setTimeout(() => go(hasWalked() ? '/?penny' : '/?walk', { quiet: true }), 300);
+  });
+  pal.onTap(() => pal.gesture('hop', 'dot').hearts(1, 'dot'), 'dot');
+  // they glance toward wherever the page was last touched
+  life.on(window, 'pointerdown', (event) => {
+    if (event.target.closest?.('.pal')) return;
+    const at = { x: event.clientX, y: event.clientY };
+    pal.look(at, 'dot');
+    if (asking === null) pal.look(at);
+  }, { passive: true });
+
   // --- The mark and the background ----------------------------------------------------
-  // Quieter than Penny and Dot, in that order: the mark stirs every twenty
+  // Quieter than Penny and Dot (who are not on the page at all), in that order: the mark stirs every twenty
   // seconds or so and opens its flap when tapped; the background shows a faint
   // tile where it is tapped, and one somewhere by itself only rarely.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -334,7 +415,7 @@ export function mount(root, life) {
     // a tap that lands on nothing in particular
     life.on(document, 'pointerdown', (event) => {
       if (!event.isPrimary || document.querySelector('dialog[open], #splash')) return;
-      if (event.target.closest('button, a, input, textarea, label, form, section, li, nav, svg, .critters, .install-banner, h1')) return;
+      if (event.target.closest('button, a, input, textarea, label, form, section, li, nav, svg, .pal, .install-banner, h1')) return;
       ghost(event.pageX, event.pageY, false);
       sfx('pick');
     });

@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: her voice (`penny.js`), her lessons at `/?learn` (`learn.js`) and her story at `/?penny` (`story.js`) |
+| `penny/` | Penny: her voice (`penny.js`), herself at life size (`pal.js`), the map walked with her at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and her story at `/?penny` (`story.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -42,21 +42,64 @@ the letters of a phrase. A double tap on a square guesses a post there.
 
 ## Penny
 
-Penny the letter and Dot the stamp live in the bottom corner of the home page.
-Penny cannot speak, read or write. What she has is a voice: a closed-mouth hum
-that comes from her seal (`penny/penny.js`), which brightens with every note so
-the voice can be seen with sound off. Nothing she is part of uses words.
+Penny is a letter and Dot is a stamp. Penny cannot speak, read or write, so
+nothing she is part of uses words. What she has is a voice, a closed-mouth hum
+that comes from her seal (`penny/penny.js`), and her feelings, which show.
 
-### Her lessons
+### Where she is
 
-Across the home page from her is a portal, and until her lessons have been
-taken she wants you through it. She calls, runs along the bottom of the page to
-the portal, looks back, waits, and comes to fetch you again. A tap on her, or on
-the portal, goes in (`/?learn`, `penny/learn.js`).
+The screen is a map seen from far above, and Penny is not on it. She stands at
+the bottom edge of the window, in the viewer's own space, life size, with Dot
+beside her, and looks up at the map with you (`penny/pal.js`). She is one layer
+over the whole app, so screens slide past and she stays; a screen that wants
+her asks for her, and she goes back under the edge when no screen does. At
+present the home page and the map ask for her.
 
-Inside, Postmarks is taught one rule at a time. Each lesson is a small board in
-a world with one more rule than the last, and solving it opens a portal to the
-next:
+Everything she says is a feeling. A mood sets her face and how she holds
+herself (the point of her flap works as a brow); a gesture is one movement; she
+looks at things, leans towards them, and walks along the edge to stand under
+whatever she wants you to see, which is the nearest she has to pointing. Her
+seal glows with how warm she feels and brightens with every note she hums, so
+her voice can be seen with sound off. She never blocks the page: she only comes
+all the way up where that covers nothing there is to press, a tap that lands on
+her over a button goes to the button, and while something is being typed she
+ducks under.
+
+### What she wants
+
+She is looking for someone, and all she knows of them is a sound: every post
+has a sound inside, and one of them is theirs (`penny/mail.js`). Most posts
+hold other people's mail, small bright things in voices of their own. The
+sound she is after is a breath across something hollow, low and far off. It is
+found in pieces, never the whole of it, each piece nearer than the last, and
+what has been heard is kept on the device. **Who or what makes it is not
+decided, and nothing in the app says or hints**: that belongs to the middle of
+a longer story, of which only the opening exists.
+
+On the home page she wants two things, and shows them by coming up and standing
+under them.
+
+- **The portal**, top left, a place on the map. Until the first places have
+  been walked she keeps coming back to it: she calls, walks under it, looks up
+  at it and back at you. Sometimes she shuts her eyes first and the sound she
+  remembers can be heard, a long way off.
+- **The app installed.** Once you have been through a portal with her, she
+  stands under the Install button and pleads. She asks at most three times in
+  a visit, leaving it twice as long each time; a no to the browser's prompt is
+  a no for the rest of the visit, and she lets it be. Nothing waits on it.
+  When the app is installed, and the first time it is opened as an app, she is
+  as glad as she gets. (`app.js` tells her where installing stands through
+  `installState()`, `requestInstall()` and an `install` event.)
+
+A tap on her does whatever she is asking for at that moment. With nothing
+asked, it opens her story.
+
+### Walking the map
+
+Through the portal is the map itself (`/?walk`, `penny/walk.js`): a few
+districts lit, the rest of it faint all round. There is no tutorial. There are
+five places, each a small piece of the game with one more rule than the last
+(`penny/places.js`), and you play them while she stands beside you:
 
 1. a double tap opens a post
 2. one post per colour
@@ -64,26 +107,38 @@ next:
 4. posts cannot touch
 5. a tap or a drag crosses squares out
 
-Penny shows each step with a ring on the board that beats the gesture (twice
-for a double tap, once for a tap, a slide for a drag) and hums the same rhythm.
-When a post is opened, the squares the newest rule takes away light up one
-after another, so the rule is seen as a shape; rules a world does not have yet
-take nothing away. Steps that can be worked out are left to the player for a
-while before she shows them. A wrong guess costs nothing, and a cross put on a
-post is taken off again. The last portal leads to a real solo game. Which
-lesson has been reached, and whether they are finished, is kept on the device;
-afterwards the portal stays, quieter, and the lessons can be taken again.
+She does not know where the posts are; she is looking too. How she feels about
+a square comes from the only two things she has to go on. One is the rules: a
+square the posts already found rule out, and a colour, row or column with one
+square left. The other is her ear: close to a post she can hear it through the
+map, from two squares off in the first places and only under your finger by
+the last. Touch a square, or slide a finger across the map, and she tells you
+with her whole face what she makes of it: thrilled, hopeful, unsure, or a shake
+of the head and a glance at the post that says no. Left alone she starts
+looking for herself, first at whatever the rules have made certain, and then,
+with nothing certain, listening.
+
+When a post is opened, the squares the place's newest rule takes away light up
+one after another, so the rule is seen as a shape; rules a place does not have
+yet take nothing away. Then the post's sound comes out and she holds still to
+listen. In every place after the first, the last post found has a piece of the
+sound she is after, and she hums it back. What has been heard of it is drawn
+at the top of the map, a mark a note, and can be played again from there.
+
+A wrong guess costs nothing. In the last place a tap makes a cross, as in the
+game; she cannot take one off, and a cross over a post she can hear frightens
+her until it is gone. A place that has given up all its posts opens a portal,
+one square further down the map, and the last portal leads out to a real solo
+game.
 
 ### Her story
 
-Once the lessons are done, a tap on Penny opens her story (`/?penny`,
-`penny/story.js`), where the only sound is her voice. She is alone in the rain,
-feels something warm inside her that she cannot read, calls out and hears
-nothing, and then hums into a post box that Dot leads her to. After that she
-waits, and the story does not go on by itself: the answer is a touch from
-whoever is watching, and it arrives in the colour of their avatar. Once the
-story is told, every touch is another answer. The app's music stands aside
-while the screen is up.
+Once the first places have been walked, a tap on Penny at rest opens her story
+(`/?penny`, `penny/story.js`), where the only sound is her voice. She is alone
+in the rain, feels something warm inside her that she cannot read, calls out
+and hears nothing, and then hums into a post box that Dot leads her to. After
+that she waits, and the story does not go on by itself: the answer is a touch
+from whoever is watching. The app's music stands aside while the screen is up.
 
 ## Game modes
 

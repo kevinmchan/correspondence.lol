@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: home (/), opening and joining a room (/?open, /?join), Penny's lessons and her story (/?learn, /?penny), a room
+// The screens: home (/), opening and joining a room (/?open, /?join), the map walked with Penny and her story (/?walk, /?penny), a room
 // (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -21,7 +21,7 @@ const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
   { name: 'penny', depth: 1, match: (path, url) => asks(url, 'penny'), load: () => import('/penny/story.js') },
-  { name: 'learn', depth: 1, match: (path, url) => asks(url, 'learn'), load: () => import('/penny/learn.js') },
+  { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },
   { name: 'game', depth: 2, match: (path) => path.startsWith('/postmarks'), load: () => import('/postmarks/ui.js') },

@@ -2,7 +2,7 @@
 //
 // She cannot speak, read or write. What she has is a closed-mouth hum that
 // comes from her seal, on the five notes the rest of the app keeps to. Every
-// screen she is on (the home page, her lessons, her story) hums through here.
+// screen she is on (the home page, the map, her story) hums through here.
 
 import { audio, holdMusic, isMuted, noise } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
@@ -11,23 +11,29 @@ export const [G4, A4, C5, D5, E5, G5, A5, C6] = [392, 440, 523.25, 587.33, 659.2
 
 // Her phrases: [pitch, seconds, pitch to glide to]. A pitch of 0 is a rest.
 export const HELLO = [[D5, 0.26], [G5, 0.55]];
-export const ASK = [[G4, 0.5, C5]];
+export const ASK = [[G4, 0.5, C5]]; // one note that turns up at the end
 export const SAG = [[E5, 0.5, D5], [C5, 1.0]];
 export const OOPS = [[E5, 0.22, D5], [C5, 0.4]];
 export const TRILL = [[G5, 0.1], [A5, 0.1], [G5, 0.1], [A5, 0.1], [C6, 0.55]];
 export const YES = [[G5, 0.12], [C6, 0.3]];
 export const THIS_WAY = [[E5, 0.2], [G5, 0.2], [C6, 0.5]];
-export const TAP_TAP = [[G5, 0.11], [0, 0.06], [G5, 0.18]]; // twice, quickly: open it
-export const TAP = [[G5, 0.2]]; // once: cross it out
-export const SWEEP = [[D5, 0.55, A5]]; // one long slide: drag across
+export const HERE = [[G5, 0.11], [0, 0.06], [G5, 0.18]]; // twice, quickly: it is right here
+export const NO_NO = [[E5, 0.13], [0, 0.05], [C5, 0.2]]; // not there
+export const COLD = [[A4, 0.2, G4]]; // nothing that she can hear
+export const WARMER = (warm) => (warm > 0.4 ? [[D5, 0.17, G5]] : [[C5, 0.17, D5]]); // closer, and how close
+export const MM = [[C5, 0.16]]; // content
+export const ALARM = [[A5, 0.09], [0, 0.04], [A5, 0.09], [0, 0.04], [A5, 0.09], [0, 0.04], [A5, 0.15]];
+export const PLEASE = [[E5, 0.32, G5], [G5, 0.75]];
+export const SIGH = [[D5, 0.6, C5]];
 
-// Whether her lessons have been finished on this device, and which comes next.
-const LEARNED_KEY = 'penny:learned:v1';
-const LESSON_KEY = 'penny:lesson:v1';
-export const hasLearned = () => load(LEARNED_KEY) === true;
-export const setLearned = () => save(LEARNED_KEY, true);
-export const lessonReached = () => (Number.isInteger(load(LESSON_KEY)) ? load(LESSON_KEY) : 0);
-export const setLessonReached = (index) => save(LESSON_KEY, index);
+// Whether the walk through the first places has been finished on this device,
+// and which place comes next.
+const WALKED_KEY = 'penny:walked:v1';
+const PLACE_KEY = 'penny:place:v1';
+export const hasWalked = () => load(WALKED_KEY) === true;
+export const setWalked = () => save(WALKED_KEY, true);
+export const placeReached = () => (Number.isInteger(load(PLACE_KEY)) ? load(PLACE_KEY) : 0);
+export const setPlaceReached = (index) => save(PLACE_KEY, index);
 
 // A voice for one screen, ending with its `life`.
 //   onNote(pitch, seconds, tag): called as each note starts, so the screen can
