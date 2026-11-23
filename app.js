@@ -19,6 +19,9 @@ if ('serviceWorker' in navigator) {
 // is one (Chrome, Edge and other Chromium browsers); elsewhere it opens a
 // guide with pictures and steps that match the device.
 
+// What installing is for, in one line: the app gets the whole screen, with no
+// browser round it, and the device can be told when a friend has moved.
+const INSTALL_WHY = 'Install for the full view, and notifications from your friends.';
 const INSTALL_KEY = 'correspondence:install:v2'; // { until }: set far ahead once this browser has installed the app
 let deferredPrompt = null; // the browser's own install prompt, when it offers one
 let installGuide = null;
@@ -163,7 +166,7 @@ function openInstallGuide() {
   dialog.innerHTML = `
     ${picture}
     <h2 id="install-title">Install correspondence.lol</h2>
-    <p class="hint">Install to receive notifications from your friends.</p>
+    <p class="hint">${INSTALL_WHY}</p>
     ${steps}
     <div class="row end">
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
@@ -193,7 +196,7 @@ function showInstallBanner(container) {
   banner.setAttribute('aria-label', 'Install the app');
   banner.innerHTML = `
     <img src="/icons/icon.svg" alt="" width="36" height="36">
-    <p>Install to receive notifications from your friends.</p>
+    <p>${INSTALL_WHY}</p>
     <button type="button" data-act="install">Install</button>`;
   banner.addEventListener('click', (event) => {
     if (event.target.closest('[data-act]')?.dataset.act === 'install') window.requestInstall();

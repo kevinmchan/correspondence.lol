@@ -251,7 +251,9 @@ Then restore the two comment lines at the top of the file and bump the version i
 ## Installing
 
 People who have not installed the app see a banner across the top of the home
-page (`app.js`): "Install to receive notifications from your friends." Its
+page (`app.js`): "Install for the full view, and notifications from your
+friends." It gives both reasons to install: the app gets the whole screen,
+with no browser round it, and the device can be told when a friend has moved. Its
 Install button triggers the browser's one-tap install where there is one.
 Elsewhere it opens a guide with a picture and steps for the device: iPhone and
 iPad (Safari and other browsers), Android, desktop Chrome and Edge, and Safari
