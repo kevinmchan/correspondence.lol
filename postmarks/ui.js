@@ -381,7 +381,8 @@ export function mount(root, life) {
   const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 
   // The screen at the end of a game: a send-off that suits the mode, and a
-  // chance to say how it went. Leaving it goes back to the room.
+  // chance to say how it went. Leaving it goes back to the room, or, playing
+  // alone, on to a new puzzle.
   function finale() {
     if (!game || !['won', 'lost'].includes(game.status)) return;
     if (document.querySelector('dialog.finale')) return;
@@ -415,10 +416,17 @@ export function mount(root, life) {
       people: online ? online.people.filter((person) => !person.left) : [],
       hearts: game.hearts,
       about: about(),
-      leave: online ? 'Back to the room' : 'Close',
+      leave: online ? 'Back to the room' : 'Play again',
       celebrate: confetti,
       onDone: () => {
-        if (online) go(roomUrl(online.room));
+        if (online) {
+          go(roomUrl(online.room));
+        } else if (!life.over) {
+          // playing alone there is no room to go back to: straight into the next puzzle
+          startSolo();
+          save(HOWTO_KEY, String(game.seed)); // no how-to this time: they have just finished a game
+          render();
+        }
       },
     });
   }
