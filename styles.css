@@ -187,7 +187,7 @@ form.card legend, .field > span {
 
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 
-input[type="text"], select {
+input[type="text"], input[type="email"], select {
   font: inherit;
   font-family: system-ui, sans-serif;
   font-size: 1rem;
@@ -200,7 +200,7 @@ input[type="text"], select {
   flex: 1;
 }
 
-input[type="text"]:focus-visible, select:focus-visible {
+input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
