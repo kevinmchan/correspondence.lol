@@ -8,7 +8,31 @@ export const AVATARS = [
   '🦊', '🐼', '🐸', '🦉', '🐙', '🦄', '🐝', '🐢', '🦁', '🐧', '🐳', '🦋',
   '🐱', '🐶', '🐰', '🦔', '🌵', '🍄', '🌙', '⭐', '🚀', '🎈', '🎲', '☕',
 ];
-export const COLORS = ['#f2a391', '#f5cf6e', '#bcdc8a', '#7fd0b8', '#8ec9ef', '#a9a7ee', '#e2a3e3', '#cfae8a'];
+// Eight soft backgrounds: light enough that any of the faces stands out on them.
+export const COLORS = ['#fbd3c5', '#fbe7a1', '#cdeab5', '#bde7da', '#c6e3fa', '#d9d5fa', '#f8d3ef', '#ecdcc3'];
+//                       0 peach    1 butter   2 mint     3 aqua     4 sky      5 lavender 6 pink     7 sand
+
+// Which backgrounds suit which face, best first. A face never sits on its own
+// colour (a yellow bee on butter, a pink octopus on pink): each gets
+// backgrounds that set it off. The picker offers only these, and a face shown
+// with any other colour (an older choice, or the server's default) is drawn on
+// its best one instead.
+const SUITS = {
+  '🦊': [4, 3, 5], '🐼': [2, 6, 1, 4], '🐸': [6, 0, 1], '🦉': [3, 4, 1], '🐙': [4, 3, 1], '🦄': [5, 4, 3],
+  '🐝': [4, 5, 2], '🐢': [1, 0, 6], '🦁': [3, 4, 5], '🐧': [4, 1, 6], '🐳': [1, 0, 6], '🦋': [2, 1, 6],
+  '🐱': [5, 4, 3], '🐶': [4, 2, 5], '🐰': [6, 5, 2], '🦔': [2, 3, 1], '🌵': [0, 7, 1], '🍄': [2, 3, 4],
+  '🌙': [5, 4, 6], '⭐': [5, 4, 3], '🚀': [5, 1, 3], '🎈': [4, 2, 1], '🎲': [3, 5, 0], '☕': [7, 0, 2],
+};
+const ANY = [4, 2, 5];
+export const suits = (face) => SUITS[face] ?? ANY;
+// The colour to draw a face on: the one asked for if it suits, else the face's best.
+export const suited = (face, color) => (suits(face).includes(color) ? color : suits(face)[0]);
+// A face and a background that go together, for someone new.
+export function randomLook() {
+  const face = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  const good = suits(face);
+  return { avatar: face, color: good[Math.floor(Math.random() * good.length)] };
+}
 
 // The look last chosen on this device, offered again in the next room.
 const LOOK_KEY = 'correspondence:look:v1';
@@ -30,7 +54,7 @@ export function avatar(person, extraClass = '') {
 
 export function paint(span, person) {
   span.textContent = person?.avatar ?? '🙂';
-  span.style.setProperty('--bg', COLORS[person?.color] ?? COLORS[0]);
+  span.style.setProperty('--bg', COLORS[suited(person?.avatar, person?.color)]);
 }
 
 // Patterns on the game's tiles, as well as colours: a choice kept on this device.
@@ -64,7 +88,7 @@ export function openProfile({ person, onSave }) {
   dialog = document.createElement('dialog');
   dialog.className = 'profile';
   dialog.setAttribute('aria-label', 'Your profile');
-  const choice = { avatar: person.avatar, color: person.color };
+  const choice = { avatar: person.avatar, color: suited(person.avatar, person.color) };
 
   const preview = avatar(choice, 'big');
 
@@ -106,12 +130,38 @@ export function openProfile({ person, onSave }) {
     return group;
   };
 
+  // The backgrounds on offer are the ones that suit the face chosen, so they
+  // are laid out afresh each time the face changes.
+  const colours = document.createElement('div');
+  colours.className = 'picker colours';
+  colours.setAttribute('role', 'radiogroup');
+  colours.setAttribute('aria-label', 'Background');
+  const NAMES = ['Peach', 'Butter', 'Mint', 'Aqua', 'Sky', 'Lavender', 'Pink', 'Sand'];
+  const offerColours = () => {
+    choice.color = suited(choice.avatar, choice.color);
+    colours.replaceChildren(...suits(choice.avatar).map((index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'radio');
+      button.setAttribute('aria-checked', String(choice.color === index));
+      button.setAttribute('aria-label', NAMES[index]);
+      button.title = NAMES[index];
+      button.style.setProperty('--bg', COLORS[index]);
+      button.addEventListener('click', () => {
+        choice.color = index;
+        for (const other of colours.children) other.setAttribute('aria-checked', String(other === button));
+        paint(preview, choice);
+      });
+      return button;
+    }));
+  };
   const avatars = picker('Avatar', 'avatars', AVATARS, () => choice.avatar,
     (button, emoji) => { button.textContent = emoji; button.setAttribute('aria-label', emoji); },
-    (emoji) => { choice.avatar = emoji; });
-  const colours = picker('Colour', 'colours', COLORS, () => choice.color,
-    (button, colour, index) => { button.style.setProperty('--bg', colour); button.setAttribute('aria-label', `Colour ${index + 1}`); },
-    (_, index) => { choice.color = index; });
+    (emoji) => {
+      choice.avatar = emoji;
+      offerColours(); // keeps the colour if it still suits, else moves to this face's best
+    });
+  offerColours();
 
   const error = document.createElement('p');
   error.className = 'message bad';
