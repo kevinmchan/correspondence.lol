@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_SIZE, MIN_SIZE,
-  applyMove, canMove, takesTurns, countSolutions, phraseBoardSize, randomSize, tokenize, generatePuzzle, isLetterCell, newGame,
+  applyMove, canMove, countSolutions, phraseBoardSize, randomSize, tokenize, generatePuzzle, isLetterCell, newGame,
 } from '../postmarks/game.js';
 
 const start = (size = 5, seed = 1) => newGame({ size, seed, players: ['Ada', 'Bo'] });
@@ -198,9 +198,6 @@ test('a solo player takes every turn', () => {
   assert.equal(canMove(s, 0), true);
   s = play(s, 'mark', emptyNonLetter(s), 0);
   assert.equal(canMove(s, 0), true, 'no waiting for anyone else');
-  assert.equal(takesTurns(s), false, 'so there are no turns to announce');
-  assert.equal(takesTurns(newGame({ size: 5, seed: 1, players: ['A', 'B'] })), true);
-  assert.equal(takesTurns({ ...newGame({ size: 5, seed: 1, players: ['A', 'B'] }), absent: [1] }), false, 'the other player left');
   s = play(s, 'guess', emptyNonLetter(s), 0);
   assert.equal(s.hearts, 2);
   for (const cell of letterCells(s)) s = play(s, 'guess', cell, 0);

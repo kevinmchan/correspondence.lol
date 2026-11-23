@@ -2,7 +2,7 @@ import { ask, choose, tell } from '/shared/ask.js';
 import { go } from '/shared/nav.js';
 import {
   CROSS, EMPTY, LETTER, MISS, START_HEARTS,
-  applyMove, canMove, takesTurns, isLetterCell, lettersFound, newGame, randomSize,
+  applyMove, canMove, isLetterCell, lettersFound, newGame, randomSize,
 } from './game.js';
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
@@ -104,8 +104,11 @@ export function mount(root, life) {
   // Moves need Submit only when a board is shared; in the solo modes you play alone.
   const immediate = () => !online || online.mode !== 'coop';
   const iCanMove = () => Boolean(online) && canMove(game, online.you);
-  // Worth saying only when turns pass between people: alone in a room, every move is yours.
-  const myTurn = () => iCanMove() && takesTurns(game);
+  // What the screen says about turns. Someone alone in a room may keep moving,
+  // but once they have moved the turn still reads as passed on: they are
+  // waiting for someone, even while free to carry on.
+  const turnOf = (seat) => canMove(game, seat) && game.last?.player !== seat;
+  const myTurn = () => Boolean(online) && turnOf(online.you);
   const clockText = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
   const elapsed = () => (game.status === 'playing' ? online.clock.ms + performance.now() - online.clock.at : online.clock.ms);
   const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
@@ -686,9 +689,7 @@ export function mount(root, life) {
       el.turn.textContent = 'Out of hearts.';
     } else if (!online) {
       el.turn.textContent = ''; // playing alone: it is always your move
-    } else if (!takesTurns(game)) {
-      el.turn.textContent = ''; // alone in the room: nobody to wait for
-    } else if (iCanMove()) {
+    } else if (myTurn()) {
       const strong = document.createElement('strong');
       strong.textContent = 'Your';
       el.turn.append(strong, ' move');
@@ -708,7 +709,7 @@ export function mount(root, life) {
         if (person.left) return []; // no longer in the room
         const li = document.createElement('li');
         li.append(avatar(person), person.name + (seat === online.you ? ' (you)' : ''));
-        if (takesTurns(game) && canMove(game, seat)) li.className = 'now';
+        if (turnOf(seat)) li.className = 'now';
         return [li];
       }));
     }
