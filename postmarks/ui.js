@@ -717,7 +717,7 @@ export function mount(root, life) {
     el.phraseNote.hidden = !(phrase && online.author !== null);
     if (phrase) {
       renderPhrase(el.phrase);
-      el.phraseNote.textContent = online.practice ? 'You wrote this phrase. This is a test run: it isn’t on the leaderboard.'
+      el.phraseNote.textContent = online.practice ? 'You wrote this phrase.'
         : `${online.people[online.author]?.name ?? 'Someone'} wrote this phrase.`;
     }
     el.shareGame.hidden = !online;
