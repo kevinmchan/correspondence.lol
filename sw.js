@@ -19,6 +19,7 @@ const PRECACHE = [
   '/shared/chat.js',
   '/shared/config.js',
   '/shared/identity.js',
+  '/shared/handoff.js',
   '/shared/live.js',
   '/shared/profile.js',
   '/shared/push.js',

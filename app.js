@@ -44,6 +44,9 @@ function installPlatform() {
   return null;
 }
 
+// On Apple devices the installed app does not share the browser's storage.
+const separateStorage = (platform) => Boolean(platform) && (platform.startsWith('ios') || platform === 'mac-safari');
+
 const ICONS = {
   share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M8 7l4-4 4 4M7 10.5H5.5v9.5h13v-9.5H17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   add: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.5v7M8.5 12h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
@@ -134,6 +137,7 @@ function openInstallGuide() {
     <h2 id="install-title">Install correspondence.lol</h2>
     <p class="hint">Install to receive notifications from your friends.</p>
     ${steps}
+    <p class="hint move" hidden>Your rooms come with you. If the app asks, your code is <b></b></p>
     <div class="row end">
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
     </div>`;
@@ -151,6 +155,18 @@ function openInstallGuide() {
   });
   document.body.append(dialog);
   dialog.showModal();
+
+  // Where the installed app starts with empty storage, show the code that
+  // brings this browser's rooms across (see shared/handoff.js).
+  if (separateStorage(platform)) {
+    import('/shared/handoff.js').then(async ({ moveCode, prettyCode }) => {
+      const code = await moveCode();
+      const line = dialog.querySelector('.move');
+      if (!code || !line) return;
+      line.querySelector('b').textContent = prettyCode(code);
+      line.hidden = false;
+    }).catch(() => {});
+  }
 }
 
 function showInstallBanner() {
@@ -196,6 +212,12 @@ window.openInstallGuide = openInstallGuide; // the room's notification prompt op
 const onHomePage = location.pathname === '/' || location.pathname === '/index.html';
 if (onHomePage && !installed() && Date.now() >= readSnooze()) {
   showInstallBanner();
+}
+
+// On an iPhone or iPad, attach the code to the Home Screen icon ahead of time:
+// people also install straight from the browser's own menu.
+if (!installed() && installPlatform()?.startsWith('ios')) {
+  import('/shared/handoff.js').then(({ bakeIntoIcon }) => bakeIntoIcon()).catch(() => {});
 }
 
 // --- Connectivity ---------------------------------------------------------
