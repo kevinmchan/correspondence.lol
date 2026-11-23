@@ -9,7 +9,7 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
 import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
-import { isMuted, play as sfx, setMuted } from './sound.js';
+import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
 
@@ -31,7 +31,7 @@ const el = {
   trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
   trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
   runs: $('runs'), phrase: $('phrase'), phraseNote: $('phrase-note'), phraseEntry: $('phrase-entry'), phraseInput: $('phrase-input'),
-  shareGame: $('share-game'), sound: $('sound'),
+  shareGame: $('share-game'), sound: $('sound'), soundMenu: $('sound-menu'), soundFx: $('sound-fx'), soundMusic: $('sound-music'),
 };
 
 // --- State ----------------------------------------------------------------
@@ -925,17 +925,40 @@ function greet() {
 const giveFeedback = () => openFeedback(about());
 el.help.addEventListener('click', () => openHowTo(giveFeedback));
 
-// Sound on or off, remembered on this device.
+// Sound: a small menu with effects and music switched on or off separately,
+// each remembered on this device.
 function showSound() {
-  el.sound.setAttribute('aria-pressed', String(!isMuted()));
-  el.sound.title = isMuted() ? 'Sound is off' : 'Sound is on';
-  el.sound.classList.toggle('off', isMuted());
+  el.soundFx.checked = !isMuted();
+  el.soundMusic.checked = !isMusicOff();
+  const silent = isMuted() && isMusicOff();
+  el.sound.title = silent ? 'Sound is off' : 'Sound';
+  el.sound.classList.toggle('off', silent);
 }
 
-el.sound.addEventListener('click', () => {
-  setMuted(!isMuted());
+function soundMenu(open) {
+  el.soundMenu.hidden = !open;
+  el.sound.setAttribute('aria-expanded', String(open));
+}
+
+el.sound.addEventListener('click', () => soundMenu(el.soundMenu.hidden));
+el.soundFx.addEventListener('change', () => {
+  setMuted(!el.soundFx.checked);
   showSound();
-  sfx('pick');
+  sfx('cross'); // a taste of what was just switched on
+});
+el.soundMusic.addEventListener('change', () => {
+  setMusicOff(!el.soundMusic.checked);
+  showSound();
+});
+// a tap anywhere else, or Escape, puts the menu away
+document.addEventListener('pointerdown', (event) => {
+  if (!el.soundMenu.hidden && !event.target.closest('.sound-wrap')) soundMenu(false);
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !el.soundMenu.hidden) {
+    soundMenu(false);
+    el.sound.focus();
+  }
 });
 showSound();
 

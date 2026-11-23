@@ -434,6 +434,13 @@ button.go { font-family: system-ui, sans-serif; }
 #sound.off .waves { display: none; }
 #sound.off .slash { display: inline; }
 #sound.off { opacity: 0.6; }
+.sound-wrap { position: relative; display: flex; }
+.sound-menu {
+  position: absolute; top: calc(100% + 0.5rem); right: 0; z-index: 30; width: 13.5rem;
+  padding: 0.2rem 0.9rem 0.8rem; border-radius: 0.9rem; background: var(--paper);
+  border: 1px solid var(--line); box-shadow: 0 0.6rem 1.8rem rgb(0 0 0 / 0.28);
+}
+.sound-menu .setting:first-child { border-top: 0; margin-top: 0; }
 
 /* --- Effects: one for every event in the game ------------------------------------- */
 

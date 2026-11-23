@@ -3,16 +3,21 @@
 // page, so the audio engine starts on the first tap or key press; anything
 // that happens before then is simply silent.
 
-const KEY = 'postmarks:sound:v1';
-let muted = false;
-try {
-  muted = localStorage.getItem(KEY) === 'off';
-} catch {
-  /* no storage: sound stays on */
-}
+const KEY = 'postmarks:sound:v1'; // effects: 'off' when switched off
+const MUSIC_KEY = 'postmarks:music:v1'; // background music: 'off' when switched off
+const stored = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null; // no storage: sound stays on
+  }
+};
+let muted = stored(KEY) === 'off';
+let musicOff = stored(MUSIC_KEY) === 'off';
 
 let ctx = null;
-let out = null;
+let out = null; // effects
+let band = null; // music, with its echo
 
 // Start the engine, or wake it. Safari on iPhone only lets this happen at the
 // end of a tap (touchend, click), not the start, and puts the engine back to
@@ -32,6 +37,17 @@ function unlock() {
   out = ctx.createGain();
   out.gain.value = 0.5;
   out.connect(squash).connect(ctx.destination);
+  // the music sits further back: quieter, and with a soft echo behind it
+  band = ctx.createGain();
+  band.gain.value = 0.5;
+  const echo = ctx.createDelay(1);
+  echo.delayTime.value = 0.42;
+  const tail = ctx.createGain();
+  tail.gain.value = 0.3;
+  band.connect(squash);
+  band.connect(echo).connect(tail).connect(echo);
+  tail.connect(squash);
+  startMusic();
 }
 
 for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click', 'keydown']) {
@@ -43,18 +59,30 @@ document.addEventListener('visibilitychange', () => {
 
 export const isMuted = () => muted;
 
-export function setMuted(value) {
-  muted = value;
+const remember = (key, off) => {
   try {
-    localStorage.setItem(KEY, value ? 'off' : 'on');
+    localStorage.setItem(key, off ? 'off' : 'on');
   } catch {
     /* not remembered */
   }
+};
+
+export function setMuted(value) {
+  muted = value;
+  remember(KEY, value);
+}
+
+export const isMusicOff = () => musicOff;
+
+export function setMusicOff(value) {
+  musicOff = value;
+  remember(MUSIC_KEY, value);
+  if (band) band.gain.setTargetAtTime(value ? 0 : 0.5, ctx.currentTime, 0.25); // fade, do not cut
 }
 
 // One note: a pitch (optionally gliding to another), a waveform and a quick
 // fade in and out. `at` is seconds from now.
-function tone({ at = 0, freq, to = freq, dur = 0.12, type = 'sine', gain = 0.25, attack = 0.005 }) {
+function tone({ at = 0, freq, to = freq, dur = 0.12, type = 'sine', gain = 0.25, attack = 0.005, into = out }) {
   const start = ctx.currentTime + at;
   const osc = ctx.createOscillator();
   const amp = ctx.createGain();
@@ -64,7 +92,7 @@ function tone({ at = 0, freq, to = freq, dur = 0.12, type = 'sine', gain = 0.25,
   amp.gain.setValueAtTime(0.0001, start);
   amp.gain.exponentialRampToValueAtTime(gain, start + attack);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  osc.connect(amp).connect(out);
+  osc.connect(amp).connect(into);
   osc.start(start);
   osc.stop(start + dur + 0.02);
 }
@@ -94,15 +122,18 @@ const NOTE = { C4: 261.63, E4: 329.63, G4: 392, A4: 440, C5: 523.25, D5: 587.33,
 let lastCross = 0; // when the last single cross chimed, and how many have followed closely
 let streak = 0;
 
+// The voice most of the effects share: a small glass bell, with a little
+// sparkle an octave up.
+function bell(at, freq, gain, dur = 0.2) {
+  tone({ at, freq, dur, type: 'sine', gain, attack: 0.004 });
+  tone({ at, freq: freq * 2, dur: dur * 0.45, type: 'sine', gain: gain * 0.28, attack: 0.003 });
+}
+
 const SOUNDS = {
   // a small bright chime, like a glass tapped: two quick rising notes for one
   // cross, and a run up the scale for a stroke of several. Kept short and
   // soft, so that finding a post is still the bigger moment.
   cross({ count = 1 } = {}) {
-    const bell = (at, freq, gain) => {
-      tone({ at, freq, dur: 0.2, type: 'sine', gain, attack: 0.004 });
-      tone({ at, freq: freq * 2, dur: 0.09, type: 'sine', gain: gain * 0.28, attack: 0.003 }); // a little sparkle
-    };
     const scale = [NOTE.E5, NOTE.G5, NOTE.A5, NOTE.C6, NOTE.D6, NOTE.E6];
     if (count > 1) {
       // a whole stroke arriving at once (someone else's move)
@@ -121,14 +152,14 @@ const SOUNDS = {
       bell(0, scale[Math.min(streak + 1, scale.length - 1)], 0.15);
     }
   },
-  // rubbing one out: a soft downward blip
+  // taking a cross back: the cross's two notes in reverse, quieter, stepping down
   clear() {
-    tone({ freq: 420, to: 250, dur: 0.1, type: 'sine', gain: 0.2 });
-    noise({ dur: 0.09, from: 1800, to: 600, q: 0.8, gain: 0.06 });
+    bell(0, NOTE.G5, 0.11);
+    bell(0.07, NOTE.E5, 0.1, 0.24);
   },
-  // choosing a square to guess, before it is played
+  // choosing a square to guess, before it is played: one expectant note
   pick() {
-    tone({ freq: 700, to: 880, dur: 0.07, type: 'sine', gain: 0.16 });
+    bell(0, NOTE.A5, 0.13, 0.16);
   },
   // a post found: the flap opens, then a bright rising chime with a shimmer on top
   post() {
@@ -140,10 +171,13 @@ const SOUNDS = {
     tone({ at: 0.42, freq: NOTE.E6, dur: 0.7, type: 'sine', gain: 0.1 });
     tone({ at: 0.46, freq: NOTE.G6, dur: 0.8, type: 'sine', gain: 0.07 });
   },
-  // the crosses that follow a post, rippling outwards: ticks that climb in pitch
+  // the crosses that follow a post, rippling outwards: tiny bells running up
+  // and round a scale under the post's chime
   cascade({ delays = [] } = {}) {
+    const run = [NOTE.C5, NOTE.D5, NOTE.E5, NOTE.G5, NOTE.A5, NOTE.C6, NOTE.D6, NOTE.E6, NOTE.G6];
     delays.slice(0, 40).forEach((ms, i) => {
-      tone({ at: ms / 1000, freq: 500 + i * 26, to: 420 + i * 26, dur: 0.05, type: 'triangle', gain: 0.1 });
+      const step = i % (run.length * 2 - 2);
+      bell(ms / 1000, run[step < run.length ? step : run.length * 2 - 2 - step], 0.055, 0.14);
     });
   },
   // a wrong guess: a dull thud and a sagging buzz
@@ -157,22 +191,22 @@ const SOUNDS = {
     tone({ at: 0.18, freq: NOTE.E5, to: NOTE.C5, dur: 0.18, type: 'sine', gain: 0.18 });
     tone({ at: 0.34, freq: NOTE.C5, to: NOTE.G4, dur: 0.3, type: 'sine', gain: 0.16 });
   },
-  // a token of the phrase turning over
+  // a token of the phrase turning over: paper, then two bells a fifth apart
   token() {
-    noise({ dur: 0.14, from: 900, to: 5000, q: 1.5, gain: 0.1 });
-    tone({ at: 0.09, freq: NOTE.A5, dur: 0.25, type: 'sine', gain: 0.16 });
-    tone({ at: 0.15, freq: NOTE.E6, dur: 0.3, type: 'sine', gain: 0.1 });
+    noise({ dur: 0.14, from: 900, to: 5000, q: 1.5, gain: 0.08 });
+    bell(0.09, NOTE.A5, 0.15, 0.3);
+    bell(0.16, NOTE.E6, 0.11, 0.36);
   },
-  // it is your move
+  // it is your move: a doorbell's two notes
   turn() {
-    tone({ freq: NOTE.G5, dur: 0.14, type: 'sine', gain: 0.16 });
-    tone({ at: 0.12, freq: NOTE.C6, dur: 0.22, type: 'sine', gain: 0.16 });
+    bell(0, NOTE.G5, 0.16, 0.22);
+    bell(0.13, NOTE.C6, 0.16, 0.34);
   },
-  // a time trial's clock starting
+  // a time trial's clock starting: ready, steady, go
   start() {
-    tone({ freq: NOTE.C5, dur: 0.1, type: 'square', gain: 0.1 });
-    tone({ at: 0.14, freq: NOTE.C5, dur: 0.1, type: 'square', gain: 0.1 });
-    tone({ at: 0.28, freq: NOTE.C6, dur: 0.35, type: 'square', gain: 0.12 });
+    bell(0, NOTE.C5, 0.14, 0.14);
+    bell(0.16, NOTE.C5, 0.14, 0.14);
+    bell(0.32, NOTE.C6, 0.18, 0.5);
   },
   // solved: a fanfare that lands on a full chord
   win() {
@@ -210,4 +244,63 @@ export function play(name, options = {}) {
       if (ctx.state === 'running' && performance.now() - asked < 400) SOUNDS[name](rest);
     }).catch(() => {});
   }
+}
+
+// --- Background music ----------------------------------------------------------
+// Made up as it goes, so it never loops: four slow chords turning over, each
+// held as a soft pad with a low note under it, and a sparse tune picked from
+// the notes that suit the chord. It is pitched below the effects and kept
+// quiet, so the bells of the game still read clearly over it.
+
+const BEAT = 0.78; // seconds
+const BAR = 8; // beats per chord
+const CHORDS = [
+  { bass: 130.81, pad: [261.63, 329.63, 392.0], tune: [392.0, 440.0, 523.25, 587.33, 659.25] }, // C
+  { bass: 110.0, pad: [220.0, 261.63, 329.63], tune: [329.63, 440.0, 523.25, 587.33, 659.25] }, // A minor
+  { bass: 87.31, pad: [174.61, 261.63, 349.23], tune: [349.23, 440.0, 523.25, 587.33, 698.46] }, // F
+  { bass: 98.0, pad: [196.0, 293.66, 392.0], tune: [392.0, 493.88, 587.33, 659.25, 783.99] }, // G
+];
+
+let musicTimer = null;
+let nextBeat = 0; // when, on the engine's clock, the next beat falls
+let beat = 0;
+let lastNote = 2; // where in the chord's notes the tune last was
+
+function scheduleBeat(at, n) {
+  const chord = CHORDS[Math.floor(n / BAR) % CHORDS.length];
+  const where = n % BAR;
+  const from = at - ctx.currentTime;
+  if (where === 0) {
+    // the chord, swelling in and out over the whole bar
+    for (const freq of chord.pad) {
+      tone({ at: from, freq, dur: BEAT * BAR * 1.05, type: 'sine', gain: 0.05, attack: BEAT * 2.5, into: band });
+    }
+    tone({ at: from, freq: chord.bass, dur: BEAT * BAR, type: 'triangle', gain: 0.07, attack: BEAT, into: band });
+  }
+  // the tune: more likely on the strong beats, moving by small steps, sometimes resting
+  const chance = where % 4 === 0 ? 0.75 : where % 2 === 0 ? 0.5 : 0.22;
+  if (Math.random() < chance) {
+    lastNote = Math.max(0, Math.min(chord.tune.length - 1, lastNote + Math.floor(Math.random() * 3) - 1));
+    const freq = chord.tune[lastNote];
+    tone({ at: from, freq, dur: BEAT * 1.9, type: 'sine', gain: 0.085, attack: 0.012, into: band });
+    tone({ at: from, freq: freq * 2, dur: BEAT * 0.7, type: 'sine', gain: 0.018, attack: 0.01, into: band });
+  }
+}
+
+function startMusic() {
+  if (musicTimer || !ctx) return;
+  band.gain.value = musicOff ? 0 : 0.5;
+  // beats are written onto the engine's clock a little ahead of time
+  musicTimer = setInterval(() => {
+    if (ctx.state !== 'running' || musicOff) {
+      nextBeat = 0; // pick up afresh when it can be heard again
+      return;
+    }
+    if (nextBeat < ctx.currentTime) nextBeat = ctx.currentTime + 0.15;
+    while (nextBeat < ctx.currentTime + 0.6) {
+      scheduleBeat(nextBeat, beat);
+      beat += 1;
+      nextBeat += BEAT;
+    }
+  }, 150);
 }

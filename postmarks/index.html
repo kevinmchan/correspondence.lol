@@ -20,9 +20,15 @@
   <header class="topbar">
     <a id="back" href="/">← correspondence.lol</a>
     <div class="top-actions">
-      <button type="button" id="sound" class="quiet round" aria-label="Sound" aria-pressed="true">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4z"/><path class="waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="slash" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
-      </button>
+      <div class="sound-wrap">
+        <button type="button" id="sound" class="quiet round" aria-label="Sound" title="Sound" aria-haspopup="true" aria-expanded="false" aria-controls="sound-menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4z"/><path class="waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="slash" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+        </button>
+        <div id="sound-menu" class="sound-menu" role="group" aria-label="Sound" hidden>
+          <label class="setting"><span>Sound effects</span><input type="checkbox" role="switch" id="sound-fx"></label>
+          <label class="setting"><span>Music</span><input type="checkbox" role="switch" id="sound-music"></label>
+        </div>
+      </div>
       <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
       <button type="button" id="share-game" class="quiet round" aria-label="Share this game" title="Share this game" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M8 7l4-4 4 4M7 10.5H5.5v9.5h13v-9.5H17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
