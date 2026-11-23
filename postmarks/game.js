@@ -307,14 +307,14 @@ export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).l
 //   state.author  index of a player sitting out (they wrote the pass phrase)
 //   state.absent  indexes of players no longer taking part (they left the room)
 const sittingOut = (state, player) => player === state.author || Boolean(state.absent?.includes(player));
-const mustAlternate = (state) =>
+export const takesTurns = (state) =>
   !state.free && state.players.filter((_, player) => !sittingOut(state, player)).length > 1;
 
 export const canMove = (state, player) =>
   state.status === 'playing' &&
   Number.isInteger(player) && player >= 0 && player < state.players.length &&
   !sittingOut(state, player) &&
-  (!mustAlternate(state) || state.last?.player !== player);
+  (!takesTurns(state) || state.last?.player !== player);
 
 // Apply one turn. A turn is exactly one action:
 //   { player, type: 'mark',   cells }  cross out one or more empty squares

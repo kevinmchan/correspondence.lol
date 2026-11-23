@@ -73,6 +73,8 @@ export function mount(root, life) {
     if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}` };
     if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} posts found` };
     const progress = `${game.found}/${game.size} posts · ${hearts}`;
+    // alone in the room, every move is yours: there is no turn to announce
+    if (room.people.filter((person) => !person.left).length < 2) return { text: progress, go: true };
     if (game.last_player === room.you) return { text: `Waiting for someone else · ${progress}` };
     return { text: `Your move · ${progress}`, go: true };
   }

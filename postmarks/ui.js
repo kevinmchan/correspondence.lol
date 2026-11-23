@@ -2,7 +2,7 @@ import { ask, choose, tell } from '/shared/ask.js';
 import { go } from '/shared/nav.js';
 import {
   CROSS, EMPTY, LETTER, MISS, START_HEARTS,
-  applyMove, canMove, isLetterCell, lettersFound, newGame, randomSize,
+  applyMove, canMove, takesTurns, isLetterCell, lettersFound, newGame, randomSize,
 } from './game.js';
 import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
@@ -104,6 +104,8 @@ export function mount(root, life) {
   // Moves need Submit only when a board is shared; in the solo modes you play alone.
   const immediate = () => !online || online.mode !== 'coop';
   const iCanMove = () => Boolean(online) && canMove(game, online.you);
+  // Worth saying only when turns pass between people: alone in a room, every move is yours.
+  const myTurn = () => iCanMove() && takesTurns(game);
   const clockText = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
   const elapsed = () => (game.status === 'playing' ? online.clock.ms + performance.now() - online.clock.at : online.clock.ms);
   const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
@@ -540,7 +542,7 @@ export function mount(root, life) {
 
   function render() {
     settleHint();
-    document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
+    document.title = `${game && myTurn() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
 
     if (!game) {
       show(el.loading);
@@ -663,7 +665,7 @@ export function mount(root, life) {
       el.board.classList.toggle('lost', game.status === 'lost');
       seen.status = game.status;
     }
-    const mine = Boolean(online) && online.mode === 'coop' && iCanMove();
+    const mine = Boolean(online) && online.mode === 'coop' && myTurn();
     if (seen.mine !== mine) {
       if (!quiet && mine && seen.mine === false) {
         sfx('turn', { delay: effects.size ? 500 : 0 });
@@ -684,6 +686,8 @@ export function mount(root, life) {
       el.turn.textContent = 'Out of hearts.';
     } else if (!online) {
       el.turn.textContent = ''; // playing alone: it is always your move
+    } else if (!takesTurns(game)) {
+      el.turn.textContent = ''; // alone in the room: nobody to wait for
     } else if (iCanMove()) {
       const strong = document.createElement('strong');
       strong.textContent = 'Your';
@@ -704,7 +708,7 @@ export function mount(root, life) {
         if (person.left) return []; // no longer in the room
         const li = document.createElement('li');
         li.append(avatar(person), person.name + (seat === online.you ? ' (you)' : ''));
-        if (canMove(game, seat)) li.className = 'now';
+        if (takesTurns(game) && canMove(game, seat)) li.className = 'now';
         return [li];
       }));
     }
