@@ -17,6 +17,7 @@ const CARDS = [
 ];
 
 let dialog = null;
+let askFeedback = null; // set by whoever opens the how-to, if feedback can be given from it
 
 function build() {
   dialog = document.createElement('dialog');
@@ -65,15 +66,26 @@ function build() {
   start.innerHTML = PLAY;
   start.addEventListener('click', () => dialog.close());
 
-  dialog.append(list, start);
+  const feedback = document.createElement('button');
+  feedback.type = 'button';
+  feedback.className = 'feedback-link';
+  feedback.textContent = 'Give feedback';
+  feedback.addEventListener('click', () => {
+    dialog.close();
+    askFeedback?.();
+  });
+
+  dialog.append(list, start, feedback);
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close(); // a tap on the backdrop
   });
   document.body.append(dialog);
 }
 
-export function openHowTo() {
+export function openHowTo(onFeedback = null) {
   if (!dialog) build();
+  askFeedback = onFeedback;
+  dialog.querySelector('.feedback-link').hidden = !onFeedback;
   if (dialog.open) return;
   dialog.showModal();
   dialog.querySelector('.start').focus();

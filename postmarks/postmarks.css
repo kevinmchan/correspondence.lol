@@ -590,3 +590,113 @@ button.go { font-family: system-ui, sans-serif; }
   92% { transform: none; box-shadow: 0 0 0 0.6rem transparent; }
 }
 @media (prefers-reduced-motion: reduce) { .toolbar #submit:not(:disabled) { animation: none; } }
+
+/* --- The end of a game, and feedback --------------------------------------- */
+
+.howto .feedback-link {
+  display: block;
+  margin: 0.7rem auto 0;
+  padding: 0.3rem 0.6rem;
+  background: none;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.finale {
+  width: min(23rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 1.4rem 1.1rem 1.1rem;
+  border: 0;
+  border-radius: 1.25rem;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.35);
+  font-family: system-ui, sans-serif;
+  text-align: center;
+}
+
+.finale::backdrop { background: rgb(20 26 32 / 0.6); }
+.finale h2 { margin: 0.9rem 0 0.2rem; font-family: Georgia, serif; font-size: 1.7rem; line-height: 1.15; color: var(--ink); text-align: center; text-transform: none; letter-spacing: 0; }
+.finale .detail { margin: 0; color: var(--muted); font-size: 1.0625rem; }
+
+.finale .stage { min-height: 6.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; }
+.finale .heart { color: var(--accent); font-size: 1.5rem; line-height: 1; }
+
+/* alone: a delivered post, postmarked, and the hearts kept */
+.finale .stamped { position: relative; width: 5.5rem; height: 5.5rem; color: var(--ink); }
+.finale .stamped svg { width: 100%; height: 100%; display: block; }
+.finale .stamp {
+  position: absolute; right: -0.9rem; top: -0.3rem; width: 3rem; height: 3rem;
+  border: 3px double var(--accent); border-radius: 50%;
+  background: repeating-linear-gradient(transparent 0 0.42rem, color-mix(in srgb, var(--accent) 75%, transparent) 0.42rem 0.55rem) center / 62% 46% no-repeat;
+  transform: rotate(-14deg);
+}
+.finale .kept { display: flex; gap: 0.3rem; }
+
+/* together: everyone side by side */
+.finale .team { display: flex; flex-wrap: wrap; justify-content: center; padding-left: 0.6rem; }
+.finale .team .avatar { width: 3.2rem; height: 3.2rem; font-size: 1.7rem; margin-left: -0.6rem; box-shadow: 0 0 0 3px var(--paper); }
+
+/* time trial: a stopwatch face with the time across it */
+.finale .watch {
+  position: relative; width: 6.5rem; height: 6.5rem; display: grid; place-items: center;
+  border: 4px solid var(--ink); border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 10%, var(--paper));
+}
+.finale .watch::before { content: ""; position: absolute; top: -0.85rem; left: 50%; width: 1.1rem; height: 0.6rem; margin-left: -0.55rem; border-radius: 3px 3px 0 0; background: var(--ink); }
+.finale .watch strong { position: relative; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+.finale .watch .hand { position: absolute; left: 50%; bottom: 50%; width: 3px; height: 42%; margin-left: -1.5px; border-radius: 2px; background: color-mix(in srgb, var(--accent) 55%, transparent); transform-origin: 50% 100%; }
+
+/* pass phrase: the phrase, out of its envelope */
+.finale .opened { width: 3.4rem; height: 3.4rem; color: var(--ink); }
+.finale .opened svg { width: 100%; height: 100%; display: block; }
+.finale q { font-family: Georgia, serif; font-size: 1.35rem; font-style: italic; line-height: 1.25; overflow-wrap: anywhere; }
+
+/* out of hearts */
+.finale .spent { flex-direction: row; gap: 0.5rem; }
+.finale .spent .heart { font-size: 2.4rem; color: color-mix(in srgb, var(--muted) 45%, transparent); }
+
+.feedback { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 0.7rem; }
+.finale.plain { padding-top: 1.1rem; }
+.finale.plain .feedback { margin-top: 0; padding-top: 0; border-top: 0; }
+.feedback .ask { margin: 0; font-size: 1rem; color: var(--muted); }
+.feedback .stars { display: flex; justify-content: center; gap: 0.15rem; }
+.feedback .stars button { width: 2.75rem; height: 2.75rem; padding: 0.4rem; background: none; color: color-mix(in srgb, var(--muted) 35%, transparent); border-radius: 50%; }
+.feedback .stars button.on { color: #e8ad2c; }
+.feedback .stars svg { width: 100%; height: 100%; display: block; }
+.feedback textarea {
+  font: inherit; font-size: 1rem; color: var(--ink); resize: vertical; min-height: 3.6rem; width: 100%; box-sizing: border-box;
+  background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.55rem 0.7rem;
+}
+.feedback textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.feedback .error { margin: 0; color: var(--accent); font-size: 0.9375rem; }
+.feedback .buttons { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.feedback .thanks { margin: 0.6rem 0; font-family: Georgia, serif; font-size: 1.4rem; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .finale[open] .stage { animation: finale-in 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+  .finale[open] h2 { animation: finale-rise 0.5s ease 0.25s both; }
+  .finale[open] .detail { animation: finale-rise 0.5s ease 0.4s both; }
+  .finale .stamp { animation: stamp-down 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) 0.6s both; }
+  .finale .kept .heart, .finale.won .feedback .stars button.on { animation: heart-beat 1.4s ease-in-out 1s infinite; }
+  .finale .team .avatar { animation: hop 1.1s ease-in-out calc(0.5s + var(--i) * 0.12s) infinite; }
+  .finale .watch .hand { animation: sweep-hand 1.2s cubic-bezier(0.3, 0, 0.2, 1) 0.3s both; }
+  .finale .watch strong { animation: finale-in 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) 1.1s both; }
+  .finale .opened { animation: letter-open 0.8s ease 0.3s both; }
+  .finale q { animation: finale-rise 0.7s ease 0.8s both; }
+  .finale .spent .heart { animation: droop 0.6s ease calc(0.2s + var(--n, 0) * 0.15s) both; }
+  .finale .spent .heart:nth-child(2) { --n: 1; }
+  .finale .spent .heart:nth-child(3) { --n: 2; }
+  .feedback .stars button.on { animation: finale-in 0.3s cubic-bezier(0.2, 1.8, 0.4, 1); }
+}
+
+@keyframes finale-in { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes finale-rise { from { transform: translateY(0.6rem); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes stamp-down { from { transform: rotate(8deg) scale(2.4); opacity: 0; } to { transform: rotate(-14deg) scale(1); opacity: 1; } }
+@keyframes heart-beat { 0%, 100% { transform: none; } 12% { transform: scale(1.22); } 24% { transform: none; } 36% { transform: scale(1.14); } 48% { transform: none; } }
+@keyframes hop { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-0.55rem); } }
+@keyframes sweep-hand { from { transform: rotate(0); } to { transform: rotate(720deg); } }
+@keyframes letter-open { 0% { transform: scale(0.5) rotate(-12deg); opacity: 0; } 60% { transform: scale(1.15) rotate(4deg); opacity: 1; } 100% { transform: none; } }
+@keyframes droop { from { transform: translateY(-0.5rem); color: var(--accent); } to { transform: translateY(0.15rem) rotate(8deg); } }
