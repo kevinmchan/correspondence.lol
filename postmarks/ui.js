@@ -51,6 +51,8 @@ export function mount(root, life) {
   let online = null; // { id, you, room, roomName } for a room game; you is this device's seat
   let busy = false; // a move is on its way to the server
   let pending = 0; // solo-mode crosses sent to the server but not yet confirmed
+  const outbox = []; // strokes of crosses shown but not yet sent
+  let guessing = null; // the square being opened, while the server is asked what is in it
   let sending = Promise.resolve(); // they go one after another, in order
   let resync = false; // the board shown may be ahead of the server: take its word next time
   // The move being put together, shown on the board but not yet played:
@@ -616,6 +618,7 @@ export function mount(root, life) {
       const theirs = online?.mode === 'coop' && game.last && game.last.player !== online.you;
       button.classList.toggle('last', Boolean(theirs) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
       button.classList.toggle('drawing', drafted);
+      button.classList.toggle('guessing', guessing === cell);
       button.classList.toggle('hinted', Boolean(hint) && hint.cells.includes(cell));
       button.classList.toggle('why', Boolean(hint) && hint.because.includes(cell));
       button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
@@ -776,25 +779,28 @@ export function mount(root, life) {
       game = local.state;
       render();
       pending++;
-      sending = sending
-        .then(() => rpc('postmarks_play', { p_game: online.id, p_token: myToken(), p_type: type, p_cells: cells }))
-        .then((view) => {
-          pending--;
-          if (!pending && !busy) {
-            accept(view);
-            render();
-          }
-        }, (error) => {
-          pending = 0;
-          say(error.message);
-          resync = true; // take the server's board back
-          poll();
-        });
+      // Held back for a moment before it is sent: if this tap turns out to be
+      // the first half of a double tap, the guess that follows makes it moot,
+      // and sending it would only make the guess wait its turn.
+      const queued = { type, cells, sent: false, dropped: false };
+      outbox.push(queued);
+      setTimeout(() => send(queued), DOUBLE_TAP_MS + 30);
       return;
     }
 
     busy = true;
     if (local) game = local.state; // show the crosses now; the server confirms below
+    if (type === 'guess' && online.mode !== 'coop') {
+      // a cross of this same square still waiting to go is the tap before this one: forget it
+      for (const queued of outbox) {
+        if (!queued.sent && queued.cells.length === 1 && queued.cells[0] === cells[0]) {
+          queued.dropped = true;
+          pending--;
+        }
+      }
+      guessing = cells[0]; // the square shows it is being opened while the server answers
+    }
+    for (const queued of [...outbox]) send(queued); // anything else waiting goes now, ahead of the guess
     render();
     try {
       await sending; // any crosses still on their way go first
@@ -810,9 +816,35 @@ export function mount(root, life) {
       resync = true; // undo anything shown early by taking the server's board
     } finally {
       busy = false;
+      guessing = null;
       render();
       poll();
     }
+  }
+
+  // leaving the screen with crosses still held back: send them on the way out
+  life.onEnd(() => { for (const queued of [...outbox]) send(queued); });
+
+  // Send one held-back stroke of crosses (see play). They go one after another, in order.
+  function send(queued) {
+    const at = outbox.indexOf(queued);
+    if (at >= 0) outbox.splice(at, 1);
+    if (queued.sent || queued.dropped) return;
+    queued.sent = true;
+    sending = sending
+      .then(() => rpc('postmarks_play', { p_game: online.id, p_token: myToken(), p_type: queued.type, p_cells: queued.cells }))
+      .then((view) => {
+        pending--;
+        if (!pending && !busy && !life.over) {
+          accept(view);
+          render();
+        }
+      }, (error) => {
+        pending = 0;
+        say(error.message);
+        resync = true; // take the server's board back
+        poll();
+      });
   }
 
   // --- Putting a move together -------------------------------------------------
@@ -863,6 +895,7 @@ export function mount(root, life) {
   // (The first tap will have crossed the square, or cleared its cross; a guess
   // is allowed either way.)
   let lastTap = { cell: null, at: 0 };
+  const DOUBLE_TAP_MS = 350;
 
   function guessAt(cell) {
     if (!ready()) return;
@@ -883,7 +916,7 @@ export function mount(root, life) {
     if (tool !== 'mark' || !event.isPrimary || event.button !== 0) return;
     const cell = cellAt(event.clientX, event.clientY);
     if (cell === null) return;
-    const again = cell === lastTap.cell && event.timeStamp - lastTap.at < 350;
+    const again = cell === lastTap.cell && event.timeStamp - lastTap.at < DOUBLE_TAP_MS;
     lastTap = again ? { cell: null, at: 0 } : { cell, at: event.timeStamp };
     if (again) {
       dragging = false;

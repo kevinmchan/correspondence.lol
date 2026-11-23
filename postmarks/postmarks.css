@@ -792,3 +792,10 @@ button.go { font-family: system-ui, sans-serif; }
 /* pass phrase, out of hearts: the two ways on */
 .lost-choice { width: 100%; justify-content: center; align-items: center; gap: 0.7rem; }
 .lost-choice .quiet { min-height: 2.9rem; padding: 0 1rem; font-size: 0.9375rem; }
+
+/* a square being opened, while the answer is on its way: it lifts and trembles */
+.cell.guessing { filter: brightness(1.18); box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14), 0 0 0 0.09em rgb(255 255 255 / 0.85); z-index: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .cell.guessing { animation: guess-wait 520ms ease-in-out infinite; }
+}
+@keyframes guess-wait { 0%, 100% { transform: scale(1.06) rotate(-2.5deg); } 50% { transform: scale(1.1) rotate(2.5deg); } }
