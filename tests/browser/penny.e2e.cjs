@@ -162,7 +162,26 @@ async function main() {
       assert.equal(await page.locator('#walk-trail').isHidden(), true, 'nothing of the sound heard yet');
       await h.through();
 
-      // place 2: a wrong guess costs a cross and nothing else; a square the rules rule out gets a no
+      // place 2: a quick tap crosses a square and takes the cross off; holding a finger down asks Penny instead
+      await h.tap(10);
+      await sleep(600);
+      assert.equal((await h.board())[10], 'x', 'a quick tap crosses the square');
+      await h.tap(10);
+      await sleep(600);
+      assert.equal((await h.board())[10], '.', 'and takes the cross off again');
+      await page.mouse.move(...(await h.centre(0)));
+      await page.mouse.down();
+      await h.says('close'); // the post is next door
+      await page.mouse.up();
+      assert.equal((await h.board())[0], '.', 'holding is listening: no cross');
+      assert.equal(await page.locator('#walk-board .cell.heard').count(), 1, 'what was heard shows on the square');
+      // a cross over a post it can hear frightens it
+      await h.tap(1);
+      await h.says('alarmed');
+      await sleep(600); // (sooner, and the two taps would be a double tap)
+      await h.tap(1);
+      await h.says('relieved');
+      // a wrong guess costs a cross and nothing else; a square the rules rule out gets a no
       await h.open(5);
       assert.equal((await h.board())[5], 'x', 'a guess that finds nothing leaves a cross');
       await h.open(1);
@@ -183,17 +202,14 @@ async function main() {
       assert.equal(await h.stored('penny:sound:v1'), 3);
       await h.through();
 
-      // place 5: crosses. Penny agrees with those it can see the reason for, finds what they leave, and is frightened by a cross on that square
-      for (const cell of [6, 14, 5, 7]) {
-        await h.tap(cell);
-        await sleep(700);
-      }
-      assert.equal(await h.board(), '.....xxx......x.');
+      // place 5: nothing to hear. One cross Penny can see the reason for leaves a colour with one square; it finds that, and is frightened by a cross on it
+      await h.tap(3);
       await h.says('agrees');
+      assert.equal(await h.board(), '...x............');
       await h.says('noticed', 20000);
-      await h.tap(4);
+      await h.tap(2);
       await h.says('alarmed');
-      await h.tap(4);
+      await h.tap(2);
       await h.says('relieved');
       assert.equal((await h.pal()).alone, true, 'still no Dot');
       for (const cell of [4, 13, 11]) await h.open(cell);
@@ -215,6 +231,19 @@ async function main() {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
       assert.equal((await h.pal()).alone, false);
+      // it begins at the first place again; the arrow goes up the map as far as has been reached, and back
+      assert.equal((await h.board()).length, 1);
+      assert.equal(await page.locator('#walk-down').isHidden(), true);
+      for (let i = 0; i < 4; i++) {
+        await page.locator('#walk-up').click();
+        await sleep(900);
+      }
+      assert.equal(await page.locator('#walk-up').isHidden(), true, 'no further than has been reached');
+      await page.locator('#walk-down').click();
+      await sleep(900);
+      await page.locator('#walk-up').click();
+      await sleep(900);
+      assert.equal(await page.evaluate(() => document.querySelector('.walk').dataset.hour), '4');
       for (const cell of [4, 13, 11, 2]) await h.open(cell);
       assert.ok(await h.portalOpen());
       assert.ok(!(await h.feeling()).includes('stamp'), 'no second finding of Dot');

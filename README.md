@@ -128,15 +128,21 @@ Through the portal is the map itself (`/?walk`, `penny/walk.js`): a few
 districts lit, the rest faint all round. The way on is always up the screen,
 and the places already walked stay on the map, flat, below. There is no
 tutorial, and nothing is shown to be copied: no ring, no arrow, no lit square,
-no rhythm in a hum. There are five places, each a small piece of the game with
-one more rule than the last (`penny/places.js`), and you play them while Penny
-stands beside you:
+no rhythm in a hum. There are five places, each a small piece of the game that
+asks one thing more than the last (`penny/places.js`), and you play them while
+Penny stands beside you:
 
 1. a double tap opens a post
 2. one post per colour
 3. one post per row and column
 4. posts cannot touch
-5. a tap or a drag crosses squares out
+5. nothing to hear: the rules alone
+
+The hand has the same three things to do as in the game. A double tap opens a
+square. From the second place on, a quick tap crosses a square out and takes
+the cross off again. And a finger held on a square, or slid across the map,
+asks Penny to listen there. Two arrows at the top right go back down the map
+to a place already walked, and up again as far as has been reached.
 
 Penny does not know where the posts are; it is looking too. How it feels about
 the square under your finger comes from two things and nothing else.
@@ -160,9 +166,9 @@ finger sliding across the map is answered square by square.
 So a rule is learnt by Penny no longer needing to listen. Penny can be unsure,
 and can be outdone: open a post it had no idea about and it is amazed at you.
 
-One tap leaves a square ajar for as long as a second tap would count, and if
-Penny thinks there is a post in it, Penny holds its breath for exactly that
-long. In the first place the wait grows with each tap left alone.
+In the first place, which is one square, a tap leaves it ajar for as long as a
+second tap would count, and if Penny thinks there is a post in it, Penny holds
+its breath for exactly that long; the wait grows with each tap left alone.
 
 When a post is opened, the squares the place's newest rule takes away light up
 one after another, so the rule is seen as a shape, and Penny's eyes follow it.
@@ -175,10 +181,15 @@ What has been heard is drawn at the top of the map, a mark a note, and can be
 played again from there, always further off than it was when it was heard.
 
 A guess that finds nothing leaves a cross and costs nothing; Penny flinches,
-and it is over. In the last place a finger makes crosses, as in the game, and
-there your crosses are Penny's memory: a cross it can see the reason for gets
-a nod, one it cannot gets its doubt, and one on a square it was sure of
-frightens it. It cannot take any of them off.
+and it is over. Penny cannot take a cross of yours off. One over a post it has
+heard, or is sure of, frightens it; one that leaves a colour with nowhere
+troubles it.
+
+The last place is where Penny hears nothing, and it is made to be gentle. A
+slide makes crosses there too, as in the game, and your crosses are Penny's
+memory: a cross it can see the reason for gets a nod, and one it cannot gets
+its doubt. One cross in the right corner leaves a colour with a single square,
+and after the first post the rest follow one at a time.
 
 Left alone, Penny does not point. If the rules have made a square certain its
 eyes find the square, and later it goes and stands underneath. Otherwise it

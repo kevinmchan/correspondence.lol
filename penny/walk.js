@@ -23,14 +23,18 @@
 // The difference between the two is how a rule gets learnt: the squares Penny
 // used to have to listen at, it now simply knows.
 //
-// One tap leaves a square ajar for as long as a second tap would count, and
-// if Penny thinks there is a post in the square, Penny holds its breath for
-// exactly that long. That is all there is to say about the double tap.
+// The hand has three things it can do, the same three as in the game. A
+// double tap opens a square. From the second place on, a quick tap crosses
+// one out, and takes the cross off again. And a finger held on a square, or
+// slid across the map, asks Penny to listen there. (In the first place, which
+// is one square, a tap leaves it ajar for as long as a second would count, and
+// if Penny thinks there is a post in it, Penny holds its breath that long.)
 //
-// In the last place a finger makes crosses, as in the game, and Penny hears
-// nothing. There your crosses are Penny's memory: a cross it can see the
-// reason for gets a nod, one it cannot gets its doubt, and one on a square it
-// was sure of frightens it. Penny cannot take any of them off.
+// Penny cannot take a cross off. A cross over a post it has heard, or is sure
+// of, frightens it; one that leaves a colour with nowhere troubles it. In the
+// last place Penny hears nothing, a slide makes crosses too, and there your
+// crosses are Penny's memory: one it can see the reason for gets a nod, one
+// it cannot gets its doubt.
 //
 // Left alone, Penny does not point. If the rules have made a square certain
 // its eyes find the square, and later it goes and stands underneath.
@@ -55,7 +59,7 @@ import { claim } from './pal.js';
 import { heard, murmur, playMail, remembered, soundSoFar } from './mail.js';
 import {
   ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, SIGH, THIS_WAY, TRILL, WONDER, YES,
-  hasDot, placeReached, setDot, setPlaceReached, setWalked,
+  hasDot, hasWalked, placeReached, setDot, setPlaceReached, setWalked,
 } from './penny.js';
 
 const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
@@ -76,6 +80,8 @@ export function mount(root, life) {
   const known = $('walk-known');
   const trail = $('walk-trail');
   const portal = $('walk-portal');
+  const down = $('walk-down');
+  const up = $('walk-up');
   const feeling = $('walk-feeling');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const wait = (ms) => new Promise((done) => life.setTimeout(done, ms));
@@ -88,7 +94,11 @@ export function mount(root, life) {
   const show = (target) => (sideways.matches ? pal.look(target) : pal.pointAt(target));
 
   // --- The place ------------------------------------------------------------------
-  let index = Math.max(0, Math.min(placeReached(), PLACES.length - 1));
+  // Where to begin: at the furthest place reached; or, once all of them have
+  // been walked, at the first again. Any place already reached can be gone
+  // back to, and come on from, by the two arrows at the top.
+  const furthest = () => Math.max(0, Math.min(placeReached(), PLACES.length - 1));
+  let index = hasWalked() ? 0 : furthest();
   let place = null;
   let cells = []; // 'empty' | 'cross' | 'letter'
   let found = []; // the squares whose posts are open, in the order they were found
@@ -111,9 +121,9 @@ export function mount(root, life) {
   // What it now knows: from the posts found, the guesses that found nothing,
   // and (the last place) whichever of your crosses it can see the reason for.
   function know() {
-    good = place.marks ? vouch(place, found, [...misses], [...byHand]) : new Set();
+    good = place.crosses ? vouch(place, found, [...misses], [...byHand]) : new Set();
     squares = read(place, found, [...misses, ...good]);
-    const trusting = place.marks ? read(place, found, [...misses, ...byHand]) : squares;
+    const trusting = place.crosses ? read(place, found, [...misses, ...byHand]) : squares;
     hoped = trusting.map((square, cell) => (square.is === 'sure' && squares[cell].is !== 'sure' ? cell : -1)).filter((cell) => cell >= 0);
     stuck = trusting.stuck;
   }
@@ -211,7 +221,9 @@ export function mount(root, life) {
 
   function start(at) {
     index = at;
-    setPlaceReached(index);
+    setPlaceReached(Math.max(furthest(), index));
+    down.hidden = index === 0;
+    up.hidden = index >= furthest();
     place = PLACES[index];
     cells = place.regions.map(() => 'empty');
     found = [];
@@ -690,7 +702,8 @@ export function mount(root, life) {
     return true;
   }
   // The squares of yours it is frightened for: crossed, and it was sure of them.
-  const frightened = () => [...byHand].filter((cell) => squares[cell].is === 'sure');
+  // (or heard a post in them)
+  const frightened = () => [...byHand].filter((cell) => squares[cell].is === 'sure' || positive.has(cell));
   // Something has been left with nowhere: it droops, and looks at the crosses
   // of yours it cannot answer for, one after another. Returns whether so.
   function trouble() {
@@ -719,13 +732,17 @@ export function mount(root, life) {
       const before = { squares, good };
       know(); // (whatever else is going on, what Penny knows keeps up with what is drawn)
       if (busy || done) return;
+      // where it has an ear, a cross is listened under: a post right there is heard
+      if (to === 'cross' && place.listen) {
+        for (const cell of changed) if (hear(place, found, cell).strength === 1) positive.add(cell);
+      }
       const afraid = frightened();
       if (to === 'cross' && changed.some((cell) => afraid.includes(cell))) {
         // a cross on a square it was sure of
         rise(1500);
         pal.mood('worried').look(tile(changed.find((cell) => afraid.includes(cell)))).gesture('start');
         pal.sing(ALARM, 0.85, { breath: 0 });
-        say('Penny is alarmed: it was sure of that one');
+        say('Penny is alarmed: there is a post under that cross');
         uneasy = true;
         return;
       }
@@ -763,8 +780,13 @@ export function mount(root, life) {
           if (reason.is === 'room') reason.group.filter((other) => cells[other] === 'empty').forEach((other) => flash(tile(other), 'starve'));
         }
         say('Penny agrees');
+      } else if (place.listen) {
+        // it hears nothing under it, and has no quarrel with it
+        pal.mood('calm').look(tile(changed[0]));
+        life.setTimeout(() => { if (!busy && touching === null) pal.look(null); }, 700);
+        say('');
       } else if (first) {
-        // the first cross there has ever been: it marvels at it
+        // the first cross it has had to think about: it marvels at it
         pal.mood('surprised').look(tile(changed[0])).gesture('hop');
         pal.sing(WONDER, 0.6, { breath: 0 });
         say('Penny marvels at the cross');
@@ -886,6 +908,8 @@ export function mount(root, life) {
   };
   let lastTap = { cell: null, at: 0, before: null };
   let stroke = null; // while a finger is down in the last place: { to, cells }
+  let press = null; // while a finger is down where a tap crosses and a hold listens: { cell, held, moved }
+  let holding = null;
   let hovering = null;
 
   function tapped(cell, at) {
@@ -903,6 +927,8 @@ export function mount(root, life) {
       }
       lastTap = { cell: null, at: 0, before: null };
       stroke = null;
+      press = null;
+      clearTimeout(holding);
       touching = null;
       open(cell);
       return;
@@ -915,6 +941,19 @@ export function mount(root, life) {
       stroke = { to: cells[cell] === 'cross' ? 'empty' : 'cross', cells: [] };
       if (mark(cell, stroke.to)) stroke.cells.push(cell);
       else if (squares[cell].is === 'out') no(squares[cell], true);
+      return;
+    }
+    if (place.crosses) {
+      // A quick tap will be a cross (see lift). Held a moment, or slid, it is
+      // a question for Penny's ear instead.
+      press = { cell, held: false, moved: false };
+      clearTimeout(holding);
+      holding = life.setTimeout(() => {
+        if (!press || press.cell !== cell || busy) return;
+        press.held = true;
+        if (cells[cell] === 'empty') knock(cell);
+        ask(cell);
+      }, 260);
       return;
     }
     if (cells[cell] === 'empty') {
@@ -948,6 +987,10 @@ export function mount(root, life) {
     }
     if (cell === null || cell === touching) return;
     // a finger sliding across the map
+    if (press) {
+      press.moved = true;
+      clearTimeout(holding);
+    }
     touching = cell;
     lastTouched = cell;
     lastTap = { cell: null, at: 0, before: null };
@@ -964,6 +1007,23 @@ export function mount(root, life) {
     touching = null;
     if (stroke?.cells.length) judge(stroke.cells, stroke.to);
     stroke = null;
+    if (!press) return;
+    clearTimeout(holding);
+    const { cell, held, moved } = press;
+    press = null;
+    if (held || moved) {
+      lastTap = { cell: null, at: 0, before: null }; // that was listening, not half of a double tap
+      return;
+    }
+    // a quick tap: a cross, or a cross taken off
+    if (busy || done || cells[cell] === 'letter') return;
+    const to = cells[cell] === 'cross' ? 'empty' : 'cross';
+    if (mark(cell, to)) {
+      if (to === 'cross' && (positive.has(cell) || squares[cell].is === 'sure')) pal.mood('holding').look(tile(cell)); // over a post it knows of: it cannot breathe
+      judge([cell], to);
+    } else if (squares[cell].is === 'out') {
+      no(squares[cell], true);
+    }
   };
   life.on(window, 'pointerup', lift);
   life.on(window, 'pointercancel', lift);
@@ -987,7 +1047,7 @@ export function mount(root, life) {
     if (event.key === 'Enter') {
       event.preventDefault();
       open(cell);
-    } else if (event.key === ' ' || (event.key.toLowerCase() === 'x' && place.marks)) {
+    } else if (event.key === ' ' || (event.key.toLowerCase() === 'x' && place.crosses)) {
       event.preventDefault();
       if (event.repeat) return;
       tapped(cell, event.timeStamp);
@@ -1030,7 +1090,6 @@ export function mount(root, life) {
     if (busy || portal.hidden || main.classList.contains('through')) return; // (busy: the sound so far is being played back)
     if (index === PLACES.length - 1) {
       setWalked();
-      setPlaceReached(0);
       go('/postmarks/');
       return;
     }
@@ -1052,6 +1111,19 @@ export function mount(root, life) {
     await wait(still ? 0 : 620);
     main.classList.remove('arriving');
   });
+
+  // Back down the map to a place already walked, and up again as far as has
+  // been reached. (The portal is still the only way to somewhere new.)
+  async function step(to) {
+    if (busy || to < 0 || to > furthest() || main.classList.contains('through')) return;
+    setBusy(true);
+    start(to);
+    main.classList.add('arriving');
+    await wait(still ? 0 : 620);
+    main.classList.remove('arriving');
+  }
+  down.addEventListener('click', () => step(index - 1));
+  up.addEventListener('click', () => step(index + 1));
 
   start(index);
 }

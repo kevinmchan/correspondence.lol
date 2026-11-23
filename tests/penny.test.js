@@ -37,7 +37,8 @@ test('a place played by all the rules has only one answer', () => {
 
 test('each place has one more rule than the last, and fewer posts it can hear', () => {
   assert.deepEqual(PLACES.map((place) => place.rules.length), [0, 1, 2, 3, 3]);
-  assert.ok(PLACES.at(-1).marks, 'the last place is the one with crosses');
+  assert.ok(PLACES.at(-1).marks, 'in the last place a slide crosses too');
+  assert.deepEqual(PLACES.map((place) => Boolean(place.crosses)), [false, true, true, true, true], 'a tap crosses from the second place on');
   const quiet = PLACES.map((place) => place.posts.length - place.loud.length);
   assert.deepEqual(quiet, [0, 1, 2, 3, 4], 'one more quiet post each place');
   for (const [i, place] of PLACES.entries()) assert.ok(place.loud.every((post) => place.posts.includes(post)), `place ${i + 1}: what is loud is a post`);
@@ -100,20 +101,21 @@ test('in the last place it hears nothing at all', () => {
   for (const cell of place.regions.keys()) assert.equal(hear(place, [], cell).strength, 0);
 });
 
-test('the last place: your crosses are its memory', () => {
+test('the last place: your crosses are its memory, and one cross is enough to begin', () => {
   const place = PLACES[4];
   const sure = (crosses) => where(read(place, [], [...vouch(place, [], [], crosses)]), 'sure');
-  // at the start it can see the reason for three crosses, and no post is sure
-  assert.deepEqual(where(read(place, []), 'room'), [6, 7, 14]);
+  // at the start no post is sure, and it can see the reason for a cross in the top right corner
   assert.deepEqual(sure([]), []);
-  // one cross makes the reason for the next
-  assert.ok(!vouch(place, [], [], [5]).has(5), 'not yet');
-  assert.ok(vouch(place, [], [], [6, 14, 5]).has(5), 'now it can see why');
-  // and four of them leave a row with one square
-  assert.deepEqual(sure([6, 7, 14, 5]), [4]);
+  assert.ok(where(read(place, []), 'room').includes(3));
+  // which leaves that colour with one square
+  assert.deepEqual(sure([3]), [2]);
   // a cross it cannot see the reason for is not vouched for, and changes nothing it knows
-  assert.deepEqual([...vouch(place, [], [], [0])], []);
-  assert.deepEqual(sure([0]), []);
+  assert.deepEqual([...vouch(place, [], [], [8])], []);
+  assert.deepEqual(sure([8]), []);
+  // one cross can make the reason for the next
+  const first = where(read(place, []), 'room');
+  const then = where(read(place, [], [3]), 'room');
+  assert.ok(then.some((cell) => !first.includes(cell)), 'something it could not see before the first cross');
 });
 
 test('it never vouches for a cross on a post, whatever is crossed', () => {

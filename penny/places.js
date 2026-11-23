@@ -2,13 +2,18 @@
 // No page here, only data and arithmetic, so the tests can run it. What is in
 // each post is at the end of the file.
 //
-// Each place is a small piece of the map with one more rule than the last:
+// Each place is a small piece of the map, and each asks one thing more than
+// the last:
 //
 //   1. a post is opened with a double tap
 //   2. one post per colour
 //   3. one post per row and column
 //   4. posts cannot touch
-//   5. a tap or a drag crosses squares out
+//   5. nothing to hear: the rules alone
+//
+// From the second place on, a quick tap crosses a square out, as in the game.
+// The last place is made to be gentle: one cross in the right corner leaves a
+// colour with a single square.
 //
 // Penny does not know where the posts are: it is looking too. Nothing here
 // that works out its feelings is given the posts. It has two things to go
@@ -39,14 +44,15 @@ import { A4, A5, C5, C6, D4, D5, E4, E5, G4, G5 } from './notes.js';
 // the last is the one it is here for. loud: the posts it can hear. reach: how
 // many squares off it hears them. listen: how long it listens before it can
 // say, in milliseconds. twice: how soon the second tap of a double tap has to
-// come. marks: a tap crosses a square out here, as in the game, and it can
-// take its one extra step of thought.
+// come. crosses: a quick tap crosses a square out (holding, or sliding, is
+// listening). marks: the last place, where nothing can be heard, so a slide
+// crosses too, and Penny can take its one extra step of thought.
 export const PLACES = [
   { rows: ['A'], tiles: { A: 1 }, posts: [0], rules: [], loud: [0], reach: 0, listen: 250, twice: 500 },
-  { rows: ['AABB', 'AABB', 'CCBB', 'CCDB'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour'], loud: [1, 7, 8], reach: 2, listen: 300, twice: 450 },
-  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line'], loud: [2, 4], reach: 2, listen: 380, twice: 350 },
-  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], loud: [1], reach: 2, listen: 460, twice: 350 },
-  { rows: ['AABB', 'AAAB', 'DDCC', 'DDDC'], tiles: { A: 1, B: 0, C: 3, D: 6 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], loud: [], reach: 0, listen: 0, twice: 350, marks: true },
+  { rows: ['AABB', 'AABB', 'CCBB', 'CCDB'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour'], loud: [1, 7, 8], reach: 2, listen: 300, twice: 450, crosses: true },
+  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line'], loud: [2, 4], reach: 2, listen: 380, twice: 350, crosses: true },
+  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], loud: [1], reach: 2, listen: 460, twice: 350, crosses: true },
+  { rows: ['BBAA', 'BBCC', 'DDDC', 'DDDC'], tiles: { A: 1, B: 0, C: 3, D: 6 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], loud: [], reach: 0, listen: 0, twice: 350, crosses: true, marks: true },
 ].map((place) => ({ ...place, n: place.rows.length, regions: place.rows.join('').split('').map((letter) => place.tiles[letter]) }));
 
 const rowOf = (cell, n) => Math.floor(cell / n);
