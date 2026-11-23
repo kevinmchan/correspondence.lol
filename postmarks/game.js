@@ -62,7 +62,7 @@ export function tokenize(phrase, n) {
     let best = 0;
     let shortest = Infinity;
     for (let i = 0; i < tokens.length - 1; i++) {
-      const length = tokens[i].t.length + tokens[i + 1].t.length;
+      const length = Array.from(tokens[i].t).length + Array.from(tokens[i + 1].t).length; // characters, as the server counts
       if (length < shortest) {
         best = i;
         shortest = length;
@@ -78,6 +78,35 @@ export function tokenize(phrase, n) {
 // allows (5 to 9), so that tokens are whole words whenever possible.
 export const phraseBoardSize = (phrase) =>
   Math.min(MAX_SIZE, Math.max(MIN_SIZE, phrase.trim().split(/\s+/).filter(Boolean).length));
+
+// What may be written as a phrase, checked as it is typed. The server has the
+// last word (postmarks_start in the database applies the same rules).
+// A phone's curly apostrophe is taken as a plain one.
+export const tidyPhrase = (phrase) => phrase.replace(/[\u2018\u2019]/g, "'");
+
+// Letters, numbers, spaces, simple punctuation and emoji: the pictograph,
+// symbol, arrow and dingbat blocks, with the joiners and modifiers that build
+// sequences (postmarks.emoji_class in the database lists the same ranges).
+const ALLOWED = /^[A-Za-z0-9\s.,!?'\u00A9\u00AE\u200D\u203C\u2049\u20E3\u2122\u2139\u2190-\u21FF\u2300-\u23FF\u24C2\u25A0-\u27BF\u2900-\u297F\u2B00-\u2BFF\u3030\u303D\u3297\u3299\uFE0F\u{1F000}-\u{1FAFF}\u{E0020}-\u{E007F}-]+$/u;
+
+// Why this phrase cannot be used, in words for its writer; null if it can.
+// An empty phrase is fine: a random one is used instead.
+export function phraseProblem(phrase) {
+  const text = tidyPhrase(phrase).trim();
+  if (!text) return null;
+  const pieces = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? Array.from(new Intl.Segmenter().segment(text), (s) => s.segment) : Array.from(text);
+  const bad = [...new Set(pieces.filter((piece) => !ALLOWED.test(piece)))];
+  if (bad.length) {
+    return `${bad.slice(0, 4).join(' ')} can’t be used. A phrase is letters, numbers, emoji, spaces and . , ! ? ' -`;
+  }
+  if (Array.from(text.replace(/\s+/g, ' ')).length > 60) return 'Too long: a phrase is up to 60 characters.';
+  const size = phraseBoardSize(text);
+  if (!letters(text)) return 'Add at least one letter or number, so that it can be guessed.';
+  // words are split to make a token for every post, but only between letters
+  if (tokenize(text, size).length < size) return `Too short: it has to fill the ${size} posts of a ${size} × ${size} board.`;
+  return null;
+}
 
 // Small seeded PRNG (mulberry32) so a seed always yields the same puzzle.
 export function rng(seed) {

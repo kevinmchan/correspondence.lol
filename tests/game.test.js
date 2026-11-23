@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_SIZE, MIN_SIZE,
-  applyMove, canMove, countSolutions, phraseBoardSize, randomSize, tokenize, generatePuzzle, isLetterCell, newGame,
+  applyMove, canMove, countSolutions, phraseBoardSize, randomSize, tokenize, phraseProblem, tidyPhrase, generatePuzzle, isLetterCell, newGame,
 } from '../postmarks/game.js';
 
 const start = (size = 5, seed = 1) => newGame({ size, seed, players: ['Ada', 'Bo'] });
@@ -286,4 +286,26 @@ test('newGame validates players and size', () => {
   assert.throws(() => newGame({ size: 6, seed: 1, players: [] }));
   assert.throws(() => newGame({ size: 6, seed: 1, players: ['a', 'b', 'c', 'd', 'e'] }));
   assert.throws(() => newGame({ size: 4, seed: 1, players: ['a', 'b'] }));
+});
+
+test('a phrase is checked as it is written', () => {
+  assert.equal(phraseProblem(''), null, 'empty: a random one is used');
+  assert.equal(phraseProblem("Thinking of you! Hope you have a lovely week"), null);
+  assert.equal(phraseProblem('Thinking of you! Hope you have a lovely week 🎈'), null, 'emoji are welcome');
+  assert.equal(phraseProblem('I ❤️ you 👨‍👩‍👧 🏳️‍🌈 🇨🇦 👍🏽 ok'), null, 'sequences too');
+  assert.equal(phraseProblem('go 🎈 🎈 🎈 🎈'), null, 'a token each');
+  assert.match(phraseProblem('🎈 🎈 🎈 🎈 🎈'), /letter or number/, 'a guess is compared on letters');
+  assert.match(phraseProblem('go 🎈 🎈'), /^Too short/, 'emoji are not split');
+  assert.match(phraseProblem('日本語 hello there'), /^日 本 語 can’t be used/);
+  // the same split as postmarks.tokenize in the database
+  assert.deepEqual(tokenize('Thinking of you! Hope you have a lovely week 🎈', 5).map((x) => x.t),
+    ['Thinking', 'of you!', 'Hope you', 'have a lovely', 'week 🎈']);
+  assert.deepEqual(tokenize('I ❤️ you 👨‍👩‍👧 🏳️‍🌈 🇨🇦 👍🏽 ok', 5).map((x) => x.t),
+    ['I ❤️ you', '👨‍👩‍👧', '🏳️‍🌈', '🇨🇦 👍🏽', 'ok']);
+  assert.match(phraseProblem('café & crème'), /^é & è can’t be used/);
+  assert.equal(phraseProblem('don’t stop me now'), null, 'a curly apostrophe is taken as a plain one');
+  assert.equal(tidyPhrase('don’t'), "don't");
+  assert.match(phraseProblem('a b c'), /^Too short: it has to fill the 5 posts of a 5 × 5 board/);
+  assert.match(phraseProblem('I ❤️ U'), /^Too short/);
+  assert.match(phraseProblem('x'.repeat(61)), /^Too long/);
 });
