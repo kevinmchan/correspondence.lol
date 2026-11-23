@@ -691,7 +691,7 @@ export function mount(root, life) {
       el.turn.append(strong, ' move');
     } else {
       const others = game.players.filter((_, seat) => seat !== online.you && !game.absent.includes(seat));
-      el.turn.textContent = others.length === 0 ? 'Waiting for someone to join the room'
+      el.turn.textContent = others.length === 0 ? 'Waiting for someone to join'
         : others.length === 1 ? `Waiting for ${others[0]}`
         : 'Waiting for someone else to move';
     }
