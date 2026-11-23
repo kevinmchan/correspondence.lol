@@ -22,7 +22,8 @@ export function mount(root, life) {
   // room (?game=<id>, stored on the server and open to everyone in that room).
 
   const GAME_KEY = 'postmarks:solo:v1';
-  const HOWTO_KEY = 'postmarks:howto:v1'; // the last game this device showed the how-to for
+  const HOWTO_KEY = 'postmarks:howto:v1'; // the last room game this device showed the how-to for
+  const SOLO_HOWTO_KEY = 'postmarks:howto-solo:v1'; // set once the how-to has been shown in solo play
   const DISTRICTS = ['coral', 'amber', 'lime', 'mint', 'sky', 'periwinkle', 'orchid', 'tan', 'grey'];
   const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
 
@@ -424,7 +425,6 @@ export function mount(root, life) {
         } else if (!life.over) {
           // playing alone there is no room to go back to: straight into the next puzzle
           startSolo();
-          save(HOWTO_KEY, String(game.seed)); // no how-to this time: they have just finished a game
           render();
         }
       },
@@ -929,12 +929,18 @@ export function mount(root, life) {
   el.shareGame.addEventListener('click', () => shareGame(el.shareGame));
   el.trialShare.addEventListener('click', () => shareGame(el.trialShare));
 
-  // The animated how-to opens the first time this device shows a given game.
+  // The animated how-to opens the first time this device shows a given room
+  // game. Playing alone it opens once, the first time ever: after that a new
+  // puzzle just starts. (It is always there under the question mark.)
   function greet() {
     if (online?.mode === 'trial') return; // the clock is running: no interruptions
-    const key = online ? online.id : String(game.seed);
-    if (load(HOWTO_KEY) === key) return;
-    save(HOWTO_KEY, key);
+    if (!online) {
+      if (load(SOLO_HOWTO_KEY)) return;
+      save(SOLO_HOWTO_KEY, true);
+    } else {
+      if (load(HOWTO_KEY) === online.id) return;
+      save(HOWTO_KEY, online.id);
+    }
     if (game.status === 'playing') openHowTo(giveFeedback);
   }
 

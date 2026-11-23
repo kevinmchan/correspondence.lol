@@ -44,8 +44,15 @@ async function show(url, { announce }) {
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
 
   const root = document.createElement('div');
-  // 'opening' marks the screen the app starts on, whose contents rise into place
-  root.className = `screen screen-${screen.name}${screen.depth > 0 ? ' page' : ''}${current ? '' : ' opening'}`;
+  // 'opening' marks the screen the app starts on, whose contents rise into
+  // place. Not after the app has reloaded itself to pick up a new version:
+  // that page has been seen arriving once already.
+  let quiet = false;
+  try {
+    quiet = sessionStorage.getItem('correspondence:quiet') === '1';
+    sessionStorage.removeItem('correspondence:quiet');
+  } catch { /* no storage */ }
+  root.className = `screen screen-${screen.name}${screen.depth > 0 ? ' page' : ''}${current || quiet ? '' : ' opening'}`;
   root.append(document.getElementById(`screen-${screen.name}`).content.cloneNode(true));
   const life = newLife();
   const leaving = current;
