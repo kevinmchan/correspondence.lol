@@ -1,6 +1,7 @@
 import { rpc } from './api.js';
 import { copyable, prettyCode } from './handoff.js';
 import { load, myToken, save } from './identity.js';
+import { isMusicOff, isMuted, setMusicOff, setMuted } from '/postmarks/sound.js';
 
 // A profile is a name plus an avatar: an emoji on one of eight colours.
 export const AVATARS = [
@@ -131,19 +132,35 @@ export function openProfile({ person, onSave }) {
   });
 
   // Settings kept on this device. They take effect at once, without Save.
-  const settings = document.createElement('label');
-  settings.className = 'setting';
-  const patterns = document.createElement('input');
-  patterns.type = 'checkbox';
-  patterns.setAttribute('role', 'switch');
-  patterns.checked = patternsOn();
-  patterns.addEventListener('change', () => {
-    save(PATTERNS_KEY, patterns.checked ? true : null);
-    applyPatterns();
-  });
-  const patternsText = document.createElement('span');
-  patternsText.textContent = 'Patterns on tiles';
-  settings.append(patternsText, patterns);
+  const settings = document.createElement('div');
+  settings.className = 'settings';
+  const toggle = (text, on, change) => {
+    const row = document.createElement('label');
+    row.className = 'setting';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('role', 'switch');
+    input.checked = on;
+    input.addEventListener('change', () => change(input.checked));
+    const label = document.createElement('span');
+    label.textContent = text;
+    row.append(label, input);
+    return row;
+  };
+  settings.append(
+    toggle('Music', !isMusicOff(), (on) => {
+      setMusicOff(!on);
+      document.dispatchEvent(new Event('soundchange'));
+    }),
+    toggle('Sound effects', !isMuted(), (on) => {
+      setMuted(!on);
+      document.dispatchEvent(new Event('soundchange'));
+    }),
+    toggle('Patterns on tiles', patternsOn(), (on) => {
+      save(PATTERNS_KEY, on ? true : null);
+      applyPatterns();
+    }),
+  );
 
   // The way on to another device: a link that makes a temporary account code.
   const sync = document.createElement('div');

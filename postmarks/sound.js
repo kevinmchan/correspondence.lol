@@ -1,5 +1,7 @@
-// Sound effects, synthesised with the Web Audio API so there are no audio files
-// to download. Browsers only allow sound after the player has touched the
+// Sound effects and background music, synthesised with the Web Audio API so
+// there are no audio files to download. Every page loads this (through the
+// profile menu's module), so the music plays on the home page and in rooms as
+// well as in games. Browsers only allow sound after the player has touched the
 // page, so the audio engine starts on the first tap or key press; anything
 // that happens before then is simply silent.
 
@@ -264,7 +266,16 @@ const CHORDS = [
 
 let musicTimer = null;
 let nextBeat = 0; // when, on the engine's clock, the next beat falls
+// Each page starts its own music. So that going from the home page into a room
+// and on into a game sounds like one piece carrying on, the place reached in
+// the chords is kept for the session and the next page picks up at the next bar.
+const PLACE_KEY = 'postmarks:music-beat';
 let beat = 0;
+try {
+  beat = Math.ceil((Number(sessionStorage.getItem(PLACE_KEY)) || 0) / 8) * 8;
+} catch {
+  /* no storage: start from the top */
+}
 let lastNote = 2; // where in the chord's notes the tune last was
 
 function scheduleBeat(at, n) {
@@ -301,6 +312,9 @@ function startMusic() {
     while (nextBeat < ctx.currentTime + 0.6) {
       scheduleBeat(nextBeat, beat);
       beat += 1;
+      try {
+        sessionStorage.setItem(PLACE_KEY, String(beat));
+      } catch { /* not kept */ }
       nextBeat += BEAT;
     }
   }, 150);

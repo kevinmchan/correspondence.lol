@@ -676,3 +676,6 @@ h1 button.rename { font: inherit; color: inherit; letter-spacing: inherit; backg
 h1 button.rename:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
 h1 form.rename { display: flex; justify-content: center; }
 h1 form.rename input { font-family: Georgia, serif; font-size: inherit; text-align: center; width: 100%; max-width: 22rem; padding: 0.1em 0.3em; }
+
+/* several switches together in the profile menu: one rule above the group, not each */
+.settings .setting + .setting { border-top: 0; padding-top: 0; margin-top: 0.7rem; }
