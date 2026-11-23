@@ -18,17 +18,23 @@ export function mountOpen(root) {
   const form = root.querySelector('#create-room');
   const roomInput = root.querySelector('#room-name');
   const error = root.querySelector('#create-error');
-  roomInput.placeholder = `${myName()}’s room`.slice(0, 40); // what it will be called if left empty
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const name = myName();
+    const roomName = roomInput.value.trim();
+    error.textContent = '';
+    if (!roomName) {
+      // a room has to be called something: its members tell their rooms apart by name
+      error.textContent = 'Give the room a name.';
+      roomInput.focus();
+      return;
+    }
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
-    error.textContent = '';
     try {
       const room = await rpc('room_create', {
-        p_room_name: roomInput.value.trim() || `${name}’s room`.slice(0, 40),
+        p_room_name: roomName,
         p_name: name,
         p_token: myToken(),
       });
