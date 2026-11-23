@@ -13,7 +13,8 @@ const el = {
   room: $('room'), members: $('members'), profile: $('profile'),
   notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'),
-  modes: $('modes'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'), gameError: $('game-error'),
+  modes: $('modes'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
+  phraseError: $('phrase-error'), phraseBack: $('phrase-back'), gameError: $('game-error'),
   chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'),
 };
 
@@ -29,6 +30,7 @@ let chat = null;
 let unread = 0;
 let timer = null;
 let watcher = null; // live updates, once we are a member
+let composing = false; // the write-a-phrase screen is showing in place of the room
 let present = false; // telling the server this room is on screen
 
 function fail(text) {
@@ -81,6 +83,7 @@ function render() {
     if (!el.joinName.value) el.joinName.value = myName();
     el.join.hidden = false;
     el.room.hidden = true;
+    el.compose.hidden = true;
     el.profile.hidden = true;
     return;
   }
@@ -90,7 +93,8 @@ function render() {
     return;
   }
   el.join.hidden = true;
-  el.room.hidden = false;
+  el.room.hidden = composing;
+  el.compose.hidden = !composing;
   el.members.replaceChildren(...room.people.flatMap((person, seat) => {
     if (person.left) return [];
     const li = document.createElement('li');
@@ -260,6 +264,7 @@ async function startGame(mode, phrase = null) {
   if (el.modes.dataset.busy) return;
   el.modes.dataset.busy = 'true';
   el.gameError.textContent = '';
+  el.phraseError.textContent = '';
   try {
     // A pass phrase hides one word in each letter, so the board is sized to
     // the phrase: as many letters as words where possible.
@@ -275,10 +280,23 @@ async function startGame(mode, phrase = null) {
     watcher?.poke();
     location.href = gameUrl('postmarks', game.id);
   } catch (error) {
-    el.gameError.textContent = error.message;
+    (composing ? el.phraseError : el.gameError).textContent = error.message;
     delete el.modes.dataset.busy;
   }
 }
+
+// Pass phrase has a screen of its own for writing the phrase. It is a step in
+// the browser's history, so Back returns to the room.
+function showCompose(show) {
+  composing = show;
+  el.phraseError.textContent = '';
+  if (room?.you !== null) render();
+  if (show) el.phraseText.focus();
+  else window.scrollTo(0, 0);
+}
+
+window.addEventListener('popstate', () => showCompose(location.hash === '#phrase'));
+el.phraseBack.addEventListener('click', () => history.back());
 
 el.modes.addEventListener('click', (event) => {
   const tile = event.target.closest('[data-mode]');
@@ -287,10 +305,8 @@ el.modes.addEventListener('click', (event) => {
     startGame(tile.dataset.mode);
     return;
   }
-  const open = el.phraseForm.hidden;
-  el.phraseForm.hidden = !open;
-  tile.setAttribute('aria-expanded', String(open));
-  if (open) el.phraseText.focus();
+  history.pushState(null, '', '#phrase');
+  showCompose(true);
 });
 
 el.phraseForm.addEventListener('submit', (event) => {
@@ -326,5 +342,6 @@ if (navigator.share) {
 
 el.shareLink.addEventListener('focus', () => el.shareLink.select());
 
+if (location.hash === '#phrase') history.replaceState(null, '', location.pathname + location.search);
 if (roomId) refresh();
 else fail('That room link doesn’t look right.');

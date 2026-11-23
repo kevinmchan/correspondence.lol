@@ -553,12 +553,12 @@ main:has(.version) { position: relative; }
   font-family: system-ui, sans-serif;
 }
 
-.mode:hover, .mode:focus-visible, .mode[aria-expanded="true"] { border-color: var(--accent); }
+.mode:hover, .mode:focus-visible { border-color: var(--accent); }
 .mode .icon { width: 1.75rem; height: 1.75rem; color: var(--muted); }
-.mode:hover .icon, .mode:focus-visible .icon, .mode[aria-expanded="true"] .icon { color: var(--accent); }
+.mode:hover .icon, .mode:focus-visible .icon { color: var(--accent); }
 .mode strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; }
 .modes[data-busy] .mode { opacity: 0.6; cursor: progress; }
 
-#phrase-form button { flex: none; padding: 0.5rem 1.1rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; }
+#compose .lede { font-size: 1.35rem; font-style: normal; color: var(--ink); }
 #no-games + h2, #games + h2, .panel h2 + .modes { margin-top: 0.1rem; }
 
