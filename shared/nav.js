@@ -31,6 +31,10 @@ const screenFor = (url) => SCREENS.find((screen) => screen.match(url.pathname, u
 const keyOf = (url) => url.pathname + url.search;
 
 const MOVE_MS = 360;
+// Between the home page and the map the move is through a portal, not a slide,
+// and is given longer (penny/walk.css).
+const PORTAL_MS = 950;
+const throughPortal = (a, b) => [a, b].sort().join() === 'home,walk';
 const still = matchMedia('(prefers-reduced-motion: reduce)');
 const stage = document.getElementById('screens');
 
@@ -74,7 +78,7 @@ async function show(url, { announce }) {
   }
   leaving.root.classList.add('leaving', direction);
   root.classList.add('entering', direction);
-  await new Promise((done) => setTimeout(done, MOVE_MS));
+  await new Promise((done) => setTimeout(done, throughPortal(leaving.screen.name, screen.name) ? PORTAL_MS : MOVE_MS));
   leaving.life.end();
   leaving.root.remove();
   root.classList.remove('entering', direction);

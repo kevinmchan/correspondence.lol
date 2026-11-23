@@ -185,11 +185,12 @@
    map rushes up through the portal, and settles, from high above, on the
    first place. Coming back, it falls away to where the portal is. */
 @media (prefers-reduced-motion: no-preference) {
-  .screen-home.leaving.forth:has(~ .screen-walk) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-rush 340ms cubic-bezier(0.6, 0, 0.9, 0.5) both; }
-  .screen-home.leaving.forth ~ .screen-walk.entering { animation: map-settle 360ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
-  .screen-walk.leaving.back:has(~ .screen-home) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-fall 340ms cubic-bezier(0.4, 0, 0.8, 0.4) both; }
-  .screen-walk.leaving.back ~ .screen-home.entering { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-near 360ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+  .screen-home.leaving.forth:has(~ .screen-walk) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-rush 620ms cubic-bezier(0.5, 0, 0.7, 0.6) both; }
+  .screen-home.leaving.forth ~ .screen-walk.entering { animation: map-arrive 700ms cubic-bezier(0.2, 0.7, 0.3, 1) 240ms both; }
+  .screen-walk.leaving.back:has(~ .screen-home) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-fall 600ms cubic-bezier(0.5, 0, 0.7, 0.6) both; }
+  .screen-walk.leaving.back ~ .screen-home.entering { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-near 700ms cubic-bezier(0.2, 0.7, 0.3, 1) 240ms both; }
 }
-@keyframes map-rush { to { transform: scale(7); opacity: 0; } }
-@keyframes map-fall { to { transform: scale(0.2); opacity: 0; } }
-@keyframes map-near { from { transform: scale(4.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes map-rush { 60% { opacity: 0.5; } to { transform: scale(3.2); opacity: 0; } }
+@keyframes map-arrive { from { transform: scale(0.72); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes map-fall { to { transform: scale(0.5); opacity: 0; } }
+@keyframes map-near { from { transform: scale(2.2); opacity: 0; } to { transform: none; opacity: 1; } }
