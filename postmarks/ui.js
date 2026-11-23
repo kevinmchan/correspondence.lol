@@ -1,4 +1,4 @@
-import { ask, tell } from '/shared/ask.js';
+import { ask, choose, tell } from '/shared/ask.js';
 import { go } from '/shared/nav.js';
 import {
   CROSS, EMPTY, LETTER, MISS, START_HEARTS,
@@ -9,6 +9,7 @@ import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
+import { COLOUR_NAMES, findHint } from './hint.js';
 import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
 import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound.js';
@@ -25,7 +26,7 @@ export function mount(root, life) {
   const GAME_KEY = 'postmarks:solo:v1';
   const HOWTO_KEY = 'postmarks:howto:v1'; // the last room game this device showed the how-to for
   const SOLO_HOWTO_KEY = 'postmarks:howto-solo:v1'; // set once the how-to has been shown in solo play
-  const DISTRICTS = ['coral', 'amber', 'lime', 'mint', 'sky', 'periwinkle', 'orchid', 'tan', 'grey'];
+  const DISTRICTS = COLOUR_NAMES;
   const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
 
   const $ = (id) => root.querySelector(`#${id}`);
@@ -34,7 +35,7 @@ export function mount(root, life) {
     back: $('back'), profile: $('profile'), loading: $('loading'),
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
     roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
-    narration: $('narration'), message: $('message'), newGame: $('new-game'),
+    narration: $('narration'), message: $('message'), newGame: $('new-game'), restart: $('restart'), lostChoice: $('lost-choice'), retryRun: $('retry-run'), revealRun: $('reveal-run'), hint: $('hint'), hintNote: $('hint-note'),
     chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
     trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
     trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
@@ -50,6 +51,8 @@ export function mount(root, life) {
   let online = null; // { id, you, room, roomName } for a room game; you is this device's seat
   let busy = false; // a move is on its way to the server
   let pending = 0; // solo-mode crosses sent to the server but not yet confirmed
+  const outbox = []; // strokes of crosses shown but not yet sent
+  let guessing = null; // the square being opened, while the server is asked what is in it
   let sending = Promise.resolve(); // they go one after another, in order
   let resync = false; // the board shown may be ahead of the server: take its word next time
   // The move being put together, shown on the board but not yet played:
@@ -89,6 +92,8 @@ export function mount(root, life) {
       id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people,
       mode, started, runs: view.runs ?? [], author: view.phrase_by ?? null, // who wrote the phrase, if anyone
       // tokens: [{ len, gap, t }] with t null until unlocked (games from before tokens have only `shown`)
+      // a pass phrase lost but not yet given up on: the player may still try it again
+      revealed: view.revealed !== false, tries: view.tries ?? 1,
       phrase: mode === 'phrase' ? { tokens: view.tokens ?? null, shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
       // the clock: how long it had run when this view was made, and when that was
       clock: view.elapsed_ms == null ? null : { ms: Number(view.elapsed_ms), at: performance.now() },
@@ -103,9 +108,12 @@ export function mount(root, life) {
   const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
 
   // --- Solo games -----------------------------------------------------------
-  function startSolo() {
-    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-    game = newGame({ size: randomSize(), seed, players: ['You'] });
+  // A new solo puzzle, or (given one to repeat) the same board again from the
+  // start: a board is made from its size and seed, so those two bring it back.
+  function startSolo(again = null) {
+    const seed = again ? again.seed : crypto.getRandomValues(new Uint32Array(1))[0];
+    game = newGame({ size: again ? again.size : randomSize(), seed, players: ['You'] });
+    hint = null;
     tool = 'mark';
     draft = null;
     builtFor = null;
@@ -247,7 +255,8 @@ export function mount(root, life) {
       const result = document.createElement('span');
       result.className = `result ${run.status}`;
       result.textContent = run.status === 'lost' ? 'out of hearts' : run.status !== 'won' ? 'playing…'
-        : online.mode === 'trial' ? clockText(run.ms) : `${run.found} of ${game.size} posts opened`;
+        : online.mode === 'trial' ? clockText(run.ms)
+        : `${run.found} of ${game.size} posts opened${run.tries > 1 ? ` · ${ordinal(run.tries)} try` : ''}`;
       li.append(who, result);
       return li;
     }));
@@ -382,11 +391,81 @@ export function mount(root, life) {
   });
   const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 
+  // Another go at the same board, where that makes sense: after losing a solo
+  // game, or a shared one (which starts a new game in the room on the same
+  // board, for everyone). Not in the modes where people are ranked against each
+  // other on a board: a second attempt there would not be a fair one.
+  function retryOffer(won) {
+    if (won) return null;
+    if (!online) {
+      const again = { size: game.size, seed: game.seed };
+      return { label: 'Try this board again', run: () => { if (!life.over) { startSolo(again); render(); } } };
+    }
+    if (online.mode !== 'coop' || !game.solution) return null;
+    const board = { room: online.room, size: game.size, regions: game.regions, solution: game.solution };
+    return {
+      label: 'Try this board again',
+      run: async () => {
+        try {
+          const fresh = await rpc('postmarks_start', {
+            p_room: board.room, p_token: myToken(), p_mode: 'coop', p_size: board.size,
+            p_regions: board.regions, p_solution: board.solution, p_phrase: null,
+          });
+          watcher?.poke();
+          if (!life.over) go(gameUrl('postmarks', fresh.id), { replace: true });
+        } catch (failure) {
+          await tell('Couldn’t start it again', { detail: failure.message });
+          if (!life.over) go(roomUrl(board.room));
+        }
+      },
+    };
+  }
+
   // The screen at the end of a game: a send-off that suits the mode, and a
   // chance to say how it went. Leaving it goes back to the room, or, playing
   // alone, on to a new puzzle.
+  // --- Pass phrase, out of hearts: try again, or see the phrase ---------------------
+  // Losing a pass phrase is not the end until the player says so. While they
+  // have not, the phrase and the posts stay hidden, and they may start the
+  // board again as often as they like. Choosing to see the phrase ends it.
+  const undecided = () => online?.mode === 'phrase' && game?.status === 'lost' && !online.revealed;
+  let deciding = false;
+
+  async function decide(choice) {
+    if (!undecided() || deciding) return;
+    deciding = true;
+    say('');
+    try {
+      const view = await rpc(choice === 'retry' ? 'postmarks_retry' : 'postmarks_reveal', { p_game: online.id, p_token: myToken() });
+      if (life.over) return;
+      accept(view);
+      hint = null;
+      draft = null;
+      tool = 'mark';
+      fresh = true; // show the board as it now is, without playing every change as an effect
+      watcher?.poke();
+    } catch (failure) {
+      say(failure.message);
+    }
+    deciding = false;
+    render();
+  }
+
+  async function offerChoice() {
+    if (!undecided() || document.querySelector('dialog.ask')) return;
+    const choice = await choose('Out of hearts', {
+      detail: 'Try the board again, or see the phrase? Once you have seen it, this one is finished.',
+      options: [{ label: 'Reveal', value: 'reveal' }, { label: 'Try again', value: 'retry', primary: true }],
+    });
+    if (choice && !life.over) decide(choice);
+  }
+
   function finale() {
     if (!game || !['won', 'lost'].includes(game.status)) return;
+    if (undecided()) {
+      offerChoice();
+      return;
+    }
     if (document.querySelector('dialog.finale')) return;
     const won = game.status === 'won';
     const mode = online?.mode ?? 'solo';
@@ -418,8 +497,9 @@ export function mount(root, life) {
       people: online ? online.people.filter((person) => !person.left) : [],
       hearts: game.hearts,
       about: about(),
-      leave: online ? 'Back to the room' : 'Play again',
+      leave: online ? 'Back to the room' : won ? 'Play again' : 'New puzzle',
       celebrate: confetti,
+      retry: retryOffer(won),
       onDone: () => {
         if (online) {
           go(roomUrl(online.room));
@@ -438,7 +518,27 @@ export function mount(root, life) {
     event.target.classList.remove(...FX);
   });
 
+  // --- Hints ------------------------------------------------------------------------
+  // The lightbulb points at the next squares that can be crossed out and says
+  // why (see hint.js). The pointing stays until those squares are dealt with.
+  let hint = null;
+
+  function settleHint() {
+    if (!hint) return;
+    const waiting = hint.kind === 'uncross' ? CROSS : EMPTY; // what a square looks like while the hint still applies to it
+    if (!game || game.status !== 'playing' || hint.cells.every((cell) => game.cells[cell] !== waiting)) hint = null;
+  }
+
+  el.hint.addEventListener('click', () => {
+    if (!game || game.status !== 'playing') return;
+    hint = findHint(game) ?? { kind: 'none', cells: [], because: [], text: 'Nothing left to work out.' };
+    sfx('pick');
+    render();
+    el.hintNote.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+
   function render() {
+    settleHint();
     document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
 
     if (!game) {
@@ -518,6 +618,9 @@ export function mount(root, life) {
       const theirs = online?.mode === 'coop' && game.last && game.last.player !== online.you;
       button.classList.toggle('last', Boolean(theirs) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
       button.classList.toggle('drawing', drafted);
+      button.classList.toggle('guessing', guessing === cell);
+      button.classList.toggle('hinted', Boolean(hint) && hint.cells.includes(cell));
+      button.classList.toggle('why', Boolean(hint) && hint.because.includes(cell));
       button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
     }
     el.board.setAttribute('aria-disabled', String(over || (Boolean(online) && !iCanMove())));
@@ -622,12 +725,19 @@ export function mount(root, life) {
     el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
     el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
     el.tools.hidden = over;
+    // no hints in a race against the clock
+    el.hint.hidden = over || online?.mode === 'trial';
+    el.hintNote.hidden = !hint || over;
+    if (hint) el.hintNote.textContent = hint.text;
     for (const button of el.tools.children) {
       button.setAttribute('aria-checked', String(button.dataset.tool === tool));
     }
     // Room games go back to the room with the arrow at the top; only a solo
     // game needs a way to start over.
+    el.lostChoice.hidden = !undecided();
+    el.retryRun.disabled = el.revealRun.disabled = deciding;
     el.newGame.hidden = Boolean(online);
+    el.restart.hidden = Boolean(online) || !game || (game.moves === 0 && !over); // nothing to start over yet
     el.newGame.textContent = over ? 'Play again' : 'New game';
   }
 
@@ -669,25 +779,28 @@ export function mount(root, life) {
       game = local.state;
       render();
       pending++;
-      sending = sending
-        .then(() => rpc('postmarks_play', { p_game: online.id, p_token: myToken(), p_type: type, p_cells: cells }))
-        .then((view) => {
-          pending--;
-          if (!pending && !busy) {
-            accept(view);
-            render();
-          }
-        }, (error) => {
-          pending = 0;
-          say(error.message);
-          resync = true; // take the server's board back
-          poll();
-        });
+      // Held back for a moment before it is sent: if this tap turns out to be
+      // the first half of a double tap, the guess that follows makes it moot,
+      // and sending it would only make the guess wait its turn.
+      const queued = { type, cells, sent: false, dropped: false };
+      outbox.push(queued);
+      setTimeout(() => send(queued), DOUBLE_TAP_MS + 30);
       return;
     }
 
     busy = true;
     if (local) game = local.state; // show the crosses now; the server confirms below
+    if (type === 'guess' && online.mode !== 'coop') {
+      // a cross of this same square still waiting to go is the tap before this one: forget it
+      for (const queued of outbox) {
+        if (!queued.sent && queued.cells.length === 1 && queued.cells[0] === cells[0]) {
+          queued.dropped = true;
+          pending--;
+        }
+      }
+      guessing = cells[0]; // the square shows it is being opened while the server answers
+    }
+    for (const queued of [...outbox]) send(queued); // anything else waiting goes now, ahead of the guess
     render();
     try {
       await sending; // any crosses still on their way go first
@@ -703,9 +816,35 @@ export function mount(root, life) {
       resync = true; // undo anything shown early by taking the server's board
     } finally {
       busy = false;
+      guessing = null;
       render();
       poll();
     }
+  }
+
+  // leaving the screen with crosses still held back: send them on the way out
+  life.onEnd(() => { for (const queued of [...outbox]) send(queued); });
+
+  // Send one held-back stroke of crosses (see play). They go one after another, in order.
+  function send(queued) {
+    const at = outbox.indexOf(queued);
+    if (at >= 0) outbox.splice(at, 1);
+    if (queued.sent || queued.dropped) return;
+    queued.sent = true;
+    sending = sending
+      .then(() => rpc('postmarks_play', { p_game: online.id, p_token: myToken(), p_type: queued.type, p_cells: queued.cells }))
+      .then((view) => {
+        pending--;
+        if (!pending && !busy && !life.over) {
+          accept(view);
+          render();
+        }
+      }, (error) => {
+        pending = 0;
+        say(error.message);
+        resync = true; // take the server's board back
+        poll();
+      });
   }
 
   // --- Putting a move together -------------------------------------------------
@@ -756,6 +895,7 @@ export function mount(root, life) {
   // (The first tap will have crossed the square, or cleared its cross; a guess
   // is allowed either way.)
   let lastTap = { cell: null, at: 0 };
+  const DOUBLE_TAP_MS = 350;
 
   function guessAt(cell) {
     if (!ready()) return;
@@ -776,7 +916,7 @@ export function mount(root, life) {
     if (tool !== 'mark' || !event.isPrimary || event.button !== 0) return;
     const cell = cellAt(event.clientX, event.clientY);
     if (cell === null) return;
-    const again = cell === lastTap.cell && event.timeStamp - lastTap.at < 350;
+    const again = cell === lastTap.cell && event.timeStamp - lastTap.at < DOUBLE_TAP_MS;
     lastTap = again ? { cell: null, at: 0 } : { cell, at: event.timeStamp };
     if (again) {
       dragging = false;
@@ -997,6 +1137,18 @@ export function mount(root, life) {
         await poll();
       },
     });
+  });
+
+  el.retryRun.addEventListener('click', () => decide('retry'));
+  el.revealRun.addEventListener('click', () => decide('reveal'));
+
+  // Start this same board over.
+  el.restart.addEventListener('click', async () => {
+    if (!game || online) return;
+    if (game.status === 'playing' && !(await ask('Start this board over?', { detail: 'Your marks and hearts go back to the start.', yes: 'Start over', no: 'Keep playing' }))) return;
+    if (life.over) return;
+    startSolo({ size: game.size, seed: game.seed });
+    render();
   });
 
   el.newGame.addEventListener('click', async () => {

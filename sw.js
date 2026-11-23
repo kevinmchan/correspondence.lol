@@ -36,6 +36,7 @@ const PRECACHE = [
   '/postmarks/postmarks.css',
   '/postmarks/game.js',
   '/postmarks/howto.js',
+  '/postmarks/hint.js',
   '/postmarks/finale.js',
   '/postmarks/sound.js',
   '/jam/',
