@@ -49,7 +49,7 @@ function list(names) {
 
 const TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.5h9.4L17.500 7M10 11v5M14 11v5"/></svg>'.replace('17.500', '17.5');
 
-const MODE_NAMES = { coop: 'Postmarks', trial: 'Time trial', phrase: 'Pass phrase' };
+const MODE_NAMES = { coop: 'Together', trial: 'Time trial', phrase: 'Pass phrase' };
 
 function gameStatus(game) {
   if (game.mode === 'trial' || game.mode === 'phrase') {
@@ -112,7 +112,7 @@ function render() {
     const a = document.createElement('a');
     a.href = gameUrl(game.kind, game.id);
     const title = document.createElement('strong');
-    title.textContent = `${MODE_NAMES[game.mode] ?? 'Postmarks'} ${game.size} × ${game.size}`;
+    title.textContent = `${MODE_NAMES[game.mode] ?? 'Together'} ${game.size} × ${game.size}`;
     const status = gameStatus(game);
     const line = document.createElement('span');
     line.textContent = status.text;
