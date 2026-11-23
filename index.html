@@ -28,6 +28,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/postmarks/postmarks.css">
+  <link rel="stylesheet" href="/jam/jam.css">
   <script>
     // The splash plays once per visit (per tab or app launch), and not at all
     // for anyone who has asked their device for less motion.
@@ -45,7 +46,7 @@
   <!--
     The whole app is this one page. Its three screens are the templates below;
     shared/nav.js puts the right one on stage for the address and swaps them as
-    people move about. /room/ and /postmarks/ serve copies of this same file
+    people move about. /room/, /postmarks/ and /jam/ serve copies of this same file
     (npm run shell), so every address opens directly.
   -->
   <div id="splash" aria-hidden="true"><canvas></canvas></div>
@@ -115,6 +116,10 @@
           <a href="/postmarks/" class="menu-button" style="--tile: #f8d95a">
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#mini-envelope"/></svg></span>
             <span class="words"><strong>Play solo</strong><small>A Postmarks puzzle on your own</small></span>
+          </a>
+          <a href="/jam/" class="menu-button" style="--tile: #f3b3e6">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.8" cy="17.5" r="2.2"/><circle cx="16.8" cy="15.5" r="2.2"/></svg></span>
+            <span class="words"><strong>Make music</strong><small>Loops you build by tapping</small></span>
           </a>
         </nav>
 
@@ -370,6 +375,38 @@
         </details>
       </div>
 
+    </main>
+  </template>
+
+  <template id="screen-jam">
+    <header class="topbar">
+      <a href="/">← correspondence.lol</a>
+    </header>
+
+    <main>
+      <h1>Loops</h1>
+      <div class="jam">
+        <p id="jam-hint" class="jam-hint">Tap the tiles, or drag across them. It plays round and round.</p>
+        <div id="jam-board" class="jam-board" role="group" aria-label="The loop: eight steps across, seven notes high"></div>
+        <div id="jam-layers" class="jam-layers" role="radiogroup" aria-label="Instrument"></div>
+        <div class="jam-controls">
+          <div class="side">
+            <button type="button" id="jam-tempo" class="quiet" aria-label="Tempo" title="Tempo"></button>
+            <button type="button" id="jam-dice" class="quiet" aria-label="Surprise me" title="Surprise me">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
+            </button>
+          </div>
+          <button type="button" id="jam-play" aria-label="Play" aria-pressed="false">
+            <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
+            <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
+          </button>
+          <div class="side">
+            <button type="button" id="jam-clear" class="quiet" aria-label="Clear this instrument" title="Clear this instrument">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7M10.3 10.5v5M13.7 10.5v5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   </template>
 

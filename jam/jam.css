@@ -1,0 +1,87 @@
+/* Loops, the music maker: a board of tiles that plays round and round. */
+
+.jam { width: 100%; max-width: 30rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+
+.jam-board {
+  --steps: 8;
+  --c: #f08a76;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--steps), 1fr);
+  gap: clamp(3px, 1.2vw, 6px);
+  touch-action: none; /* a drag lays down notes; it does not scroll the page */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pad {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 24%;
+  background: color-mix(in srgb, var(--ink) 9%, var(--paper));
+  box-shadow: inset 0 -0.16rem 0 color-mix(in srgb, var(--ink) 8%, transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 90ms ease, transform 90ms ease, filter 90ms ease;
+}
+/* the two halves of the loop each start on a slightly stronger tile */
+.pad.beat { background: color-mix(in srgb, var(--ink) 14%, var(--paper)); }
+.pad.on { background: var(--c); box-shadow: inset 0 -0.2rem 0 rgb(0 0 0 / 0.16); }
+/* other layers' notes: small lights along the bottom of the tile */
+.pad i { width: 22%; aspect-ratio: 1; margin-bottom: 14%; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px color-mix(in srgb, var(--paper) 60%, transparent); }
+/* the step being heard */
+.pad.now { filter: brightness(1.12); }
+.pad.now:not(.on) { background: color-mix(in srgb, var(--ink) 22%, var(--paper)); }
+.pad.now.on { filter: brightness(1.25) saturate(1.1); }
+.pad:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; z-index: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pad.hit { animation: pad-hit 260ms cubic-bezier(0.2, 1.4, 0.4, 1); }
+}
+@keyframes pad-hit { 0% { transform: scale(1); } 35% { transform: scale(1.16); } 100% { transform: scale(1); } }
+
+.jam-hint { margin: 0; min-height: 1.3rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; color: var(--muted); }
+
+/* --- Layers: one instrument each ----------------------------------------------------- */
+.jam-layers { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.layer {
+  --press: var(--lip);
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.55rem 0.2rem 0.5rem;
+  border-radius: 0.95rem; background: var(--card); color: var(--ink);
+  box-shadow: 0 0.2rem 0 var(--lip); transition: transform 70ms ease, box-shadow 70ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.layer:active { transform: translateY(0.16rem); box-shadow: 0 0.04rem 0 var(--lip); }
+.layer .tile { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border-radius: 26%; background: var(--c); color: #22303c; box-shadow: inset 0 -0.2rem 0 rgb(0 0 0 / 0.16); opacity: 0.55; transition: opacity 120ms ease; }
+.layer .tile svg { width: 62%; height: 62%; }
+.layer .name { font-family: system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.layer .count { position: absolute; top: 0.3rem; right: 0.4rem; font-family: system-ui, sans-serif; font-size: 0.6875rem; font-weight: 700; color: var(--muted); }
+.layer[aria-checked="true"] { box-shadow: 0 0.2rem 0 var(--c), inset 0 0 0 2px var(--c); }
+.layer[aria-checked="true"] .tile { opacity: 1; }
+.layer[aria-checked="true"] .name { color: var(--ink); }
+
+/* --- Play, tempo, start over ----------------------------------------------------------- */
+.jam-controls { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6rem; }
+.jam-controls .side { display: flex; align-items: center; gap: 0.5rem; }
+.jam-controls .side:last-child { justify-content: flex-end; }
+.jam-controls button.quiet { height: 2.9rem; min-width: 2.9rem; padding: 0 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.9375rem; }
+.jam-controls button.quiet svg { width: 1.2rem; height: 1.2rem; }
+.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 3.4rem; }
+.jam-controls #jam-tempo::after { content: " bpm"; font-weight: 400; font-size: 0.75rem; color: var(--muted); }
+#jam-play {
+  width: 4.2rem; height: 4.2rem; padding: 0; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: #fff; box-shadow: 0 0.26rem 0 color-mix(in srgb, var(--accent) 68%, #000);
+  transition: transform 70ms ease, box-shadow 70ms ease;
+}
+#jam-play:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
+#jam-play svg { width: 1.9rem; height: 1.9rem; }
+#jam-play .pause { display: none; }
+#jam-play.playing .pause { display: block; }
+#jam-play.playing .go-on { display: none; }
