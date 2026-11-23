@@ -679,3 +679,41 @@ h1 form.rename input { font-family: Georgia, serif; font-size: inherit; text-ali
 
 /* several switches together in the profile menu: one rule above the group, not each */
 .settings .setting + .setting { border-top: 0; padding-top: 0; margin-top: 0.7rem; }
+
+/* --- Splash: the mark assembling itself, once per visit ------------------------ */
+.no-splash #splash { display: none; }
+#splash {
+  position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.4rem; padding: 1.5rem; background: var(--paper); color: var(--ink); cursor: pointer;
+  transition: opacity 400ms ease, transform 400ms ease;
+}
+#splash.leaving { opacity: 0; transform: scale(1.06); pointer-events: none; }
+.splash-mark { width: min(38vw, 9.5rem); height: auto; overflow: visible; margin-bottom: 1.1rem; }
+.splash-mark .tile { fill: #22303c; stroke: var(--line); stroke-width: 4; }
+.splash-mark .tile, .splash-mark .letter, .splash-mark .seal, .splash-mark .ring { transform-box: fill-box; transform-origin: center; }
+.splash-mark .ring { fill: none; stroke: #c8442e; stroke-width: 8; opacity: 0; }
+.splash-name { margin: 0; font-family: Georgia, serif; font-size: clamp(1.75rem, 7vw, 3rem); letter-spacing: -0.01em; line-height: 1.1; white-space: nowrap; }
+.splash-name .word, .splash-name .dot { display: inline-block; }
+.splash-name .dot { color: var(--accent); }
+.splash-line { margin: 0; font-family: Georgia, serif; font-style: italic; font-size: 1.125rem; color: var(--muted); }
+
+/* the tile lands, the letter rises into it, its flap is drawn, the seal is
+   pressed on (two rings spreading out from it), then the name writes itself */
+.splash-mark .tile { animation: splash-tile 520ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.splash-mark .letter { animation: splash-letter 480ms cubic-bezier(0.2, 1.2, 0.4, 1) 300ms both; }
+.splash-mark .flap { stroke-dasharray: 1; animation: splash-flap 420ms ease-out 700ms both; }
+.splash-mark .seal { animation: splash-seal 420ms cubic-bezier(0.3, 1.7, 0.5, 1) 1050ms both; }
+.splash-mark .ring.one { animation: splash-ring 800ms ease-out 1250ms forwards; }
+.splash-mark .ring.two { animation: splash-ring 800ms ease-out 1430ms forwards; }
+.splash-name .word { animation: splash-write 620ms cubic-bezier(0.3, 0, 0.2, 1) 1250ms both; }
+.splash-name .dot { animation: splash-pop 380ms cubic-bezier(0.2, 1.8, 0.4, 1) 1820ms both; }
+.splash-line { animation: splash-rise 500ms ease 2050ms both; }
+
+@keyframes splash-tile { from { transform: scale(0.3) rotate(-18deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes splash-letter { from { transform: translateY(60%) scale(0.7); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes splash-flap { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes splash-seal { from { transform: scale(3.2); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes splash-ring { from { transform: scale(1); opacity: 0.7; } to { transform: scale(5.5); opacity: 0; } }
+@keyframes splash-write { from { clip-path: inset(0 100% 0 0); opacity: 0.4; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+@keyframes splash-pop { from { transform: scale(0) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes splash-rise { from { transform: translateY(0.5rem); opacity: 0; } to { transform: none; opacity: 1; } }
