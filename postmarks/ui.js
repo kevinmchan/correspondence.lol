@@ -94,6 +94,7 @@ export function mount(root, life) {
       // tokens: [{ len, gap, t }] with t null until unlocked (games from before tokens have only `shown`)
       // a pass phrase lost but not yet given up on: the player may still try it again
       revealed: view.revealed !== false, tries: view.tries ?? 1,
+      practice: Boolean(view.practice), // the author trying their own board: not ranked
       phrase: mode === 'phrase' ? { tokens: view.tokens ?? null, shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
       // the clock: how long it had run when this view was made, and when that was
       clock: view.elapsed_ms == null ? null : { ms: Number(view.elapsed_ms), at: performance.now() },
@@ -481,7 +482,7 @@ export function mount(root, life) {
       detail = standing;
     } else if (won && mode === 'phrase') {
       title = 'Phrase solved!';
-      detail = `${found === game.size ? 'Every post opened.' : `Only ${found} of ${game.size} posts opened.`} ${standing}`.trim();
+      detail = `${found === game.size ? 'Every post opened.' : `Only ${found} of ${game.size} posts opened.`} ${online.practice ? 'A test run, so it isn’t ranked.' : standing}`.trim();
     } else if (won && mode === 'coop') {
       title = 'Delivered together!';
       detail = spare;
@@ -559,12 +560,14 @@ export function mount(root, life) {
         show(el.loading);
         return;
       }
-      // A time trial waits for Start. A phrase's author has no board: they watch the results.
+      // A time trial waits for Start. A phrase's author watches the results, and
+      // may try the board for themselves: a test run, which is not ranked.
       el.trialTitle.textContent = online.mode === 'trial' ? 'Time trial' : 'Pass phrase';
       el.trialHint.textContent = online.mode === 'trial'
         ? 'Everyone solves the same board on their own. Fastest time wins, and three wrong guesses put you out. Your clock starts when you press Start.'
-        : 'You wrote this one. Everyone else solves the board on their own, and each post they find shows them one token.';
-      el.trialStart.hidden = wrote;
+        : 'You wrote this one. Everyone else solves the board on their own, and each post they find shows them one token. You can test the board yourself: it won’t count.';
+      el.trialStart.hidden = false;
+      el.trialStart.lastChild.textContent = wrote ? 'Test your board' : 'Start';
       if (online.phrase) renderPhrase(el.trialPhrase);
       else el.trialPhrase.hidden = true;
       leaderboard(el.trialRuns);
@@ -714,7 +717,8 @@ export function mount(root, life) {
     el.phraseNote.hidden = !(phrase && online.author !== null);
     if (phrase) {
       renderPhrase(el.phrase);
-      el.phraseNote.textContent = `${online.people[online.author]?.name ?? 'Someone'} wrote this phrase.`;
+      el.phraseNote.textContent = online.practice ? 'You wrote this phrase. This is a test run: it isn’t on the leaderboard.'
+        : `${online.people[online.author]?.name ?? 'Someone'} wrote this phrase.`;
     }
     el.shareGame.hidden = !online;
 
