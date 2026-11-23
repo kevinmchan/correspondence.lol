@@ -1,7 +1,7 @@
 # correspondence.lol
 
 A static, no-build progressive web app served from the repository root at
-<https://correspondence.lol>: games played by turns, together.
+<https://correspondence.lol>.
 
 ## Layout
 
