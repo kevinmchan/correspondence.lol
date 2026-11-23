@@ -4,6 +4,6 @@
   "scripts": {
     "test": "node --test \"tests/*.test.js\"",
     "start": "python3 -m http.server 8000",
-    "shell": "cp index.html room/index.html && cp index.html postmarks/index.html"
+    "shell": "cp index.html room/index.html && cp index.html postmarks/index.html && cp index.html jam/index.html"
   }
 }

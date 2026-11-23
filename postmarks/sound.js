@@ -21,6 +21,8 @@ const MUSIC_LEVEL = 0.3; // how loud the music is, next to the effects' 0.5
 let ctx = null;
 let out = null; // effects
 let band = null; // music, with its echo
+let mix = null; // where everything meets on its way out
+let held = false; // the background music is standing aside (the music maker is playing)
 
 // Start the engine, or wake it. Safari on iPhone only lets this happen at the
 // end of a tap (touchend, click), not the start, and puts the engine back to
@@ -37,12 +39,13 @@ function unlock() {
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
   // a gentle compressor keeps stacked notes from clipping
   const squash = ctx.createDynamicsCompressor();
+  mix = squash;
   out = ctx.createGain();
   out.gain.value = 0.5;
   out.connect(squash).connect(ctx.destination);
   // the music sits further back: quieter, and with a soft echo behind it
   band = ctx.createGain();
-  band.gain.value = MUSIC_LEVEL;
+  band.gain.value = held ? 0 : MUSIC_LEVEL;
   const echo = ctx.createDelay(1);
   echo.delayTime.value = 0.42;
   const tail = ctx.createGain();
@@ -80,12 +83,23 @@ export const isMusicOff = () => musicOff;
 export function setMusicOff(value) {
   musicOff = value;
   remember(MUSIC_KEY, value);
-  if (band) band.gain.setTargetAtTime(value ? 0 : MUSIC_LEVEL, ctx.currentTime, 0.25); // fade, do not cut
+  if (band) band.gain.setTargetAtTime(value || held ? 0 : MUSIC_LEVEL, ctx.currentTime, 0.25); // fade, do not cut
 }
+
+// The music maker has the floor: the background music fades out while it is
+// open, and comes back afterwards.
+export function holdMusic(on) {
+  held = on;
+  if (band) band.gain.setTargetAtTime(on || musicOff ? 0 : MUSIC_LEVEL, ctx.currentTime, 0.2);
+}
+
+// The running sound engine, for something that wants to make its own sounds on
+// the same clock: { ctx, mix }. Null until a first touch has woken it.
+export const audio = () => (ctx && ctx.state === 'running' ? { ctx, mix } : null);
 
 // One note: a pitch (optionally gliding to another), a waveform and a quick
 // fade in and out. `at` is seconds from now.
-function tone({ at = 0, freq, to = freq, dur = 0.12, type = 'sine', gain = 0.25, attack = 0.005, into = out }) {
+export function tone({ at = 0, freq, to = freq, dur = 0.12, type = 'sine', gain = 0.25, attack = 0.005, into = out }) {
   const start = ctx.currentTime + at;
   const osc = ctx.createOscillator();
   const amp = ctx.createGain();
@@ -101,7 +115,7 @@ function tone({ at = 0, freq, to = freq, dur = 0.12, type = 'sine', gain = 0.25,
 }
 
 // A burst of filtered noise: paper, air, a thud.
-function noise({ at = 0, dur = 0.15, from = 800, to = from, q = 1, gain = 0.2 }) {
+export function noise({ at = 0, dur = 0.15, from = 800, to = from, q = 1, gain = 0.2, into = out }) {
   const start = ctx.currentTime + at;
   const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
   const data = buffer.getChannelData(0);
@@ -116,7 +130,7 @@ function noise({ at = 0, dur = 0.15, from = 800, to = from, q = 1, gain = 0.2 })
   const amp = ctx.createGain();
   amp.gain.setValueAtTime(gain, start);
   amp.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  src.connect(filter).connect(amp).connect(out);
+  src.connect(filter).connect(amp).connect(into);
   src.start(start);
 }
 
@@ -331,10 +345,10 @@ function scheduleBeat(at, n) {
 
 function startMusic() {
   if (musicTimer || !ctx) return;
-  band.gain.value = musicOff ? 0 : MUSIC_LEVEL;
+  band.gain.value = musicOff || held ? 0 : MUSIC_LEVEL;
   // beats are written onto the engine's clock a little ahead of time
   musicTimer = setInterval(() => {
-    if (ctx.state !== 'running' || musicOff) {
+    if (ctx.state !== 'running' || musicOff || held) {
       nextBeat = 0; // pick up afresh when it can be heard again
       return;
     }
@@ -355,6 +369,6 @@ function startMusic() {
 // have sounds of their own.)
 document.addEventListener('click', (event) => {
   const target = event.target.closest?.('button, .critters .penny, .critters .dot'); // links have the screen-change sound
-  if (!target || target.closest('#board, .tools, .setting') || target.classList.contains('code') || target.disabled) return;
+  if (!target || target.closest('#board, .tools, .setting, .jam') || target.classList.contains('code') || target.disabled) return;
   play(target.closest('.critters') ? 'squeak' : 'tap');
 }, { capture: true });

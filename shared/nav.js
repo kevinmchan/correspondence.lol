@@ -1,7 +1,7 @@
 // The app's one page, and the moves between its screens.
 //
-// There are three screens: home (/), a room (/room/?id=…) and a game
-// (/postmarks/…). Each is a template in the page and a module with a
+// The screens: home (/), a room (/room/?id=…), a game (/postmarks/…) and the
+// music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
 // screens can be on stage together for a moment: the one being left slides
@@ -17,6 +17,7 @@ const SCREENS = [
   { name: 'home', depth: 0, match: (path) => path === '/' || path === '/index.html', load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },
   { name: 'game', depth: 2, match: (path) => path.startsWith('/postmarks'), load: () => import('/postmarks/ui.js') },
+  { name: 'jam', depth: 1, match: (path) => path.startsWith('/jam'), load: () => import('/jam/jam.js') },
 ];
 const screenFor = (path) => SCREENS.find((screen) => screen.match(path)) ?? SCREENS[0];
 const keyOf = (url) => url.pathname + url.search;
