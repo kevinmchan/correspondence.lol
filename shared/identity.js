@@ -51,6 +51,19 @@ export function rememberRoom(id, name) {
   save(ROOMS_KEY, rooms.slice(0, 12));
 }
 
+// The rooms as the server lists them for this profile: [{ id, name, at }].
+export function setRooms(rooms) {
+  save(ROOMS_KEY, rooms.filter((r) => r && UUID.test(r.id)).slice(0, 50)
+    .map((r) => ({ id: r.id, name: String(r.name).slice(0, 40), at: Number(r.at) || Date.now() })));
+}
+
+// Start afresh as a new, blank guest: a new secret and nothing remembered.
+export function resetIdentity() {
+  memoryToken = null;
+  for (const key of [TOKEN_KEY, NAME_KEY, ROOMS_KEY, 'correspondence:look:v1', 'correspondence:profile:v1',
+    'correspondence:handoff:v2', 'correspondence:handoff-spent:v1']) save(key, null);
+}
+
 export function forgetRoom(id) {
   save(ROOMS_KEY, recentRooms().filter((r) => r.id !== id));
 }

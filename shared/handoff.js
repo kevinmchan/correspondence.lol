@@ -1,14 +1,13 @@
 // Moving to the installed app. On an iPhone or iPad the app on the Home Screen
-// starts with empty storage: it does not know who its owner was in the browser
-// or which rooms they joined. So the browser asks the server for a code that
-// stands for its places in those rooms (good for one app only), and
+// starts with empty storage: it does not know who its owner was in the browser.
+// So a browser on a guest profile asks the server for a code that lets one
+// more device into that profile, and
 //   - bakes it into the address the Home Screen icon opens, so the app hands
 //     it in by itself each time it starts, and
 //   - shows it in the install guide, to be typed in if that did not work.
 
 import { rpc } from './api.js';
-import { load, myToken, recentRooms, rememberRoom, save, setMyName } from './identity.js';
-import { saveLook } from './profile.js';
+import { load, myToken, recentRooms, save } from './identity.js';
 
 const CODE_KEY = 'correspondence:handoff:v2'; // { code, until }: this browser's current code
 const SPENT_KEY = 'correspondence:handoff-spent:v1'; // a code the server turned down: not worth trying again
@@ -58,20 +57,14 @@ export async function bakeIntoIcon() {
   }
 }
 
-// Hand a code in. The rooms of the browser it came from become this device's,
-// with its name and look. The same device can hand the same code in again
-// later, to fetch rooms that browser has joined since. `fresh` in the answer
-// lists the rooms that were not here before.
+// Hand a code in: this device joins the guest profile the code came from,
+// bringing along any rooms of its own. The answer is the profile; `fresh`
+// lists the rooms that were not on this device before.
 export async function claim(code) {
-  const moved = await rpc('handoff_claim', { p_code: code, p_token: myToken() });
   const known = new Set(recentRooms().map((room) => room.id));
-  moved.fresh = moved.rooms.filter((room) => !known.has(room.id));
-  for (const room of [...moved.fresh].reverse()) rememberRoom(room.id, room.name);
-  if (moved.fresh.length > 0 || known.size === 0) {
-    if (moved.name) setMyName(moved.name);
-    if (moved.avatar && Number.isInteger(moved.color)) saveLook(moved.avatar, moved.color);
-  }
-  return moved;
+  const profile = await rpc('handoff_claim', { p_code: code, p_token: myToken() });
+  profile.fresh = profile.rooms.filter((room) => !known.has(room.id));
+  return profile;
 }
 
 // The code the app was opened with, unless the server has already turned it down.

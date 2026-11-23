@@ -137,7 +137,7 @@ function openInstallGuide() {
     <h2 id="install-title">Install correspondence.lol</h2>
     <p class="hint">Install to receive notifications from your friends.</p>
     ${steps}
-    <p class="hint move" hidden>Your rooms come with you. If one is missing in the app, enter this code there: <b></b></p>
+    <p class="hint move" hidden>Your profile comes with you. If the app opens without it, enter this code there: <b></b></p>
     <div class="row end">
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
     </div>`;
@@ -160,8 +160,18 @@ function openInstallGuide() {
   // brings this browser's rooms across (see shared/handoff.js).
   if (separateStorage(platform)) {
     import('/shared/handoff.js').then(async ({ moveCode, prettyCode }) => {
-      const code = await moveCode();
       const line = dialog.querySelector('.move');
+      let account = null;
+      try {
+        account = JSON.parse(localStorage.getItem('correspondence:profile:v1'));
+      } catch { /* no storage */ }
+      if (account?.signed_in) {
+        // an account has no codes: its way in is its email address
+        line.textContent = `After installing, sign in${account.email ? ` with ${account.email}` : ''} to get your rooms.`;
+        line.hidden = false;
+        return;
+      }
+      const code = await moveCode();
       if (!code || !line) return;
       line.querySelector('b').textContent = prettyCode(code);
       line.hidden = false;
