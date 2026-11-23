@@ -7,8 +7,8 @@
 // been fading in around it. Nothing bounces, spins or pops: one idea, one
 // motion, about a second and a half.
 //
-// Drawn on a canvas so the shapes stay sharp at any scale. Plays once per
-// visit; a tap finishes it at once. Whether it plays at all is decided in the
+// Drawn on a canvas so the shapes stay sharp at any scale. Plays each time the
+// page is loaded on the home screen; a tap finishes it at once. Whether it plays at all is decided in the
 // page's head (see index.html).
 (function () {
   var root = document.getElementById('splash');
