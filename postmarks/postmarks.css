@@ -75,30 +75,30 @@
    neighbours are easy to tell apart. --on is the colour of marks drawn on a
    tile, --pc the colour of its pattern (see below). */
 .cell { --pc: rgb(0 0 0 / 0.17); }
-.cell.d0, .bridge.d0 { --tile: #f08a76; }
-.cell.d1, .bridge.d1 { --tile: #f8d95a; }
-.cell.d2, .bridge.d2 { --tile: #7cc46a; }
-.cell.d3, .bridge.d3 { --tile: #2aa198; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
-.cell.d4, .bridge.d4 { --tile: #9ad3f7; }
-.cell.d5, .bridge.d5 { --tile: #5a55c8; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
-.cell.d6, .bridge.d6 { --tile: #f3b3e6; }
-.cell.d7, .bridge.d7 { --tile: #8a5a36; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
-.cell.d8, .bridge.d8 { --tile: #cdd6dd; }
+.cell.d0 { --tile: #f08a76; }
+.cell.d1 { --tile: #f8d95a; }
+.cell.d2 { --tile: #7cc46a; }
+.cell.d3 { --tile: #2aa198; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
+.cell.d4 { --tile: #9ad3f7; }
+.cell.d5 { --tile: #5a55c8; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
+.cell.d6 { --tile: #f3b3e6; }
+.cell.d7 { --tile: #8a5a36; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
+.cell.d8 { --tile: #cdd6dd; }
 
 /* On a dark background the same hues are drawn in a narrower band of
    lightness: nothing near white (it glares) and nothing near the background
    (it sinks), and a little less saturated. */
 @media (prefers-color-scheme: dark) {
   .cell { --pc: rgb(0 0 0 / 0.2); }
-  .cell.d0, .bridge.d0 { --tile: #d98572; }
-  .cell.d1, .bridge.d1 { --tile: #d6ba5c; }
-  .cell.d2, .bridge.d2 { --tile: #72ad66; }
-  .cell.d3, .bridge.d3 { --tile: #3f9d95; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
-  .cell.d4, .bridge.d4 { --tile: #82b7da; }
-  .cell.d5, .bridge.d5 { --tile: #736dd0; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
-  .cell.d6, .bridge.d6 { --tile: #d09ac6; }
-  .cell.d7, .bridge.d7 { --tile: #9c6f4b; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
-  .cell.d8, .bridge.d8 { --tile: #a9b3bc; }
+  .cell.d0 { --tile: #d98572; }
+  .cell.d1 { --tile: #d6ba5c; }
+  .cell.d2 { --tile: #72ad66; }
+  .cell.d3 { --tile: #3f9d95; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d4 { --tile: #82b7da; }
+  .cell.d5 { --tile: #736dd0; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d6 { --tile: #d09ac6; }
+  .cell.d7 { --tile: #9c6f4b; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d8 { --tile: #a9b3bc; }
 }
 
 /* Patterns, for anyone who would rather not tell districts apart by colour
@@ -121,12 +121,13 @@
 
 /* Ruled-out squares fade back so the squares still in play stand out. */
 .cell[data-state="cross"] {
-  background: color-mix(in srgb, var(--tile) 42%, var(--paper));
+  /* Stepped back, not washed out: enough of the district's colour stays that a
+     crossed square still plainly belongs with its open and solved neighbours. */
+  background: color-mix(in srgb, var(--tile) 64%, var(--paper));
   background-image: var(--pat, none);
   background-size: var(--pat-size, auto);
-  color: color-mix(in srgb, var(--ink) 55%, var(--tile));
-  /* faded, but still wearing its district's colour round the edge */
-  box-shadow: inset 0 0 0 0.075em var(--tile);
+  color: color-mix(in srgb, var(--ink) 50%, var(--tile));
+  box-shadow: none;
 }
 
 .cell[data-state="miss"] {
@@ -143,11 +144,10 @@
    drawn in the district's own colour. */
 @media (prefers-color-scheme: dark) {
   .cell[data-state="cross"] {
-    background: color-mix(in oklch, var(--tile) 36%, #1f272e);
+    background: color-mix(in oklch, var(--tile) 56%, #1f272e);
     background-image: var(--pat, none);
     background-size: var(--pat-size, auto);
-    color: color-mix(in srgb, var(--tile) 80%, #fff);
-    box-shadow: inset 0 0 0 0.075em var(--tile);
+    color: color-mix(in srgb, var(--tile) 55%, #fff);
   }
   .cell[data-state="miss"] {
     background:
@@ -156,20 +156,6 @@
     color: #f08a76;
   }
 }
-
-/* Links between neighbouring squares of one district (see buildBoard). Each is
-   a short bar across the gap, placed by its square's row and column. */
-.links-layer { position: absolute; inset: 0; pointer-events: none; --w: calc((100% - (var(--n) - 1) * var(--gap)) / var(--n)); }
-.bridge { position: absolute; background: var(--tile); }
-.bridge.across {
-  left: calc(var(--c) * (var(--w) + var(--gap)) + var(--w) - 1px); top: calc(var(--r) * (var(--w) + var(--gap)) + var(--w) * 0.3);
-  width: calc(var(--gap) + 2px); height: calc(var(--w) * 0.4);
-}
-.bridge.down {
-  top: calc(var(--r) * (var(--w) + var(--gap)) + var(--w) - 1px); left: calc(var(--c) * (var(--w) + var(--gap)) + var(--w) * 0.3);
-  height: calc(var(--gap) + 2px); width: calc(var(--w) * 0.4);
-}
-.board.won .bridge, .board.lost .bridge { opacity: 0.55; }
 
 .cell[data-state="letter"] {
   box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14), inset 0 0 0 0.09em rgb(255 255 255 / 0.75);
