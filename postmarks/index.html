@@ -21,6 +21,7 @@
       <button type="button" id="sound" class="quiet round" aria-label="Sound" aria-pressed="true">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4z"/><path class="waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="slash" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
       </button>
+      <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
       <button type="button" id="share-game" class="quiet round" aria-label="Share this game" title="Share this game" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M8 7l4-4 4 4M7 10.5H5.5v9.5h13v-9.5H17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -62,32 +63,26 @@
 
       <div class="toolbar">
         <div id="tools" class="tools" role="radiogroup" aria-label="What your turn does">
-          <button type="button" role="radio" data-tool="mark" aria-checked="true">
-            <span class="glyph" aria-hidden="true">×</span> Cross
+          <button type="button" role="radio" data-tool="mark" aria-checked="true" aria-label="Cross" title="Cross">
+            <span class="glyph" aria-hidden="true">×</span>
           </button>
-          <button type="button" role="radio" data-tool="guess" aria-checked="false">
-            <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg> Post
+          <button type="button" role="radio" data-tool="guess" aria-checked="false" aria-label="Post" title="Post">
+            <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg>
           </button>
           <button type="button" role="radio" data-tool="phrase" aria-checked="false" hidden>
             <span class="glyph" aria-hidden="true">Aa</span> Phrase
           </button>
         </div>
-        <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
+        <button type="button" id="submit" class="go" disabled hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Submit
+        </button>
       </div>
       <form id="phrase-entry" class="row phrase-entry" hidden>
         <input type="text" id="phrase-input" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false"
                placeholder="Type the whole phrase" aria-label="Your guess at the phrase" required>
         <button type="submit">Guess</button>
       </form>
-      <div id="actions" class="actions" hidden>
-        <button type="button" id="clear" class="quiet round" aria-label="Clear my move" title="Clear my move" disabled>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9a8 8 0 1 1 -1 6M5 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button type="button" id="submit" class="go" disabled>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Submit
-        </button>
-      </div>
       <p id="narration" class="sr-only" role="status" aria-live="polite"></p>
       <p id="message" class="message bad" role="alert"></p>
 

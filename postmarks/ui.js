@@ -23,7 +23,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   back: $('back'), profile: $('profile'), loading: $('loading'),
   play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
-  roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
+  roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
   narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
   trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
@@ -543,11 +543,9 @@ function render() {
   el.shareGame.hidden = !online;
 
   // Tools, and the buttons that play or discard the draft
-  el.actions.hidden = over || immediate() || !iCanMove(); // Submit belongs to shared room games
-  el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
-  el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
+  // Submit belongs to shared room games, and only while the move is yours
+  el.submit.hidden = over || immediate() || !iCanMove();
   el.submit.disabled = !draft || busy;
-  el.clear.disabled = !draft || busy;
   el.tools.hidden = over;
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
@@ -776,12 +774,6 @@ el.board.addEventListener('click', (event) => {
 });
 
 el.submit.addEventListener('click', submitDraft);
-
-el.clear.addEventListener('click', () => {
-  draft = null;
-  say('');
-  render();
-});
 
 // Arrow keys move between squares.
 el.board.addEventListener('keydown', (event) => {

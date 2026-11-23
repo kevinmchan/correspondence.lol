@@ -119,9 +119,9 @@
   }
 }
 
-/* tools on the left, help on the right */
-.toolbar { width: 100%; display: flex; align-items: center; gap: 0.5rem; }
-.toolbar #help { margin-left: auto; }
+/* tools on the left; in a shared game, Submit on the right of the same row */
+.toolbar { width: 100%; display: flex; align-items: center; gap: 0.5rem; min-height: 2.9rem; }
+.toolbar #submit { margin-left: auto; }
 
 .tools { display: flex; gap: 0.5rem; font-family: system-ui, sans-serif; }
 
@@ -151,7 +151,6 @@
 
 /* --- Submitting a move --------------------------------------------------- */
 
-.actions { display: flex; align-items: center; gap: 0.6rem; font-family: system-ui, sans-serif; }
 
 button.go {
   display: inline-flex;
@@ -159,7 +158,8 @@ button.go {
   gap: 0.4rem;
   background: var(--accent);
   color: #fff;
-  padding: 0.7rem 1.6rem 0.7rem 1.3rem;
+  height: 2.9rem;
+  padding: 0 1.4rem 0 1.1rem;
   font-weight: 600;
 }
 
@@ -367,9 +367,11 @@ button.round:disabled { opacity: 0.35; }
 button.go { font-family: system-ui, sans-serif; }
 
 /* three tools need to fit a phone's width alongside the help button */
-.tools { flex-wrap: wrap; gap: 0.35rem; }
-.tools button { padding: 0.5rem 0.7rem; gap: 0.3rem; font-size: 0.875rem; }
-.tools .glyph { width: 1.1em; height: 1.1em; font-size: 1.05em; }
+.tools { flex-wrap: wrap; gap: 0.4rem; }
+/* Cross and Post are icons only; Phrase keeps its word */
+.tools button { min-width: 2.9rem; height: 2.9rem; justify-content: center; padding: 0 0.8rem; gap: 0.3rem; font-size: 0.9375rem; }
+.tools .glyph { width: 1.5rem; height: 1.5rem; font-size: 1.5rem; }
+.tools [data-tool="phrase"] .glyph { width: auto; font-size: 1rem; }
 
 /* --- Sound toggle ---------------------------------------------------------------- */
 
