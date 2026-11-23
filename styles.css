@@ -600,5 +600,17 @@ main:has(.version) { position: relative; }
   }
 }
 
+/* tokens that are pieces of one word sit together, read as a single word */
+.phrase .word.cont { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: 0.4rem; }
+.phrase .word.join { border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; margin-left: calc(-0.4rem + 2px); }
+
 #tokens { min-height: 2.2rem; }
 #token-note { min-height: 1.1rem; font-size: 0.8125rem; text-align: center; }
+
+/* --- A game in the room's list, with its delete button -------------------------- */
+
+#games li { display: flex; align-items: center; gap: 0.4rem; }
+#games li a { flex: 1; min-width: 0; }
+#games .delete { flex: none; width: 2.4rem; height: 2.4rem; padding: 0; display: inline-grid; place-items: center; border-color: transparent; }
+#games .delete svg { width: 1.15rem; height: 1.15rem; }
+#games .delete:hover, #games .delete:focus-visible { color: var(--accent); border-color: var(--accent); }

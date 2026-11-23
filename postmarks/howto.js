@@ -5,14 +5,15 @@ const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelo
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
 
 // Each picture is nine squares, read left to right, top to bottom:
-//   L letter   x crossed out (digits give the order crosses appear in)
-//   c part of the highlighted colour   . plain
+//   L post     x crossed out (digits give the order crosses appear in)
+//   c part of the highlighted colour   . plain   T a post being double-tapped
 // A lowercase letter after a cross keeps that square in the highlighted colour.
 const CARDS = [
-  { caption: '1 letter per colour', tint: '#f2a391', cells: ['0c', '1c', '2c', '3c', 'Lc', '.', '4c', '.', '.'] },
-  { caption: '1 letter per row and column', tint: '#8ec9ef', cells: ['0', 'L', '1', '.', '2', '.', '.', '3', '.'] },
-  { caption: 'Letters can’t touch', tint: '#bcdc8a', cells: ['0', '1', '2', '3', 'L', '4', '5', '6', '7'] },
+  { caption: '1 post per colour', tint: '#f2a391', cells: ['0c', '1c', '2c', '3c', 'Lc', '.', '4c', '.', '.'] },
+  { caption: '1 post per row and column', tint: '#8ec9ef', cells: ['0', 'L', '1', '.', '2', '.', '.', '3', '.'] },
+  { caption: 'Posts can’t touch', tint: '#bcdc8a', cells: ['0', '1', '2', '3', 'L', '4', '5', '6', '7'] },
   { caption: 'Drag to cross out several', tint: '#a9a7ee', drag: true, cells: ['.', '.', '.', '0', '1', '2', '.', '.', '.'] },
+  { caption: 'Double-tap to open a post', tint: '#f5cf6e', cells: ['.', '.', '.', '.', 'T', '.', '.', '.', '.'] },
 ];
 
 let dialog = null;
@@ -35,8 +36,8 @@ function build() {
     for (const code of card.cells) {
       const square = document.createElement('span');
       const order = Number.parseInt(code, 10);
-      if (code.startsWith('L')) {
-        square.className = 'letter';
+      if (code.startsWith('L') || code.startsWith('T')) {
+        square.className = code.startsWith('T') ? 'letter tapped' : 'letter';
         square.innerHTML = ENVELOPE;
       } else if (!Number.isNaN(order)) {
         square.className = 'cross';

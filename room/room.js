@@ -4,7 +4,7 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
-import { generatePuzzle, randomSize } from '/postmarks/game.js';
+import { generatePuzzle, phraseBoardSize, randomSize, tokenize } from '/postmarks/game.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -47,6 +47,8 @@ function list(names) {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
+const TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.5h9.4L17.500 7M10 11v5M14 11v5"/></svg>'.replace('17.500', '17.5');
+
 const MODE_NAMES = { coop: 'Postmarks', trial: 'Time trial', phrase: 'Pass phrase' };
 
 function gameStatus(game) {
@@ -61,8 +63,8 @@ function gameStatus(game) {
   }
   const hearts = '♥'.repeat(game.hearts) + '♡'.repeat(3 - game.hearts);
   if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}` };
-  if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} letters found` };
-  const progress = `${game.found}/${game.size} letters · ${hearts}`;
+  if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} posts found` };
+  const progress = `${game.found}/${game.size} posts · ${hearts}`;
   if (game.last_player === room.you) return { text: `Waiting for someone else · ${progress}` };
   return { text: `Your move · ${progress}`, go: true };
 }
@@ -116,7 +118,15 @@ function render() {
     line.textContent = status.text;
     if (status.go) line.className = 'go';
     a.append(title, line);
-    li.append(a);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'quiet round delete';
+    remove.dataset.game = game.id;
+    remove.dataset.name = title.textContent;
+    remove.title = 'Delete this game';
+    remove.setAttribute('aria-label', `Delete ${title.textContent}`);
+    remove.innerHTML = TRASH;
+    li.append(a, remove);
     return li;
   }));
   el.noGames.hidden = room.games.length > 0;
@@ -256,6 +266,24 @@ el.profile.addEventListener('click', () => {
   openProfile({ person: room.people[room.you], onSave: saveProfile });
 });
 
+// --- Deleting a game ---------------------------------------------------------------
+// Any member can delete any game in the room. It disappears for everyone.
+el.games.addEventListener('click', async (event) => {
+  const button = event.target.closest('.delete');
+  if (!button) return;
+  if (!confirm(`Delete ${button.dataset.name}? It will be gone for everyone in the room.`)) return;
+  button.disabled = true;
+  el.gameError.textContent = '';
+  try {
+    await rpc('postmarks_delete', { p_game: button.dataset.game, p_token: myToken() });
+    watcher?.poke();
+    await refresh();
+  } catch (error) {
+    el.gameError.textContent = error.message;
+    button.disabled = false;
+  }
+});
+
 // --- Starting a game ----------------------------------------------------------------
 // One tile per kind of game. Together and Time trial start on a tap; Pass
 // phrase first offers a box for writing the phrase (left empty, a random one
@@ -266,10 +294,10 @@ async function startGame(mode, phrase = null) {
   el.gameError.textContent = '';
   el.phraseError.textContent = '';
   try {
-    // A pass phrase hides one word in each letter, so the board is sized to
-    // the phrase: as many letters as words where possible.
-    const words = phraseWords(phrase ?? '').length;
-    const size = mode !== 'phrase' ? randomSize() : words ? phraseBoard(words) : 5 + Math.floor(Math.random() * 3);
+    // A written phrase gets a board with one post per word where it can; the
+    // server then splits the phrase into exactly one token per post.
+    const written = (phrase ?? '').trim();
+    const size = mode !== 'phrase' ? randomSize() : written ? phraseBoardSize(written) : 5 + Math.floor(Math.random() * 3);
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_start', {
       p_room: roomId, p_token: myToken(), p_mode: mode, p_size: size,
@@ -283,33 +311,31 @@ async function startGame(mode, phrase = null) {
   }
 }
 
-// A phrase is split into words, and each word is hidden in one letter of the
-// board as a token. The board has as many letters as there are words, within
-// its limits of 5 to 9; beyond 9 words, letters hold more than one.
-const phraseWords = (text) => text.trim().split(/\s+/).filter(Boolean);
-const phraseBoard = (words) => Math.min(9, Math.max(5, words));
-
-// Show the tokens the phrase turns into, as it is typed.
+// Show the tokens the phrase turns into, as it is typed: exactly one for each
+// post on its board.
 function previewTokens() {
-  const words = phraseWords(el.phraseText.value);
-  const size = phraseBoard(words.length);
-  const tokens = [];
-  words.forEach((word, i) => {
-    (tokens[i % size] ??= []).push(word.toUpperCase());
-  });
-  // Cards are updated in place so that typing only animates a newly added token.
+  const phrase = el.phraseText.value;
+  const size = phraseBoardSize(phrase);
+  const tokens = tokenize(phrase, size);
+  // Cards are updated in place so that typing only animates what changed.
   while (el.tokens.children.length > tokens.length) el.tokens.lastElementChild.remove();
-  tokens.forEach((group, i) => {
-    const card = el.tokens.children[i] ?? el.tokens.appendChild(Object.assign(document.createElement('span'), { className: 'word' }));
-    const text = group.join(' + ');
+  tokens.forEach((token, i) => {
+    const card = el.tokens.children[i] ?? el.tokens.appendChild(document.createElement('span'));
+    const text = token.t.toUpperCase();
     if (card.textContent !== text) card.textContent = text;
+    const className = ['word', i > 0 && !tokens[i - 1].gap && 'join', !token.gap && i < tokens.length - 1 && 'cont']
+      .filter(Boolean).join(' ');
+    if (card.className !== className) card.className = className;
   });
-  const n = tokens.length;
-  el.tokenNote.textContent = n === 0 ? ''
-    : `${n} ${n === 1 ? 'token' : 'tokens'}, hidden in ${n === size ? 'the' : `${n} of the`} ${size} letters of a ${size} × ${size} board`;
+  el.tokenNote.textContent = tokens.length === 0 ? ''
+    : tokens.length < size ? `Too short: a ${size} × ${size} board needs at least ${size} letters`
+      : `${size} tokens, one in each post of a ${size} × ${size} board`;
 }
 
-el.phraseText.addEventListener('input', previewTokens);
+el.phraseText.addEventListener('input', () => {
+  el.phraseError.textContent = ''; // an earlier complaint no longer applies to what is typed now
+  previewTokens();
+});
 
 // Pass phrase has a screen of its own for writing the phrase. It is a step in
 // the browser's history, so Back returns to the room.

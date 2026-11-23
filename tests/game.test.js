@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CROSS, EMPTY, LETTER, MISS, MAX_SIZE, MIN_SIZE,
-  applyMove, canMove, countSolutions, randomSize, generatePuzzle, isLetterCell, newGame,
+  applyMove, canMove, countSolutions, phraseBoardSize, randomSize, tokenize, generatePuzzle, isLetterCell, newGame,
 } from '../postmarks/game.js';
 
 const start = (size = 5, seed = 1) => newGame({ size, seed, players: ['Ada', 'Bo'] });
@@ -237,6 +237,36 @@ test('players who have left no longer count towards turn-taking', () => {
   assert.equal(canMove(s, 0), true);
   s = play(s, 'mark', emptyNonLetter(s), 0);
   assert.equal(s.moves, 2);
+});
+
+const show = (tokens) => tokens.map((x) => x.t + (x.gap ? ' ' : '|')).join('');
+
+test('a phrase always becomes exactly one token per board letter', () => {
+  // as many words as letters: tokens are the words
+  assert.equal(show(tokenize('meet me by the fountain', 5)), 'meet me by the fountain|');
+  // too few words: the longest tokens are split in half until there are enough
+  assert.equal(show(tokenize('meet me', 5)), 'm|e|e|t me|');
+  assert.equal(show(tokenize('kindness costs nothing', 5)), 'kind|ness costs noth|ing|');
+  assert.equal(show(tokenize('Hello, dear friend!', 5)), 'Hel|lo, dear fri|end!|');
+  // too many words: the shortest neighbours are joined
+  assert.equal(show(tokenize('a b c d e f', 5)), 'a b c d e f|');
+  assert.equal(tokenize('one two three four five six seven eight nine ten eleven', 9).length, 9);
+  for (const phrase of ['wish you were here', 'a penny for your thoughts', 'good things come to those who wait', 'hi mum']) {
+    for (let n = 5; n <= 9; n++) {
+      const tokens = tokenize(phrase, n);
+      if (phrase.replace(/[^a-z]/g, '').length >= n) assert.equal(tokens.length, n, `${phrase} into ${n}`);
+      // put back together, the tokens are the phrase
+      assert.equal(tokens.map((x) => x.t + (x.gap ? ' ' : '')).join(''), phrase);
+      assert.ok(tokens.every((x) => /[a-z0-9]/i.test(x.t)), 'every token has something to hide');
+      assert.equal(tokens[tokens.length - 1].gap, false);
+    }
+  }
+  // fewer letters than board letters: as many tokens as there are letters, no more
+  assert.equal(tokenize('hi', 5).length, 2);
+  assert.deepEqual(tokenize('   ', 5), []);
+  assert.equal(phraseBoardSize('meet me'), 5);
+  assert.equal(phraseBoardSize('a b c d e f g'), 7);
+  assert.equal(phraseBoardSize('one two three four five six seven eight nine ten eleven'), 9);
 });
 
 test('newGame validates players and size', () => {

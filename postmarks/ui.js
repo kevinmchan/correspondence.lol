@@ -7,6 +7,7 @@ import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
+import { isMuted, play as sfx, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
 
@@ -22,13 +23,13 @@ const $ = (id) => document.getElementById(id);
 const el = {
   back: $('back'), profile: $('profile'), loading: $('loading'),
   play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
-  roster: $('roster'), tools: $('tools'), actions: $('actions'), submit: $('submit'), clear: $('clear'), help: $('help'),
+  roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
   narration: $('narration'), message: $('message'), newGame: $('new-game'),
   chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
   trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
   trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
   runs: $('runs'), phrase: $('phrase'), phraseNote: $('phrase-note'), phraseEntry: $('phrase-entry'), phraseInput: $('phrase-input'),
-  shareGame: $('share-game'),
+  shareGame: $('share-game'), sound: $('sound'),
 };
 
 // --- State ----------------------------------------------------------------
@@ -47,6 +48,8 @@ let draft = null;
 let dragging = false; // a drag is in progress, adding the squares it passes to the draft
 let tool = 'mark';
 let builtFor = null;
+let fresh = true; // the board has just been put on screen: show it as it is, without effects
+const seen = { hearts: null, status: null, mine: null, found: null }; // what was last shown, to spot changes
 let pollTimer = null;
 let chat = null;
 let watcher = null; // live updates for the game's room
@@ -60,7 +63,7 @@ if (!onlineId) {
 // Adopt the server's view of a room game. Its mode is 'coop' (one board for
 // the room, taking turns) or one of the solo modes, where everyone solves
 // their own copy of the same board and results are listed in `runs`:
-// 'trial' (against the clock) and 'phrase' (each letter found reveals a word
+// 'trial' (against the clock) and 'phrase' (each post found reveals a token
 // of a hidden phrase, which can also be guessed outright).
 function accept(view) {
   const mode = view.mode ?? 'coop';
@@ -75,7 +78,8 @@ function accept(view) {
   online = {
     id: view.id, you: view.you, room: view.room, roomName: view.room_name, people: view.people,
     mode, started, runs: view.runs ?? [], author: view.phrase_by ?? null, // who wrote the phrase, if anyone
-    phrase: mode === 'phrase' ? { shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
+    // tokens: [{ len, gap, t }] with t null until unlocked (games from before tokens have only `shown`)
+    phrase: mode === 'phrase' ? { tokens: view.tokens ?? null, shown: view.phrase ?? view.phrase_mask, known: Boolean(view.phrase) } : null,
     // the clock: how long it had run when this view was made, and when that was
     clock: view.elapsed_ms == null ? null : { ms: Number(view.elapsed_ms), at: performance.now() },
   };
@@ -126,8 +130,14 @@ async function poll() {
       render();
     }
     feedChat(room);
-  } catch {
-    /* offline or a blip: keep showing what we have and try again */
+  } catch (error) {
+    // Someone deleted the game while it was open here: back to the room.
+    if (/game not found/i.test(error.message)) {
+      alert('This game was deleted.');
+      location.replace(roomUrl(online.room));
+      return;
+    }
+    /* otherwise offline or a blip: keep showing what we have and try again */
   }
   schedulePoll();
 }
@@ -175,6 +185,7 @@ function buildBoard(key) {
     el.board.append(button);
   }
   builtFor = key;
+  fresh = true;
 }
 
 const where = (cell) => `row ${Math.floor(cell / game.size) + 1}, column ${(cell % game.size) + 1}`;
@@ -188,8 +199,8 @@ function describeLast() {
   if (last.type === 'mark') return `${who} crossed out ${many ?? where(last.cell)}.`;
   if (last.type === 'unmark') return `${who} removed the ${many ? `crosses on ${many}` : `cross at ${where(last.cell)}`}.`;
   return last.correct
-    ? `${who} found a letter at ${where(last.cell)}.${last.crossed ? ` ${last.crossed} more ${last.crossed === 1 ? 'square' : 'squares'} crossed out.` : ''}`
-    : `${who} guessed ${where(last.cell)} — no letter there. A heart lost.`;
+    ? `${who} found a post at ${where(last.cell)}.${last.crossed ? ` ${last.crossed} more ${last.crossed === 1 ? 'square' : 'squares'} crossed out.` : ''}`
+    : `${who} guessed ${where(last.cell)} — no post there. A heart lost.`;
 }
 
 // The board shows the latest move by itself; this describes it for screen
@@ -211,6 +222,11 @@ function show(section) {
 // A time trial's results, best first: finished times, then those still playing
 // or out of hearts.
 function leaderboard(list) {
+  // rebuilt only when something in it changed, so rows do not re-animate on every refresh
+  const key = JSON.stringify([online.runs, online.people, online.you]);
+  list.hidden = online.runs.length === 0;
+  if (list.dataset.key === key) return;
+  list.dataset.key = key;
   list.replaceChildren(...online.runs.map((run) => {
     const li = document.createElement('li');
     const who = document.createElement('span');
@@ -219,34 +235,139 @@ function leaderboard(list) {
     const result = document.createElement('span');
     result.className = `result ${run.status}`;
     result.textContent = run.status === 'lost' ? 'out of hearts' : run.status !== 'won' ? 'playing…'
-      : online.mode === 'trial' ? clockText(run.ms) : `${run.found} of ${game.size} opened`;
+      : online.mode === 'trial' ? clockText(run.ms) : `${run.found} of ${game.size} posts opened`;
     li.append(who, result);
     return li;
   }));
   list.hidden = online.runs.length === 0;
 }
 
-// The pass phrase, one card per word. A word stays face down, showing only how
-// many letters it has, until the board letter holding it is found.
+// The pass phrase as a row of cards, one per token: each letter on the board
+// holds exactly one. A card stays face down, showing only how long its token
+// is, until that letter is found. Tokens that are parts of one word sit
+// joined together.
 function renderPhrase(target) {
-  const words = online.phrase.shown.toUpperCase().split(' ');
-  // Cards are updated in place, so a word turning over animates once and the
+  const tokens = online.phrase.tokens
+    // games from before tokens: one card per word
+    ?? online.phrase.shown.split(' ').map((word) => ({ len: word.length, gap: true, t: word.includes('_') ? null : word }));
+  // Cards are updated in place, so one turning over animates once and the
   // rest stay still when the page refreshes.
-  while (target.children.length > words.length) target.lastElementChild.remove();
-  words.forEach((word, i) => {
+  while (target.children.length > tokens.length) target.lastElementChild.remove();
+  let turned = 0;
+  tokens.forEach((token, i) => {
     const card = target.children[i] ?? target.appendChild(document.createElement('span'));
-    const hidden = word.includes('_');
-    const text = hidden ? word.replace(/_/g, '•') : word;
+    const text = token.t === null ? '•'.repeat(token.len) : token.t.toUpperCase();
     if (card.textContent !== text) card.textContent = text;
-    const className = hidden ? 'word hidden' : 'word';
-    if (card.className !== className) card.className = className;
+    const className = ['word', token.t === null && 'hidden', i > 0 && !tokens[i - 1].gap && 'join', !token.gap && i < tokens.length - 1 && 'cont']
+      .filter(Boolean).join(' ');
+    if (card.className !== className) {
+      if (card.classList.contains('hidden') && token.t !== null) turned++;
+      card.className = className;
+    }
   });
-  const left = words.filter((word) => word.includes('_')).length;
+  if (turned) sfx('token', { delay: 300 }); // just after the post that held it opens
+  const left = tokens.filter((token) => token.t === null).length;
   target.setAttribute('aria-label', left === 0
     ? `The phrase: ${online.phrase.shown}`
-    : `The phrase so far: ${online.phrase.shown.replace(/_+/g, 'hidden word')}. ${left} of ${words.length} words hidden.`);
+    : `The phrase, ${tokens.length} tokens, ${left} still hidden: ${tokens.map((token) => (token.t ?? 'hidden') + (token.gap ? ',' : '')).join(' ')}`);
   target.hidden = false;
 }
+
+// --- Effects: what each change on the board looks and sounds like ----------------
+const FX = ['fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-pick', 'fx-reveal'];
+
+// Restart a one-shot animation class on an element.
+function replay(node, name) {
+  node.classList.remove(name);
+  void node.offsetWidth;
+  node.classList.add(name);
+}
+
+// Given the squares that changed, returns the effect for each (its animation
+// and when it starts) and plays the sounds to match.
+function boardEffects(changes) {
+  const effects = new Map();
+  const { size } = game;
+  const post = changes.find((c) => c.name === 'letter');
+  const crossed = changes.filter((c) => c.name === 'cross');
+
+  if (post) {
+    // A post is found: it bursts open, and the crosses it brings ripple outwards
+    // from it, the nearest first.
+    effects.set(post.cell, { name: 'fx-post', delay: 0 });
+    const [row, col] = [Math.floor(post.cell / size), post.cell % size];
+    const delays = [];
+    for (const c of crossed) {
+      const distance = Math.hypot(Math.floor(c.cell / size) - row, (c.cell % size) - col);
+      const delay = Math.round(280 + distance * 70);
+      effects.set(c.cell, { name: 'fx-cross', delay });
+      delays.push(delay);
+    }
+    ripple(post.cell);
+    sfx('post');
+    sfx('cascade', { delays: delays.sort((x, y) => x - y) });
+  } else if (crossed.length) {
+    crossed.forEach((c, i) => effects.set(c.cell, { name: 'fx-cross', delay: i * 35 }));
+    sfx('cross', { count: crossed.length });
+  }
+
+  const cleared = changes.filter((c) => c.name === 'empty' && c.from === 'cross');
+  cleared.forEach((c, i) => effects.set(c.cell, { name: 'fx-clear', delay: i * 35 }));
+  if (cleared.length && !post) sfx('clear');
+
+  for (const c of changes) {
+    if (c.name === 'miss') {
+      effects.set(c.cell, { name: 'fx-miss', delay: 0 });
+      sfx('miss');
+    } else if (c.name === 'guess') {
+      effects.set(c.cell, { name: 'fx-pick', delay: 0 });
+      sfx('pick');
+    } else if (c.name === 'reveal') {
+      effects.set(c.cell, { name: 'fx-reveal', delay: 500 + effects.size * 90 });
+    }
+  }
+  return effects;
+}
+
+// A ring that spreads across the whole board from a post just found.
+function ripple(cell) {
+  const tile = el.board.children[cell];
+  const ring = document.createElement('i');
+  ring.className = 'ripple';
+  ring.style.left = `${tile.offsetLeft + tile.offsetWidth / 2}px`;
+  ring.style.top = `${tile.offsetTop + tile.offsetHeight / 2}px`;
+  ring.style.setProperty('--reach', `${el.board.offsetWidth * 2.4}px`);
+  el.board.append(ring);
+  setTimeout(() => ring.remove(), 1200);
+}
+
+// Paper confetti for a win.
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colours = ['#f2a391', '#f5cf6e', '#bcdc8a', '#7fd0b8', '#8ec9ef', '#a9a7ee', '#e2a3e3', '#c8442e'];
+  const layer = document.createElement('div');
+  layer.className = 'confetti';
+  layer.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 70; i++) {
+    const bit = document.createElement('i');
+    bit.style.setProperty('--x', `${Math.random() * 100}vw`);
+    bit.style.setProperty('--drift', `${(Math.random() - 0.5) * 30}vw`);
+    bit.style.setProperty('--spin', `${(Math.random() - 0.5) * 1400}deg`);
+    bit.style.setProperty('--time', `${1.6 + Math.random() * 1.6}s`);
+    bit.style.setProperty('--wait', `${Math.random() * 0.5}s`);
+    bit.style.background = colours[i % colours.length];
+    if (i % 3 === 0) bit.style.borderRadius = '50%';
+    layer.append(bit);
+  }
+  document.body.append(layer);
+  setTimeout(() => layer.remove(), 4200);
+}
+
+// Effects run once: clear them off a square when they finish.
+el.board.addEventListener('animationend', (event) => {
+  if (event.pseudoElement || !event.target.classList?.contains('cell')) return;
+  event.target.classList.remove(...FX);
+});
 
 function render() {
   document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
@@ -273,7 +394,7 @@ function render() {
     el.trialTitle.textContent = online.mode === 'trial' ? 'Time trial' : 'Pass phrase';
     el.trialHint.textContent = online.mode === 'trial'
       ? 'Everyone solves the same board on their own. Fastest time wins, and three wrong guesses put you out. Your clock starts when you press Start.'
-      : 'You wrote this one. Everyone else solves the board on their own, and each letter they find shows them one word.';
+      : 'You wrote this one. Everyone else solves the board on their own, and each post they find shows them one token.';
     el.trialStart.hidden = wrote;
     if (online.phrase) renderPhrase(el.trialPhrase);
     else el.trialPhrase.hidden = true;
@@ -290,8 +411,10 @@ function render() {
   const over = game.status !== 'playing';
   const found = lettersFound(game);
 
-  // Squares
-  for (const button of el.board.children) {
+  // Squares: work out what each should show, then apply it, animating what changed
+  const quiet = fresh; // a board arriving on screen does so without fanfare
+  fresh = false;
+  const squares = [...el.board.children].map((button) => {
     const cell = Number(button.dataset.cell);
     // squares in the draft are shown as they would be once submitted
     const drafted = Boolean(draft?.cells.includes(cell));
@@ -301,15 +424,26 @@ function render() {
     let label = 'empty';
     if (mark === CROSS) [name, content, label] = ['cross', '×', 'crossed out'];
     else if (mark === MISS) [name, content, label] = ['miss', '×', 'wrong guess'];
-    else if (mark === LETTER) [name, content, label] = ['letter', ENVELOPE, 'letter found'];
+    else if (mark === LETTER) [name, content, label] = ['letter', ENVELOPE, 'post found'];
     if (drafted && draft.type === 'guess') [name, content, label] = ['guess', ENVELOPE, 'your guess, not yet submitted'];
     else if (drafted) label += ', not yet submitted';
     if (game.status === 'lost' && game.solution && mark !== LETTER && isLetterCell(game, cell)) {
-      [name, content, label] = ['reveal', ENVELOPE, 'a letter was here'];
+      [name, content, label] = ['reveal', ENVELOPE, 'a post was here'];
     }
-    if (button.dataset.state !== name) {
+    return { button, cell, drafted, name, content, label, from: button.dataset.state };
+  });
+  const effects = quiet ? new Map() : boardEffects(squares.filter((s) => s.from !== s.name));
+  for (const { button, cell, drafted, name, content, label, from } of squares) {
+    if (from !== name) {
       button.dataset.state = name;
       button.innerHTML = content;
+      button.classList.remove(...FX);
+      const effect = effects.get(cell);
+      if (effect) {
+        button.style.setProperty('--d', `${effect.delay}ms`);
+        void button.offsetWidth; // so the same effect can play again on a square
+        button.classList.add(effect.name);
+      }
     }
     button.classList.toggle('last', !draft && (game.last?.cells ?? [game.last?.cell]).includes(cell));
     button.classList.toggle('drawing', drafted);
@@ -319,9 +453,45 @@ function render() {
   el.board.classList.toggle('busy', busy);
 
   // Heads-up display
-  el.hearts.textContent = '♥'.repeat(game.hearts) + '♡'.repeat(START_HEARTS - game.hearts);
+  if (seen.hearts !== game.hearts) {
+    const lost = !quiet && seen.hearts !== null && game.hearts < seen.hearts;
+    el.hearts.replaceChildren(...Array.from({ length: START_HEARTS }, (_, i) => {
+      const heart = document.createElement('span');
+      heart.textContent = i < game.hearts ? '♥' : '♡';
+      if (lost && i >= game.hearts && i < seen.hearts) heart.className = 'break'; // the one just lost
+      return heart;
+    }));
+    if (lost) sfx('heart');
+    seen.hearts = game.hearts;
+  }
   el.hearts.setAttribute('aria-label', `${game.hearts} of ${START_HEARTS} hearts left`);
-  el.found.textContent = `${found}/${game.size} letters`;
+  el.found.textContent = `${found}/${game.size} posts`;
+  if (seen.found !== found) {
+    if (!quiet && seen.found !== null && found > seen.found) replay(el.found, 'bump');
+    seen.found = found;
+  }
+
+  // The end of the game, and (in a shared game) the move coming round to you
+  if (seen.status !== game.status) {
+    const settle = effects.size ? 750 : 0; // let the last move's own effects land first
+    if (!quiet && seen.status === 'playing' && game.status === 'won') {
+      sfx('win', { delay: settle });
+      setTimeout(confetti, settle);
+    } else if (!quiet && seen.status === 'playing' && game.status === 'lost') {
+      sfx('lose', { delay: 450 });
+    }
+    el.board.classList.toggle('won', game.status === 'won');
+    el.board.classList.toggle('lost', game.status === 'lost');
+    seen.status = game.status;
+  }
+  const mine = Boolean(online) && online.mode === 'coop' && iCanMove();
+  if (seen.mine !== mine) {
+    if (!quiet && mine && seen.mine === false) {
+      sfx('turn', { delay: effects.size ? 500 : 0 });
+      replay(el.turn, 'bump');
+    }
+    seen.mine = mine;
+  }
 
   el.turn.replaceChildren();
   if (online?.mode === 'trial') {
@@ -373,11 +543,9 @@ function render() {
   el.shareGame.hidden = !online;
 
   // Tools, and the buttons that play or discard the draft
-  el.actions.hidden = over || immediate() || !iCanMove(); // Submit belongs to shared room games
-  el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
-  el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
+  // Submit belongs to shared room games, and only while the move is yours
+  el.submit.hidden = over || immediate() || !iCanMove();
   el.submit.disabled = !draft || busy;
-  el.clear.disabled = !draft || busy;
   el.tools.hidden = over;
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
@@ -509,10 +677,38 @@ const cellAt = (x, y) => {
 
 // Each new press starts the move over: a tap drafts one square, a drag drafts
 // every square it passes, and whatever was drafted before is discarded.
+// A second tap on the same square, soon after the first, guesses a post there.
+// (The first tap will have crossed the square, or cleared its cross; a guess
+// is allowed either way.)
+let lastTap = { cell: null, at: 0 };
+
+function guessAt(cell) {
+  if (!ready()) return;
+  say('');
+  if (game.cells[cell] === LETTER || game.cells[cell] === MISS) {
+    say('That square is already settled.');
+  } else if (immediate()) {
+    draft = null;
+    play('guess', [cell]);
+    return;
+  } else {
+    draft = { type: 'guess', cells: [cell] }; // a guess replaces whatever was drafted
+  }
+  render();
+}
+
 el.board.addEventListener('pointerdown', (event) => {
   if (tool !== 'mark' || !event.isPrimary || event.button !== 0) return;
   const cell = cellAt(event.clientX, event.clientY);
-  if (cell === null || !ready()) return;
+  if (cell === null) return;
+  const again = cell === lastTap.cell && event.timeStamp - lastTap.at < 350;
+  lastTap = again ? { cell: null, at: 0 } : { cell, at: event.timeStamp };
+  if (again) {
+    dragging = false;
+    guessAt(cell);
+    return;
+  }
+  if (!ready()) return;
   say('');
   draft = null;
   if (draftCross(cell)) dragging = true;
@@ -559,6 +755,7 @@ el.board.addEventListener('click', (event) => {
   if (!button) return;
   const cell = Number(button.dataset.cell);
   if (tool !== 'guess' && event.detail !== 0) return;
+  if (tool === 'guess' && event.detail > 1) return; // the second click of a double tap: already guessed
   if (!ready()) return;
   say('');
   const settled = game.cells[cell] === LETTER || game.cells[cell] === MISS;
@@ -577,12 +774,6 @@ el.board.addEventListener('click', (event) => {
 });
 
 el.submit.addEventListener('click', submitDraft);
-
-el.clear.addEventListener('click', () => {
-  draft = null;
-  say('');
-  render();
-});
 
 // Arrow keys move between squares.
 el.board.addEventListener('keydown', (event) => {
@@ -622,6 +813,7 @@ async function startRun() {
   el.trialError.textContent = '';
   try {
     accept(await rpc('postmarks_trial_start', { p_game: online.id, p_token: myToken() }));
+    if (online.mode === 'trial') sfx('start');
     render();
     greet();
     watcher?.poke();
@@ -673,6 +865,20 @@ function greet() {
 }
 
 el.help.addEventListener('click', openHowTo);
+
+// Sound on or off, remembered on this device.
+function showSound() {
+  el.sound.setAttribute('aria-pressed', String(!isMuted()));
+  el.sound.title = isMuted() ? 'Sound is off' : 'Sound is on';
+  el.sound.classList.toggle('off', isMuted());
+}
+
+el.sound.addEventListener('click', () => {
+  setMuted(!isMuted());
+  showSound();
+  sfx('pick');
+});
+showSound();
 
 el.profile.addEventListener('click', () => {
   openProfile({

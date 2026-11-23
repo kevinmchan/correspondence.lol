@@ -31,6 +31,7 @@
 
 .board {
   --n: 6;
+  position: relative;
   width: 100%;
   aspect-ratio: 1;
   display: grid;
@@ -47,6 +48,7 @@
 /* Each square is its own tile; a district is the tiles that share a colour. */
 .cell {
   --tile: #c9d1d6;
+  position: relative;
   aspect-ratio: 1;
   min-width: 0;
   padding: 0;
@@ -117,9 +119,9 @@
   }
 }
 
-/* tools on the left, help on the right */
-.toolbar { width: 100%; display: flex; align-items: center; gap: 0.5rem; }
-.toolbar #help { margin-left: auto; }
+/* tools on the left; in a shared game, Submit on the right of the same row */
+.toolbar { width: 100%; display: flex; align-items: center; gap: 0.5rem; min-height: 2.9rem; }
+.toolbar #submit { margin-left: auto; }
 
 .tools { display: flex; gap: 0.5rem; font-family: system-ui, sans-serif; }
 
@@ -149,7 +151,6 @@
 
 /* --- Submitting a move --------------------------------------------------- */
 
-.actions { display: flex; align-items: center; gap: 0.6rem; font-family: system-ui, sans-serif; }
 
 button.go {
   display: inline-flex;
@@ -157,7 +158,8 @@ button.go {
   gap: 0.4rem;
   background: var(--accent);
   color: #fff;
-  padding: 0.7rem 1.6rem 0.7rem 1.3rem;
+  height: 2.9rem;
+  padding: 0 1.4rem 0 1.1rem;
   font-weight: 600;
 }
 
@@ -365,6 +367,226 @@ button.round:disabled { opacity: 0.35; }
 button.go { font-family: system-ui, sans-serif; }
 
 /* three tools need to fit a phone's width alongside the help button */
-.tools { flex-wrap: wrap; gap: 0.35rem; }
-.tools button { padding: 0.5rem 0.7rem; gap: 0.3rem; font-size: 0.875rem; }
-.tools .glyph { width: 1.1em; height: 1.1em; font-size: 1.05em; }
+.tools { flex-wrap: wrap; gap: 0.4rem; }
+/* Cross and Post are icons only; Phrase keeps its word */
+.tools button { min-width: 2.9rem; height: 2.9rem; justify-content: center; padding: 0 0.8rem; gap: 0.3rem; font-size: 0.9375rem; }
+.tools .glyph { width: 1.5rem; height: 1.5rem; font-size: 1.5rem; }
+.tools [data-tool="phrase"] .glyph { width: auto; font-size: 1rem; }
+
+/* --- Sound toggle ---------------------------------------------------------------- */
+
+#sound .slash { display: none; }
+#sound.off .waves { display: none; }
+#sound.off .slash { display: inline; }
+#sound.off { opacity: 0.6; }
+
+/* --- Effects: one for every event in the game ------------------------------------- */
+
+#hearts span { display: inline-block; }
+
+.ripple {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  display: none;
+}
+
+.confetti { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 20; }
+
+.confetti i {
+  position: absolute;
+  top: -1rem;
+  left: var(--x);
+  width: 0.5rem;
+  height: 0.8rem;
+  border-radius: 2px;
+  animation: confetti-fall var(--time) cubic-bezier(0.3, 0.6, 0.6, 1) var(--wait) both;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(var(--drift), 105vh) rotate(var(--spin)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* a cross going down: the tile dips and the mark is struck in. Until its
+     turn comes (--d), the tile keeps looking untouched, which is what lets
+     crosses ripple outwards from a post */
+  .cell.fx-cross { animation: cross-tile 300ms ease-out var(--d, 0ms) both; }
+  @keyframes cross-tile {
+    0% { background: var(--tile); box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14); color: transparent; transform: none; }
+    45% { transform: scale(0.84) rotate(-5deg); color: transparent; }
+    70% { transform: scale(1.06) rotate(2deg); }
+    100% { transform: none; }
+  }
+
+  /* a cross rubbed out: the tile springs back up */
+  .cell.fx-clear { animation: clear-tile 260ms cubic-bezier(0.3, 1.6, 0.5, 1) var(--d, 0ms) both; }
+  @keyframes clear-tile {
+    0% { transform: scale(0.82); filter: brightness(1.25); }
+    100% { transform: none; filter: none; }
+  }
+
+  /* choosing a square to guess */
+  .cell.fx-pick svg { animation: pick 260ms cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+  @keyframes pick {
+    0% { transform: scale(0.4) translateY(30%); opacity: 0; }
+    100% { transform: none; opacity: 0.75; }
+  }
+
+  /* a post found: the tile leaps and spins face-up with a flash, a ring bursts
+     from it and sparks fly, then the envelope lands with a bounce */
+  .cell.fx-post { z-index: 4; animation: post-tile 820ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+  .cell.fx-post svg { animation: post-envelope 900ms cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+  .cell.fx-post::before, .cell.fx-post::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .cell.fx-post::before { box-shadow: 0 0 0 0 rgb(255 255 255 / 0.9); animation: post-ring 700ms ease-out both; }
+  .cell.fx-post::after {
+    inset: 46%;
+    border-radius: 50%;
+    animation: post-sparks 800ms ease-out 120ms both;
+  }
+
+  @keyframes post-tile {
+    0% { transform: scale(0.7) rotateY(180deg); filter: brightness(2.2) saturate(0.4); }
+    35% { transform: scale(1.45) rotateY(0deg) rotate(-6deg); filter: brightness(1.5); }
+    55% { transform: scale(0.92) rotate(4deg); filter: none; }
+    75% { transform: scale(1.08) rotate(-2deg); }
+    100% { transform: none; }
+  }
+
+  @keyframes post-envelope {
+    0%, 25% { transform: scale(0) rotate(-40deg); opacity: 0; }
+    60% { transform: scale(1.3) rotate(8deg); opacity: 1; }
+    80% { transform: scale(0.9) rotate(-4deg); }
+    100% { transform: none; }
+  }
+
+  @keyframes post-ring {
+    0% { box-shadow: 0 0 0 0 rgb(255 255 255 / 0.95), 0 0 0 0 var(--tile); }
+    100% { box-shadow: 0 0 0 1.1em rgb(255 255 255 / 0), 0 0 0 2em transparent; }
+  }
+
+  /* eight sparks thrown outwards, drawn as shadows of one dot */
+  @keyframes post-sparks {
+    0% {
+      opacity: 1;
+      box-shadow: 0 0 0 0.05em #fff, 0 0 0 0.05em #fff, 0 0 0 0.05em #fff, 0 0 0 0.05em #fff,
+        0 0 0 0.05em var(--tile), 0 0 0 0.05em var(--tile), 0 0 0 0.05em var(--tile), 0 0 0 0.05em var(--tile);
+    }
+    100% {
+      opacity: 0;
+      box-shadow: 0 -1.5em 0 0 #fff, 1.5em 0 0 0 #fff, 0 1.5em 0 0 #fff, -1.5em 0 0 0 #fff,
+        1.1em -1.1em 0 0 var(--tile), 1.1em 1.1em 0 0 var(--tile), -1.1em 1.1em 0 0 var(--tile), -1.1em -1.1em 0 0 var(--tile);
+    }
+  }
+
+  /* and a ring spreads across the whole board, just ahead of the crosses */
+  .ripple { display: block; border: 3px solid rgb(255 255 255 / 0.85); animation: ripple 950ms ease-out both; }
+  @keyframes ripple {
+    0% { width: 0; height: 0; margin: 0; opacity: 0.9; }
+    100% { width: var(--reach); height: var(--reach); margin: calc(var(--reach) / -2); opacity: 0; border-width: 1px; }
+  }
+
+  /* a wrong guess: the tile flashes red and shakes */
+  .cell.fx-miss { animation: miss 520ms ease-out both; z-index: 2; }
+  @keyframes miss {
+    0% { transform: scale(1.25); filter: brightness(1.6); }
+    20% { transform: translateX(-12%) rotate(-5deg); }
+    40% { transform: translateX(10%) rotate(4deg); }
+    60% { transform: translateX(-7%) rotate(-2deg); }
+    80% { transform: translateX(4%); }
+    100% { transform: none; filter: none; }
+  }
+
+  /* a heart lost: it swells, cracks sideways and drops out */
+  #hearts .break { animation: heart-break 900ms ease-in both; }
+  @keyframes heart-break {
+    0% { transform: scale(1); color: var(--accent); }
+    25% { transform: scale(1.9) rotate(-14deg); }
+    45% { transform: scale(1.5) rotate(12deg); }
+    70% { transform: scale(0.5) translateY(60%) rotate(-25deg); opacity: 0.2; }
+    100% { transform: none; opacity: 1; }
+  }
+
+  /* the count of posts, or the turn passing to you */
+  .bump { animation: bump 420ms cubic-bezier(0.3, 1.8, 0.5, 1); }
+  @keyframes bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  #found, #turn { display: inline-block; transform-origin: center; }
+
+  /* the posts nobody found, shown one by one when the game is lost */
+  .cell.fx-reveal svg { animation: reveal 500ms ease-out var(--d, 0ms) both; }
+  @keyframes reveal {
+    0% { transform: scale(0.3); opacity: 0; }
+    100% { transform: none; opacity: 0.45; }
+  }
+
+  /* solved: the posts dance; lost: the board sags */
+  .board.won .cell[data-state="letter"]:not(.fx-post) { animation: dance 900ms ease-in-out 500ms 3; }
+  @keyframes dance {
+    0%, 100% { transform: none; }
+    30% { transform: translateY(-14%) rotate(-6deg); }
+    60% { transform: translateY(0) rotate(5deg); }
+  }
+  .board.lost { animation: sag 700ms ease-out 300ms both; }
+  @keyframes sag {
+    0% { transform: none; filter: none; }
+    30% { transform: translateX(-1.5%) rotate(-0.6deg); }
+    60% { transform: translateX(1%) rotate(0.4deg); }
+    100% { transform: none; filter: saturate(0.55); }
+  }
+
+  /* a new result on a leaderboard slides in */
+  .runs li { animation: slide-in 320ms ease-out both; }
+  @keyframes slide-in {
+    from { transform: translateY(-40%); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  /* a token of the phrase turning over glows as it lands */
+  .phrase .word:not(.hidden) { animation: turn-over 420ms ease, token-glow 900ms ease-out; }
+  @keyframes token-glow {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 80%, transparent); }
+    100% { box-shadow: 0 0 0 0.7em transparent; }
+  }
+}
+
+/* how-to: the square being double-tapped pulses twice */
+.howto .mini .tapped { position: relative; }
+@media (prefers-reduced-motion: no-preference) {
+  .howto .mini .tapped { animation: double-tap 2.6s ease-in-out infinite; }
+  .howto .mini .tapped svg { animation: tap-open 2.6s ease-in-out infinite; }
+  @keyframes double-tap {
+    0%, 12%, 24%, 100% { transform: none; box-shadow: none; }
+    6%, 18% { transform: scale(0.82); box-shadow: 0 0 0 0.3em color-mix(in srgb, var(--tint) 45%, transparent); }
+  }
+  @keyframes tap-open {
+    0%, 22% { opacity: 0; transform: scale(0.3); }
+    34%, 90% { opacity: 1; transform: none; }
+    100% { opacity: 0; }
+  }
+}
+
+/* A move is drawn but not sent: Submit nudges every few seconds until it is */
+.toolbar #submit:not(:disabled) { animation: nudge 3.2s ease-in-out 1.2s infinite; }
+@keyframes nudge {
+  0%, 68%, 100% { transform: none; box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  74% { transform: scale(1.07) rotate(-2deg); }
+  80% { transform: scale(0.98) rotate(1.5deg); }
+  86% { transform: scale(1.04); box-shadow: 0 0 0 0.6rem transparent; }
+  92% { transform: none; box-shadow: 0 0 0 0.6rem transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .toolbar #submit:not(:disabled) { animation: none; } }

@@ -19,6 +19,66 @@ export const START_HEARTS = 3;
 // Board sizes are not chosen by players: each game gets one at random.
 export const randomSize = (random = Math.random) => MIN_SIZE + Math.floor(random() * (MAX_SIZE - MIN_SIZE + 1));
 
+// --- Pass phrase tokens ---------------------------------------------------
+// A phrase is hidden one token per board letter, so it is split into exactly
+// `n` tokens. Each word starts as a token. With too few, the token with the
+// most letters is split in half, repeatedly; with too many, the neighbouring
+// pair that makes the shortest token is joined, repeatedly. Returns
+// [{ t: text, gap: is it followed by a space }]. The server does the same
+// (postmarks.tokenize in the database) and its result is what the game uses;
+// this copy draws the preview while a phrase is being written.
+const letters = (text) => text.replace(/[^A-Za-z0-9]/g, '').length;
+
+export function tokenize(phrase, n) {
+  const tokens = phrase.trim().split(/\s+/).filter(Boolean).map((t) => ({ t, gap: true }));
+  if (!tokens.length) return [];
+  tokens[tokens.length - 1].gap = false;
+
+  while (tokens.length < n) {
+    let best = -1;
+    let most = 1;
+    tokens.forEach((token, i) => {
+      if (letters(token.t) > most) {
+        best = i;
+        most = letters(token.t);
+      }
+    });
+    if (best < 0) break; // nothing left with two letters to split
+    const { t, gap } = tokens[best];
+    const half = Math.floor((most + 1) / 2);
+    let seen = 0;
+    let cut = 0;
+    for (let j = 0; j < t.length; j++) {
+      if (/[A-Za-z0-9]/.test(t[j])) seen++;
+      if (seen === half) {
+        cut = j + 1;
+        break;
+      }
+    }
+    tokens.splice(best, 1, { t: t.slice(0, cut), gap: false }, { t: t.slice(cut), gap });
+  }
+
+  while (tokens.length > n) {
+    let best = 0;
+    let shortest = Infinity;
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const length = tokens[i].t.length + tokens[i + 1].t.length;
+      if (length < shortest) {
+        best = i;
+        shortest = length;
+      }
+    }
+    const [a, b] = [tokens[best], tokens[best + 1]];
+    tokens.splice(best, 2, { t: a.t + (a.gap ? ' ' : '') + b.t, gap: b.gap });
+  }
+  return tokens;
+}
+
+// The board for a written phrase: one letter per word where the board's size
+// allows (5 to 9), so that tokens are whole words whenever possible.
+export const phraseBoardSize = (phrase) =>
+  Math.min(MAX_SIZE, Math.max(MIN_SIZE, phrase.trim().split(/\s+/).filter(Boolean).length));
+
 // Small seeded PRNG (mulberry32) so a seed always yields the same puzzle.
 export function rng(seed) {
   let a = seed >>> 0;
