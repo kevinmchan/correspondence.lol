@@ -662,3 +662,11 @@ dialog.profile .sync { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px 
 dialog.profile .sync .link { background: none; padding: 0.2rem 0.4rem; color: var(--ink); font-size: 0.9375rem; text-decoration: underline; text-underline-offset: 0.2em; }
 dialog.profile .sync .code { font-size: 1.5rem; }
 dialog.profile .sync p { margin: 0; }
+
+/* a switch in the profile menu */
+dialog.profile .setting { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); font-family: system-ui, sans-serif; font-size: 1rem; color: var(--ink); text-align: left; cursor: pointer; }
+dialog.profile .setting input { appearance: none; -webkit-appearance: none; flex: none; width: 2.9rem; height: 1.7rem; margin: 0; border-radius: 1rem; background: color-mix(in srgb, var(--muted) 45%, transparent); position: relative; cursor: pointer; transition: background-color 150ms ease; }
+dialog.profile .setting input::after { content: ""; position: absolute; top: 0.2rem; left: 0.2rem; width: 1.3rem; height: 1.3rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); transition: transform 150ms ease; }
+dialog.profile .setting input:checked { background: var(--accent); }
+dialog.profile .setting input:checked::after { transform: translateX(1.2rem); }
+dialog.profile .setting input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -8,6 +8,7 @@ import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
 import { openFeedback, openFinale } from './finale.js';
+import { applyPatterns } from '/shared/profile.js';
 import { isMuted, play as sfx, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
@@ -345,7 +346,7 @@ function ripple(cell) {
 // Paper confetti for a win.
 function confetti(over = document.body) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const colours = ['#f2a391', '#f5cf6e', '#bcdc8a', '#7fd0b8', '#8ec9ef', '#a9a7ee', '#e2a3e3', '#c8442e'];
+  const colours = ['#f08a76', '#f8d95a', '#7cc46a', '#2aa198', '#9ad3f7', '#5a55c8', '#f3b3e6', '#c8442e'];
   const layer = document.createElement('div');
   layer.className = 'confetti';
   layer.setAttribute('aria-hidden', 'true');
@@ -496,7 +497,9 @@ function render() {
         button.classList.add(effect.name);
       }
     }
-    button.classList.toggle('last', !draft && (game.last?.cells ?? [game.last?.cell]).includes(cell));
+    // the outline marks someone else's last move on a shared board; playing alone it would only be clutter
+    const theirs = online?.mode === 'coop' && game.last && game.last.player !== online.you;
+    button.classList.toggle('last', Boolean(theirs) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
     button.classList.toggle('drawing', drafted);
     button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
   }
@@ -955,6 +958,8 @@ el.newGame.addEventListener('click', () => {
   render();
   greet();
 });
+
+applyPatterns(); // the choice made in the profile menu
 
 // --- Start ----------------------------------------------------------------
 render();

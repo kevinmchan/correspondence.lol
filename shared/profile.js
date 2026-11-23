@@ -32,6 +32,13 @@ export function paint(span, person) {
   span.style.setProperty('--bg', COLORS[person?.color] ?? COLORS[0]);
 }
 
+// Patterns on the game's tiles, as well as colours: a choice kept on this device.
+const PATTERNS_KEY = 'correspondence:patterns:v1';
+export const patternsOn = () => load(PATTERNS_KEY) === true;
+export function applyPatterns() {
+  document.documentElement.classList.toggle('patterns', patternsOn());
+}
+
 let dialog = null;
 
 // Open the profile editor. onSave({ name, avatar, color }) should return a
@@ -123,6 +130,21 @@ export function openProfile({ person, onSave }) {
     }
   });
 
+  // Settings kept on this device. They take effect at once, without Save.
+  const settings = document.createElement('label');
+  settings.className = 'setting';
+  const patterns = document.createElement('input');
+  patterns.type = 'checkbox';
+  patterns.setAttribute('role', 'switch');
+  patterns.checked = patternsOn();
+  patterns.addEventListener('change', () => {
+    save(PATTERNS_KEY, patterns.checked ? true : null);
+    applyPatterns();
+  });
+  const patternsText = document.createElement('span');
+  patternsText.textContent = 'Patterns on tiles';
+  settings.append(patternsText, patterns);
+
   // The way on to another device: a link that makes a temporary account code.
   const sync = document.createElement('div');
   sync.className = 'sync';
@@ -150,7 +172,7 @@ export function openProfile({ person, onSave }) {
   });
   sync.append(ask, code, note);
 
-  dialog.append(preview, form, sync);
+  dialog.append(preview, form, settings, sync);
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close();
   });
