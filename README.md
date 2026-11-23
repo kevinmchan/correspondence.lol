@@ -35,6 +35,8 @@ A Postmarks game in a room is one of three kinds, chosen when it is started:
 
 In the solo modes there are no turns and no Submit: moves are played at once. Any game can be shared by its link: room members open it directly, and anyone else joins the room first and is then taken to the game.
 
+Any member of a room can delete any of its games. A deleted game is kept in the database but marked, and is gone as far as the app is concerned: off the room's list, not found when opened, and closed to further moves.
+
 The board is generated in the browser of whoever starts the game, so that player's device briefly knows the solution. That is accepted for games among friends; it is not a defence against cheating.
 
 ## Rooms
@@ -47,7 +49,7 @@ A solo game needs no room and is saved in the browser only.
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_leave`, `room_profile`, `room_say`,
 `postmarks_start`, `postmarks_get`, `postmarks_play`, `postmarks_trial_start`,
-`postmarks_guess_phrase`) that enforce membership and the rules; no
+`postmarks_guess_phrase`, `postmarks_delete`) that enforce membership and the rules; no
 table is exposed. There are no accounts: a room's link lets anyone see its name
 and member names and join it, while chat and games are for members. Each device
 holds a random token (in `localStorage`) that proves which member it is, and

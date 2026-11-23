@@ -126,8 +126,14 @@ async function poll() {
       render();
     }
     feedChat(room);
-  } catch {
-    /* offline or a blip: keep showing what we have and try again */
+  } catch (error) {
+    // Someone deleted the game while it was open here: back to the room.
+    if (/game not found/i.test(error.message)) {
+      alert('This game was deleted.');
+      location.replace(roomUrl(online.room));
+      return;
+    }
+    /* otherwise offline or a blip: keep showing what we have and try again */
   }
   schedulePoll();
 }

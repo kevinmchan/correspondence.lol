@@ -47,6 +47,8 @@ function list(names) {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
+const TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.5h9.4L17.500 7M10 11v5M14 11v5"/></svg>'.replace('17.500', '17.5');
+
 const MODE_NAMES = { coop: 'Postmarks', trial: 'Time trial', phrase: 'Pass phrase' };
 
 function gameStatus(game) {
@@ -116,7 +118,15 @@ function render() {
     line.textContent = status.text;
     if (status.go) line.className = 'go';
     a.append(title, line);
-    li.append(a);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'quiet round delete';
+    remove.dataset.game = game.id;
+    remove.dataset.name = title.textContent;
+    remove.title = 'Delete this game';
+    remove.setAttribute('aria-label', `Delete ${title.textContent}`);
+    remove.innerHTML = TRASH;
+    li.append(a, remove);
     return li;
   }));
   el.noGames.hidden = room.games.length > 0;
@@ -254,6 +264,24 @@ async function saveProfile({ name, avatar: face, color }) {
 
 el.profile.addEventListener('click', () => {
   openProfile({ person: room.people[room.you], onSave: saveProfile });
+});
+
+// --- Deleting a game ---------------------------------------------------------------
+// Any member can delete any game in the room. It disappears for everyone.
+el.games.addEventListener('click', async (event) => {
+  const button = event.target.closest('.delete');
+  if (!button) return;
+  if (!confirm(`Delete ${button.dataset.name}? It will be gone for everyone in the room.`)) return;
+  button.disabled = true;
+  el.gameError.textContent = '';
+  try {
+    await rpc('postmarks_delete', { p_game: button.dataset.game, p_token: myToken() });
+    watcher?.poke();
+    await refresh();
+  } catch (error) {
+    el.gameError.textContent = error.message;
+    button.disabled = false;
+  }
 });
 
 // --- Starting a game ----------------------------------------------------------------
