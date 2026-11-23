@@ -30,16 +30,14 @@
   <link rel="stylesheet" href="/postmarks/postmarks.css">
   <link rel="stylesheet" href="/jam/jam.css">
   <script>
-    // The splash plays once per visit (per tab or app launch), and not at all
-    // for anyone who has asked their device for less motion.
-    // It belongs to the home screen: an address that opens a room or a game skips it.
-    try {
-      if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join)\b/.test(location.search) || sessionStorage.getItem('correspondence:splash') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        document.documentElement.classList.add('no-splash');
-      } else {
-        sessionStorage.setItem('correspondence:splash', '1');
-      }
-    } catch (e) { /* no storage: it simply plays */ }
+    // The splash plays whenever the page is loaded on the home screen: opening
+    // the app, a new tab, or a refresh. (Moving between screens inside the app
+    // loads nothing, so it never plays then.) An address that opens a room, a
+    // game or one of the other screens skips it, and so does anyone who has
+    // asked their device for less motion.
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('no-splash');
+    }
   </script>
 </head>
 <body>
