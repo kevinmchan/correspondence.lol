@@ -378,7 +378,10 @@
         <p id="narration" class="sr-only" role="status" aria-live="polite"></p>
         <p id="message" class="message bad" role="alert"></p>
 
-        <button type="button" id="new-game" class="quiet">New game</button>
+        <div class="row solo-actions">
+          <button type="button" id="restart" class="quiet" hidden>Start over</button>
+          <button type="button" id="new-game" class="quiet">New game</button>
+        </div>
         <ol id="runs" class="runs" hidden></ol>
 
         <details id="chat-box" class="panel" hidden>

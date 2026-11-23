@@ -35,7 +35,7 @@ export function mount(root, life) {
     back: $('back'), profile: $('profile'), loading: $('loading'),
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
     roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
-    narration: $('narration'), message: $('message'), newGame: $('new-game'), hint: $('hint'), hintNote: $('hint-note'),
+    narration: $('narration'), message: $('message'), newGame: $('new-game'), restart: $('restart'), hint: $('hint'), hintNote: $('hint-note'),
     chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
     trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
     trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
@@ -104,9 +104,12 @@ export function mount(root, life) {
   const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
 
   // --- Solo games -----------------------------------------------------------
-  function startSolo() {
-    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-    game = newGame({ size: randomSize(), seed, players: ['You'] });
+  // A new solo puzzle, or (given one to repeat) the same board again from the
+  // start: a board is made from its size and seed, so those two bring it back.
+  function startSolo(again = null) {
+    const seed = again ? again.seed : crypto.getRandomValues(new Uint32Array(1))[0];
+    game = newGame({ size: again ? again.size : randomSize(), seed, players: ['You'] });
+    hint = null;
     tool = 'mark';
     draft = null;
     builtFor = null;
@@ -383,6 +386,36 @@ export function mount(root, life) {
   });
   const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 
+  // Another go at the same board, where that makes sense: after losing a solo
+  // game, or a shared one (which starts a new game in the room on the same
+  // board, for everyone). Not in the modes where people are ranked against each
+  // other on a board: a second attempt there would not be a fair one.
+  function retryOffer(won) {
+    if (won) return null;
+    if (!online) {
+      const again = { size: game.size, seed: game.seed };
+      return { label: 'Try this board again', run: () => { if (!life.over) { startSolo(again); render(); } } };
+    }
+    if (online.mode !== 'coop' || !game.solution) return null;
+    const board = { room: online.room, size: game.size, regions: game.regions, solution: game.solution };
+    return {
+      label: 'Try this board again',
+      run: async () => {
+        try {
+          const fresh = await rpc('postmarks_start', {
+            p_room: board.room, p_token: myToken(), p_mode: 'coop', p_size: board.size,
+            p_regions: board.regions, p_solution: board.solution, p_phrase: null,
+          });
+          watcher?.poke();
+          if (!life.over) go(gameUrl('postmarks', fresh.id), { replace: true });
+        } catch (failure) {
+          await tell('Couldn’t start it again', { detail: failure.message });
+          if (!life.over) go(roomUrl(board.room));
+        }
+      },
+    };
+  }
+
   // The screen at the end of a game: a send-off that suits the mode, and a
   // chance to say how it went. Leaving it goes back to the room, or, playing
   // alone, on to a new puzzle.
@@ -419,8 +452,9 @@ export function mount(root, life) {
       people: online ? online.people.filter((person) => !person.left) : [],
       hearts: game.hearts,
       about: about(),
-      leave: online ? 'Back to the room' : 'Play again',
+      leave: online ? 'Back to the room' : won ? 'Play again' : 'New puzzle',
       celebrate: confetti,
+      retry: retryOffer(won),
       onDone: () => {
         if (online) {
           go(roomUrl(online.room));
@@ -655,6 +689,7 @@ export function mount(root, life) {
     // Room games go back to the room with the arrow at the top; only a solo
     // game needs a way to start over.
     el.newGame.hidden = Boolean(online);
+    el.restart.hidden = Boolean(online) || !game || (game.moves === 0 && !over); // nothing to start over yet
     el.newGame.textContent = over ? 'Play again' : 'New game';
   }
 
@@ -1024,6 +1059,15 @@ export function mount(root, life) {
         await poll();
       },
     });
+  });
+
+  // Start this same board over.
+  el.restart.addEventListener('click', async () => {
+    if (!game || online) return;
+    if (game.status === 'playing' && !(await ask('Start this board over?', { detail: 'Your marks and hearts go back to the start.', yes: 'Start over', no: 'Keep playing' }))) return;
+    if (life.over) return;
+    startSolo({ size: game.size, seed: game.seed });
+    render();
   });
 
   el.newGame.addEventListener('click', async () => {

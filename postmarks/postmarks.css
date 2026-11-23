@@ -779,3 +779,12 @@ button.go { font-family: system-ui, sans-serif; }
   .hint-note:not([hidden]) { animation: pop-in 220ms cubic-bezier(0.2, 1.1, 0.3, 1); }
 }
 @keyframes hint-pulse { 0%, 100% { outline-color: #f6c453; } 50% { outline-color: color-mix(in srgb, #f6c453 35%, transparent); } }
+
+/* --- The same board again -------------------------------------------------------- */
+.solo-actions { justify-content: center; gap: 0.6rem; }
+.finale .again {
+  display: block; width: 100%; margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 0.95rem;
+  background: var(--ink); color: var(--paper); font-family: system-ui, sans-serif; font-size: 1.0625rem; font-weight: 700;
+  box-shadow: 0 0.24rem 0 color-mix(in srgb, var(--ink) 62%, #000); transition: transform 70ms ease, box-shadow 70ms ease;
+}
+.finale .again:active { transform: translateY(0.2rem); box-shadow: 0 0.04rem 0 color-mix(in srgb, var(--ink) 62%, #000); }

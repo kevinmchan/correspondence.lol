@@ -100,8 +100,10 @@ export function openFeedback(about) {
 //   time: a time trial's finishing time; phrase: the solved phrase
 //   people: who played together; hearts: how many were left
 //   leave: label for leaving without feedback; onDone: where to go afterwards
-export function openFinale({ won, mode, title, detail, time, phrase, people, hearts, about, leave, onDone, celebrate }) {
-  const dialog = sheet(`finale ${won ? 'won' : 'lost'} ${mode}`, title, onDone);
+//   retry: { label, run } offers the same board again, in place of onDone
+export function openFinale({ won, mode, title, detail, time, phrase, people, hearts, about, leave, onDone, celebrate, retry }) {
+  let next = onDone; // what happens when the screen goes away
+  const dialog = sheet(`finale ${won ? 'won' : 'lost'} ${mode}`, title, () => next?.());
   const stage = make('div', 'stage');
   stage.setAttribute('aria-hidden', 'true');
 
@@ -140,6 +142,15 @@ export function openFinale({ won, mode, title, detail, time, phrase, people, hea
 
   dialog.append(stage, make('h2', null, title));
   if (detail) dialog.append(make('p', 'detail', detail));
+  if (retry) {
+    const again = make('button', 'again', retry.label);
+    again.type = 'button';
+    again.addEventListener('click', () => {
+      next = retry.run;
+      dialog.close();
+    });
+    dialog.append(again);
+  }
   dialog.append(feedbackForm({ about, leave, done: () => dialog.close() }));
   dialog.showModal();
   if (won) celebrate?.(dialog);
