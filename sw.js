@@ -10,6 +10,7 @@ const PRECACHE = [
   '/app.js',
   '/version.js',
   '/home.js',
+  '/rooms.js',
   '/manifest.webmanifest',
   '/icons/icon.svg',
   '/icons/icon-192.png',
