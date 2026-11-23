@@ -137,7 +137,7 @@ function openInstallGuide() {
     <h2 id="install-title">Install correspondence.lol</h2>
     <p class="hint">Install to receive notifications from your friends.</p>
     ${steps}
-    <p class="hint move" hidden>Your profile comes with you. If the app opens without it, enter this code there: <b></b></p>
+    <p class="hint move" hidden>Your account comes with you. If the app opens without it, enter this code there: <b></b></p>
     <div class="row end">
       ${deferredPrompt ? '<button type="button" data-act="install" autofocus>Install</button>' : '<button type="button" data-act="done" autofocus>Got it</button>'}
     </div>`;

@@ -2,7 +2,7 @@ import { rpc } from '/shared/api.js';
 import { UUID, myName, myToken, recentRooms, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
-import { cachedProfile, fetchProfile, openDeviceCode, openSignIn, saveProfile, signOut, startAfresh } from '/shared/account.js';
+import { cachedProfile, fetchProfile, openDeviceCode, saveProfile, startAfresh } from '/shared/account.js';
 
 const form = document.getElementById('create-room');
 const nameInput = document.getElementById('my-name');
@@ -11,16 +11,15 @@ const error = document.getElementById('create-error');
 const rooms = document.getElementById('rooms');
 
 // --- Who this device is -------------------------------------------------------
-// A guest profile, an account, or (after signing out, or after the profile
+// An account (the server calls it a profile), or (after signing out, or after the profile
 // became an account on another device) nobody yet.
 const me = {
   card: document.getElementById('me'), edit: document.getElementById('me-edit'),
   name: document.getElementById('me-name'), kind: document.getElementById('me-kind'),
-  signIn: document.getElementById('me-sign-in'), code: document.getElementById('me-code'),
-  signOut: document.getElementById('me-sign-out'),
+  code: document.getElementById('me-code'),
 };
-// With no profile on the device, the page is only the three ways to get one:
-// create one, sign in, or sync a guest profile with a code from another device.
+// With no account on the device, the page is only the two ways to get one:
+// create one, or sync one with a code from another device.
 const welcome = {
   section: document.getElementById('welcome'), note: document.getElementById('welcome-note'),
   form: document.getElementById('welcome-new'), name: document.getElementById('welcome-name'),
@@ -36,7 +35,7 @@ const noProfile = () => {
 };
 const nameField = document.getElementById('my-name-field');
 const look = () => savedLook() ?? { avatar: '🙂', color: 0 };
-// After signing in from a room's join screen, go back to it.
+// Sent here from a room's join screen to sync an account first: go back after.
 const next = new URLSearchParams(location.search).get('next');
 const onward = () => (next && /^\/(room|postmarks)\/\?[\w=&-]+$/.test(next) ? next : null);
 
@@ -54,11 +53,9 @@ function showMe() {
   }
   const name = myName();
   me.edit.replaceChildren(avatar(look()));
-  me.name.textContent = name || 'Guest';
-  me.kind.textContent = profile.signed_in ? profile.email ?? 'Signed in' : 'Guest profile';
-  me.signIn.hidden = Boolean(profile.signed_in);
-  me.code.hidden = Boolean(profile.signed_in) || (!name && recentRooms().length === 0); // nothing to share yet
-  me.signOut.hidden = !profile.signed_in;
+  me.name.textContent = name || 'You';
+  const n = recentRooms().length;
+  me.kind.textContent = n === 0 ? 'No rooms yet' : n === 1 ? '1 room' : `${n} rooms`;
   // the name is asked for when opening a first room, and lives on the profile after that
   nameField.hidden = Boolean(name);
   nameInput.required = !name;
@@ -75,27 +72,11 @@ async function refresh() {
   if (!noProfile()) showRooms();
 }
 
-const signedIn = () => {
-  const to = onward();
-  if (to) location.href = to;
-  else refresh();
-};
-
 me.edit.addEventListener('click', () => {
   openProfile({ person: { name: myName(), ...look() }, onSave: async (person) => { await saveProfile(person); showMe(); } });
 });
-me.signIn.addEventListener('click', () => openSignIn({ guest: true, onDone: signedIn }));
 me.code.addEventListener('click', openDeviceCode);
-me.signOut.addEventListener('click', async () => {
-  if (!confirm('Sign out on this device? Your profile and rooms stay in your account.')) return;
-  me.signOut.disabled = true;
-  await signOut().catch(() => {});
-  me.signOut.disabled = false;
-  showMe();
-});
-document.getElementById('welcome-sign-in').addEventListener('click', () => openSignIn({ guest: false, onDone: signedIn }));
-
-// Create a profile: a new guest, with a look to start with (it can be changed).
+// Create an account, with a look to start with (it can be changed).
 welcome.form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const name = welcome.name.value.trim();
@@ -120,7 +101,7 @@ welcome.form.addEventListener('submit', async (event) => {
   button.disabled = false;
 });
 
-// Sync a guest profile: this device joins it.
+// Sync an account from another device: this device joins it.
 welcome.codeForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const code = asCode(welcome.code.value);
@@ -164,8 +145,8 @@ if (!noProfile()) showRooms();
 
 // --- Getting into a room that already exists --------------------------------
 // With an invite link, pasted here (the installed app has no address bar to
-// paste it into), or with a code from another device on a guest profile,
-// which puts this device in that profile (see shared/account.js).
+// paste it into), or with a code from another device, which puts this
+// device in that device's account (see shared/account.js).
 const joinForm = document.getElementById('join-room');
 const joinInput = document.getElementById('join-text');
 const joinNote = document.getElementById('join-note');
@@ -179,7 +160,7 @@ async function bringAcross(code, quietly = false) {
     const n = moved.rooms.length;
     joinNote.className = 'message';
     joinNote.textContent = quietly && moved.fresh.length === 0 ? ''
-      : `Welcome back${moved.name ? `, ${moved.name}` : ''}. ${n === 0 ? 'This device is in your profile now.' : `Your ${n === 1 ? 'room is' : `${n} rooms are`} here.`}`;
+      : `Welcome back${moved.name ? `, ${moved.name}` : ''}. ${n === 0 ? 'This device is in your account now.' : `Your ${n === 1 ? 'room is' : `${n} rooms are`} here.`}`;
     return true;
   } catch (failure) {
     const offline = failure.message.startsWith('Can’t reach');
@@ -222,11 +203,6 @@ if (carried) {
   bringAcross(carried, true).then((ok) => { if (!ok) refresh(); });
 } else {
   refresh();
-}
-
-// Sent here from a room's join screen to sign in first.
-if (new URLSearchParams(location.search).has('signin') && !cachedProfile().signed_in) {
-  openSignIn({ guest: !noProfile(), onDone: signedIn });
 }
 
 form.addEventListener('submit', async (event) => {

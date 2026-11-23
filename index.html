@@ -24,46 +24,38 @@
     <p class="lede">Games played by turns, together.</p>
 
     <div class="stack">
-      <section id="me" class="card me" aria-label="Your profile">
+      <section id="me" class="card me" aria-label="Your account">
         <button type="button" id="me-edit" class="profile-button" aria-label="Edit your profile" title="Edit your profile"></button>
         <div class="who">
           <strong id="me-name"></strong>
           <span id="me-kind"></span>
         </div>
         <div class="row">
-          <button type="button" id="me-sign-in" class="quiet">Sign in</button>
           <button type="button" id="me-code" class="quiet">Use on another device</button>
-          <button type="button" id="me-sign-out" class="quiet" hidden>Sign out</button>
         </div>
       </section>
 
-      <section id="welcome" class="stack" hidden aria-label="Set up your profile">
+      <section id="welcome" class="stack" hidden aria-label="Set up your account">
         <p id="welcome-note" class="hint" hidden>You’re signed out on this device.</p>
         <form id="welcome-new" class="card">
           <fieldset>
-            <legend>New here? Create a profile</legend>
+            <legend>New here? Create an account</legend>
             <label class="field">
               <span>Your name</span>
               <input type="text" id="welcome-name" maxlength="20" required autocomplete="off">
             </label>
-            <button type="submit">Create profile</button>
+            <button type="submit">Create account</button>
             <p id="welcome-new-error" class="message bad" role="alert"></p>
           </fieldset>
         </form>
-        <div class="card plain">
-          <fieldset>
-            <legend>Have an account?</legend>
-            <button type="button" id="welcome-sign-in">Sign in</button>
-          </fieldset>
-        </div>
         <form id="welcome-code" class="card">
           <fieldset>
-            <legend>Have a guest profile on another device?</legend>
+            <legend>Have an account on another device?</legend>
             <label class="field">
               <span>Its code (there: Use on another device)</span>
               <input type="text" id="welcome-code-text" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
             </label>
-            <button type="submit">Sync profile</button>
+            <button type="submit">Sync account</button>
             <p id="welcome-code-note" class="message bad" role="alert"></p>
           </fieldset>
         </form>
@@ -92,7 +84,7 @@
 
       <form id="join-room" class="card">
         <fieldset>
-          <legend>Join a room, or a profile</legend>
+          <legend>Join a room</legend>
           <label class="field">
             <span>Invite link, or a code from another device</span>
             <input type="text" id="join-text" autocomplete="off" autocapitalize="off" spellcheck="false" required>
