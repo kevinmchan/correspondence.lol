@@ -9,11 +9,11 @@ const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-
 //   c part of the highlighted colour   . plain   T a post being double-tapped
 // A lowercase letter after a cross keeps that square in the highlighted colour.
 const CARDS = [
-  { caption: '1 post per colour', tint: '#f2a391', cells: ['0c', '1c', '2c', '3c', 'Lc', '.', '4c', '.', '.'] },
-  { caption: '1 post per row and column', tint: '#8ec9ef', cells: ['0', 'L', '1', '.', '2', '.', '.', '3', '.'] },
-  { caption: 'Posts can’t touch', tint: '#bcdc8a', cells: ['0', '1', '2', '3', 'L', '4', '5', '6', '7'] },
-  { caption: 'Drag to cross out several', tint: '#a9a7ee', drag: true, cells: ['.', '.', '.', '0', '1', '2', '.', '.', '.'] },
-  { caption: 'Double-tap to open a post', tint: '#f5cf6e', cells: ['.', '.', '.', '.', 'T', '.', '.', '.', '.'] },
+  { caption: '1 post per colour', tint: '#f08a76', cells: ['0c', '1c', '2c', '3c', 'Lc', '.', '4c', '.', '.'] },
+  { caption: '1 post per row and column', tint: '#9ad3f7', cells: ['0', 'L', '1', '.', '2', '.', '.', '3', '.'] },
+  { caption: 'Posts can’t touch', tint: '#7cc46a', cells: ['0', '1', '2', '3', 'L', '4', '5', '6', '7'] },
+  { caption: 'Drag to cross out several', tint: '#f3b3e6', drag: true, cells: ['.', '.', '.', '0', '1', '2', '.', '.', '.'] },
+  { caption: 'Double-tap to open a post', tint: '#f8d95a', cells: ['.', '.', '.', '.', 'T', '.', '.', '.', '.'] },
 ];
 
 let dialog = null;

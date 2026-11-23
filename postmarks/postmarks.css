@@ -57,7 +57,9 @@
   display: grid;
   place-items: center;
   background: var(--tile);
-  color: #22303c;
+  background-image: var(--pat, none);
+  background-size: var(--pat-size, auto);
+  color: var(--on, #22303c);
   font-family: system-ui, sans-serif;
   font-size: calc(52cqw / var(--n));
   font-weight: 300;
@@ -68,15 +70,47 @@
   transition: transform 80ms ease, filter 120ms ease, background-color 160ms ease;
 }
 
-.cell.d0 { --tile: #f2a391; }
-.cell.d1 { --tile: #f5cf6e; }
-.cell.d2 { --tile: #bcdc8a; }
-.cell.d3 { --tile: #7fd0b8; }
-.cell.d4 { --tile: #8ec9ef; }
-.cell.d5 { --tile: #a9a7ee; }
-.cell.d6 { --tile: #e2a3e3; }
-.cell.d7 { --tile: #cfae8a; }
-.cell.d8 { --tile: #b9c4cc; }
+/* Nine district colours, spread out in lightness as well as hue so that
+   neighbours are easy to tell apart. --on is the colour of marks drawn on a
+   tile, --pc the colour of its pattern (see below). */
+.cell { --pc: rgb(0 0 0 / 0.17); }
+.cell.d0 { --tile: #f08a76; }
+.cell.d1 { --tile: #f8d95a; }
+.cell.d2 { --tile: #7cc46a; }
+.cell.d3 { --tile: #2aa198; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
+.cell.d4 { --tile: #9ad3f7; }
+.cell.d5 { --tile: #5a55c8; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
+.cell.d6 { --tile: #f3b3e6; }
+.cell.d7 { --tile: #8a5a36; --on: #fff; --pc: rgb(255 255 255 / 0.26); }
+.cell.d8 { --tile: #cdd6dd; }
+
+/* On a dark background the same hues are drawn in a narrower band of
+   lightness: nothing near white (it glares) and nothing near the background
+   (it sinks), and a little less saturated. */
+@media (prefers-color-scheme: dark) {
+  .cell { --pc: rgb(0 0 0 / 0.2); }
+  .cell.d0 { --tile: #d98572; }
+  .cell.d1 { --tile: #d6ba5c; }
+  .cell.d2 { --tile: #72ad66; }
+  .cell.d3 { --tile: #3f9d95; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d4 { --tile: #82b7da; }
+  .cell.d5 { --tile: #736dd0; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d6 { --tile: #d09ac6; }
+  .cell.d7 { --tile: #9c6f4b; --on: #fff; --pc: rgb(255 255 255 / 0.2); }
+  .cell.d8 { --tile: #a9b3bc; }
+}
+
+/* Patterns, for anyone who would rather not tell districts apart by colour
+   alone. Off unless switched on in the profile menu. */
+.patterns .cell.d0 { --pat: repeating-linear-gradient(45deg, var(--pc) 0 0.07em, transparent 0.07em 0.26em); }
+.patterns .cell.d1 { --pat: radial-gradient(circle, var(--pc) 0.065em, transparent 0.075em); --pat-size: 0.27em 0.27em; }
+.patterns .cell.d2 { --pat: repeating-linear-gradient(0deg, var(--pc) 0 0.07em, transparent 0.07em 0.27em); }
+.patterns .cell.d3 { --pat: linear-gradient(var(--pc) 0.06em, transparent 0.06em), linear-gradient(90deg, var(--pc) 0.06em, transparent 0.06em); --pat-size: 0.3em 0.3em; }
+.patterns .cell.d4 { --pat: repeating-linear-gradient(-45deg, var(--pc) 0 0.07em, transparent 0.07em 0.26em); }
+.patterns .cell.d5 { --pat: repeating-linear-gradient(90deg, var(--pc) 0 0.07em, transparent 0.07em 0.27em); }
+.patterns .cell.d6 { --pat: conic-gradient(var(--pc) 25%, transparent 0 50%, var(--pc) 0 75%, transparent 0); --pat-size: 0.4em 0.4em; }
+.patterns .cell.d7 { --pat: repeating-linear-gradient(45deg, var(--pc) 0 0.05em, transparent 0.05em 0.3em), repeating-linear-gradient(-45deg, var(--pc) 0 0.05em, transparent 0.05em 0.3em); }
+.patterns .cell.d8 { --pat: radial-gradient(circle, transparent 0.09em, var(--pc) 0.1em 0.15em, transparent 0.16em); --pat-size: 0.46em 0.46em; }
 
 .board:not([aria-disabled="true"]) .cell:hover { filter: brightness(1.06); }
 .board:not([aria-disabled="true"]) .cell:active { transform: translateY(1px) scale(0.97); }
@@ -87,7 +121,9 @@
 /* Ruled-out squares fade back so the squares still in play stand out. */
 .cell[data-state="cross"] {
   background: color-mix(in srgb, var(--tile) 42%, var(--paper));
-  color: color-mix(in srgb, #22303c 45%, var(--tile));
+  background-image: var(--pat, none);
+  background-size: var(--pat-size, auto);
+  color: color-mix(in srgb, var(--ink) 55%, var(--tile));
   box-shadow: none;
 }
 
@@ -100,6 +136,24 @@
   box-shadow: none;
 }
 
+/* Faded toward near-black, colours go muddy (yellow to olive, coral to brown).
+   In the dark they are dimmed with their hue kept instead, and the cross is
+   drawn in the district's own colour. */
+@media (prefers-color-scheme: dark) {
+  .cell[data-state="cross"] {
+    background: color-mix(in oklch, var(--tile) 36%, #1f272e);
+    background-image: var(--pat, none);
+    background-size: var(--pat-size, auto);
+    color: color-mix(in srgb, var(--tile) 80%, #fff);
+  }
+  .cell[data-state="miss"] {
+    background:
+      repeating-linear-gradient(45deg, rgb(232 102 79 / 0.3) 0 4px, transparent 4px 8px),
+      color-mix(in oklch, var(--tile) 36%, #1f272e);
+    color: #f08a76;
+  }
+}
+
 .cell[data-state="letter"] {
   box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14), inset 0 0 0 0.09em rgb(255 255 255 / 0.75);
 }
@@ -107,6 +161,7 @@
 .cell[data-state="letter"] svg { filter: drop-shadow(0 0.04em 0.03em rgb(0 0 0 / 0.25)); }
 .cell[data-state="reveal"] svg { opacity: 0.45; }
 
+/* a friend's last move, in a shared game */
 .cell.last { outline: 2.5px solid var(--ink); outline-offset: 1px; }
 .cell.drawing { outline: 2.5px solid var(--accent); outline-offset: 1px; }
 .cell:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; z-index: 1; }
