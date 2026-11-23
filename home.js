@@ -40,13 +40,18 @@ async function bringAcross(code, quietly = false) {
   try {
     const moved = await claim(code);
     showRooms();
-    const n = moved.rooms.length;
+    // On a quiet start, speak up only when something new came across.
+    const n = quietly ? moved.fresh.length : moved.rooms.length;
+    const names = moved.fresh.map((room) => room.name).join(', ');
     joinNote.className = 'message';
-    joinNote.textContent = n === 0 ? '' : `Welcome back${moved.name ? `, ${moved.name}` : ''}. Your ${n === 1 ? 'room is' : `${n} rooms are`} here.`;
+    joinNote.textContent = n === 0 ? (quietly ? '' : 'Nothing to bring across: your browser has no rooms.')
+      : moved.fresh.length === 0 ? 'You’re up to date: nothing new in your browser.'
+      : moved.fresh.length < moved.rooms.length ? `Brought across from your browser: ${names}.`
+      : `Welcome back${moved.name ? `, ${moved.name}` : ''}. Your ${n === 1 ? 'room is' : `${n} rooms are`} here.`;
     return true;
   } catch (failure) {
     const offline = failure.message.startsWith('Can’t reach');
-    if (quietly && !offline) giveUpOn(code); // used or expired: stop trying on every start
+    if (quietly && !offline) giveUpOn(code); // expired or another device's: stop trying on every start
     if (!quietly) {
       joinNote.className = 'message bad';
       joinNote.textContent = failure.message;
@@ -78,6 +83,7 @@ joinForm.addEventListener('submit', async (event) => {
 });
 
 // The installed app, opened from an icon that carries a code: hand it in.
+// It does so on every start, which also fetches rooms joined in the browser since.
 const carried = codeInAddress();
 if (carried) {
   bringAcross(carried, true);

@@ -1,17 +1,17 @@
 // Moving to the installed app. On an iPhone or iPad the app on the Home Screen
 // starts with empty storage: it does not know who its owner was in the browser
-// or which rooms they joined. So the browser asks the server for a one-time
-// code that stands for its places in those rooms, and
-//   - bakes it into the address the Home Screen icon opens, so the app can
-//     hand it in by itself the first time it starts, and
+// or which rooms they joined. So the browser asks the server for a code that
+// stands for its places in those rooms (good for one app only), and
+//   - bakes it into the address the Home Screen icon opens, so the app hands
+//     it in by itself each time it starts, and
 //   - shows it in the install guide, to be typed in if that did not work.
 
 import { rpc } from './api.js';
 import { load, myToken, recentRooms, rememberRoom, save, setMyName } from './identity.js';
 import { saveLook } from './profile.js';
 
-const CODE_KEY = 'correspondence:handoff:v1'; // { code, until }: this browser's current code
-const DONE_KEY = 'correspondence:handoff-done:v1'; // the last code this device handed in
+const CODE_KEY = 'correspondence:handoff:v2'; // { code, until }: this browser's current code
+const SPENT_KEY = 'correspondence:handoff-spent:v1'; // a code the server turned down: not worth trying again
 const HALF_DAY = 12 * 3600 * 1000;
 
 export const prettyCode = (code) => `${code.slice(0, 4)}-${code.slice(4)}`;
@@ -58,21 +58,27 @@ export async function bakeIntoIcon() {
   }
 }
 
-// Hand a code in. Its rooms, name and look become this device's.
+// Hand a code in. The rooms of the browser it came from become this device's,
+// with its name and look. The same device can hand the same code in again
+// later, to fetch rooms that browser has joined since. `fresh` in the answer
+// lists the rooms that were not here before.
 export async function claim(code) {
   const moved = await rpc('handoff_claim', { p_code: code, p_token: myToken() });
-  save(DONE_KEY, code);
-  for (const room of [...moved.rooms].reverse()) rememberRoom(room.id, room.name);
-  if (moved.name) setMyName(moved.name);
-  if (moved.avatar && Number.isInteger(moved.color)) saveLook(moved.avatar, moved.color);
+  const known = new Set(recentRooms().map((room) => room.id));
+  moved.fresh = moved.rooms.filter((room) => !known.has(room.id));
+  for (const room of [...moved.fresh].reverse()) rememberRoom(room.id, room.name);
+  if (moved.fresh.length > 0 || known.size === 0) {
+    if (moved.name) setMyName(moved.name);
+    if (moved.avatar && Number.isInteger(moved.color)) saveLook(moved.avatar, moved.color);
+  }
   return moved;
 }
 
-// The code the app was opened with, if it has not been handed in yet.
+// The code the app was opened with, unless the server has already turned it down.
 export function codeInAddress() {
   const code = asCode(new URLSearchParams(location.hash.slice(1)).get('move') ?? '');
-  return code && load(DONE_KEY) !== code ? code : null;
+  return code && load(SPENT_KEY) !== code ? code : null;
 }
 
-// It can only be used once: do not try it again on every start.
-export const giveUpOn = (code) => save(DONE_KEY, code);
+// Expired, or another device's by now: do not try it again on every start.
+export const giveUpOn = (code) => save(SPENT_KEY, code);
