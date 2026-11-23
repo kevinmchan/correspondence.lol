@@ -15,6 +15,7 @@ const stored = (key) => {
 let muted = stored(KEY) === 'off';
 let musicOff = stored(MUSIC_KEY) === 'off';
 
+const MUSIC_LEVEL = 0.3; // how loud the music is, next to the effects' 0.5
 let ctx = null;
 let out = null; // effects
 let band = null; // music, with its echo
@@ -39,7 +40,7 @@ function unlock() {
   out.connect(squash).connect(ctx.destination);
   // the music sits further back: quieter, and with a soft echo behind it
   band = ctx.createGain();
-  band.gain.value = 0.5;
+  band.gain.value = MUSIC_LEVEL;
   const echo = ctx.createDelay(1);
   echo.delayTime.value = 0.42;
   const tail = ctx.createGain();
@@ -77,7 +78,7 @@ export const isMusicOff = () => musicOff;
 export function setMusicOff(value) {
   musicOff = value;
   remember(MUSIC_KEY, value);
-  if (band) band.gain.setTargetAtTime(value ? 0 : 0.5, ctx.currentTime, 0.25); // fade, do not cut
+  if (band) band.gain.setTargetAtTime(value ? 0 : MUSIC_LEVEL, ctx.currentTime, 0.25); // fade, do not cut
 }
 
 // One note: a pitch (optionally gliding to another), a waveform and a quick
@@ -289,7 +290,7 @@ function scheduleBeat(at, n) {
 
 function startMusic() {
   if (musicTimer || !ctx) return;
-  band.gain.value = musicOff ? 0 : 0.5;
+  band.gain.value = musicOff ? 0 : MUSIC_LEVEL;
   // beats are written onto the engine's clock a little ahead of time
   musicTimer = setInterval(() => {
     if (ctx.state !== 'running' || musicOff) {
