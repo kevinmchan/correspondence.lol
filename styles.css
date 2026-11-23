@@ -932,11 +932,14 @@ section.card.me:active { transform: translateY(0.18rem); box-shadow: 0 0.04rem 0
    Screens are stacked in the same place (shared/nav.js). For the length of a
    move two of them are there together: the one being left slides off as the
    next slides in. Deeper into the app moves leftwards, coming back rightwards. */
-#screens { display: grid; min-height: 100%; }
+#screens { display: grid; min-height: 100%; position: relative; overflow: clip; }
 .screen { grid-area: 1 / 1; min-width: 0; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .screen > main { flex: 1; min-height: 0; }
 .install-banner ~ main { min-height: 0; }
-.screen.leaving { pointer-events: none; animation: leave-forth 340ms cubic-bezier(0.4, 0, 0.6, 1) both; }
+/* The screen being left is lifted out of the layout, so that only the new one
+   decides how tall the page is. (Otherwise a tall screen on its way out holds
+   the page open, and the new screen's contents jump when it finally goes.) */
+.screen.leaving { position: absolute; top: 0; left: 0; right: 0; grid-area: auto; pointer-events: none; animation: leave-forth 340ms cubic-bezier(0.4, 0, 0.6, 1) both; }
 .screen.leaving.back { animation-name: leave-back; }
 .screen.entering { animation: enter-forth 360ms cubic-bezier(0.15, 0.85, 0.3, 1) both; }
 .screen.entering.back { animation-name: enter-back; }
