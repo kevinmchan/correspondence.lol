@@ -126,7 +126,7 @@
         <p id="status" class="status" role="status" aria-live="polite"></p>
       </div>
       <p id="version" class="version"></p>
-      <!-- A place on the map, with a little of the map showing round it: the portal Penny wants to take you through (penny/walk.js). She herself is not on the page: see penny/pal.js. -->
+      <!-- The page is a map seen from very far up, and one place is marked on it: the portal Penny wants to take you through (penny/walk.js). It itself is not on the page: see penny/pal.js. -->
       <div class="map-far home-map" aria-hidden="true"></div>
       <a href="/?walk" id="portal" class="portal home-portal" aria-label="Walk the map with Penny"></a>
     </main>
@@ -412,8 +412,11 @@
     <main class="walk">
       <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
       <button type="button" id="walk-trail" class="walk-trail" aria-label="The sound Penny is looking for, as far as it has been heard" hidden></button>
+      <p id="walk-feeling" class="sr-only" role="status"></p>
       <div class="walk-ground">
         <div class="map-far walk-map" aria-hidden="true"></div>
+        <div class="walk-light" aria-hidden="true"></div>
+        <div id="walk-known" class="walk-known" aria-hidden="true"></div>
         <div id="walk-board" class="board walk-board" role="group" aria-label="A place on the map"></div>
         <button type="button" id="walk-portal" class="portal" aria-label="On to the next place" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
       </div>
@@ -437,16 +440,6 @@
           <rect class="slot-light" x="36" y="206" width="20" height="5" rx="2.2"/>
           <rect x="39" y="219" width="14" height="16" rx="1.5" fill="#f6f1e7" opacity="0.85"/>
           <rect x="28" y="256" width="36" height="6" rx="2" fill="#8f2e1e"/>
-        </g>
-        <g class="p-dot">
-          <ellipse class="shade" cx="0" cy="1" rx="18" ry="3"/>
-          <g class="act"><g class="bob"><g transform="scale(1.2) translate(-33 -77)">
-            <rect x="17" y="43" width="32" height="34" rx="3" fill="#2aa198"/>
-            <rect class="perf" x="17" y="43" width="32" height="34" rx="3"/>
-            <rect x="22.5" y="48.5" width="21" height="23" rx="1.5" fill="none" stroke="#f6f1e7" stroke-width="1.2" opacity="0.55"/>
-            <g class="eyes"><circle cx="28" cy="58" r="1.9"/><circle cx="38" cy="58" r="1.9"/></g>
-            <path class="mouth" d="M30 63.5 q3 2.6 6 0"/>
-          </g></g></g>
         </g>
         <g class="p-penny">
           <ellipse class="shade" cx="0" cy="1" rx="33" ry="3.5"/>

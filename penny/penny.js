@@ -1,30 +1,35 @@
-// Penny: her voice, and what she remembers.
+// Penny: its voice, and what it remembers.
 //
-// She cannot speak, read or write. What she has is a closed-mouth hum that
-// comes from her seal, on the five notes the rest of the app keeps to. Every
-// screen she is on (the home page, the map, her story) hums through here.
+// It cannot speak, read or write. What it has is a closed-mouth hum that
+// comes from its seal, on the five notes the rest of the app keeps to. Every
+// screen it is on (the home page, the map, its story) hums through here.
 
 import { audio, holdMusic, isMuted, noise } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
+import { A4, A5, C5, C6, D5, E5, G4, G5 } from './notes.js';
 
-export const [G4, A4, C5, D5, E5, G5, A5, C6] = [392, 440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5];
+export { A4, A5, C5, C6, D5, E5, G4, G5 };
 
-// Her phrases: [pitch, seconds, pitch to glide to]. A pitch of 0 is a rest.
+// Its phrases: [pitch, seconds, pitch to glide to]. A pitch of 0 is a rest.
+// None of them carries a rhythm to be copied: they are feelings, not signals.
 export const HELLO = [[D5, 0.26], [G5, 0.55]];
-export const ASK = [[G4, 0.5, C5]]; // one note that turns up at the end
+export const ASK = [[G4, 0.5, C5]]; // one note that turns up at the end: it cannot tell
 export const SAG = [[E5, 0.5, D5], [C5, 1.0]];
 export const OOPS = [[E5, 0.22, D5], [C5, 0.4]];
 export const TRILL = [[G5, 0.1], [A5, 0.1], [G5, 0.1], [A5, 0.1], [C6, 0.55]];
 export const YES = [[G5, 0.12], [C6, 0.3]];
 export const THIS_WAY = [[E5, 0.2], [G5, 0.2], [C6, 0.5]];
-export const HERE = [[G5, 0.11], [0, 0.06], [G5, 0.18]]; // twice, quickly: it is right here
-export const NO_NO = [[E5, 0.13], [0, 0.05], [C5, 0.2]]; // not there
-export const COLD = [[A4, 0.2, G4]]; // nothing that she can hear
-export const WARMER = (warm) => (warm > 0.4 ? [[D5, 0.17, G5]] : [[C5, 0.17, D5]]); // closer, and how close
-export const MM = [[C5, 0.16]]; // content
-export const ALARM = [[A5, 0.09], [0, 0.04], [A5, 0.09], [0, 0.04], [A5, 0.09], [0, 0.04], [A5, 0.15]];
+export const GASP = [[C5, 0.16, A5]]; // it is right here
+export const NEAR = [[C5, 0.17, D5]]; // close by
+export const NO_NO = [[E5, 0.13], [0, 0.05], [C5, 0.2]]; // not there: the rules say so
+export const LET_GO = [[E5, 0.3, D5]]; // a breath let out
+export const WONDER = [[C5, 0.5, E5]]; // watching a rule take its squares
+export const MM = [[C5, 0.16]]; // content: yes, it can see why
+export const RELIEF = [[D5, 0.2, E5]];
+export const ALARM = [[A5, 0.09], [0, 0.04], [A5, 0.09], [0, 0.04], [E5, 0.28, D5]];
 export const PLEASE = [[E5, 0.32, G5], [G5, 0.75]];
 export const SIGH = [[D5, 0.6, C5]];
+export const LONGING = [[E5, 0.5, G5], [G5, 0.5, E5]]; // up, and back down: after something that is over
 
 // Whether the walk through the first places has been finished on this device,
 // and which place comes next.
@@ -34,10 +39,15 @@ export const hasWalked = () => load(WALKED_KEY) === true;
 export const setWalked = () => save(WALKED_KEY, true);
 export const placeReached = () => (Number.isInteger(load(PLACE_KEY)) ? load(PLACE_KEY) : 0);
 export const setPlaceReached = (index) => save(PLACE_KEY, index);
+// Whether Dot has been found yet. Penny sets out alone: Dot is met a quarter
+// of the way through, at the end of the first places, and stays from then on.
+const DOT_KEY = 'penny:dot:v1';
+export const hasDot = () => load(DOT_KEY) === true;
+export const setDot = () => save(DOT_KEY, true);
 
 // A voice for one screen, ending with its `life`.
 //   onNote(pitch, seconds, tag): called as each note starts, so the screen can
-//     show it (her seal brightens); `tag` is whatever sing() was given
+//     show it (its seal brightens); `tag` is whatever sing() was given
 //   alone: the app's music stands aside while this screen is up
 export function createVoice(life, { onNote = () => {}, alone = false } = {}) {
   let bus = null;
@@ -106,7 +116,7 @@ export function createVoice(life, { onNote = () => {}, alone = false } = {}) {
   }
 
   return {
-    // Whether she can be heard yet (sound needs a first touch, and may be off).
+    // Whether it can be heard yet (sound needs a first touch, and may be off).
     get audible() {
       return Boolean(audio()) && !isMuted();
     },

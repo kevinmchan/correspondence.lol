@@ -1,16 +1,19 @@
-// Penny's story (/?penny), told without a word: no captions, no instructions. The only
-// sound on this screen is her voice, a closed-mouth hum that comes from her
+// Penny's story (/?penny), told without a word: no captions, no instructions.
+// The only sound on this screen is Penny's voice, a closed-mouth hum from its
 // seal, and the seal brightens with every note so the voice can be seen too.
 //
-// What happens: she is alone in the rain; she feels something warm inside her;
-// she calls out and nothing comes back; Dot turns up and a post box with him;
-// she hums into the post, and then she waits. The answer is a touch from
-// whoever is watching. Until it comes she goes on waiting, calling less and
-// less often. Once answered she is glad, and stays glad: after that every touch
-// is another answer.
+// What happens: Penny is alone in the rain; feels something warm inside; calls
+// out, and nothing comes back; morning comes, and a post box with it; Penny
+// hums into the post, and then waits. (Penny is alone in all of this: Dot is
+// met later, a quarter of the way through what follows.) Until the screen is
+// touched Penny goes on waiting, calling less and less often; a touch lets the
+// story go on, and an answer comes. Where the answer comes from, and who sent
+// it, the story does not say: it is a light from a long way off, and after it
+// Penny is glad. That one answer is why Penny is searching now
+// (penny/mail.js). Afterwards a touch has Penny write again, and nothing more
+// comes back.
 
 import { audio, isMuted } from '/postmarks/sound.js';
-import { COLORS, savedLook } from '/shared/profile.js';
 import { A4, ASK, C5, C6, D5, E5, G4, G5, A5, HELLO, SAG, TRILL, createVoice } from './penny.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -27,7 +30,7 @@ const JOY = [[D5, 0.24], [G5, 0.42], [0, 0.12], [E5, 0.8], [0, 0.1], [G5, 0.3], 
 const GLAD = [HELLO, [[E5, 0.2], [G5, 0.2], [A5, 0.45]], TRILL];
 
 const GROUND = 262; // where feet stand, in the drawing's own units
-const SEAL_UP = 25.8; // her seal, above her feet
+const SEAL_UP = 25.8; // its seal, above its feet
 const SLOT = { x: 58, y: 208.5 }; // the post box's slot
 const BOX_TOP = { x: 46, y: 186 };
 const STAR = { x: 160, y: 50 };
@@ -38,7 +41,6 @@ export function mount(root, life) {
   const stage = root.querySelector('.penny-stage');
   const rain = root.querySelector('.penny-rain');
   const penny = stage.querySelector('.p-penny');
-  const dot = stage.querySelector('.p-dot');
   const box = stage.querySelector('.p-box');
   const star = stage.querySelector('.p-star');
   const seal = stage.querySelector('.seal');
@@ -75,7 +77,7 @@ export function mount(root, life) {
     const flight = circle.animate(frames, { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
     return Promise.race([flight.finished.catch(() => {}), wait(ms + 50)]).then(() => circle.remove());
   }
-  // Each note she hums: the seal brightens, and the note leaves her, either up
+  // Each note it hums: the seal brightens, and the note leaves it, either up
   // into the air or across into the post.
   function show(freq, dur, into) {
     seal.classList.remove('sound');
@@ -98,7 +100,7 @@ export function mount(root, life) {
     what.classList.add('flash');
   }
 
-  // The app's music stands aside here: nothing sounds but her.
+  // The app's music stands aside here: nothing sounds but it.
   const voice = createVoice(life, { onNote: show, alone: true });
   const sing = (phrase, level = 1, { into = 'air', breath = 1 } = {}) => voice.sing(phrase, level, { breath, tag: into });
 
@@ -127,15 +129,16 @@ export function mount(root, life) {
       life.setTimeout(() => heart.remove(), 1800 + i * 140);
     }
   }
-  // What she posted leaves the box for somewhere far away.
+  // What it posted leaves the box for somewhere far away.
   function away() {
     star.classList.add('lit');
     if (still) return wait(600).then(() => flash(star));
     return fly(mote('#f8d95a', 2.6), [BOX_TOP, { x: 96, y: 96 }, { ...STAR, s: 0.5 }], 1700).then(() => flash(star));
   }
-  // And an answer comes back the same way, in the colour of whoever sent it.
+  // And an answer comes back the same way. It is the colour of the star it
+  // comes from and of nothing else: nothing about it says whose it is.
   async function answer() {
-    const colour = COLORS[savedLook()?.color] ?? '#2aa198';
+    const colour = '#f8d95a';
     flash(star);
     if (still) {
       await wait(700);
@@ -151,8 +154,8 @@ export function mount(root, life) {
 
   // --- A touch ---------------------------------------------------------------------
   let touched = 0; // when the screen was first touched
-  let waiting = null; // while she waits: what to call when an answer is sent
-  let settled = false; // the story has been told; she is glad
+  let waiting = null; // while it waits: what to call when an answer is sent
+  let settled = false; // the story has been told; it is glad
   let busy = false;
   async function touch(onPenny) {
     touched ||= performance.now();
@@ -167,9 +170,11 @@ export function mount(root, life) {
         hearts(1);
         await sing(HELLO);
       } else {
-        await answer();
-        act(penny, 'hop');
-        await sing(GLAD[Math.floor(Math.random() * GLAD.length)]);
+        // it writes again, and it goes; this time nothing comes back
+        look(penny, -1.2, -0.6);
+        await sing(GLAD[Math.floor(Math.random() * GLAD.length)], 1, { into: 'post' });
+        await away();
+        look(penny, 0, 0);
       }
       busy = false;
     }
@@ -204,7 +209,7 @@ export function mount(root, life) {
     await sing(LONELY, 0.6);
     await wait(1800);
 
-    // something warm inside her, that she cannot read
+    // something warm inside it, that it cannot read
     rain.classList.add('thin');
     penny.classList.add('warm');
     await wait(1500);
@@ -215,7 +220,7 @@ export function mount(root, life) {
     await sing(INSIDE_SURER, 0.75);
     await wait(1000);
 
-    // she calls out, one way and the other, and nothing comes back
+    // it calls out, one way and the other, and nothing comes back
     rain.classList.add('gone');
     look(penny, -1.5, -0.8);
     await sing(HELLO, 0.9);
@@ -228,40 +233,28 @@ export function mount(root, life) {
     await sing(SAG, 0.6);
     await wait(1400);
 
-    // Dot
+    // Morning comes anyway, and with it something it has not seen before: a post box
     main.dataset.sky = 'dawn';
-    stand(dot, 178);
-    act(dot, 'hop');
-    await wait(900);
-    look(penny, 1.6, 0);
-    penny.classList.remove('low');
-    act(dot, 'hop');
-    await wait(700);
-    await sing(ASK, 0.8);
-    await wait(500);
-
-    // and the post box Dot knows about
+    await wait(1500);
     box.classList.add('here');
-    look(dot, -1.4, -0.3);
-    await wait(900);
+    await wait(1100);
+    penny.classList.remove('low');
     look(penny, -1.6, -0.3);
-    await wait(700);
-    stand(dot, 168);
-    act(dot, 'hop');
-    await wait(250);
+    await wait(800);
+    await sing(ASK, 0.8);
+    await wait(600);
     pennyX = 106;
     stand(penny, pennyX);
     act(penny, 'wiggle');
     await wait(1400);
 
-    // she hums what she carries into the post
+    // it hums what it carries into the post
     await sing(LETTER, 1, { into: 'post' });
     await wait(900);
     await away();
 
     // and waits
     look(penny, 1.2, -1.2);
-    look(dot, 0.6, -1.2);
     const answered = new Promise((sent) => { waiting = sent; });
     (async () => {
       let pause = 4200;
@@ -282,22 +275,18 @@ export function mount(root, life) {
     penny.classList.remove('low');
     penny.classList.add('glad');
     look(penny, 0, 0);
-    look(dot, -1.2, 0);
     act(penny, 'hop');
     await sing(GASP, 0.9, { breath: 3 });
     await wait(350);
     hearts(3);
     await sing(TRILL);
     main.dataset.sky = 'day';
-    await wait(900);
-    act(dot, 'hop');
-    await wait(300);
+    await wait(1200);
 
-    // and she writes back
+    // and it writes back
     await sing(JOY, 1.05, { into: 'post' });
     await wait(700);
     await away();
-    look(dot, 0, 0);
     settled = true;
   }
   story();

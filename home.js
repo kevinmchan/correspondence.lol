@@ -6,7 +6,7 @@ import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
-import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasWalked, placeReached } from '/penny/penny.js';
+import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
 import { notesHeard, playMail, remembered } from '/penny/mail.js';
 
@@ -173,50 +173,85 @@ export function mount(root, life) {
 
   // --- Penny and Dot --------------------------------------------------------------
   // They are not on the page. Penny stands at the bottom edge of the window
-  // (penny/pal.js), life size, with Dot beside her, and looks up at this page
-  // the way one looks at a map. Mostly she just watches, her eyes over the
-  // edge. But there are things she wants, and since she cannot say so, she
+  // (penny/pal.js), life size, with Dot beside it, and looks up at this page
+  // the way one looks at a map. Mostly it just watches, its eyes over the
+  // edge. But there are things it wants, and since it cannot say so, it
   // comes up and shows it:
   //
-  //   The portal, top left: a place on the map she wants to take you to
-  //   (penny/walk.js). Until the first places have been walked she keeps
-  //   coming back to it: she calls, walks along the edge to stand under it,
-  //   looks up at it and back at you. Now and then she stops to remember the
-  //   sound she is looking for, and it can be heard, far off.
+  //   The portal, top left: a place on the map it wants to take you to
+  //   (penny/walk.js). Until the first places have been walked it keeps
+  //   coming back to it: it calls, walks along the edge to stand under it,
+  //   looks up at it and back at you. Now and then it stops to remember the
+  //   sound it is looking for, and it can be heard, far off.
   //
-  //   The app installed. Once you have been through a portal with her, she
+  //   The app installed. Once you have been through a portal with it, it
   //   stands under the Install button and pleads. It is asked a few times, at
   //   longer and longer intervals, then left alone; a no is taken as a no for
   //   the rest of the visit. Nothing waits on it.
   //
-  // A tap on her does whatever she is asking for at that moment; with nothing
-  // asked, it opens her story (penny/story.js). Those moves are made without
-  // the usual sound, so the next thing heard is her.
+  // A tap on it does whatever it is asking for at that moment; with nothing
+  // asked, it opens its story (penny/story.js). Those moves are made without
+  // the usual sound, so the next thing heard is it.
   const portal = $('portal');
-  const pal = callPal(life, { x: 0.7, height: 'peek', mood: 'calm' });
+  const pal = callPal(life, { x: 0.7, height: 'peek', mood: 'calm', dot: hasDot() }); // it is alone until Dot is found, a quarter of the way through (penny/walk.js)
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   const quiet = () => document.visibilityState !== 'visible' || Boolean(document.querySelector('dialog[open], #splash'));
   const installButton = () => root.querySelector('.install-banner [data-act="install"]');
   const canInstall = () => ['ready', 'guide'].includes(window.installState?.()) && Boolean(installButton());
   const SAID_NO_KEY = 'penny:install-no'; // for this visit only
   const saidNo = () => { try { return sessionStorage.getItem(SAID_NO_KEY) === '1'; } catch { return false; } };
-  let asking = null; // what she is showing you just now: 'portal' | 'install' | null
+  let asking = null; // what it is showing you just now: 'portal' | 'install' | null
   let pleas = 0;
-  let turn = 0; // which of her wants is being shown: so that one does not start while another is going on
+  let turn = 0; // which of its wants is being shown: so that one does not start while another is going on
 
   portal.classList.toggle('calm', hasWalked());
+  // The page is the map from far up: line its squares up with the dots behind
+  // the page, and note where the portal is, for the way through it (walk.css).
+  const map = root.querySelector('.home-map');
+  const lineUp = () => {
+    const main = map.parentElement.getBoundingClientRect();
+    const pitch = 0.875 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const top = main.top + window.scrollY;
+    map.parentElement.style.setProperty('--map-y', `${-(top % pitch)}px`);
+    const at = portal.getBoundingClientRect();
+    const frame = root.getBoundingClientRect();
+    document.documentElement.style.setProperty('--portal-x', `${at.left + at.width / 2 - frame.left}px`);
+    document.documentElement.style.setProperty('--portal-y', `${at.top + at.height / 2 - frame.top}px`);
+  };
+  lineUp();
+  setTimeout(lineUp, 400); // once the banner and whatever else has settled
+  life.on(window, 'resize', lineUp);
   const flare = (what, name) => {
     if (!what) return;
     what.classList.remove(name);
     void what.getBoundingClientRect();
     what.classList.add(name);
   };
+  // Back to waiting: its eyes over the edge, or ducked right down where
+  // something of the page's is under it.
   const settle = () => {
     asking = null;
-    pal.mood('calm').height('peek').goTo(0.7).look(null);
+    pal.mood('calm').goTo(0.7).look(null).settle('peek');
   };
+  setTimeout(() => { if (asking === null) pal.settle('peek'); }, 500);
+  // The page moving under it, or being pressed, while it is up over part of
+  // it: it gets out of the way at once.
+  let scrolled = null;
+  const mind = () => {
+    if (asking !== null && pal.inTheWay) {
+      turn += 1;
+      settle();
+    } else if (asking === null) {
+      pal.settle('peek');
+    }
+  };
+  life.on(window, 'scroll', () => {
+    clearTimeout(scrolled);
+    scrolled = setTimeout(mind, 140);
+  }, { passive: true });
+  life.on(window, 'resize', mind);
 
-  // What she is looking for: a sound, a long way off. She shuts her eyes to
+  // What it is looking for: a sound, a long way off. It shuts its eyes to
   // remember it, and for a moment it is there.
   async function remember() {
     pal.mood('sleepy').look(null);
@@ -266,13 +301,13 @@ export function mount(root, life) {
     pal.look(null).gesture('hop');
     await wait(1700);
     if (mine !== turn) return;
-    pal.look(button).gesture('hop2');
+    pal.look(button).gesture('hop');
     flare(button, 'wanted');
     await wait(2400);
     if (mine === turn) settle();
   }
 
-  // Being let in. She is as glad as she gets.
+  // Being let in. It is as glad as it gets.
   async function celebrate() {
     const mine = ++turn;
     asking = null;
@@ -285,7 +320,7 @@ export function mount(root, life) {
     pal.gesture('jump');
     pal.sing(THIS_WAY, 1);
     await wait(2600);
-    if (mine === turn) pal.mood('glad').height('peek').goTo(0.7);
+    if (mine === turn) pal.mood('glad').goTo(0.7).settle('peek');
   }
 
   life.on(window, 'install', (event) => {
@@ -293,19 +328,19 @@ export function mount(root, life) {
     if (what === 'installed') {
       celebrate();
     } else if (what === 'asked') {
-      // you pressed it: she can hardly look
+      // you pressed it: it can hardly look
       turn += 1;
       asking = 'install';
       pal.rise().mood('thrilled').gesture('jump');
     } else if (what === 'declined') {
-      // a no is a no: she feels it, and lets it be
+      // a no is a no: it feels it, and lets it be
       turn += 1;
-      try { sessionStorage.setItem(SAID_NO_KEY, '1'); } catch { /* she will simply ask once more next time */ }
+      try { sessionStorage.setItem(SAID_NO_KEY, '1'); } catch { /* it will simply ask once more next time */ }
       pal.mood('sad').gesture('sink');
       pal.sing(SIGH, 0.6);
       setTimeout(settle, 2600);
     } else if (what === 'closed') {
-      // the steps have been read: she waits, hoping
+      // the steps have been read: it waits, hoping
       turn += 1;
       pleas = 3;
       pal.mood('hopeful').look(null);
@@ -320,11 +355,11 @@ export function mount(root, life) {
     setTimeout(() => { if (!quiet()) celebrate(); }, 2600);
   }
 
-  // Her wants, one at a time, with long rests between.
+  // Its wants, one at a time, with long rests between.
   (async () => {
     await wait(3200);
-    let since = 0; // portal showings since she last pleaded
-    let gap = 20000; // how long she leaves it before pleading again: twice as long each time
+    let since = 0; // portal showings since it last pleaded
+    let gap = 20000; // how long it leaves it before pleading again: twice as long each time
     let notBefore = 0;
     for (;;) {
       if (!quiet() && asking === null) {
@@ -371,6 +406,10 @@ export function mount(root, life) {
   // they glance toward wherever the page was last touched
   life.on(window, 'pointerdown', (event) => {
     if (event.target.closest?.('.pal')) return;
+    if (asking !== null && pal.inTheWay) {
+      turn += 1;
+      settle();
+    }
     const at = { x: event.clientX, y: event.clientY };
     pal.look(at, 'dot');
     if (asking === null) pal.look(at);

@@ -1,69 +1,29 @@
 // What is in the posts.
 //
-// Every post on the map has a sound inside, and opening one lets it out. Most
-// of it is other people's mail: small bright things, a few notes each, every
-// one in a voice of its own. Penny listens to each and is glad for whoever it
-// was meant for.
+// Every post on the map has a sound inside, and opening a post lets its sound
+// out, once. Most are other people's mail: small bright things, a few notes
+// each, every one in a voice of its own.
 //
-// One sound is the one she is looking for. It is nobody's that we know: a
+// One sound is the one Penny is looking for. It is nobody's that we know: a
 // breath blown across something hollow, low, with an echo behind it, as if it
-// had come a long way. It arrives in pieces, never the whole of it, each
-// piece a little nearer than the last. Who or what makes it is not known, here
-// or anywhere else in the app, and nothing in this file should be read as a
-// clue to it: it is only a sound.
+// had come a long way. It arrives in pieces, never the whole, each piece a
+// little nearer than the last. Who or what makes it is not known, here or
+// anywhere else in the app, and nothing in this file should be read as a clue:
+// it is only a sound. Whose it is belongs to the halfway mark of the
+// adventure, which is not written.
 //
-// What she has heard of it so far is kept on the device, so the search picks
-// up where it was left.
+// And one post has no sound at all: the last post of the fifth place, a
+// quarter of the way through. That one has Dot in it (penny/walk.js).
+//
+// What Penny has heard of the sound so far is kept on the device, so the
+// search picks up where it was left.
 
 import { audio, isMuted, noise, tone } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
-import { A4, A5, C5, C6, D5, E5, G4, G5 } from './penny.js';
+import { E5, G5 } from './notes.js';
+import { SOUND, echoOf } from './places.js';
 
-const D4 = 293.66;
-const E4 = 329.63;
-
-// --- The sound she is after -----------------------------------------------------
-// As much of it as the opening of the story gives away: [pitch, seconds, pitch
-// to glide to]. There is more of it than this.
-const SOUND = [[A4, 0.62], [E4, 0.26], [G4, 0.3], [D4, 0.9, E4]];
-
-// Which piece each place gives up, as [first note, one past the last], and how
-// far off it sounds there (1 is a long way; 0 would be in the room).
-const PIECES = [null, { notes: [0, 1], far: 0.85 }, { notes: [0, 2], far: 0.65 }, { notes: [0, 3], far: 0.45 }, { notes: [1, 4], far: 0.3 }];
-// Her answer to a piece is the same notes hummed back, an octave up.
-const echoOf = (notes) => notes.map(([pitch, dur, to]) => [pitch * 2, dur * 0.7, to ? to * 2 : undefined]);
-
-// --- Other people's mail ---------------------------------------------------------
-// kind is the voice; notes are [pitch, seconds].
-const OTHERS = [
-  { kind: 'pluck', notes: [[C5, 0.16], [E5, 0.16], [G5, 0.3]] },
-  { kind: 'blip', notes: [[G5, 0.1], [G5, 0.1], [C6, 0.22]] },
-  { kind: 'chirp', notes: [[E5, 0.14], [A5, 0.2]] },
-  { kind: 'knock', notes: [[G4, 0.12], [G4, 0.12], [C5, 0.2]] },
-  { kind: 'pluck', notes: [[A5, 0.14], [G5, 0.14], [E5, 0.14], [D5, 0.3]] },
-  { kind: 'bubble', notes: [[C5, 0.12], [D5, 0.12], [E5, 0.12], [G5, 0.24]] },
-  { kind: 'blip', notes: [[E5, 0.12], [D5, 0.12], [C5, 0.26]] },
-  { kind: 'chirp', notes: [[G5, 0.12], [E5, 0.12], [G5, 0.12], [C6, 0.24]] },
-  { kind: 'knock', notes: [[C5, 0.1], [C5, 0.1], [C5, 0.1], [E5, 0.22]] },
-  { kind: 'bubble', notes: [[A4, 0.14], [C5, 0.14], [A5, 0.3]] },
-  { kind: 'pluck', notes: [[D5, 0.2], [G5, 0.34]] },
-];
-
-// What is in the post opened `order`-th (0 for the first) in place `place`.
-// In every place after the first, the last post to be opened is the one with
-// a piece of the sound in it: whichever square that turns out to be.
-export function mailIn(place, order, posts) {
-  const piece = PIECES[place];
-  if (piece && order === posts - 1) {
-    const notes = SOUND.slice(...piece.notes);
-    return { friend: true, notes, far: piece.far, upTo: piece.notes[1], echo: echoOf(notes) };
-  }
-  let before = 0;
-  for (let i = 0; i < place; i++) before += i === 0 ? 1 : 3; // the ordinary posts in the places before this one
-  return { friend: false, ...OTHERS[(before + order) % OTHERS.length] };
-}
-
-// --- What she has heard of it so far --------------------------------------------------
+// --- What it has heard of it so far --------------------------------------------------
 const HEARD_KEY = 'penny:sound:v1'; // how many notes of it, from the first
 export const notesHeard = () => Math.max(0, Math.min(SOUND.length, Number.isInteger(load(HEARD_KEY)) ? load(HEARD_KEY) : 0));
 export function heard(mail) {
@@ -75,7 +35,8 @@ export function soundSoFar() {
   const [low, high] = [Math.min(...pitches), Math.max(...pitches)];
   return SOUND.slice(0, notesHeard()).map(([pitch, dur, to]) => ({ pitch, dur, to, height: (Math.log(to ?? pitch) - Math.log(low)) / (Math.log(high) - Math.log(low)) }));
 }
-// The same, as a piece of mail to play: what she remembers.
+// The same, as a piece of mail to play: what it remembers. A thing remembered
+// is never as near as it was when it happened, so this is always a long way off.
 export const remembered = (far = 0.9) => {
   const notes = SOUND.slice(0, Math.max(1, notesHeard()));
   return { friend: true, notes, far, upTo: notes.length, echo: echoOf(notes) };
@@ -107,7 +68,7 @@ function wires() {
   return rig;
 }
 
-// One note of the sound she is after: breath across something hollow. Mostly
+// One note of the sound it is after: breath across something hollow. Mostly
 // air (noise through a very narrow filter, which gives it a pitch), with a
 // plain tone inside it so the pitch is sure. Slow to start, slow to go.
 function hollow({ ctx, dry, wet }, at, freq, dur, to, far) {
@@ -171,6 +132,21 @@ function other(kind, at, freq, dur, into) {
     noise({ at, dur: 0.07, from: 420, to: 180, q: 1.2, gain: 0.5, into });
     tone({ at, freq: freq / 2, dur: 0.12, type: 'sine', gain: 0.2, attack: 0.003, into });
   }
+}
+
+// A loud post making itself heard through the map, unopened: one muffled note.
+export function murmur() {
+  const out = wires();
+  if (!out) return;
+  const { ctx, dry } = out;
+  const muffle = ctx.createBiquadFilter();
+  muffle.type = 'lowpass';
+  muffle.frequency.value = 520;
+  const quiet = ctx.createGain();
+  quiet.gain.value = 0.5;
+  muffle.connect(quiet).connect(dry);
+  tone({ at: 0, freq: E5 / 2, dur: 0.5, type: 'triangle', gain: 0.3, attack: 0.02, into: muffle });
+  tone({ at: 0.22, freq: G5 / 2, dur: 0.6, type: 'triangle', gain: 0.24, attack: 0.02, into: muffle });
 }
 
 // Let a post's sound out. onNote(pitch, seconds) is called as each note

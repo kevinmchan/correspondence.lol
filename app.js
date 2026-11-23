@@ -106,7 +106,7 @@ const snooze = (days) => {
 };
 
 // --- What Penny needs of all this (home.js) -----------------------------------
-// She wants the app installed and cannot say so, so she has to know where
+// It wants the app installed and cannot say so, so it has to know where
 // things stand and be told when they change.
 //   installState()   'installed' | 'ready' (the browser will do it in one tap)
 //                    | 'guide' (there are steps to follow) | 'none' (not on

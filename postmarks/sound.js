@@ -194,7 +194,7 @@ const SOUNDS = {
   tap() {
     bell(0, NOTE.E5, 0.07, 0.11);
   },
-  // Dot, tapped. (Penny has a voice of her own: see penny/penny.js.)
+  // Dot, tapped. (Penny has a voice of its own: see penny/penny.js.)
   squeak() {
     bell(0, NOTE.A5, 0.11, 0.12);
     bell(0.07, NOTE.E6, 0.1, 0.2);

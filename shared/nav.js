@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: home (/), opening and joining a room (/?open, /?join), the map walked with Penny and her story (/?walk, /?penny), a room
+// The screens: home (/), opening and joining a room (/?open, /?join), the map walked with Penny and its story (/?walk, /?penny), a room
 // (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -62,6 +62,8 @@ async function show(url, { announce }) {
   window.scrollTo(0, 0);
   current = { key: keyOf(url), screen, root, life };
   module[screen.mount ?? 'mount'](root, life);
+  // (Penny, who stands over all the screens, wants to know whose turn it is: penny/pal.js)
+  window.dispatchEvent(new CustomEvent('screen', { detail: { name: screen.name, life } }));
 
   if (!leaving) return;
   if (announce) play(direction);
