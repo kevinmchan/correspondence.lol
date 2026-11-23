@@ -349,6 +349,7 @@
 
         <div id="board" class="board" role="group" aria-label="Puzzle grid"></div>
 
+        <p id="hint-note" class="hint-note" role="status" hidden></p>
         <div class="toolbar">
           <div id="tools" class="tools" role="radiogroup" aria-label="What your turn does">
             <button type="button" role="radio" data-tool="mark" aria-checked="true" aria-label="Cross" title="Cross">
@@ -361,6 +362,9 @@
               <span class="glyph" aria-hidden="true">Aa</span> Phrase
             </button>
           </div>
+          <button type="button" id="hint" class="hint-button" aria-label="Hint" title="Hint">
+            <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.5h6M10 20.5h4M8.2 14.2A6 6 0 1 1 15.8 14.2c-.6.6-.9 1.3-.9 2.1v1.2H9.1v-1.2c0-.8-.3-1.5-.9-2.1z"/></svg>
+          </button>
           <button type="button" id="submit" class="go" disabled hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Submit

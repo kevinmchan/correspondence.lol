@@ -184,6 +184,10 @@ function findSolutions(size, regions, limit) {
   return found;
 }
 
+// The solution of a district layout (a column for each row), or null if it has
+// none. Layouts made by generatePuzzle have exactly one.
+export const solve = (size, regions) => findSolutions(size, regions, 1)[0] ?? null;
+
 // Count solutions of a district layout, stopping once `limit` is reached.
 export function countSolutions(size, regions, limit = 2) {
   return findSolutions(size, regions, limit).length;

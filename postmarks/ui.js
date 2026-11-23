@@ -9,6 +9,7 @@ import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
+import { COLOUR_NAMES, findHint } from './hint.js';
 import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
 import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound.js';
@@ -25,7 +26,7 @@ export function mount(root, life) {
   const GAME_KEY = 'postmarks:solo:v1';
   const HOWTO_KEY = 'postmarks:howto:v1'; // the last room game this device showed the how-to for
   const SOLO_HOWTO_KEY = 'postmarks:howto-solo:v1'; // set once the how-to has been shown in solo play
-  const DISTRICTS = ['coral', 'amber', 'lime', 'mint', 'sky', 'periwinkle', 'orchid', 'tan', 'grey'];
+  const DISTRICTS = COLOUR_NAMES;
   const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
 
   const $ = (id) => root.querySelector(`#${id}`);
@@ -34,7 +35,7 @@ export function mount(root, life) {
     back: $('back'), profile: $('profile'), loading: $('loading'),
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
     roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
-    narration: $('narration'), message: $('message'), newGame: $('new-game'),
+    narration: $('narration'), message: $('message'), newGame: $('new-game'), hint: $('hint'), hintNote: $('hint-note'),
     chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
     trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
     trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
@@ -438,7 +439,27 @@ export function mount(root, life) {
     event.target.classList.remove(...FX);
   });
 
+  // --- Hints ------------------------------------------------------------------------
+  // The lightbulb points at the next squares that can be crossed out and says
+  // why (see hint.js). The pointing stays until those squares are dealt with.
+  let hint = null;
+
+  function settleHint() {
+    if (!hint) return;
+    const waiting = hint.kind === 'uncross' ? CROSS : EMPTY; // what a square looks like while the hint still applies to it
+    if (!game || game.status !== 'playing' || hint.cells.every((cell) => game.cells[cell] !== waiting)) hint = null;
+  }
+
+  el.hint.addEventListener('click', () => {
+    if (!game || game.status !== 'playing') return;
+    hint = findHint(game) ?? { kind: 'none', cells: [], because: [], text: 'Nothing left to work out.' };
+    sfx('pick');
+    render();
+    el.hintNote.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+
   function render() {
+    settleHint();
     document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
 
     if (!game) {
@@ -518,6 +539,8 @@ export function mount(root, life) {
       const theirs = online?.mode === 'coop' && game.last && game.last.player !== online.you;
       button.classList.toggle('last', Boolean(theirs) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
       button.classList.toggle('drawing', drafted);
+      button.classList.toggle('hinted', Boolean(hint) && hint.cells.includes(cell));
+      button.classList.toggle('why', Boolean(hint) && hint.because.includes(cell));
       button.setAttribute('aria-label', `${where(cell)}, ${DISTRICTS[game.regions[cell]]} district, ${label}`);
     }
     el.board.setAttribute('aria-disabled', String(over || (Boolean(online) && !iCanMove())));
@@ -622,6 +645,10 @@ export function mount(root, life) {
     el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
     el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
     el.tools.hidden = over;
+    // no hints in a race against the clock
+    el.hint.hidden = over || online?.mode === 'trial';
+    el.hintNote.hidden = !hint || over;
+    if (hint) el.hintNote.textContent = hint.text;
     for (const button of el.tools.children) {
       button.setAttribute('aria-checked', String(button.dataset.tool === tool));
     }
