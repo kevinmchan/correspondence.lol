@@ -3,7 +3,7 @@ import { go } from '/shared/nav.js';
 import { play as sfx } from '/postmarks/sound.js';
 import { myName, recentRooms, roomUrl } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
-import { AVATARS, COLORS, avatar, openProfile, savedLook } from '/shared/profile.js';
+import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 
 // The home screen. mount() puts it to work in `root`, a fresh copy of its
@@ -85,7 +85,7 @@ export function mount(root, life) {
     welcome.error.textContent = '';
     try {
       if (cachedProfile().signed_out) startAfresh(); // leave the old profile's device behind
-      const started = savedLook() ?? { avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)], color: Math.floor(Math.random() * COLORS.length) };
+      const started = savedLook() ?? randomLook();
       await saveProfile({ name, avatar: started.avatar, color: started.color });
       welcome.name.value = '';
       const to = onward();
