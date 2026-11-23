@@ -921,3 +921,8 @@ main { position: relative; z-index: 1; }
 .ghost-tile.faint { animation-name: ghost-faint; animation-duration: 2600ms; }
 @keyframes ghost { 0% { opacity: 0; transform: scale(0.7); } 18% { opacity: 0.3; transform: none; } 100% { opacity: 0; transform: none; } }
 @keyframes ghost-faint { 0% { opacity: 0; } 35% { opacity: 0.14; } 100% { opacity: 0; } }
+
+/* the whole account card opens the profile, not just the avatar in it */
+section.card.me { position: relative; cursor: pointer; transition: transform 70ms ease, box-shadow 70ms ease; -webkit-tap-highlight-color: transparent; }
+section.card.me .profile-button::after { content: ""; position: absolute; inset: 0; border-radius: 1.1rem; }
+section.card.me:active { transform: translateY(0.18rem); box-shadow: 0 0.04rem 0 var(--lip); }
