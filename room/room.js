@@ -83,7 +83,7 @@ function render() {
       : n === 0 ? 'Nobody is here at the moment. Join to play and chat.'
         : `${list(here)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
     if (!el.joinName.value) el.joinName.value = myName();
-    document.getElementById('join-sign-in').href = `/?signin=1&next=${encodeURIComponent(location.pathname + location.search)}`;
+    document.getElementById('join-sign-in').href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
     // A device signed out of its profile cannot join as itself: home offers the ways back in.
     rpc('profile_get', { p_token: myToken() }).then((profile) => {
       if (profile.signed_out) location.replace('/');

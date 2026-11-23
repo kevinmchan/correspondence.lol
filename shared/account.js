@@ -59,6 +59,8 @@ function sheet(label) {
   return dialog;
 }
 
+// NOT IN USE for now: email sign-in is switched off in the app, and nothing
+// opens this. Kept, with the server side, for when it comes back.
 // Sign in with an email address: a code is sent to it, and typed in here.
 // For a guest this is also how the profile becomes an account. onDone(profile)
 // runs once the device is signed in.
@@ -161,9 +163,9 @@ export function openSignIn({ guest, onDone }) {
 
 // A temporary code that lets another device into this guest profile.
 export async function openDeviceCode() {
-  const dialog = sheet('Use this profile on another device');
+  const dialog = sheet('Use this account on another device');
   const title = make('h2', null, 'Use on another device');
-  const lede = make('p', 'hint', 'On the other device, open correspondence.lol and enter this code under “Join a room”. It works once, for ten minutes.');
+  const lede = make('p', 'hint', 'On the other device, open correspondence.lol and enter this code under “Sync account”. It works once, for ten minutes.');
   const code = make('p', 'code', '…');
   const error = make('p', 'message bad');
   error.setAttribute('role', 'alert');
