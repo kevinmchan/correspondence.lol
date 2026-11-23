@@ -85,7 +85,7 @@ export function mount(root, life) {
       v: 1, size: view.size, regions: view.regions ?? [], solution: view.solution ?? null, players: view.players,
       cells: view.cells ?? [], hearts: view.hearts ?? START_HEARTS, moves: view.moves ?? 0,
       status: started ? view.status : 'waiting', last: view.last ?? null,
-      free: mode !== 'coop',
+      free: mode !== 'coop', shared: mode === 'coop',
       absent: view.people.flatMap((person, seat) => (person.left ? [seat] : [])), // they left the room
     };
     online = {
@@ -104,11 +104,6 @@ export function mount(root, life) {
   // Moves need Submit only when a board is shared; in the solo modes you play alone.
   const immediate = () => !online || online.mode !== 'coop';
   const iCanMove = () => Boolean(online) && canMove(game, online.you);
-  // What the screen says about turns. Someone alone in a room may keep moving,
-  // but once they have moved the turn still reads as passed on: they are
-  // waiting for someone, even while free to carry on.
-  const turnOf = (seat) => canMove(game, seat) && game.last?.player !== seat;
-  const myTurn = () => Boolean(online) && turnOf(online.you);
   const clockText = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
   const elapsed = () => (game.status === 'playing' ? online.clock.ms + performance.now() - online.clock.at : online.clock.ms);
   const nameOf = (seat) => (online && seat === online.you ? 'You' : game.players[seat]);
@@ -545,7 +540,7 @@ export function mount(root, life) {
 
   function render() {
     settleHint();
-    document.title = `${game && myTurn() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
+    document.title = `${game && iCanMove() ? '● Your move · ' : ''}Postmarks · correspondence.lol`;
 
     if (!game) {
       show(el.loading);
@@ -622,9 +617,10 @@ export function mount(root, life) {
           button.classList.add(effect.name);
         }
       }
-      // the outline marks someone else's last move on a shared board; playing alone it would only be clutter
-      const theirs = online?.mode === 'coop' && game.last && game.last.player !== online.you;
-      button.classList.toggle('last', Boolean(theirs) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
+      // the outline marks the last submitted move on a shared board, whoever made it;
+      // playing alone it would only be clutter
+      const shown = online?.mode === 'coop' && game.last;
+      button.classList.toggle('last', Boolean(shown) && !draft && (game.last.cells ?? [game.last.cell]).includes(cell));
       button.classList.toggle('drawing', drafted);
       button.classList.toggle('guessing', guessing === cell);
       button.classList.toggle('hinted', Boolean(hint) && hint.cells.includes(cell));
@@ -668,7 +664,7 @@ export function mount(root, life) {
       el.board.classList.toggle('lost', game.status === 'lost');
       seen.status = game.status;
     }
-    const mine = Boolean(online) && online.mode === 'coop' && myTurn();
+    const mine = Boolean(online) && online.mode === 'coop' && iCanMove();
     if (seen.mine !== mine) {
       if (!quiet && mine && seen.mine === false) {
         sfx('turn', { delay: effects.size ? 500 : 0 });
@@ -689,7 +685,7 @@ export function mount(root, life) {
       el.turn.textContent = 'Out of hearts.';
     } else if (!online) {
       el.turn.textContent = ''; // playing alone: it is always your move
-    } else if (myTurn()) {
+    } else if (iCanMove()) {
       const strong = document.createElement('strong');
       strong.textContent = 'Your';
       el.turn.append(strong, ' move');
@@ -709,7 +705,7 @@ export function mount(root, life) {
         if (person.left) return []; // no longer in the room
         const li = document.createElement('li');
         li.append(avatar(person), person.name + (seat === online.you ? ' (you)' : ''));
-        if (turnOf(seat)) li.className = 'now';
+        if (canMove(game, seat)) li.className = 'now';
         return [li];
       }));
     }

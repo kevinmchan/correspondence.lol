@@ -302,13 +302,15 @@ export const lettersFound = (state) => state.cells.filter((c) => c === LETTER).l
 
 // Turn-taking. Anyone may take the next turn except the player who took the
 // last one, but only when more than one person can play: someone alone has
-// nobody to wait for. Two optional flags on the state change who can play:
+// nobody to wait for. Optional flags on the state change who can play:
+//   state.shared  a room's board: the last mover always waits, even with
+//                 nobody else there yet (someone has to join and move)
 //   state.free    no turns at all (a time trial, where each player has their own board)
 //   state.author  index of a player sitting out (they wrote the pass phrase)
 //   state.absent  indexes of players no longer taking part (they left the room)
 const sittingOut = (state, player) => player === state.author || Boolean(state.absent?.includes(player));
 const mustAlternate = (state) =>
-  !state.free && state.players.filter((_, player) => !sittingOut(state, player)).length > 1;
+  !state.free && (Boolean(state.shared) || state.players.filter((_, player) => !sittingOut(state, player)).length > 1);
 
 export const canMove = (state, player) =>
   state.status === 'playing' &&

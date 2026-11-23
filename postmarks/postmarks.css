@@ -164,7 +164,7 @@
 .cell[data-state="letter"] svg { filter: drop-shadow(0 0.04em 0.03em rgb(0 0 0 / 0.25)); }
 .cell[data-state="reveal"] svg { opacity: 0.45; }
 
-/* a friend's last move, in a shared game */
+/* the last submitted move, in a shared game */
 .cell.last { outline: 2.5px solid var(--ink); outline-offset: 1px; }
 .cell.drawing { outline: 2.5px solid var(--accent); outline-offset: 1px; }
 .cell:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; z-index: 1; }
