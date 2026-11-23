@@ -1,3 +1,4 @@
+import { ask } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
 import { createChat } from '/shared/chat.js';
@@ -351,7 +352,9 @@ export function mount(root, life) {
   });
 
   el.leave.addEventListener('click', async () => {
-    if (!confirm(`Leave ${room.name}? You can come back with its code.`)) return;
+    moreMenu(false);
+    if (!(await ask(`Leave ${room.name}?`, { detail: 'You can come back with its code.', yes: 'Leave room', no: 'Stay', danger: true }))) return;
+    if (life.over) return;
     el.leave.disabled = true;
     el.leaveError.textContent = '';
     try {
@@ -386,7 +389,8 @@ export function mount(root, life) {
   el.games.addEventListener('click', async (event) => {
     const button = event.target.closest('.delete');
     if (!button) return;
-    if (!confirm(`Delete ${button.dataset.name}? It will be gone for everyone in the room.`)) return;
+    if (!(await ask(`Delete ${button.dataset.name}?`, { detail: 'It will be gone for everyone in the room.', yes: 'Delete', no: 'Keep it', danger: true }))) return;
+    if (life.over) return;
     button.disabled = true;
     el.gameError.textContent = '';
     try {
