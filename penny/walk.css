@@ -95,6 +95,12 @@
   .walk-ground { --top: 3.4rem; --bottom: 1rem; padding-left: 4rem; padding-right: calc(var(--pal-w) + 2rem); }
 }
 
+/* Top right: back down the map to a place already walked, and up again. */
+.walk-steps { position: absolute; z-index: 3; top: max(0.75rem, env(safe-area-inset-top)); right: max(0.75rem, env(safe-area-inset-right)); display: flex; gap: 0.4rem; }
+.walk-steps button { width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); cursor: pointer; }
+.walk-steps button[hidden] { display: none; }
+.walk-steps svg { width: 1.3rem; height: 1.3rem; }
+
 /* The sound so far: a mark a note, as high as the note, and a tail for the rest. */
 .walk-trail {
   position: absolute; z-index: 3; top: max(1rem, calc(env(safe-area-inset-top) + 0.6rem)); left: 50%; translate: -50% 0;
@@ -131,9 +137,21 @@
 .walk-board .cell.cold { animation: cold 900ms ease-out; }
 @keyframes cold { 0%, 55% { filter: saturate(0.35) brightness(0.9); } 100% { filter: none; } }
 
+/* What Penny knows, as against what it hears: its own seal, stamped on the
+   square. Red, crisp, no glow: nothing like the warmth above. */
+.walk-board .cell.known { z-index: 3; outline: 0.075em solid var(--ink); outline-offset: 1px; }
+.walk-board .cell.known::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; margin: -15% 0 0 -15%;
+  border-radius: 50%; background: #c8442e; box-shadow: 0 0 0 0.055em #f6f1e7, 0 0.05em 0.12em rgb(0 0 0 / 0.35);
+}
+.walk-board .cell.known[data-state="cross"]::after { opacity: 0.55; }
+/* While Penny listens to what was in a post, the map dims: the thing to watch is Penny. */
+.walk-ground { transition: filter 450ms ease; }
+.walk.hush .walk-ground { filter: brightness(0.5) saturate(0.6); }
+
 /* One tap leaves a square ajar, for as long as a second tap would count. */
 .walk-board .cell.ajar { z-index: 3; filter: brightness(1.1); box-shadow: 0 0 0 0.06em var(--paper), 0 0.16em 0.3em rgb(0 0 0 / 0.28), inset 0 -0.14em 0 rgb(0 0 0 / 0.14); }
-/* The squares that would have had nowhere, when it can see why a cross is right; and the crosses it cannot answer for, when something has. */
+/* The crosses Penny cannot answer for, when they have left something with nowhere to go. */
 .walk-board .cell.starve { z-index: 3; outline: 0.07em dashed var(--ink); outline-offset: 1px; animation: starve-still 600ms ease-out both; }
 /* A loud post stirring of its own accord. */
 .walk-board .cell.stir { animation: stir-still 700ms ease-out; }
@@ -146,6 +164,7 @@
   .walk-board .cell.why svg { animation: why 700ms ease-in-out; }
   .walk-board .cell.ajar { transform: translateY(-6%) scale(1.05); }
   .walk-board .cell.fx-knock { animation: knock 220ms ease-out; }
+  .walk-board .cell.known::after { animation: stamp 420ms cubic-bezier(0.3, 1.5, 0.5, 1) both; }
   .walk-board .cell.asking { animation: asking 620ms ease-in-out infinite; }
   .walk-board .cell.heard.here { animation: here 760ms ease-in-out infinite; }
   .walk-board .cell.starve { animation: starve 600ms ease-in-out both; }
@@ -158,6 +177,7 @@
 @keyframes why { 0%, 100% { transform: none; } 30% { transform: scale(1.28) rotate(-8deg); } 60% { transform: scale(1.1) rotate(6deg); } }
 @keyframes asking { 0%, 100% { outline-offset: 1px; } 50% { outline-offset: 0.12em; } }
 @keyframes here { 0%, 100% { transform: none; } 50% { transform: scale(1.06); } }
+@keyframes stamp { from { transform: scale(2.6); opacity: 0; } 55% { opacity: 1; } to { transform: none; opacity: 1; } }
 @keyframes knock { 0%, 100% { transform: none; } 40% { transform: scale(0.93); } }
 @keyframes starve { 0%, 100% { transform: none; outline-color: transparent; } 15%, 45%, 75% { transform: translateX(-2.5%); outline-color: var(--ink); } 30%, 60% { transform: translateX(2.5%); } }
 @keyframes stir { 0%, 100% { transform: none; filter: none; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.14); } 40% { transform: scale(1.04); filter: brightness(1.15); box-shadow: 0 0 0 0.06em #f6a070, inset 0 -0.14em 0 rgb(0 0 0 / 0.14); } }
@@ -179,11 +199,12 @@
    map rushes up through the portal, and settles, from high above, on the
    first place. Coming back, it falls away to where the portal is. */
 @media (prefers-reduced-motion: no-preference) {
-  .screen-home.leaving.forth:has(~ .screen-walk) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-rush 340ms cubic-bezier(0.6, 0, 0.9, 0.5) both; }
-  .screen-home.leaving.forth ~ .screen-walk.entering { animation: map-settle 360ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
-  .screen-walk.leaving.back:has(~ .screen-home) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-fall 340ms cubic-bezier(0.4, 0, 0.8, 0.4) both; }
-  .screen-walk.leaving.back ~ .screen-home.entering { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-near 360ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+  .screen-home.leaving.forth:has(~ .screen-walk) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-rush 620ms cubic-bezier(0.5, 0, 0.7, 0.6) both; }
+  .screen-home.leaving.forth ~ .screen-walk.entering { animation: map-arrive 700ms cubic-bezier(0.2, 0.7, 0.3, 1) 240ms both; }
+  .screen-walk.leaving.back:has(~ .screen-home) { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-fall 600ms cubic-bezier(0.5, 0, 0.7, 0.6) both; }
+  .screen-walk.leaving.back ~ .screen-home.entering { transform-origin: var(--portal-x, 2.6rem) var(--portal-y, 6rem); animation: map-near 700ms cubic-bezier(0.2, 0.7, 0.3, 1) 240ms both; }
 }
-@keyframes map-rush { to { transform: scale(7); opacity: 0; } }
-@keyframes map-fall { to { transform: scale(0.2); opacity: 0; } }
-@keyframes map-near { from { transform: scale(4.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes map-rush { 60% { opacity: 0.5; } to { transform: scale(3.2); opacity: 0; } }
+@keyframes map-arrive { from { transform: scale(0.72); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes map-fall { to { transform: scale(0.5); opacity: 0; } }
+@keyframes map-near { from { transform: scale(2.2); opacity: 0; } to { transform: none; opacity: 1; } }
