@@ -8,6 +8,10 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadController || reloaded) return;
     reloaded = true;
+    // the page that comes back should simply be there, not make its entrance a second time
+    try {
+      sessionStorage.setItem('correspondence:quiet', '1');
+    } catch { /* it will animate again; no harm */ }
     location.reload();
   });
 
