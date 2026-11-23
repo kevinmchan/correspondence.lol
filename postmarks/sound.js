@@ -89,15 +89,24 @@ function noise({ at = 0, dur = 0.15, from = 800, to = from, q = 1, gain = 0.2 })
   src.start(start);
 }
 
-const NOTE = { C4: 261.63, E4: 329.63, G4: 392, A4: 440, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, C6: 1046.5, E6: 1318.5, G6: 1568 };
+const NOTE = { C4: 261.63, E4: 329.63, G4: 392, A4: 440, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, C6: 1046.5, D6: 1174.66, E6: 1318.5, G6: 1568 };
 
 const SOUNDS = {
-  // a pencil tick; several crosses in one stroke strum upwards
+  // a small bright chime, like a glass tapped: two quick rising notes for one
+  // cross, and a run up the scale for a stroke of several. Kept short and
+  // soft, so that finding a post is still the bigger moment.
   cross({ count = 1 } = {}) {
-    for (let i = 0; i < Math.min(count, 8); i++) {
-      tone({ at: i * 0.035, freq: 620 + i * 45, to: 380 + i * 45, dur: 0.06, type: 'triangle', gain: 0.22 });
-      noise({ at: i * 0.035, dur: 0.03, from: 3200, q: 2, gain: 0.05 });
+    const bell = (at, freq, gain) => {
+      tone({ at, freq, dur: 0.2, type: 'sine', gain, attack: 0.004 });
+      tone({ at, freq: freq * 2, dur: 0.09, type: 'sine', gain: gain * 0.28, attack: 0.003 }); // a little sparkle
+    };
+    if (count <= 1) {
+      bell(0, NOTE.E5, 0.17);
+      bell(0.06, NOTE.G5, 0.15);
+      return;
     }
+    const scale = [NOTE.C5, NOTE.D5, NOTE.E5, NOTE.G5, NOTE.A5, NOTE.C6, NOTE.D6, NOTE.E6];
+    for (let i = 0; i < Math.min(count, scale.length); i++) bell(i * 0.05, scale[i], 0.15);
   },
   // rubbing one out: a soft downward blip
   clear() {
