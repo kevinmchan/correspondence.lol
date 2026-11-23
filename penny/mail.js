@@ -13,7 +13,8 @@
 // adventure, which is not written.
 //
 // And one post has no sound at all: the last post of the fifth place, a
-// quarter of the way through. That one has Dot in it (penny/walk.js).
+// quarter of the way through. That one has Dot in it (penny/walk.js). Once:
+// walked again after Dot has been found, it is somebody's ordinary mail.
 //
 // What Penny has heard of the sound so far is kept on the device, so the
 // search picks up where it was left.

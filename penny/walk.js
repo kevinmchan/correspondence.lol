@@ -44,9 +44,11 @@
 // a moment longer than it lasts. One day passes over the five places, early
 // in the first and evening by the last, and it only goes one way.
 //
-// The last post of the last place has no sound in it. It has Dot.
+// The last post of the last place has no sound in it. It has Dot. (The
+// places can be walked again, and then Dot is there from the start and that
+// post is somebody's ordinary mail: Dot is found once.)
 
-import { play as sfx, noise } from '/postmarks/sound.js';
+import { audio, isMuted, play as sfx, noise } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
 import { PLACES, groupsOf, hear, mailIn, read, ruledOut, vouch } from './places.js';
 import { claim } from './pal.js';
@@ -86,7 +88,7 @@ export function mount(root, life) {
   const show = (target) => (sideways.matches ? pal.look(target) : pal.pointAt(target));
 
   // --- The place ------------------------------------------------------------------
-  let index = Math.min(placeReached(), PLACES.length - 1);
+  let index = Math.max(0, Math.min(placeReached(), PLACES.length - 1));
   let place = null;
   let cells = []; // 'empty' | 'cross' | 'letter'
   let found = []; // the squares whose posts are open, in the order they were found
@@ -98,7 +100,11 @@ export function mount(root, life) {
   let stuck = []; // groups your crosses have left with nowhere
   let positive = new Set(); // squares where it has heard a post right under the finger
   let done = false;
-  let busy = false; // a post is being opened and listened to
+  let busy = false; // a post is being opened and listened to: the map waits
+  const setBusy = (now) => {
+    busy = now;
+    board.classList.toggle('busy', now); // (as the game's own board is marked while a move is on its way)
+  };
 
   const tile = (cell) => board.children[cell];
   const sureOnes = () => squares.map((square, cell) => (square.is === 'sure' ? cell : -1)).filter((cell) => cell >= 0);
@@ -169,6 +175,11 @@ export function mount(root, life) {
     known.replaceChildren(...tiles);
   }
   life.on(window, 'resize', lay);
+  // turned on its side, or back: Penny goes to where there is room
+  life.on(sideways, 'change', () => {
+    pal.goTo(spot());
+    lay();
+  });
 
   // The sound so far, at the top of the map: a mark a note, set as high as the
   // note is, and a fading tail for what has not been heard yet. Pressing it
@@ -185,15 +196,15 @@ export function mount(root, life) {
   }
   trail.addEventListener('click', async () => {
     if (busy) return;
-    busy = true;
+    setBusy(true);
     pal.mood('listening').look(trail);
     const marks = [...trail.querySelectorAll('i:not(.more)')];
     let n = 0;
-    await playMail(life, remembered(0.5), () => {
+    await playMail(life, remembered(), () => { // (always further off than it was when it was heard)
       const mark = marks[n++];
       if (mark) flash(mark, 'lit');
     });
-    busy = false;
+    setBusy(false);
     pal.mood('hopeful').look(null);
     touched();
   });
@@ -208,7 +219,7 @@ export function mount(root, life) {
     byHand = new Set();
     positive = new Set();
     done = false;
-    busy = false;
+    setBusy(false);
     lone = 0;
     asked = { times: 0 };
     sung = new Map();
@@ -416,6 +427,7 @@ export function mount(root, life) {
   // a stamp, map-small, who looks out, and then comes across to stand beside
   // it. This is the quarter of the way: from here on it is not alone.
   async function findDot(cell) {
+    rise(11000); // (up before Dot's place on the map is measured from where Penny stands, not during)
     pal.mood('holding').look(tile(cell));
     await wait(420);
     pal.mood('listening');
@@ -425,7 +437,6 @@ export function mount(root, life) {
     await wait(500);
     const arriving = pal.arrive(tile(cell).getBoundingClientRect(), 1500);
     ring(cell, false);
-    rise(9000);
     pal.mood('surprised').gesture('start');
     say('There is someone in this one: a stamp, looking out');
     life.setTimeout(() => { sfx('squeak'); pal.gesture('hop', 'dot'); }, 350);
@@ -449,7 +460,20 @@ export function mount(root, life) {
     await wait(500);
   }
 
-  async function open(cell) {
+  // Opening a square. Should anything in the long business that follows go
+  // wrong, the map is not left waiting for ever: it is handed back, and if
+  // that was the last post the way on still opens.
+  const open = (cell) => opening(cell).catch((error) => {
+    console.error(error);
+    if (life.over) return;
+    setBusy(false);
+    pal.height('face').mood('calm').look(null);
+    if (!done) return;
+    board.classList.add('won');
+    portal.hidden = false;
+    lay();
+  });
+  async function opening(cell) {
     if (done || busy || cells[cell] === 'letter') return;
     clearTimeout(listening);
     clearTimeout(judging);
@@ -468,6 +492,7 @@ export function mount(root, life) {
       cells[cell] = 'cross';
       paint(cell, 'fx-miss');
       know();
+      if (!frightened().length && !stuck.length) uneasy = false;
       if (mine.is === 'out' && mine.post !== undefined) {
         // it did think not: kindly, it shows you why, the whole shape of it
         pal.mood('no').gesture('wiggle');
@@ -497,7 +522,7 @@ export function mount(root, life) {
       return;
     }
 
-    busy = true;
+    setBusy(true);
     cells[cell] = 'letter';
     byHand.delete(cell);
     found.push(cell);
@@ -555,12 +580,13 @@ export function mount(root, life) {
     for (const other of [...byHand]) if (ruled[other].is === 'out') byHand.delete(other);
     if (delays.length) sfx('cascade', { delays });
     know();
+    if (!frightened().length && !stuck.length) uneasy = false; // (the cross that frightened Penny may just have been opened instead)
     done = found.length === place.posts.length;
 
     // And what was inside it. Every time, this could be the one: it can
     // hardly bear it. Then it holds still to listen.
     await wait(Math.max(900, Math.min(at + 250, 1700)));
-    const mail = mailIn(index, found.length - 1, place.posts.length);
+    const mail = mailIn(index, found.length - 1, place.posts.length, hasDot()); // (Dot is only there to be found once)
     if (mail.dot) {
       await findDot(cell);
     } else {
@@ -601,7 +627,7 @@ export function mount(root, life) {
       }
     }
     if (life.over) return;
-    busy = false;
+    setBusy(false);
     if (done) {
       board.classList.add('won');
       portal.hidden = false;
@@ -646,12 +672,17 @@ export function mount(root, life) {
   }
   // What it makes of the crosses just made or rubbed out. It waits for the
   // stroke to end, and a little longer in case it was half of a double tap.
-  function judge(changed, to) {
+  let pending = null; // crosses made since Penny last had the time to look: { to, cells }
+  function judge(strokeCells, to) {
+    // a second stroke straight after the first is judged with it, not instead of it
+    pending = pending?.to === to ? { to, cells: [...new Set([...pending.cells, ...strokeCells])] } : { to, cells: strokeCells };
     clearTimeout(judging);
     judging = life.setTimeout(() => {
-      if (busy || done) return;
+      const changed = pending.cells;
+      pending = null;
       const before = { squares, good };
-      know();
+      know(); // (whatever else is going on, what Penny knows keeps up with what is drawn)
+      if (busy || done) return;
       const afraid = frightened();
       if (to === 'cross' && changed.some((cell) => afraid.includes(cell))) {
         // a cross on a square it was sure of
@@ -815,7 +846,7 @@ export function mount(root, life) {
   };
   const knock = (cell) => {
     flash(tile(cell), 'fx-knock');
-    try { noise({ dur: 0.07, from: 260, to: 120, q: 1, gain: 0.12 }); } catch { /* no sound yet: the first touch is what wakes it */ }
+    if (audio() && !isMuted()) noise({ dur: 0.07, from: 260, to: 120, q: 1, gain: 0.12 });
   };
   let lastTap = { cell: null, at: 0, before: null };
   let stroke = null; // while a finger is down in the last place: { to, cells }
@@ -960,7 +991,7 @@ export function mount(root, life) {
 
   // --- Through the portal ---------------------------------------------------------------------
   portal.addEventListener('click', async () => {
-    if (portal.hidden || main.classList.contains('through')) return;
+    if (busy || portal.hidden || main.classList.contains('through')) return; // (busy: the sound so far is being played back)
     if (index === PLACES.length - 1) {
       setWalked();
       setPlaceReached(0);
@@ -972,12 +1003,14 @@ export function mount(root, life) {
     const frame = main.getBoundingClientRect();
     main.style.setProperty('--through-x', `${at.left + at.width / 2 - frame.left}px`);
     main.style.setProperty('--through-y', `${at.top + at.height / 2 - frame.top}px`);
-    busy = true;
+    setBusy(true);
     rise(1400);
     pal.mood('thrilled').look(portal).gesture('jump');
     main.classList.add('through');
     await wait(still ? 0 : 520);
+    const keyed = document.activeElement === portal; // come through by keyboard: the keys should still have somewhere to be
     start(index + 1);
+    if (keyed) tile(0)?.focus({ preventScroll: true });
     main.classList.remove('through');
     main.classList.add('arriving');
     await wait(still ? 0 : 620);

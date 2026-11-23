@@ -10,6 +10,12 @@ import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReac
 import { claim as callPal } from '/penny/pal.js';
 import { notesHeard, playMail, remembered } from '/penny/mail.js';
 
+// How Penny's asking has gone this visit. It is kept here, outside the screen,
+// because the screen is made afresh every time the home page is come back to:
+// three asks for the app to be installed is three for the visit, not three for
+// each return from a room.
+const visit = { pleas: 0, gap: 20000, notBefore: 0, remembered: false };
+
 // The home screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
 export function mount(root, life) {
@@ -171,27 +177,31 @@ export function mount(root, life) {
   // The version, small and out of the way at the bottom of the page.
   $('version').textContent = self.APP_VERSION ?? '';
 
-  // --- Penny and Dot --------------------------------------------------------------
-  // They are not on the page. Penny stands at the bottom edge of the window
-  // (penny/pal.js), life size, with Dot beside it, and looks up at this page
-  // the way one looks at a map. Mostly it just watches, its eyes over the
-  // edge. But there are things it wants, and since it cannot say so, it
-  // comes up and shows it:
+  // --- Penny ----------------------------------------------------------------------
+  // Penny is not on the page. Penny stands at the bottom edge of the window
+  // (penny/pal.js), life size, and looks up at this page the way one looks at
+  // a map; once Dot has been found, Dot stands beside it. Mostly Penny just
+  // watches, eyes over the edge, ducked right down wherever something of the
+  // page's is under it. But there are two things Penny wants, and since it
+  // cannot say so, it comes up and shows them:
   //
-  //   The portal, top left: a place on the map it wants to take you to
-  //   (penny/walk.js). Until the first places have been walked it keeps
-  //   coming back to it: it calls, walks along the edge to stand under it,
-  //   looks up at it and back at you. Now and then it stops to remember the
-  //   sound it is looking for, and it can be heard, far off.
+  //   The portal, top left: a place on the map Penny wants to take you to
+  //   (penny/walk.js). Until the first places have been walked Penny keeps
+  //   coming back to it: calls, walks along the edge to stand under the
+  //   portal, looks up at it and back at you. The first time in a visit, and
+  //   sometimes after, Penny stops to remember the sound it is looking for,
+  //   and the sound can be heard, far off.
   //
-  //   The app installed. Once you have been through a portal with it, it
-  //   stands under the Install button and pleads. It is asked a few times, at
-  //   longer and longer intervals, then left alone; a no is taken as a no for
-  //   the rest of the visit. Nothing waits on it.
+  //   The app installed. Once you have been through a portal with Penny, it
+  //   stands under the Install button and pleads: three times in a visit at
+  //   most, twice as long apart each time, and not at all once the browser's
+  //   prompt has been turned down. Nothing waits on it.
   //
-  // A tap on it does whatever it is asking for at that moment; with nothing
-  // asked, it opens its story (penny/story.js). Those moves are made without
-  // the usual sound, so the next thing heard is it.
+  // A tap on Penny while it is asking for the app to be installed is a yes to
+  // that. Any other tap goes through the portal with it, until the first
+  // places have been walked; and after that opens its story (penny/story.js).
+  // Those moves are made without the usual sound, so the next thing heard is
+  // Penny.
   const portal = $('portal');
   const pal = callPal(life, { x: 0.7, height: 'peek', mood: 'calm', dot: hasDot() }); // it is alone until Dot is found, a quarter of the way through (penny/walk.js)
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -200,8 +210,7 @@ export function mount(root, life) {
   const canInstall = () => ['ready', 'guide'].includes(window.installState?.()) && Boolean(installButton());
   const SAID_NO_KEY = 'penny:install-no'; // for this visit only
   const saidNo = () => { try { return sessionStorage.getItem(SAID_NO_KEY) === '1'; } catch { return false; } };
-  let asking = null; // what it is showing you just now: 'portal' | 'install' | null
-  let pleas = 0;
+  let asking = null; // what it is doing just now: showing the 'portal', asking for the 'install', being 'glad'; or nothing
   let turn = 0; // which of its wants is being shown: so that one does not start while another is going on
 
   portal.classList.toggle('calm', hasWalked());
@@ -253,11 +262,13 @@ export function mount(root, life) {
 
   // What it is looking for: a sound, a long way off. It shuts its eyes to
   // remember it, and for a moment it is there.
-  async function remember() {
+  async function remember(mine) {
     pal.mood('sleepy').look(null);
     pal.look(pal.penny, 'dot');
     await wait(500);
-    await playMail(life, remembered(0.92), () => pal.glow(0.9));
+    if (mine !== turn) return;
+    await playMail(life, remembered(0.92), () => { if (mine === turn) pal.glow(0.9); });
+    if (mine !== turn) return; // something else has come up meanwhile: it is not put back to hoping over that
     pal.mood('hopeful').look(null, 'dot');
     await wait(500);
   }
@@ -268,7 +279,11 @@ export function mount(root, life) {
     pal.sing(HELLO, 0.85);
     await wait(1300);
     if (mine !== turn) return;
-    if (notesHeard() === 0 || Math.random() < 0.4) await remember();
+    // the first time in a visit, and sometimes after, it stops to remember what it is looking for
+    if (!visit.remembered || Math.random() < 0.4) {
+      visit.remembered = true;
+      await remember(mine);
+    }
     if (mine !== turn) return;
     pal.mood('hopeful').pointAt(portal);
     await wait(1500);
@@ -290,7 +305,7 @@ export function mount(root, life) {
     const button = installButton();
     if (!button) return;
     asking = 'install';
-    pleas += 1;
+    visit.pleas += 1;
     pal.rise().mood('pleading').pointAt(button);
     await wait(1300);
     if (mine !== turn) return;
@@ -310,7 +325,7 @@ export function mount(root, life) {
   // Being let in. It is as glad as it gets.
   async function celebrate() {
     const mine = ++turn;
-    asking = null;
+    asking = 'glad'; // (not nothing: nothing is what lets its other wants take a turn)
     pal.rise().goTo(0.6).mood('thrilled').look(null).gesture('jump').hearts(3);
     pal.sing(TRILL, 1);
     await wait(700);
@@ -320,7 +335,9 @@ export function mount(root, life) {
     pal.gesture('jump');
     pal.sing(THIS_WAY, 1);
     await wait(2600);
-    if (mine === turn) pal.mood('glad').goTo(0.7).settle('peek');
+    if (mine !== turn) return;
+    asking = null;
+    pal.mood('glad').goTo(0.7).settle('peek');
   }
 
   life.on(window, 'install', (event) => {
@@ -329,9 +346,11 @@ export function mount(root, life) {
       celebrate();
     } else if (what === 'asked') {
       // you pressed it: it can hardly look
-      turn += 1;
+      const mine = ++turn;
       asking = 'install';
       pal.rise().mood('thrilled').gesture('jump');
+      // (should no answer ever come back from the browser, Penny does not wait on tiptoe for ever)
+      setTimeout(() => { if (mine === turn) settle(); }, 45000);
     } else if (what === 'declined') {
       // a no is a no: it feels it, and lets it be
       turn += 1;
@@ -342,7 +361,7 @@ export function mount(root, life) {
     } else if (what === 'closed') {
       // the steps have been read: it waits, hoping
       turn += 1;
-      pleas = 3;
+      visit.pleas = 3;
       pal.mood('hopeful').look(null);
       setTimeout(settle, 3000);
     }
@@ -351,26 +370,27 @@ export function mount(root, life) {
   // The first time the app is opened as an app.
   const HOME_KEY = 'penny:at-home:v1';
   if (window.installState?.() === 'installed' && load(HOME_KEY) !== true) {
-    save(HOME_KEY, true);
-    setTimeout(() => { if (!quiet()) celebrate(); }, 2600);
+    setTimeout(() => {
+      if (quiet()) return; // not now: the next time the app is opened, then
+      save(HOME_KEY, true);
+      celebrate();
+    }, 2600);
   }
 
   // Its wants, one at a time, with long rests between.
   (async () => {
     await wait(3200);
     let since = 0; // portal showings since it last pleaded
-    let gap = 20000; // how long it leaves it before pleading again: twice as long each time
-    let notBefore = 0;
-    for (;;) {
+    while (!life.over) {
       if (!quiet() && asking === null) {
         const been = hasWalked() || placeReached() > 0;
-        const mayPlead = canInstall() && !saidNo() && pleas < 3 && been && performance.now() >= notBefore;
+        const mayPlead = canInstall() && !saidNo() && visit.pleas < 3 && been && performance.now() >= visit.notBefore;
         const mine = ++turn;
-        if (mayPlead && (hasWalked() || since >= 1 || pleas === 0)) {
+        if (mayPlead && (hasWalked() || since >= 1 || visit.pleas === 0)) {
           since = 0;
           await plead(mine);
-          notBefore = performance.now() + gap;
-          gap *= 2;
+          visit.notBefore = performance.now() + visit.gap; // and twice as long before the next
+          visit.gap *= 2;
         } else if (!hasWalked()) {
           since += 1;
           await showPortal(mine);
@@ -395,7 +415,7 @@ export function mount(root, life) {
   pal.onTap(() => {
     turn += 1;
     pal.gesture('hop');
-    if (asking === 'install' || (hasWalked() && canInstall() && !saidNo())) {
+    if (asking === 'install') {
       window.requestInstall?.();
       return;
     }

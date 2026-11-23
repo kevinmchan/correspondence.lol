@@ -37,7 +37,10 @@ const WALKED_KEY = 'penny:walked:v1';
 const PLACE_KEY = 'penny:place:v1';
 export const hasWalked = () => load(WALKED_KEY) === true;
 export const setWalked = () => save(WALKED_KEY, true);
-export const placeReached = () => (Number.isInteger(load(PLACE_KEY)) ? load(PLACE_KEY) : 0);
+export const placeReached = () => {
+  const place = load(PLACE_KEY);
+  return Number.isInteger(place) && place >= 0 ? place : 0; // whatever has got into storage
+};
 export const setPlaceReached = (index) => save(PLACE_KEY, index);
 // Whether Dot has been found yet. Penny sets out alone: Dot is met a quarter
 // of the way through, at the end of the first places, and stays from then on.

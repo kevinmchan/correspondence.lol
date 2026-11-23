@@ -28,7 +28,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 // flap comes down (it works as a brow: up is open and glad, down is troubled),
 // `cheek` how pink, `glow` how warm the seal. `eyes` picks the eye drawing,
 // `mouth` the mouth, `idle` what it does while nothing else is happening.
-export const MOODS = {
+const MOODS = {
   calm: { mouth: 'smile', eyes: 'open', eye: 1, brow: 1, cheek: 0.5, glow: 0.15, idle: 'breathe', tilt: 0 },
   curious: { mouth: 'o', eyes: 'open', eye: 1.1, brow: 0.93, cheek: 0.5, glow: 0.25, idle: 'breathe', tilt: 5 },
   unsure: { mouth: 'wavy', eyes: 'open', eye: 1, brow: 1.03, cheek: 0.4, glow: 0.12, idle: 'sway', tilt: -4 },
@@ -137,13 +137,25 @@ function build() {
 
   // A screen that has not asked for it does not get it: it is gone as soon
   // as it arrives, not when the one before it has finished leaving.
-  window.addEventListener('screen', (event) => {
-    if (owner !== event.detail?.life) layer.dataset.height = 'gone';
-  });
-
   // While something is being typed it ducks right under: on phones that
   // shrink the window for the keyboard it would otherwise sit on the field.
   const field = (target) => target instanceof HTMLElement && target.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable]');
+
+  // A change of screen. A field that was being typed in may have gone with
+  // the old screen without ever saying it had lost the focus, so that is
+  // looked at afresh. And a screen that has not asked for Penny does not get
+  // it: Penny is gone as soon as that screen arrives, and the screen before
+  // has no more say, though it takes a moment longer to finish leaving.
+  window.addEventListener('screen', (event) => {
+    typing = field(document.activeElement);
+    layer.classList.toggle('typing', typing);
+    if (owner === event.detail?.life) return;
+    owner = null;
+    layer.dataset.height = 'gone';
+    air.style.opacity = 0;
+    document.documentElement.classList.remove('pal-tinted', 'has-pal');
+  });
+
   document.addEventListener('focusin', (event) => {
     if (field(event.target)) {
       typing = true;
@@ -188,6 +200,13 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
   const dotEl = root.querySelector('.pal-dot');
   const seal = penny.querySelector('.seal');
   const mine = () => owner === life;
+  const dotHere = () => !root.classList.contains('alone'); // until Dot is found there is nothing of Dot's to move
+  // Dot where it belongs, at its own size: whatever an arrival left on it is taken off.
+  const settleDot = () => {
+    dotEl.getAnimations().forEach((flight) => flight.cancel());
+    dotEl.style.transform = '';
+    dotEl.style.zIndex = '';
+  };
   owner = life;
   const world = document.documentElement;
   const uncolour = () => {
@@ -256,7 +275,7 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
     },
     // One movement, of its or (who: 'dot') Dot's.
     gesture(name, who = 'penny') {
-      if (!mine() || !GESTURES.includes(name)) return handle;
+      if (!mine() || !GESTURES.includes(name) || (who === 'dot' && !dotHere())) return handle;
       again((who === 'dot' ? dotEl : penny).querySelector('.act'), name, GESTURES);
       return handle;
     },
@@ -300,7 +319,8 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
     },
     // Look at a point of the window, an element, or (nothing given) the viewer.
     look(target, who = 'penny') {
-      if (!mine()) return handle;
+      if (!mine() || (who === 'dot' && !dotHere())) return handle;
+      if (target instanceof Element && !target.isConnected) return handle; // something that has since gone from the page
       const eyes = eyesOf(who === 'dot' ? dotEl : penny);
       if (!target) {
         eyes.style.translate = '0px 0px';
@@ -338,6 +358,7 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
     // it. Resolves when it has landed.
     async arrive(from, linger = 1200) {
       if (!mine()) return;
+      settleDot(); // (an arrival may have been cut short before, by the screen being left)
       root.classList.remove('alone');
       if (still) return;
       const box = dotEl.getBoundingClientRect();
@@ -359,7 +380,7 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
     },
     // Hearts rising from one of them.
     hearts(n = 1, who = 'penny') {
-      if (!mine() || still) return handle;
+      if (!mine() || still || (who === 'dot' && !dotHere())) return handle;
       const box = (who === 'dot' ? dotEl : penny).getBoundingClientRect();
       for (let i = 0; i < n; i++) {
         const heart = document.createElement('span');
@@ -391,6 +412,7 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
   life.onEnd(() => {
     ending.abort();
     clearTimeout(walking);
+    penny.classList.remove('walking'); // (or it would go on rocking on the next screen, and nothing else could move it)
   });
 
   root.classList.toggle('alone', !dot);
@@ -399,6 +421,8 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
   life.onEnd(() => { if (owner === null) document.documentElement.classList.remove('has-pal'); });
   root.classList.toggle('typing', typing);
   root.style.setProperty('--walk', '0ms');
+  penny.classList.remove('walking');
+  settleDot();
   place();
   handle.mood(mood).look(null).look(null, 'dot');
   root.style.setProperty('--lean', '0deg');

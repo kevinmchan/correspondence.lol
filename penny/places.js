@@ -190,10 +190,12 @@ const OTHERS = [
 // What is in the post opened `order`-th (0 for the first) in place `place`.
 // In every place after the first, the last post to be opened is the one with
 // a piece of the sound in it: whichever square that turns out to be.
-export function mailIn(place, order, posts) {
+// (`dotFound`: Dot has been found already, on an earlier walk. Then that post
+// is somebody's ordinary mail: Dot is only there to be found once.)
+export function mailIn(place, order, posts, dotFound = false) {
   const piece = PIECES[place];
-  if (piece === 'dot' && order === posts - 1) return { dot: true, notes: [] };
-  if (piece && order === posts - 1) {
+  if (piece === 'dot' && order === posts - 1 && !dotFound) return { dot: true, notes: [] };
+  if (piece && piece !== 'dot' && order === posts - 1) {
     const notes = SOUND.slice(...piece.notes);
     return { friend: true, notes, far: piece.far, upTo: piece.notes[1], echo: echoOf(notes) };
   }

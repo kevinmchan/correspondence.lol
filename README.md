@@ -14,7 +14,7 @@ A static, no-build progressive web app served from the repository root at
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
-| `tests/` | Tests for the game rules and puzzle generator (`npm test`, needs only Node) |
+| `tests/` | Tests for the game rules, the puzzle generator and Penny's places (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
@@ -104,19 +104,23 @@ two things, and shows them by coming up and standing under them.
 
 - **The portal**, top left, the one place marked on the map. Until the first
   places have been walked Penny keeps coming back to it: it calls, walks under
-  the portal, looks up at it and back at you. Sometimes it shuts its eyes first
-  and the sound it remembers can be heard, a long way off. Going through is a
-  rush up through the portal, not a slide to another screen.
+  the portal, looks up at it and back at you. The first time in a visit, and
+  sometimes after, it shuts its eyes first and what it remembers of the sound
+  can be heard, a long way off: at the start that is one note, the beginning,
+  which is all Penny has. Going through is a rush up through the portal, not a
+  slide to another screen.
 - **The app installed.** Once you have been through a portal with it, Penny
   stands under the Install button and pleads. It asks at most three times in a
-  visit, leaving it twice as long each time; a no to the browser's prompt is a
-  no for the rest of the visit, and Penny lets it be. Nothing waits on it. When
+  visit, however often the home page is come back to, leaving it twice as long
+  each time; a no to the browser's prompt is a no for the rest of the visit,
+  and Penny lets it be. Nothing waits on it. When
   the app is installed, and the first time it is opened as an app, Penny is as
   glad as it gets. (`app.js` tells it where installing stands through
   `installState()`, `requestInstall()` and an `install` event.)
 
-A tap on Penny does whatever it is asking for at that moment. With nothing
-asked, it opens Penny's story.
+A tap on Penny while it is asking for the app to be installed is a yes to
+that. Any other tap goes through the portal with it, until the first places
+have been walked, and after that opens Penny's story.
 
 ### Walking the map
 
@@ -161,7 +165,7 @@ then Penny is glad for them. In the second, third and fourth places the last
 post found has a piece of the sound Penny is after; it hums the piece back,
 holds on to it a moment longer than it lasts, and looks a long way up the map.
 What has been heard is drawn at the top of the map, a mark a note, and can be
-played again from there, always further off than it was.
+played again from there, always further off than it was when it was heard.
 
 A guess that finds nothing leaves a cross and costs nothing; Penny flinches,
 and it is over. In the last place a finger makes crosses, as in the game, and
@@ -178,9 +182,14 @@ last. In the last post of the last place there is no sound. There is Dot, who
 looks out, map-small, and then crosses over to stand beside Penny. The portal
 that opens after that leads out to a real solo game.
 
+The places can be walked again afterwards, from the same portal, now quieter.
+Dot is beside Penny from the start then, and is not found a second time: that
+last post is somebody's ordinary mail. Nothing already heard is lost.
+
 ### Penny's story
 
-Once the first places have been walked, a tap on Penny at rest opens its story
+Once the first places have been walked, a tap on Penny (when it is not asking
+for the app to be installed) opens its story
 (`/?penny`, `penny/story.js`), where the only sound is Penny's voice. Penny is
 alone in the rain, feels something warm inside that it cannot read, calls out
 and hears nothing; morning comes, and a post box with it, and Penny hums into

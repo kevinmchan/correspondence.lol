@@ -160,4 +160,7 @@ test('what is in the posts: pieces of the sound in the middle places, and Dot at
       if (order < place.posts.length - 1) assert.ok(!mail.friend && mail.notes.length > 0, 'the earlier posts are other people\'s');
     }
   });
+  // and only once: with Dot already found, that post is somebody's ordinary mail
+  const again = mailIn(4, PLACES[4].posts.length - 1, PLACES[4].posts.length, true);
+  assert.ok(!again.dot && !again.friend && again.notes.length > 0);
 });
