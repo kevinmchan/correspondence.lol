@@ -637,3 +637,10 @@ section.card.me { border: 1px solid var(--line); border-radius: 0.75rem; padding
 section.card fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
 section.card legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
 dialog.account form.card { margin-top: 0.6rem; }
+
+/* --- No profile yet: the three ways to get one ------------------------------ */
+#welcome { width: 100%; gap: 1rem; }
+#welcome .hint { margin: 0; }
+div.card.plain { width: 100%; text-align: left; font-family: system-ui, sans-serif; }
+div.card.plain fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
+div.card.plain legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
