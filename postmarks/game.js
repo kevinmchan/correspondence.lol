@@ -79,6 +79,28 @@ export function tokenize(phrase, n) {
 export const phraseBoardSize = (phrase) =>
   Math.min(MAX_SIZE, Math.max(MIN_SIZE, phrase.trim().split(/\s+/).filter(Boolean).length));
 
+// What may be written as a phrase, checked as it is typed. The server has the
+// last word (postmarks_start in the database applies the same rules).
+// A phone's curly apostrophe is taken as a plain one.
+export const tidyPhrase = (phrase) => phrase.replace(/[\u2018\u2019]/g, "'");
+
+// Why this phrase cannot be used, in words for its writer; null if it can.
+// An empty phrase is fine: a random one is used instead.
+export function phraseProblem(phrase) {
+  const text = tidyPhrase(phrase).trim();
+  if (!text) return null;
+  const pieces = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? Array.from(new Intl.Segmenter().segment(text), (s) => s.segment) : Array.from(text);
+  const bad = [...new Set(pieces.filter((piece) => !/^[A-Za-z0-9\s.,!?'-]+$/.test(piece)))];
+  if (bad.length) {
+    return `${bad.slice(0, 4).join(' ')} can’t be used. A phrase is letters, numbers, spaces and . , ! ? ' -`;
+  }
+  if (text.replace(/\s+/g, ' ').length > 60) return 'Too long: a phrase is up to 60 characters.';
+  const size = phraseBoardSize(text);
+  if (letters(text) < size) return `Too short: a ${size} × ${size} board needs at least ${size} letters.`;
+  return null;
+}
+
 // Small seeded PRNG (mulberry32) so a seed always yields the same puzzle.
 export function rng(seed) {
   let a = seed >>> 0;

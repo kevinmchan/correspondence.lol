@@ -7,7 +7,7 @@ import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
-import { generatePuzzle, phraseBoardSize, randomSize, tokenize } from '/postmarks/game.js';
+import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -409,9 +409,10 @@ export function mount(root, life) {
   // is used and its starter can play too).
   async function startGame(mode, phrase = null) {
     if (el.modes.dataset.busy) return;
+    if (phrase !== null) phrase = tidyPhrase(phrase);
+    if (phrase !== null && phraseProblem(phrase)) return; // already said under the box
     el.modes.dataset.busy = 'true';
     el.gameError.textContent = '';
-    el.phraseError.textContent = '';
     try {
       // A written phrase gets a board with one post per word where it can; the
       // server then splits the phrase into exactly one token per post.
@@ -431,9 +432,14 @@ export function mount(root, life) {
   }
 
   // Show the tokens the phrase turns into, as it is typed: exactly one for each
-  // post on its board.
+  // post on its board. Anything wrong with the phrase is said at once, the box
+  // is marked and Start is held back until it is put right.
   function previewTokens() {
-    const phrase = el.phraseText.value;
+    const phrase = tidyPhrase(el.phraseText.value);
+    const problem = phraseProblem(phrase);
+    el.phraseError.textContent = problem ?? '';
+    el.phraseText.setAttribute('aria-invalid', String(Boolean(problem)));
+    el.phraseForm.querySelector('button[type="submit"]').disabled = Boolean(problem);
     const size = phraseBoardSize(phrase);
     const tokens = tokenize(phrase, size);
     // Cards are updated in place so that typing only animates what changed.
@@ -446,21 +452,16 @@ export function mount(root, life) {
         .filter(Boolean).join(' ');
       if (card.className !== className) card.className = className;
     });
-    el.tokenNote.textContent = tokens.length === 0 ? ''
-      : tokens.length < size ? `Too short: a ${size} × ${size} board needs at least ${size} letters`
-        : `${size} tokens, one in each post of a ${size} × ${size} board`;
+    el.tokenNote.textContent = tokens.length === 0 || problem ? ''
+      : `${size} tokens, one in each post of a ${size} × ${size} board`;
   }
 
-  el.phraseText.addEventListener('input', () => {
-    el.phraseError.textContent = ''; // an earlier complaint no longer applies to what is typed now
-    previewTokens();
-  });
+  el.phraseText.addEventListener('input', previewTokens);
 
   // Pass phrase has a screen of its own for writing the phrase. It is a step in
   // the browser's history, so Back returns to the room.
   function showCompose(show) {
     composing = show;
-    el.phraseError.textContent = '';
     if (room?.you !== null) render();
     if (show) {
       previewTokens();
