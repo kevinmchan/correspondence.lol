@@ -543,8 +543,8 @@ main:has(.version) { position: relative; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.8rem 0.5rem;
+  gap: 0.45rem;
+  padding: 0.9rem 0.4rem 0.8rem;
   border-radius: 0.9rem;
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   border: 1.5px solid transparent;
@@ -554,9 +554,9 @@ main:has(.version) { position: relative; }
 }
 
 .mode:hover, .mode:focus-visible, .mode[aria-expanded="true"] { border-color: var(--accent); }
-.mode .icon { font-size: 1.6rem; line-height: 1; }
+.mode .icon { width: 1.75rem; height: 1.75rem; color: var(--muted); }
+.mode:hover .icon, .mode:focus-visible .icon, .mode[aria-expanded="true"] .icon { color: var(--accent); }
 .mode strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; }
-.mode span:last-child { font-size: 0.75rem; line-height: 1.3; color: var(--muted); }
 .modes[data-busy] .mode { opacity: 0.6; cursor: progress; }
 
 #phrase-form button { flex: none; padding: 0.5rem 1.1rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; }
