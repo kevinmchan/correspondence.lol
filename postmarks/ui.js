@@ -7,6 +7,7 @@ import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
 import { openHowTo } from './howto.js';
+import { openFeedback, openFinale } from './finale.js';
 import { isMuted, play as sfx, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
@@ -342,7 +343,7 @@ function ripple(cell) {
 }
 
 // Paper confetti for a win.
-function confetti() {
+function confetti(over = document.body) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const colours = ['#f2a391', '#f5cf6e', '#bcdc8a', '#7fd0b8', '#8ec9ef', '#a9a7ee', '#e2a3e3', '#c8442e'];
   const layer = document.createElement('div');
@@ -359,8 +360,58 @@ function confetti() {
     if (i % 3 === 0) bit.style.borderRadius = '50%';
     layer.append(bit);
   }
-  document.body.append(layer);
+  over.append(layer);
   setTimeout(() => layer.remove(), 4200);
+}
+
+// What feedback sent from this page is filed under.
+const about = () => ({
+  game: online?.id ?? null, mode: online?.mode ?? 'solo',
+  outcome: game && ['won', 'lost'].includes(game.status) ? game.status : null,
+});
+const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+
+// The screen at the end of a game: a send-off that suits the mode, and a
+// chance to say how it went. Leaving it goes back to the room.
+function finale() {
+  if (!game || !['won', 'lost'].includes(game.status)) return;
+  if (document.querySelector('dialog.finale')) return;
+  const won = game.status === 'won';
+  const mode = online?.mode ?? 'solo';
+  const found = game.cells.filter((mark) => mark === LETTER).length;
+  const spare = game.hearts === START_HEARTS ? 'Not a heart lost.' : `${game.hearts} ${game.hearts === 1 ? 'heart' : 'hearts'} to spare.`;
+  const finished = online ? online.runs.filter((run) => run.status === 'won') : [];
+  const place = finished.findIndex((run) => run.seat === online?.you) + 1;
+  const standing = place === 0 ? '' : finished.length === 1 ? 'First to finish.' : `${ordinal(place)} of ${finished.length} so far.`;
+  let title = 'Out of hearts';
+  let detail = `${found} of ${game.size} posts delivered.`;
+  if (won && mode === 'trial') {
+    title = place === 1 && finished.length > 1 ? 'Fastest so far!' : 'Delivered!';
+    detail = standing;
+  } else if (won && mode === 'phrase') {
+    title = 'Phrase solved!';
+    detail = `${found === game.size ? 'Every post opened.' : `Only ${found} of ${game.size} posts opened.`} ${standing}`.trim();
+  } else if (won && mode === 'coop') {
+    title = 'Delivered together!';
+    detail = spare;
+  } else if (won) {
+    title = 'All delivered!';
+    detail = spare;
+  }
+  for (const open of document.querySelectorAll('dialog[open]')) open.close(); // nothing else in the way
+  openFinale({
+    won, mode, title, detail,
+    time: online?.clock ? clockText(elapsed()) : null,
+    phrase: online?.phrase?.known ? online.phrase.shown : null,
+    people: online ? online.people.filter((person) => !person.left) : [],
+    hearts: game.hearts,
+    about: about(),
+    leave: online ? 'Back to the room' : 'Close',
+    celebrate: confetti,
+    onDone: () => {
+      if (online) location.href = roomUrl(online.room);
+    },
+  });
 }
 
 // Effects run once: clear them off a square when they finish.
@@ -477,8 +528,10 @@ function render() {
     if (!quiet && seen.status === 'playing' && game.status === 'won') {
       sfx('win', { delay: settle });
       setTimeout(confetti, settle);
+      setTimeout(finale, settle + 1700); // the board has its moment first
     } else if (!quiet && seen.status === 'playing' && game.status === 'lost') {
       sfx('lose', { delay: 450 });
+      setTimeout(finale, 1900);
     }
     el.board.classList.toggle('won', game.status === 'won');
     el.board.classList.toggle('lost', game.status === 'lost');
@@ -546,6 +599,8 @@ function render() {
   // Submit belongs to shared room games, and only while the move is yours
   el.submit.hidden = over || immediate() || !iCanMove();
   el.submit.disabled = !draft || busy;
+  el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
+  el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
   el.tools.hidden = over;
   for (const button of el.tools.children) {
     button.setAttribute('aria-checked', String(button.dataset.tool === tool));
@@ -861,10 +916,11 @@ function greet() {
   const key = online ? online.id : String(game.seed);
   if (load(HOWTO_KEY) === key) return;
   save(HOWTO_KEY, key);
-  if (game.status === 'playing') openHowTo();
+  if (game.status === 'playing') openHowTo(giveFeedback);
 }
 
-el.help.addEventListener('click', openHowTo);
+const giveFeedback = () => openFeedback(about());
+el.help.addEventListener('click', () => openHowTo(giveFeedback));
 
 // Sound on or off, remembered on this device.
 function showSound() {
