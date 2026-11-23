@@ -37,13 +37,36 @@
         </div>
       </section>
 
-      <section id="signed-out" class="card" hidden>
-        <fieldset>
-          <legend>You’re signed out on this device</legend>
-          <p class="hint">Sign in to get your profile and rooms back, enter a code from a guest profile below, or start again as a new guest.</p>
-          <button type="button" id="out-sign-in">Sign in</button>
-          <button type="button" id="out-guest" class="quiet">Start as a new guest</button>
-        </fieldset>
+      <section id="welcome" class="stack" hidden aria-label="Set up your profile">
+        <p id="welcome-note" class="hint" hidden>You’re signed out on this device.</p>
+        <form id="welcome-new" class="card">
+          <fieldset>
+            <legend>New here? Create a profile</legend>
+            <label class="field">
+              <span>Your name</span>
+              <input type="text" id="welcome-name" maxlength="20" required autocomplete="off">
+            </label>
+            <button type="submit">Create profile</button>
+            <p id="welcome-new-error" class="message bad" role="alert"></p>
+          </fieldset>
+        </form>
+        <div class="card plain">
+          <fieldset>
+            <legend>Have an account?</legend>
+            <button type="button" id="welcome-sign-in">Sign in</button>
+          </fieldset>
+        </div>
+        <form id="welcome-code" class="card">
+          <fieldset>
+            <legend>Have a guest profile on another device?</legend>
+            <label class="field">
+              <span>Its code (there: Use on another device)</span>
+              <input type="text" id="welcome-code-text" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+            </label>
+            <button type="submit">Sync profile</button>
+            <p id="welcome-code-note" class="message bad" role="alert"></p>
+          </fieldset>
+        </form>
       </section>
 
       <div id="rooms" class="stack" hidden>
