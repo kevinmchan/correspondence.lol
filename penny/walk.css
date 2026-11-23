@@ -139,7 +139,7 @@
 
 /* One tap leaves a square ajar, for as long as a second tap would count. */
 .walk-board .cell.ajar { z-index: 3; filter: brightness(1.1); box-shadow: 0 0 0 0.06em var(--paper), 0 0.16em 0.3em rgb(0 0 0 / 0.28), inset 0 -0.14em 0 rgb(0 0 0 / 0.14); }
-/* The squares that would have had nowhere, when it can see why a cross is right; and the crosses it cannot answer for, when something has. */
+/* The crosses Penny cannot answer for, when they have left something with nowhere to go. */
 .walk-board .cell.starve { z-index: 3; outline: 0.07em dashed var(--ink); outline-offset: 1px; animation: starve-still 600ms ease-out both; }
 /* A loud post stirring of its own accord. */
 .walk-board .cell.stir { animation: stir-still 700ms ease-out; }

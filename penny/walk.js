@@ -772,13 +772,9 @@ export function mount(root, life) {
       const agreed = changed.filter((cell) => good.has(cell));
       const late = [...good].filter((cell) => !before.good.has(cell) && !changed.includes(cell));
       if (agreed.length || late.length) {
-        // it can see why. And what would have had nowhere, shivers
+        // it can see why
         pal.mood('calm').look(tile(agreed[0] ?? late[0])).gesture('nod');
         hum(MM, 0.45, 'agree');
-        for (const cell of agreed) {
-          const reason = before.squares[cell];
-          if (reason.is === 'room') reason.group.filter((other) => cells[other] === 'empty').forEach((other) => flash(tile(other), 'starve'));
-        }
         say('Penny agrees');
       } else if (place.listen) {
         // it hears nothing under it, and has no quarrel with it
