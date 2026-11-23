@@ -18,6 +18,7 @@ const PRECACHE = [
   '/shared/api.js',
   '/shared/chat.js',
   '/shared/config.js',
+  '/splash.js',
   '/shared/identity.js',
   '/shared/handoff.js',
   '/shared/account.js',

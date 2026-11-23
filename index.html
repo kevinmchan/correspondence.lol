@@ -30,34 +30,13 @@
 </head>
 <body>
   <div id="splash" aria-hidden="true">
-    <svg class="splash-mark" viewBox="0 0 512 512">
-      <rect class="tile" width="512" height="512" rx="112"/>
-      <g class="letter">
-        <rect x="116" y="166" width="280" height="180" rx="14" fill="#f6f1e7"/>
-        <path class="flap" pathLength="1" d="M122 176 L256 276 L390 176" fill="none" stroke="#22303c" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-      <circle class="ring one" cx="256" cy="290" r="30"/>
-      <circle class="ring two" cx="256" cy="290" r="30"/>
-      <circle class="seal" cx="256" cy="290" r="30" fill="#c8442e"/>
-    </svg>
-    <p class="splash-name"><span class="word">correspondence</span><span class="dot">.lol</span></p>
-    <p class="splash-line">Games played by turns, together.</p>
+    <canvas></canvas>
+    <div class="splash-text">
+      <p class="splash-name"><span class="word">correspondence</span><span class="dot">.lol</span></p>
+      <p class="splash-line">Games played by turns, together.</p>
+    </div>
   </div>
-  <script>
-    (function () {
-      var splash = document.getElementById('splash');
-      if (document.documentElement.classList.contains('no-splash')) { splash.remove(); return; }
-      var gone = false;
-      function leave() {
-        if (gone) return;
-        gone = true;
-        splash.classList.add('leaving');
-        setTimeout(function () { splash.remove(); }, 420);
-      }
-      setTimeout(leave, 2700);                      // it plays through by itself
-      splash.addEventListener('pointerup', leave);  // or a tap skips it
-    })();
-  </script>
+  <script src="/splash.js"></script>
   <main>
     <img class="mark" src="/icons/icon.svg" alt="" width="80" height="80">
     <h1>correspondence<span>.lol</span></h1>
