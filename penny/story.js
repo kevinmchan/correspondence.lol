@@ -1,4 +1,4 @@
-// Penny's story, told without a word: no captions, no instructions. The only
+// Penny's story (/?penny), told without a word: no captions, no instructions. The only
 // sound on this screen is her voice, a closed-mouth hum that comes from her
 // seal, and the seal brightens with every note so the voice can be seen too.
 //
@@ -9,26 +9,20 @@
 // less often. Once answered she is glad, and stays glad: after that every touch
 // is another answer.
 
-import { audio, holdMusic, isMuted, noise } from '/postmarks/sound.js';
+import { audio, isMuted } from '/postmarks/sound.js';
 import { COLORS, savedLook } from '/shared/profile.js';
+import { A4, ASK, C5, C6, D5, E5, G4, G5, A5, HELLO, SAG, TRILL, createVoice } from './penny.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
-const [G4, C5, D5, E5, G5, A5, C6] = [392, 523.25, 587.33, 659.25, 783.99, 880, 1046.5];
-const A4 = 440;
 
-// Her phrases: [pitch, seconds, pitch to glide to]. A pitch of 0 is a rest.
-// All on the five notes the rest of the app keeps to.
+// The phrases only the story uses (the rest are in penny.js).
 const LONELY = [[A4, 0.75], [G4, 1.3]];
 const INSIDE = [[E5, 1.5]];
 const INSIDE_SURER = [[C5, 0.45], [E5, 1.7]];
-const HELLO = [[D5, 0.26], [G5, 0.55]];
-const SAG = [[E5, 0.5, D5], [C5, 1.0]];
-const ASK = [[G4, 0.5, C5]];
 const LETTER = [[D5, 0.28], [G5, 0.5], [0, 0.18], [E5, 1.1], [0, 0.12], [D5, 0.36], [C5, 1.2]];
 const ANYONE = [[D5, 0.22], [E5, 0.45]];
 const MISSING = [[E5, 0.5], [C5, 1.3]];
 const GASP = [[C5, 0.16, A5]];
-const TRILL = [[G5, 0.1], [A5, 0.1], [G5, 0.1], [A5, 0.1], [C6, 0.55]];
 const JOY = [[D5, 0.24], [G5, 0.42], [0, 0.12], [E5, 0.8], [0, 0.1], [G5, 0.3], [A5, 0.3], [C6, 1.3]];
 const GLAD = [HELLO, [[E5, 0.2], [G5, 0.2], [A5, 0.45]], TRILL];
 
@@ -61,72 +55,6 @@ export function mount(root, life) {
     drop.style.setProperty('--t', `${0.7 + Math.random() * 0.5}s`);
     drop.style.setProperty('--wait', `${-Math.random() * 1.2}s`);
     rain.append(drop);
-  }
-
-  // --- Her voice -----------------------------------------------------------------
-  // The app's music stands aside: nothing sounds here but her.
-  holdMusic(true);
-  let bus = null;
-  life.onEnd(() => {
-    holdMusic(false);
-    const live = audio();
-    if (bus && live) bus.gain.setTargetAtTime(0, live.ctx.currentTime, 0.06);
-  });
-  function engine() {
-    if (isMuted()) return null;
-    const live = audio();
-    if (!live) return null;
-    if (!bus) {
-      bus = live.ctx.createGain();
-      bus.gain.value = 0.55;
-      bus.connect(live.mix);
-    }
-    return live.ctx;
-  }
-
-  // One hummed note: a soft triangle with a sine under it and a little of the
-  // octave above, all behind a low-pass so it sounds closed-mouthed. It scoops
-  // up into its pitch, and a held note starts to waver.
-  function hum(ctx, at, freq, dur, to, level, breath) {
-    const start = ctx.currentTime + 0.03 + at;
-    const end = start + dur;
-    const soften = ctx.createBiquadFilter();
-    soften.type = 'lowpass';
-    soften.frequency.value = Math.max(freq, to) * 2.4;
-    soften.Q.value = 0.7;
-    const amp = ctx.createGain();
-    amp.gain.setValueAtTime(0.0001, start);
-    amp.gain.exponentialRampToValueAtTime(0.16 * level, start + 0.07);
-    amp.gain.setTargetAtTime(0.0001, Math.max(start + 0.08, end - 0.1), 0.06);
-    soften.connect(amp).connect(bus);
-
-    const waver = ctx.createOscillator();
-    waver.frequency.value = 5.4;
-    const depth = ctx.createGain(); // in cents
-    depth.gain.setValueAtTime(0, start);
-    if (dur > 0.5) {
-      depth.gain.setValueAtTime(0, start + 0.22);
-      depth.gain.linearRampToValueAtTime(18, start + 0.6);
-    }
-    waver.connect(depth);
-    waver.start(start);
-    waver.stop(end + 0.4);
-
-    for (const [type, times, share] of [['triangle', 1, 1], ['sine', 1, 0.6], ['sine', 2, 0.12]]) {
-      const osc = ctx.createOscillator();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq * times * 0.965, start);
-      osc.frequency.exponentialRampToValueAtTime(freq * times, start + 0.06);
-      if (to !== freq) osc.frequency.exponentialRampToValueAtTime(to * times, start + dur * 0.85);
-      depth.connect(osc.detune);
-      const part = ctx.createGain();
-      part.gain.value = share;
-      osc.connect(part).connect(soften);
-      osc.start(start);
-      osc.stop(end + 0.4);
-    }
-    // the breath before a phrase: paper lifting
-    if (breath) noise({ at, dur: 0.09, from: 1400, to: 2600, q: 1.1, gain: 0.035 * level * breath, into: bus });
   }
 
   // --- What the voice looks like -------------------------------------------------
@@ -170,21 +98,9 @@ export function mount(root, life) {
     what.classList.add('flash');
   }
 
-  // Hum a phrase. Resolves when it has been sung.
-  function sing(phrase, level = 1, { into = 'air', breath = 1 } = {}) {
-    const ctx = engine();
-    let at = 0;
-    let first = true;
-    for (const [freq, dur, to] of phrase) {
-      if (freq) {
-        if (ctx) hum(ctx, at, freq, dur, to ?? freq, level, first ? breath : 0);
-        life.setTimeout(show, at * 1000, to ?? freq, dur, into);
-        first = false;
-      }
-      at += dur + (freq ? 0.04 : 0);
-    }
-    return wait(at * 1000);
-  }
+  // The app's music stands aside here: nothing sounds but her.
+  const voice = createVoice(life, { onNote: show, alone: true });
+  const sing = (phrase, level = 1, { into = 'air', breath = 1 } = {}) => voice.sing(phrase, level, { breath, tag: into });
 
   // --- What they do ---------------------------------------------------------------
   const act = (who, name) => {

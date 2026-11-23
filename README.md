@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny.js`, `penny.css` | Penny's story, a wordless scene at `/?penny` |
+| `penny/` | Penny: her voice (`penny.js`), her lessons at `/?learn` (`learn.js`) and her story at `/?penny` (`story.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -40,18 +40,50 @@ device for reduced motion.
 The envelopes on the board are called posts, so that "letters" only ever means
 the letters of a phrase. A double tap on a square guesses a post there.
 
-## Penny's story
+## Penny
 
 Penny the letter and Dot the stamp live in the bottom corner of the home page.
-A tap on Penny opens her story (`/?penny`, `penny.js`). It has no words and no
-instructions, and the only sound on the screen is her voice: a closed-mouth hum
-that comes from her seal, which brightens with every note so the voice can be
-seen with sound off. She is alone in the rain, feels something warm inside her
-that she cannot read, calls out and hears nothing, and then hums into a post
-box that Dot leads her to. After that she waits, and the story does not go on
-by itself: the answer is a touch from whoever is watching, and it arrives in the
-colour of their avatar. Once the story is told, every touch is another answer.
-The app's music stands aside while the screen is up.
+Penny cannot speak, read or write. What she has is a voice: a closed-mouth hum
+that comes from her seal (`penny/penny.js`), which brightens with every note so
+the voice can be seen with sound off. Nothing she is part of uses words.
+
+### Her lessons
+
+Across the home page from her is a portal, and until her lessons have been
+taken she wants you through it. She calls, runs along the bottom of the page to
+the portal, looks back, waits, and comes to fetch you again. A tap on her, or on
+the portal, goes in (`/?learn`, `penny/learn.js`).
+
+Inside, Postmarks is taught one rule at a time. Each lesson is a small board in
+a world with one more rule than the last, and solving it opens a portal to the
+next:
+
+1. a double tap opens a post
+2. one post per colour
+3. one post per row and column
+4. posts cannot touch
+5. a tap or a drag crosses squares out
+
+Penny shows each step with a ring on the board that beats the gesture (twice
+for a double tap, once for a tap, a slide for a drag) and hums the same rhythm.
+When a post is opened, the squares the newest rule takes away light up one
+after another, so the rule is seen as a shape; rules a world does not have yet
+take nothing away. Steps that can be worked out are left to the player for a
+while before she shows them. A wrong guess costs nothing, and a cross put on a
+post is taken off again. The last portal leads to a real solo game. Which
+lesson has been reached, and whether they are finished, is kept on the device;
+afterwards the portal stays, quieter, and the lessons can be taken again.
+
+### Her story
+
+Once the lessons are done, a tap on Penny opens her story (`/?penny`,
+`penny/story.js`), where the only sound is her voice. She is alone in the rain,
+feels something warm inside her that she cannot read, calls out and hears
+nothing, and then hums into a post box that Dot leads her to. After that she
+waits, and the story does not go on by itself: the answer is a touch from
+whoever is watching, and it arrives in the colour of their avatar. Once the
+story is told, every touch is another answer. The app's music stands aside
+while the screen is up.
 
 ## Game modes
 

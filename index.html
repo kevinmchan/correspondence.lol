@@ -29,14 +29,15 @@
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/postmarks/postmarks.css">
   <link rel="stylesheet" href="/jam/jam.css">
-  <link rel="stylesheet" href="/penny.css">
+  <link rel="stylesheet" href="/penny/story.css">
+  <link rel="stylesheet" href="/penny/learn.css">
   <script>
     // The splash plays whenever the page is loaded on the home screen: opening
     // the app, a new tab, or a refresh. (Moving between screens inside the app
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|learn)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -124,11 +125,13 @@
         <p id="status" class="status" role="status" aria-live="polite"></p>
       </div>
       <p id="version" class="version"></p>
+      <!-- A portal in the corner: where Penny wants to take you (her lessons, penny/learn.js). -->
+      <a href="/?learn" id="portal" class="portal home-portal" aria-label="Learn to play, with Penny"></a>
       <!-- Two small residents of the bottom corner: Penny the letter and Dot the stamp. -->
       <div id="critters" class="critters" aria-hidden="true">
         <svg viewBox="0 0 132 84">
           <ellipse class="shade" cx="33" cy="78" rx="15" ry="3"/>
-          <ellipse class="shade" cx="90" cy="78" rx="27" ry="3.5"/>
+          <ellipse class="shade hers" cx="90" cy="78" rx="27" ry="3.5"/>
           <g class="dot">
             <g class="bob">
               <rect x="17" y="43" width="32" height="34" rx="3" fill="#2aa198"/>
@@ -429,13 +432,37 @@
     </main>
   </template>
 
+  <template id="screen-learn">
+    <!-- Penny's lessons. No words on this screen either: see penny/learn.js. -->
+    <main class="learn">
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <ol id="learn-steps" class="learn-steps" aria-hidden="true"></ol>
+      <div id="learn-board" class="board learn-board" role="group" aria-label="Penny's lesson"></div>
+      <div class="learn-floor">
+        <svg class="penny-art learn-penny" viewBox="54 24 72 58" aria-hidden="true">
+          <ellipse class="shade" cx="90" cy="78" rx="27" ry="3.5"/>
+          <g class="p-penny"><g class="act"><g class="bob">
+            <path class="foot" d="M76 76 q4 -4 8 0z"/><path class="foot" d="M96 76 q4 -4 8 0z"/>
+            <rect x="60" y="32" width="60" height="42" rx="5" fill="#f6f1e7" stroke="#22303c" stroke-width="2.6"/>
+            <path class="flap" d="M61.5 34 L90 55 L118.5 34"/>
+            <circle class="cheek" cx="71" cy="62" r="3.4"/><circle class="cheek" cx="109" cy="62" r="3.4"/>
+            <g class="eyes"><ellipse cx="78" cy="58" rx="2.3" ry="2.9"/><ellipse cx="102" cy="58" rx="2.3" ry="2.9"/></g>
+            <path class="mouth" d="M86.5 65 q3.5 3 7 0"/>
+            <circle class="seal" cx="90" cy="54.5" r="4.6"/>
+          </g></g></g>
+        </svg>
+        <button type="button" id="learn-portal" class="portal" aria-label="On to the next" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
+      </div>
+    </main>
+  </template>
+
   <template id="screen-penny">
-    <!-- Penny's story. No words on this screen: see penny.js. -->
+    <!-- Penny's story. No words on this screen: see penny/story.js. -->
     <main class="penny-story" data-sky="night">
       <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
       <div class="penny-sky" aria-hidden="true"><i class="dawn"></i><i class="day"></i></div>
       <div class="penny-rain" aria-hidden="true"></div>
-      <svg class="penny-stage" viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Penny">
+      <svg class="penny-stage penny-art" viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Penny">
         <rect class="p-ground" x="-2000" y="262" width="4200" height="60"/>
         <g class="p-star"><circle class="halo" cx="160" cy="50" r="8"/><circle cx="160" cy="50" r="2.4"/></g>
         <g class="p-box">

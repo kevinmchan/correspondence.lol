@@ -1,0 +1,85 @@
+/* Penny's lessons, and the portals between them. */
+
+/* --- A portal: a ring of the game's colours turning round a dark middle ------------ */
+.portal {
+  position: relative; display: block; flex: none;
+  width: 3.6rem; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer; isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+.portal::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(#f08a76, #f8d95a, #7cc46a, #2aa198, #9ad3f7, #736dd0, #f3b3e6, #f08a76);
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0.9rem color-mix(in srgb, #9ad3f7 55%, transparent);
+}
+.portal::after {
+  content: ""; position: absolute; inset: 15%; border-radius: 50%;
+  background: radial-gradient(circle at 50% 46%, #fff 0 5%, #3b4d63 12%, #1b2732 46%, #0c1217 100%);
+  box-shadow: inset 0 0 0.5rem #000;
+}
+.portal svg { position: absolute; inset: 27%; width: 46%; height: 46%; z-index: 1; display: none; }
+.portal.last svg { display: block; }
+.portal.last::after { background: radial-gradient(circle, #3b4d63 0, #1b2732 60%, #0c1217 100%); }
+.portal:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.portal.calm { opacity: 0.6; }
+@media (prefers-reduced-motion: no-preference) {
+  .portal::before { animation: portal-turn 7s linear infinite; }
+  .portal:not(.calm) { animation: portal-breathe 2.2s ease-in-out infinite; }
+  .portal.called { animation: portal-call 700ms ease-out; }
+  /* (the screen the app opens on raises its contents into place: not this) */
+  .screen.opening main > .portal { animation: none; }
+  .screen.opening main > .portal:not(.calm) { animation: portal-breathe 2.2s ease-in-out infinite; }
+  .screen.opening main > .portal.called { animation: portal-call 700ms ease-out; }
+  .learn .portal:not([hidden]) { animation: portal-open 520ms cubic-bezier(0.3, 1.5, 0.5, 1) both, portal-breathe 2.2s ease-in-out 520ms infinite; }
+}
+@keyframes portal-turn { to { transform: rotate(1turn); } }
+@keyframes portal-breathe { 0%, 100% { transform: none; } 50% { transform: scale(1.07); } }
+@keyframes portal-call { 0% { transform: none; filter: none; } 35% { transform: scale(1.28); filter: brightness(1.3); } 100% { transform: none; filter: none; } }
+@keyframes portal-open { from { transform: scale(0) rotate(-120deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* The one on the home page, in the corner across from Penny and Dot. */
+.home-portal { position: absolute; left: max(0.9rem, env(safe-area-inset-left)); bottom: max(1.7rem, calc(env(safe-area-inset-bottom) + 1.3rem)); width: 3.2rem; } /* clear of the version, which is under it */
+.critters .penny, .critters .shade.hers { transition: translate 1500ms ease-in-out; }
+.critters .seal.sound { animation: p-sound-still var(--d, 400ms) ease-out; }
+@media (prefers-reduced-motion: no-preference) {
+  .critters .seal.sound { animation-name: p-sound; }
+}
+
+/* --- A lesson ------------------------------------------------------------------- */
+.screen-learn main.learn { position: relative; justify-content: center; gap: 1.1rem; padding-top: max(4rem, calc(env(safe-area-inset-top) + 3.5rem)); }
+.learn .penny-back { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+.learn-steps { display: flex; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+.learn-steps li { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: color-mix(in srgb, var(--ink) 16%, transparent); transition: background 300ms ease, transform 300ms ease; }
+.learn-steps li.done { background: var(--ink); }
+.learn-steps li.now { background: var(--accent); transform: scale(1.35); }
+.learn-board { width: min(100%, calc(var(--n) * 5.2rem), 50vh); }
+.learn-floor { display: flex; align-items: flex-end; justify-content: center; gap: 1.4rem; min-height: 4.6rem; }
+.learn-penny { width: 5.6rem; height: auto; overflow: visible; flex: none; }
+.penny-art.learn-penny .p-penny { translate: none; }
+.learn-penny .cheek { opacity: 0.8; }
+
+/* What she is asking for: a ring on the square, beating the gesture. */
+.learn-ring { position: absolute; z-index: 5; pointer-events: none; border-radius: 26%; box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--paper); }
+.learn-ring[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .learn-ring.twice { animation: ring-twice 1.7s ease-out infinite; }
+  .learn-ring.once { animation: ring-once 1.7s ease-out infinite; }
+}
+@keyframes ring-twice {
+  0%, 12%, 26%, 100% { scale: 1; }
+  6%, 19% { scale: 0.8; }
+}
+@keyframes ring-once {
+  0%, 16%, 100% { scale: 1; }
+  8% { scale: 0.8; }
+}
+
+/* The squares a new rule takes away, lit one after another. */
+.learn-board .cell.teach { z-index: 3; outline: 0.085em solid transparent; outline-offset: 1px; animation: teach 1100ms ease-out var(--d, 0ms) both; }
+.learn-board .cell.fx-cross.teach { animation: teach 1100ms ease-out var(--d, 0ms) both; }
+@media (prefers-reduced-motion: no-preference) {
+  .learn-board .cell.fx-cross.teach { animation: cross-tile 300ms ease-out var(--d, 0ms) both, teach 1100ms ease-out var(--d, 0ms) both; }
+  .learn.through .learn-board, .learn.through .learn-steps { transition: transform 440ms cubic-bezier(0.6, 0, 0.8, 0.4), opacity 440ms ease; transform: scale(0.1) rotate(40deg); opacity: 0; }
+  .learn.through .learn-penny { transition: transform 440ms ease-in; transform: translateX(4rem) scale(0.2); }
+}
+@keyframes teach { 0% { outline-color: transparent; } 18% { outline-color: var(--ink); } 70% { outline-color: var(--ink); } 100% { outline-color: transparent; } }

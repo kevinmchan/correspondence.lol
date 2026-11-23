@@ -5,6 +5,7 @@ import { myName, recentRooms, roomUrl } from '/shared/identity.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
+import { ASK, HELLO, THIS_WAY, createVoice, hasLearned } from '/penny/penny.js';
 
 // The home screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -173,9 +174,29 @@ export function mount(root, life) {
   // the page was last touched. A tap on Dot gets a hop and a heart; a tap on
   // Penny, a hop, and then her story.
   const critters = $('critters');
-  // A tap on Penny opens her story (penny.js). The move is made without its
-  // usual sound: the first thing heard there should be her.
-  critters?.querySelector('.penny').addEventListener('click', () => setTimeout(() => go('/?penny', { quiet: true }), 260));
+  // Until her lessons have been taken (penny/learn.js), Penny wants one thing:
+  // to get you through the portal in the other corner. She has no words for
+  // it, so she does what a dog does: calls, runs to it, looks back, waits, and
+  // comes to fetch you again. A tap on her goes there. Once the lessons are
+  // done she is at rest, and a tap opens her story instead (penny/story.js).
+  // Either move is made without its usual sound: the next thing heard is her.
+  const portal = $('portal');
+  const pennyHome = critters?.querySelector('.penny');
+  const voice = createVoice(life, {
+    onNote(pitch, dur) {
+      const seal = pennyHome?.querySelector('.seal');
+      if (!seal) return;
+      seal.classList.remove('sound');
+      void seal.getBoundingClientRect();
+      seal.style.setProperty('--d', `${Math.max(260, dur * 1000)}ms`);
+      seal.classList.add('sound');
+    },
+  });
+  portal.classList.toggle('calm', hasLearned());
+  pennyHome?.addEventListener('click', () => {
+    if (!hasLearned()) voice.sing(HELLO, 0.9);
+    setTimeout(() => go(hasLearned() ? '/?penny' : '/?learn', { quiet: true }), 300);
+  });
   if (critters && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const penny = critters.querySelector('.penny');
     const dot = critters.querySelector('.dot');
@@ -208,6 +229,57 @@ export function mount(root, life) {
       setTimeout(idle, 7000 + Math.random() * 9000);
     };
     setTimeout(idle, 5000);
+    // --- Penny, wanting to show you something ---
+    const hers = critters.querySelector('.shade.hers');
+    const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+    const gaze = (who, dx, dy) => { who.querySelector('.eyes').style.translate = `${dx}px ${dy}px`; };
+    // Move her along the bottom of the page: all the way to the portal, or home.
+    const run = (toPortal) => {
+      let by = 0;
+      if (toPortal) {
+        const scale = critters.querySelector('svg').getBoundingClientRect().width / 132; // screen pixels to a unit of the drawing
+        const gap = portal.getBoundingClientRect().right + 8 - critters.getBoundingClientRect().left;
+        by = Math.min(0, gap / scale - 60); // her left edge is 60 units into the drawing
+      }
+      penny.style.translate = hers.style.translate = `${by}px 0`;
+    };
+    const quiet = () => document.visibilityState !== 'visible' || document.querySelector('dialog[open], #splash');
+    (async () => {
+      await wait(3200);
+      while (!hasLearned()) {
+        if (!quiet()) {
+          // to you
+          gaze(penny, -0.8, -1.2);
+          once(penny, 'hop');
+          voice.sing(HELLO, 0.85);
+          await wait(1200);
+          // to the portal
+          run(true);
+          await wait(700);
+          once(penny, 'hop');
+          await wait(1000);
+          // and back at you: this way?
+          gaze(penny, 1.4, -1);
+          once(penny, 'wiggle');
+          voice.sing(ASK, 0.85);
+          portal.classList.remove('called');
+          void portal.getBoundingClientRect();
+          portal.classList.add('called');
+          await wait(1900);
+          gaze(penny, -1.6, 0.2); // into it
+          await wait(1500);
+          gaze(penny, 1.4, -1);
+          once(penny, 'hop');
+          voice.sing(THIS_WAY, 0.85);
+          await wait(3200);
+          // nobody came: back to fetch you
+          run(false);
+          await wait(1800);
+        }
+        await wait(5000 + Math.random() * 4000);
+      }
+    })();
+
     dot.addEventListener('click', () => {
       once(dot, 'hop');
       heart(dot);
