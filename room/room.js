@@ -22,7 +22,7 @@ export function mount(root, life) {
     games: $('games'), noGames: $('no-games'),
     modes: $('modes'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
     phraseError: $('phrase-error'), phraseBack: $('phrase-back'), tokens: $('tokens'), tokenNote: $('token-note'), gameError: $('game-error'),
-    chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'),
+    chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'), more: $('more'), moreMenu: $('more-menu'), rename: $('rename'),
   };
 
   const requested = new URLSearchParams(location.search).get('id');
@@ -186,6 +186,7 @@ export function mount(root, life) {
       return [li];
     }));
     el.profile.hidden = false;
+    el.more.hidden = false;
     el.profile.replaceChildren(avatar(room.people[room.you]));
     const code = `${room.code.slice(0, 3)}-${room.code.slice(3)}`;
     if (el.roomCode.dataset.code !== code) {
@@ -327,8 +328,30 @@ export function mount(root, life) {
   });
 
   // --- Leaving ----------------------------------------------------------------------
+  // The room's options, tucked behind the three dots at the top: things done
+  // rarely (renaming) or not to be done by accident (leaving).
+  const moreMenu = (open) => {
+    el.moreMenu.hidden = !open;
+    el.more.setAttribute('aria-expanded', String(open));
+    if (open) el.leaveError.textContent = '';
+  };
+  el.more.addEventListener('click', () => moreMenu(el.moreMenu.hidden));
+  life.on(document, 'pointerdown', (event) => {
+    if (!el.moreMenu.hidden && !event.target.closest('.more-wrap')) moreMenu(false);
+  });
+  life.on(document, 'keydown', (event) => {
+    if (event.key === 'Escape' && !el.moreMenu.hidden) {
+      moreMenu(false);
+      el.more.focus();
+    }
+  });
+  el.rename.addEventListener('click', () => {
+    moreMenu(false);
+    editName();
+  });
+
   el.leave.addEventListener('click', async () => {
-    if (!confirm(`Leave ${room.name}? You can come back with the room's link.`)) return;
+    if (!confirm(`Leave ${room.name}? You can come back with its code.`)) return;
     el.leave.disabled = true;
     el.leaveError.textContent = '';
     try {
