@@ -1,3 +1,4 @@
+import { ask, tell } from '/shared/ask.js';
 import { go } from '/shared/nav.js';
 import {
   CROSS, EMPTY, LETTER, MISS, START_HEARTS,
@@ -143,8 +144,8 @@ export function mount(root, life) {
     } catch (error) {
       // Someone deleted the game while it was open here: back to the room.
       if (/game not found/i.test(error.message)) {
-        alert('This game was deleted.');
-        go(roomUrl(online.room), { replace: true });
+        await tell('This game was deleted', { ok: 'Back to the room' });
+        if (!life.over) go(roomUrl(online.room), { replace: true });
         return;
       }
       /* otherwise offline or a blip: keep showing what we have and try again */
@@ -998,8 +999,10 @@ export function mount(root, life) {
     });
   });
 
-  el.newGame.addEventListener('click', () => {
-    if (game?.status === 'playing' && game.moves > 0 && !confirm('Abandon this game and start a new one?')) return;
+  el.newGame.addEventListener('click', async () => {
+    if (game?.status === 'playing' && game.moves > 0
+      && !(await ask('Start a new game?', { detail: 'This one will be left unfinished.', yes: 'New game', no: 'Keep playing' }))) return;
+    if (life.over) return;
     startSolo();
     render();
     greet();
