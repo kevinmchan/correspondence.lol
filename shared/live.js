@@ -12,9 +12,11 @@ export function watchRoom(roomId, onChange) {
   let channel = null;
   let live = false;
   let pending = null;
+  let stopped = false;
 
   // Several events can arrive together; refetch once.
   const changed = () => {
+    if (stopped) return;
     clearTimeout(pending);
     pending = setTimeout(onChange, 50);
   };
@@ -22,6 +24,7 @@ export function watchRoom(roomId, onChange) {
   import('/vendor/realtime.js')
     .then(({ RealtimeClient }) => {
       const client = new RealtimeClient(`${SUPABASE_URL}/realtime/v1`, { params: { apikey: SUPABASE_KEY } });
+      if (stopped) return;
       channel = client
         .channel(`room:${roomId}`, { config: { broadcast: { self: false } } })
         .on('broadcast', { event: 'changed' }, changed)
@@ -36,6 +39,14 @@ export function watchRoom(roomId, onChange) {
     });
 
   return {
+    // The screen that was listening has gone: hang up.
+    stop() {
+      stopped = true;
+      clearTimeout(pending);
+      try {
+        channel?.unsubscribe();
+      } catch { /* already gone */ }
+    },
     // True while the socket is connected and listening.
     get live() {
       return live;
