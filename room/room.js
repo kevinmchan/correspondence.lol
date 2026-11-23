@@ -14,7 +14,7 @@ const el = {
   notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), shareLink: $('share-link'), copyLink: $('copy-link'), shareButton: $('share-button'),
   games: $('games'), noGames: $('no-games'),
   modes: $('modes'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
-  phraseError: $('phrase-error'), phraseBack: $('phrase-back'), gameError: $('game-error'),
+  phraseError: $('phrase-error'), phraseBack: $('phrase-back'), tokens: $('tokens'), tokenNote: $('token-note'), gameError: $('game-error'),
   chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'),
 };
 
@@ -268,10 +268,8 @@ async function startGame(mode, phrase = null) {
   try {
     // A pass phrase hides one word in each letter, so the board is sized to
     // the phrase: as many letters as words where possible.
-    const words = (phrase ?? '').trim().split(/\s+/).filter(Boolean).length;
-    const size = mode !== 'phrase' ? randomSize()
-      : words ? Math.min(9, Math.max(5, words))
-      : 5 + Math.floor(Math.random() * 3);
+    const words = phraseWords(phrase ?? '').length;
+    const size = mode !== 'phrase' ? randomSize() : words ? phraseBoard(words) : 5 + Math.floor(Math.random() * 3);
     const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
     const game = await rpc('postmarks_start', {
       p_room: roomId, p_token: myToken(), p_mode: mode, p_size: size,
@@ -285,13 +283,43 @@ async function startGame(mode, phrase = null) {
   }
 }
 
+// A phrase is split into words, and each word is hidden in one letter of the
+// board as a token. The board has as many letters as there are words, within
+// its limits of 5 to 9; beyond 9 words, letters hold more than one.
+const phraseWords = (text) => text.trim().split(/\s+/).filter(Boolean);
+const phraseBoard = (words) => Math.min(9, Math.max(5, words));
+
+// Show the tokens the phrase turns into, as it is typed.
+function previewTokens() {
+  const words = phraseWords(el.phraseText.value);
+  const size = phraseBoard(words.length);
+  const tokens = [];
+  words.forEach((word, i) => {
+    (tokens[i % size] ??= []).push(word.toUpperCase());
+  });
+  el.tokens.replaceChildren(...tokens.map((group) => {
+    const card = document.createElement('span');
+    card.className = 'word';
+    card.textContent = group.join(' + ');
+    return card;
+  }));
+  const n = tokens.length;
+  el.tokenNote.textContent = n === 0 ? ''
+    : `${n} ${n === 1 ? 'token' : 'tokens'}, hidden in ${n === size ? 'the' : `${n} of the`} ${size} letters of a ${size} × ${size} board`;
+}
+
+el.phraseText.addEventListener('input', previewTokens);
+
 // Pass phrase has a screen of its own for writing the phrase. It is a step in
 // the browser's history, so Back returns to the room.
 function showCompose(show) {
   composing = show;
   el.phraseError.textContent = '';
   if (room?.you !== null) render();
-  if (show) el.phraseText.focus();
+  if (show) {
+    previewTokens();
+    el.phraseText.focus();
+  }
   else window.scrollTo(0, 0);
 }
 

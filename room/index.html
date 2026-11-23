@@ -36,12 +36,14 @@
 
     <div id="compose" class="stack" hidden>
       <p class="lede">Pass phrase</p>
-      <p class="hint">Write a phrase for the others to uncover, one word per letter on the board. You'll watch them solve it. Leave it empty for a random phrase and you can play too.</p>
+      <p class="hint">Leave a phrase for others to uncover.</p>
       <form id="phrase-form" class="card">
         <label class="field">
           <span>Your phrase</span>
           <input type="text" id="phrase-text" maxlength="60" autocomplete="off" spellcheck="false" placeholder="Leave empty for a random one">
         </label>
+        <div id="tokens" class="phrase" aria-live="polite" aria-label="How your phrase will be hidden"></div>
+        <p id="token-note" class="hint"></p>
         <button type="submit">Start game</button>
         <p id="phrase-error" class="message bad" role="alert"></p>
       </form>

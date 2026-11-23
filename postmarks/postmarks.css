@@ -353,40 +353,7 @@ button.round:disabled { opacity: 0.35; }
 
 /* --- Pass phrase ---------------------------------------------------------------- */
 
-/* one card per word: face down until its letter is found */
-.phrase {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.4rem;
-  font-family: system-ui, sans-serif;
-}
-
-.phrase .word {
-  padding: 0.4rem 0.65rem;
-  border-radius: 0.55rem;
-  background: var(--ink);
-  color: var(--paper);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
-.phrase .word.hidden {
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
-  color: var(--muted);
-  letter-spacing: 0.18em;
-  box-shadow: inset 0 0 0 1.5px var(--line);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .phrase .word:not(.hidden) { animation: turn-over 350ms ease; }
-  @keyframes turn-over {
-    from { transform: rotateX(90deg); }
-    to { transform: none; }
-  }
-}
+/* the phrase's cards are styled in /styles.css, shared with the room's phrase screen */
 
 .phrase-entry { width: 100%; }
 .phrase-entry button { flex: none; padding: 0.5rem 1.1rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; }
