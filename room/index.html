@@ -33,13 +33,14 @@
   <link rel="stylesheet" href="/penny/walk.css">
   <link rel="stylesheet" href="/penny/pal.css">
   <link rel="stylesheet" href="/penny/office.css">
+  <link rel="stylesheet" href="/penny/slow.css">
   <script>
     // The splash plays whenever the page is loaded on the home screen: opening
     // the app, a new tab, or a refresh. (Moving between screens inside the app
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -445,6 +446,24 @@
         <g class="o-motes"></g>
         <g class="o-air"></g>
       </svg>
+    </main>
+  </template>
+
+  <template id="screen-slow">
+    <!-- Scene two: what slow hands make. No words: see penny/slow.js. -->
+    <main class="office slow">
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
+      <p class="sr-only">Draw in the room with a finger, or with the arrow keys. What is drawn slowly stays, and grows; what is drawn fast fades. A finger held still opens a flower.</p>
+      <svg class="office-stage penny-art" viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Penny, in the sorting room, now quiet, watching what you draw in the lamplight">
+        <path class="o-lamp-light" d="M100 16 L20 262 L180 262 Z"/>
+        <path class="o-lamp" d="M100 -600 V10 M92 16 q8 -9 16 0 z" stroke="#3b4d63" stroke-width="1.5"/>
+        <g class="o-clock"><circle cx="66" cy="18" r="9"/><path d="M66 10.5v1.6M66 23.9v1.6M58.5 18h1.6M71.9 18h1.6" fill="none"/><path class="o-hand" d="M66 18V11.8" fill="none"/></g>
+        <rect class="o-floor" x="-2000" y="262" width="4200" height="60"/>
+      </svg>
+      <canvas class="slow-keep" aria-hidden="true"></canvas>
+      <canvas class="slow-pass" aria-hidden="true"></canvas>
+      <i class="slow-tip" aria-hidden="true"></i>
+      <button type="button" id="slow-portal" class="portal" aria-label="On, to the map" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
     </main>
   </template>
 

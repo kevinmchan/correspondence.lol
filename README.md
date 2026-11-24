@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -95,7 +95,7 @@ Only the first quarter is built. The shape of the whole:
 
 | Mark | What happens | State |
 | --- | --- | --- |
-| The start | A sorting office in a hurry. The express mail leaves, quicker and quicker, and Penny is left. It tries to be as fast, and cannot. When it stops, the room slows, and there is a sound. It is looking for whoever made it, and wants to take you through a portal to find them. | built |
+| The start | Two scenes. A sorting office in a hurry. The express mail leaves, quicker and quicker, and Penny is left. It tries to be as fast, and cannot. When it stops, the room slows, and there is a sound. It is looking for whoever made it. Then the same room, slowed, where what you draw slowly stays and grows, and a portal out of it to go and look. | built |
 | To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them, and nothing in them is timed: Penny hears by holding still. | built |
 | **A quarter** | **Penny finds a friend, Dot**, a stamp, in the last post of the fifth place. From here on Penny is not alone. | built |
 | To a half | The search goes on, with Dot. | not written |
@@ -268,7 +268,7 @@ the film again from scene one (`/?office`, `penny/office.js`).
 The story is gone through by swiping up. The scene is a handful of screens,
 and none of them moves on by itself: a swipe up turns to the next at once (the
 up arrow and a wheel do the same), and a swipe up from the last, once one
-square of the map is lit, goes through to the walk.
+square of the map is lit, goes on to scene two.
 
 Each screen is a loop. It plays, and plays again, for as long as it is left
 up, and no two turns of it are quite alike: the small differences are the
@@ -294,6 +294,35 @@ The scene is silent until the first touch, with Penny's seal beating slowly
 as the sign that there is something to hear. (An older scene of
 Penny's story lived at `/?penny`; that address now opens scene one, and its
 styles in `penny/story.css` are still used by the office.)
+
+### Scene two: what slow hands make
+
+Scene one is about stopping. Scene two (`/?slow`, `penny/slow.js`) is the
+reason it is worth it: slowing down is beautiful because of what can be made.
+It is the same room, slowed, and it is yours to draw in. There is nothing to
+solve and nothing is counted. What a finger makes depends on one thing only,
+how fast it goes:
+
+| The hand | What it leaves |
+| --- | --- |
+| Fast | A thin cold scratch, straight, gone almost as it is made. |
+| Slow | A wide warm ribbon in the game's colours, which stays. Shoots grow out of it, curl away and end in buds: the slower the line, the more of them and the longer they grow. |
+| Still | A flower, opening for as long as the finger is held there. |
+
+Everything is drawn twice, once each side of the middle of the screen, as ink
+goes through a letter folded while it is wet. The room keeps to the rules in
+"How a place says it": the clock on the wall goes at the speed of your hand,
+its hand red in a rush and pale at rest. Penny watches the finger, winces at
+a rush and warms to anything slow, and hums a note for a slow line now and
+then, higher the higher up the screen it is. The arrow keys draw too, at a
+walk (with shift, at a rush).
+
+Whoever is caught waiting is shown, as in scene one: Penny looks out, and a
+fingertip of light crosses the room slowly, leaving what a slow hand leaves.
+That fades; it was only to show. Once a little has been made slowly, a portal
+opens in the corner and leads on to the walk. It opens for slowness and never
+for speed, and it does not hurry anybody through. What was drawn is not kept
+when the scene is left.
 
 ## Game modes
 

@@ -8,7 +8,7 @@
 // map, a long way off, and Penny knows it is meant for it. It answers, and
 // waits, as it always has. And then, for the first time, it turns away from
 // the map and looks at whoever is watching. One square of the map lights. That
-// square is where the walk begins (penny/walk.js).
+// square is the way on, to scene two (penny/slow.js), and after it the walk.
 //
 // The scene is a handful of screens, and each of them is a loop: it plays,
 // and plays again, for as long as it is left up. No two turns of a loop are
@@ -425,7 +425,7 @@ export function mount(root, life) {
   const LEFT = Symbol('left');
   let at = 0;
   let run = 0;
-  const leave = () => go('/?walk', { quiet: true });
+  const leave = () => go('/?slow', { quiet: true }); // scene two (penny/slow.js)
   async function show(index) {
     run += 1;
     const mine = run;
@@ -450,7 +450,7 @@ export function mount(root, life) {
       if (error !== LEFT) throw error;
     }
   }
-  // A swipe up. Out of the last screen it goes through to the walk: once the
+  // A swipe up. Out of the last screen it goes on to scene two: once the
   // square is lit, and a swipe before that lights it.
   function turn() {
     if (life.over) return;
@@ -498,7 +498,7 @@ export function mount(root, life) {
     turn();
   });
 
-  // The lit square is the first place of the walk.
+  // The lit square is the way on.
   first.addEventListener('click', () => {
     if (first.classList.contains('lit')) leave();
   });
