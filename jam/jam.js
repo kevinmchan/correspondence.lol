@@ -447,7 +447,7 @@ export function mount(root, life) {
       return li;
     }));
   }
-  $('jam-lab').addEventListener('click', () => go('/jam/?taste')); // the taste test (jam/taste.js)
+  $('jam-lab').addEventListener('click', () => go('/jam/?taste')); // the radio (jam/taste.js)
   el.save.addEventListener('click', () => {
     const beat = now();
     if (isEmpty(beat)) return;

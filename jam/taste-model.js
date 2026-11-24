@@ -1,4 +1,4 @@
-// The taste test: what is measured about a loop, the model of what you like,
+// Behind the radio (jam/taste.js), the taste test: what is measured about a loop, the model of what you like,
 // and the test of whether that model can really tell.
 //
 // THE EXPERIMENT. Two loops at a time. You pick the one you prefer; it stays,

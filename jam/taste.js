@@ -1,26 +1,22 @@
-// The taste test (/jam/?taste): an experiment in whether what you like in a
-// loop can be predicted.
+// The radio (/jam/?taste). To whoever is using it, it is a radio: two stations
+// on the dial, a swipe to tune from one to the other, a double tap to keep
+// the one you would go on listening to. The station kept stays on the dial
+// and a new one comes in beside it. A station kept five times running is
+// saved as a preset, and two new stations take the dial.
 //
-// One card, two sides, a loop on each. A swipe across the card turns it over,
-// and the side that is up is the one that is playing. A double tap on a side
-// picks it. The loop that was picked stays where it is, and a new challenger
-// takes the other side. Every pick is one label for the model.
+// Behind it, out of sight until the flask at the top is pressed, it is an
+// experiment in whether what you like in a loop can be predicted. Every
+// station kept is a label; what is measured about a loop, the model, and the
+// test of whether the model can really tell are in jam/taste-model.js. The
+// longer a station has been kept, the likelier the next one beside it is a
+// near relation of it, which is the harder choice.
 //
-// What is measured about a loop, the model, and the test of whether the model
-// can really tell are in jam/taste-model.js. This file is the card, the
-// sound, and the lab notes underneath, which say where the experiment stands
-// after every pick.
-//
-// A loop that wins five times running retires undefeated, to a hall of fame
-// under the card, and two new loops start again: no early favourite sits
-// there for ever. And the longer a loop has reigned, the likelier its next
-// challenger is a near relation of it, which is the harder contest.
-//
-// Two things are done for the sake of the experiment and not of the game. A
-// pick does not count until both sides have been listened to. And which side
-// is up when a new pair arrives is decided by a coin, so that "the one I heard
-// first" is not always the challenger.
+// Two things are done for the sake of the experiment and not of the radio. A
+// station cannot be kept until both have been listened to. And which of the
+// two is tuned in when a new pair arrives is decided by a coin, so that "the
+// one I heard first" is not always the newcomer.
 
+import { audio, noise } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode } from './beat.js';
@@ -30,7 +26,14 @@ import { NEEDED, REIGN, WARMUP, begin, choose, fit, leanings, pairVector, standi
 const KEY = 'jam:taste:v1';
 const LISTEN_MS = 1500; // how long a side has to have been heard before a pick counts
 const SIDES = ['front', 'back'];
-const LETTER = { front: 'A', back: 'B' };
+// Where on the dial a station is: worked out from the loop itself, so the same
+// loop is always the same station. (Between 87.5 and 108, as FM is.)
+const [LOW, HIGH_END] = [87.5, 108];
+function dialOf(beat) {
+  let hash = 2166136261;
+  for (const letter of encode(beat)) hash = Math.imul(hash ^ letter.charCodeAt(0), 16777619) >>> 0;
+  return LOW + (hash % 206) / 10;
+}
 const otherSide = (side) => (side === 'front' ? 'back' : 'front');
 
 // What is kept: the picks, with the loops as their codes, and the pair now up.
@@ -56,9 +59,10 @@ function restore() {
 
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
-  document.title = 'Taste test · correspondence.lol';
+  document.title = 'Radio · correspondence.lol';
   const el = {
     card: $('taste-card'), hint: $('taste-hint'), note: $('taste-note'), flip: $('taste-flip'), pick: $('taste-pick'), play: $('taste-play'),
+    freq: $('radio-freq'), tag: $('radio-tag'), signal: $('radio-signal'), behind: $('taste-behind'),
     picks: $('lab-picks'), called: $('lab-called'), habits: $('lab-habits'), coin: $('lab-coin'), stake: $('lab-stake'), meter: $('lab-meter'),
     verdict: $('lab-verdict'), likes: $('lab-likes'), hall: $('lab-hall'), copy: $('taste-copy'), reset: $('taste-reset'),
   };
@@ -150,24 +154,44 @@ export function mount(root, life) {
       face.classList.add('gleam');
     }
   }
-  function show() {
-    for (const side of SIDES) {
-      const face = faces[side];
-      face.querySelector('.pic').innerHTML = picture(state.current[side]);
-      face.querySelector('.tempo').textContent = `${TEMPOS[state.current[side].tempo]} bpm`;
-      const reigns = state.current.reigning === side;
-      face.querySelector('.crown').hidden = !reigns;
-      face.querySelector('.crown b').textContent = reigns ? `${state.streak} of ${REIGN}` : ''; // (at five it retires)
-      face.querySelector('.new').hidden = reigns || state.current.reigning === null;
-    }
+  // The two stations' places on the dial (never quite the same place).
+  let dial = { front: 0, back: 0 };
+  const name = (side) => dial[side].toFixed(1);
+  function place() {
+    dial = { front: dialOf(state.current.front), back: dialOf(state.current.back) };
+    if (Math.abs(dial.front - dial.back) < 0.8) dial.back = dial.front + (dial.front > 98 ? -1.2 : 1.2);
+  }
+  const along = (at) => `${(((at - LOW) / (HIGH_END - LOW)) * 100).toFixed(2)}%`;
+  // What changes while a pair is up: which is tuned in, and what has been listened to.
+  function tune() {
     el.card.classList.toggle('turned', up === 'back');
-    el.card.setAttribute('aria-label', `Loop ${LETTER[up]} is up${state.current.reigning === up ? ', the reigning one' : ''}. Swipe to turn the card over; double tap to pick this loop.`);
-    el.pick.textContent = `Pick ${LETTER[up]}`;
+    el.card.style.setProperty('--needle', along(dial[up]));
+    el.card.style.setProperty('--edge', up === 'front' ? '#f08a76' : '#2aa198');
+    for (const side of SIDES) {
+      faces[side].classList.toggle('tuned', side === up);
+      faces[side].classList.toggle('heard', heardMs[side] >= LISTEN_MS);
+      el.card.querySelector(`.mark.${side}`).classList.toggle('heard', heardMs[side] >= LISTEN_MS);
+    }
+    el.freq.textContent = name(up);
+    const kept = state.current.reigning === up;
+    el.tag.textContent = kept ? `★ Kept ${state.streak} of ${REIGN}` : state.current.reigning ? 'New station' : '';
+    el.tag.classList.toggle('kept', kept);
+    el.signal.dataset.bars = String(Math.min(3, Math.floor((heardMs[up] / LISTEN_MS) * 3)));
+    el.card.setAttribute('aria-label', `Tuned to ${name(up)} FM${kept ? ', the station you have kept' : ''}. Swipe to tune to the other station; double tap to keep this one.`);
+    el.pick.textContent = `Keep ${name(up)}`;
     el.play.setAttribute('aria-pressed', String(started));
     el.play.setAttribute('aria-label', started ? 'Pause' : 'Play');
     el.play.classList.toggle('playing', started);
     el.hint.hidden = state.trials.length > 2;
-    for (const side of SIDES) faces[side].classList.toggle('heard', heardMs[side] >= LISTEN_MS);
+  }
+  // A new pair: their pictures, and their places on the dial.
+  function show() {
+    place();
+    for (const side of SIDES) {
+      faces[side].querySelector('.pic').innerHTML = picture(state.current[side]);
+      el.card.querySelector(`.mark.${side}`).style.left = along(dial[side]);
+    }
+    tune();
   }
   let noteTimer = 0;
   function say(text) {
@@ -180,17 +204,24 @@ export function mount(root, life) {
     start();
     up = otherSide(up);
     flips += 1;
-    show();
+    // between stations: a moment of static, seen and heard
+    if (!still) {
+      el.card.classList.remove('retune');
+      void el.card.offsetWidth;
+      el.card.classList.add('retune');
+    }
+    if (audio()) noise({ dur: 0.13, from: 2600, to: 5200, q: 0.5, gain: 0.035 });
+    tune();
   }
   function pick() {
     if (!started) { // nothing has been heard yet
       start();
-      show();
+      tune();
       return;
     }
     const unheard = SIDES.find((side) => heardMs[side] < LISTEN_MS);
     if (unheard) {
-      say(unheard === up ? 'Listen to this one a moment longer.' : `Listen to ${LETTER[unheard]} first.`);
+      say(unheard === up ? 'Stay on this one a moment longer.' : `Tune to ${name(unheard)} first.`);
       if (unheard !== up) turn(); // and here it is
       el.card.classList.remove('nope');
       void el.card.offsetWidth;
@@ -198,6 +229,7 @@ export function mount(root, life) {
       return;
     }
     const picked = up;
+    const keptName = name(picked);
     choose(state, picked, Math.random, { at: Date.now(), ms: Math.round(performance.now() - shownAt), flips, heardFront: Math.round(heardMs.front), heardBack: Math.round(heardMs.back) });
     keep();
     sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
@@ -209,7 +241,7 @@ export function mount(root, life) {
     face.classList.remove('won');
     void face.offsetWidth;
     face.classList.add('won');
-    if (state.trials[state.trials.length - 1].retired) say(`${LETTER[picked]} has won ${REIGN} in a row and retires undefeated. Two new loops.`);
+    if (state.trials[state.trials.length - 1].retired) say(`${keptName} is a keeper: saved to your presets. Two new stations.`);
     show();
     notes();
   }
@@ -235,7 +267,7 @@ export function mount(root, life) {
         pick();
       } else {
         lastTap = now;
-        if (!started) { start(); show(); }
+        if (!started) { start(); tune(); }
       }
     }
   });
@@ -246,7 +278,7 @@ export function mount(root, life) {
   });
   el.flip.addEventListener('click', turn);
   el.pick.addEventListener('click', pick);
-  el.play.addEventListener('click', () => { started = !started; show(); });
+  el.play.addEventListener('click', () => { started = !started; tune(); });
 
   // Every frame: the bar across the side that is playing, and the listening counted.
   let frame = 0;
@@ -262,7 +294,8 @@ export function mount(root, life) {
     if (step >= 0) {
       const before = heardMs[up];
       heardMs[up] += Math.min(250, now - last); // (a long gap between frames is the screen having been away, not listening)
-      if (before < LISTEN_MS && heardMs[up] >= LISTEN_MS) faces[up].classList.add('heard');
+      const bars = (ms) => Math.min(3, Math.floor((ms / LISTEN_MS) * 3));
+      if (bars(before) !== bars(heardMs[up])) tune(); // the signal fills as it is listened to
     }
     for (const side of SIDES) {
       const bar = faces[side].querySelector('.now');
@@ -292,24 +325,24 @@ export function mount(root, life) {
     el.verdict.classList.toggle('yes', now.significant);
     if (now.picks < WARMUP) {
       const left = WARMUP - now.picks;
-      el.verdict.textContent = `The model starts calling your picks after ${WARMUP}. ${left} to go.`;
+      el.verdict.textContent = `The model starts calling your choices after ${WARMUP}. ${left} to go.`;
     } else if (now.significant) {
-      el.verdict.textContent = `Significant. The music itself predicts your picks: p = ${now.p.toFixed(3)}, reached at pick ${now.reachedAt}.`;
+      el.verdict.textContent = `Significant. The music itself predicts your choices: p = ${now.p.toFixed(3)}, reached at choice ${now.reachedAt}.`;
     } else {
       el.verdict.textContent = `Not yet. So far p = ${now.p.toFixed(2)}; it is significant when the stake reaches ×${NEEDED} (p = 0.05).`;
     }
-    // the loops that retired undefeated: each a small picture that opens it in the music maker
+    // the presets: stations kept five times running. A press opens one in the music maker
     el.hall.hidden = state.retired.length === 0;
     el.hall.querySelector('ul').replaceChildren(...state.retired.map((beat, index) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = `/jam/?b=${encode(beat)}`;
-      a.setAttribute('aria-label', `Champion ${index + 1}: open it in the music maker`);
+      a.setAttribute('aria-label', `Preset ${index + 1}, ${dialOf(beat).toFixed(1)} FM: open it in the music maker`);
       a.title = 'Open in the music maker';
-      a.innerHTML = small(beat);
+      a.innerHTML = `<b>${index + 1}</b>${small(beat)}<span>${dialOf(beat).toFixed(1)}</span>`;
       li.append(a);
       return li;
-    }).reverse());
+    }));
     const likes = leanings(state.weights);
     el.likes.textContent = now.picks < WARMUP || likes.length === 0 ? '' : `So far it thinks you go for ${likes.map((one) => one.words).join(', ')}.`;
   }
@@ -324,7 +357,7 @@ export function mount(root, life) {
     }
   });
   el.reset.addEventListener('click', async () => {
-    if (!(await ask('Start the experiment over?', { detail: `Your ${state.trials.length} picks will be thrown away.`, yes: 'Start over', danger: true }))) return;
+    if (!(await ask('Start the experiment over?', { detail: `Your ${state.trials.length} choices and your presets will be thrown away.`, yes: 'Start over', danger: true }))) return;
     state = begin();
     up = state.current.first;
     sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
@@ -335,6 +368,15 @@ export function mount(root, life) {
     show();
     notes();
   });
+
+  // The experiment, behind the radio: a sheet that opens over it.
+  $('taste-behind-open').addEventListener('click', () => {
+    notes();
+    el.behind.showModal();
+  });
+  $('taste-behind-close').addEventListener('click', () => el.behind.close());
+  el.behind.addEventListener('click', (event) => { if (event.target === el.behind) el.behind.close(); }); // a tap outside it
+  life.onEnd(() => { if (el.behind.open) el.behind.close(); });
 
   if (still) el.card.classList.add('still');
   show();
