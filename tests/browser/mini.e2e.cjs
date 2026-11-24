@@ -36,7 +36,7 @@
 // to no server.
 
 const assert = require('node:assert/strict');
-const { PHONES, serve, open, measure, ACCOUNT, ROOM, listed, roomSays } = require('./phone.cjs');
+const { PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays } = require('./phone.cjs');
 
 const LISTING = process.argv.includes('--list');
 let chromium = null;
@@ -56,6 +56,31 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 // What the server says, for the screens that ask it something.
 const GAMES = [listed({ last_player: 1, found: 2, hearts: 2 }), listed({ mode: 'trial', finished: 2 }), listed({ mode: 'phrase', mine: 'playing', finished: 1 }), listed({ last_player: 0 }), listed({ status: 'won', last_player: 1, moves: 9, found: 5 })];
 const rooms = (games) => (name, args) => (name === 'room_get' ? roomSays(args.p_room, args.p_room === ROOM ? 'Book club' : 'Family', args.p_room === ROOM ? games : []) : undefined);
+// One room, as the server says it is, with whatever is different about it this time.
+const room = (over = {}) => (name, args) => (name === 'room_get' ? { ...roomSays(args.p_room, 'Book club', []), ...over } : undefined);
+const LONG_NAME = 'The Thursday Evening Correspondence Club'; // forty letters, which is as long as a room's name gets
+// A game of every kind, in every state a room's table shows one in (gameStatus() in room/room.js).
+const TABLE = [
+  ...GAMES,
+  listed({ size: 9, status: 'lost', last_player: 1, moves: 6, found: 3, hearts: 0 }),
+  listed({ mode: 'trial', size: 8, mine: 'playing', finished: 1 }),
+  listed({ mode: 'trial', size: 6, mine: 'won', finished: 2 }),
+  listed({ mode: 'phrase', size: 7, mine: 'lost', finished: 1 }),
+  listed({ mode: 'phrase', size: 5, phrase_by: 0, finished: 2 }),
+].map((game, i) => ({ ...game, id: `${String(i).repeat(8)}-3333-4333-8333-333333333333` }));
+const CROWD = [...PEOPLE, { name: 'Bartholomew', avatar: '🐙', color: 5, left: false }, { name: 'Lin', avatar: '🌵', color: 3, left: false }, { name: 'Wilhelmina Longname', avatar: '🦉', color: 6, left: false }];
+// A dozen messages from two people, short and long, with what the room itself says in between (rooms.room_view).
+const said = (id, seat, body, game = null) => ({ id, seat, body, at: new Date(Date.UTC(2026, 10, 24, 18, id)).toISOString(), game_kind: game && 'postmarks', game_id: game });
+const TALK = [
+  said(1, null, 'Sam opened the room'), said(2, 1, 'hello!'), said(3, 0, 'Hi Ada. Shall we start with one together?'),
+  said(4, null, 'Ada started Together 6 × 6', '33333333-3333-4333-8333-333333333333'),
+  said(5, 1, 'Your move. I have put two posts in the top corner, and I am fairly sure about the yellow district, but the long green one down the left-hand side could go either way, so do not trust my crosses there.'),
+  said(6, 0, 'ok'), said(7, 0, 'Found one more. Lost a heart on the way, sorry!'), said(8, 1, '😅'), said(9, 1, 'I left you a pass phrase too'),
+  said(10, null, 'Ada started Pass phrase 5 × 5', '33333333-3333-4333-8333-333333333333'),
+  said(11, 0, 'A hint? How many words? I will have a look after supper, and then the time trial, if my clock has not run out by then.'),
+  said(12, 1, 'no hints'), said(13, 1, 'good luck 🍀'), said(14, 0, 'Averyveryverylongwordwithnospacesinitatallwhichhastobreaksomewhere'),
+];
+const STREET = { ...ACCOUNT, 'home:tab:v1': 'lobby', 'correspondence:rooms:v1': [...ACCOUNT['correspondence:rooms:v1'], { id: '44444444-4444-4444-8444-444444444444', name: LONG_NAME, at: 1794000000000 }] };
 
 // Every screen, in every state worth looking at.
 //   screen: which screen of the app it is (the name of its template in index.html, without "screen-").
@@ -91,7 +116,17 @@ async function states() {
     { name: 'home, the feed with nothing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
+    { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
+    { name: 'a room, empty', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room(), ready: '#no-games:not([hidden])' },
+    { name: 'a room, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li' },
+    { name: 'a room, the chat with messages', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES.slice(0, 2), messages: TALK }), ready: '.chat-log li',
+      then: (page) => page.locator('#chat').scrollIntoViewIfNeeded() },
+    { name: 'a room, seen by somebody not in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, you: null, messages: null, games: null }), ready: '#join:not([hidden])' },
+    { name: 'a room, renaming it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: GAMES }), ready: '#games li',
+      then: (page) => page.locator('#room-name button').click(), settle: '#room-name input' },
+    { name: 'a room, writing a pass phrase', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); }, settle: '#tokens .word' },
     { name: 'the game, the smallest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
     { name: 'the game, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'],
       small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },

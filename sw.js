@@ -46,6 +46,8 @@ const PRECACHE = [
   '/vendor/realtime.js',
   '/room/',
   '/room/room.js',
+  '/room/room.css',
+  '/shared/place.js',
   '/postmarks/',
   '/postmarks/postmarks.css',
   '/postmarks/game.js',

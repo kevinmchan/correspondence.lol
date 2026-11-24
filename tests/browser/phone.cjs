@@ -120,6 +120,11 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
       for (let up = el; up; up = up.parentElement) {
         const style = getComputedStyle(up);
         if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+        // scrolled out of sight inside a box that scrolls by itself (a chat's log): not there to be pressed or read
+        if (up !== el && up !== document.body && up !== document.documentElement && /auto|scroll|hidden|clip/.test(style.overflowY + style.overflowX)) {
+          const frame = up.getBoundingClientRect();
+          if (box.bottom < frame.top + 1 || box.top > frame.bottom - 1 || box.right < frame.left + 1 || box.left > frame.right - 1) return false;
+        }
       }
       return true;
     };
