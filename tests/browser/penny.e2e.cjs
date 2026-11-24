@@ -465,7 +465,14 @@ async function main() {
       assert.equal(await page.locator('.feed-item strong').first().textContent(), 'Ada played');
       assert.equal(await page.locator('#feed-count').textContent(), '2');
       assert.equal(await page.locator('#menu').isVisible(), false, 'the lobby is on the other tab');
+      // nothing above the tabs, nor the tabs themselves, moves when the other one is picked
+      const placed = () => page.evaluate(() => ['.mark', 'h1', '#tabs'].map((part) => {
+        const box = document.querySelector(part).getBoundingClientRect();
+        return [box.left, box.top, box.width, box.height].map(Math.round).join(' ');
+      }));
+      const onFeed = await placed();
       await page.locator('#tab-lobby').click();
+      assert.deepEqual(await placed(), onFeed, 'the page shifted when the tab changed');
       assert.equal(await page.locator('#menu').isVisible(), true);
       assert.equal(await page.locator('#rooms').isVisible(), true);
       assert.equal(await page.locator('.feed-item').first().isVisible(), false);
