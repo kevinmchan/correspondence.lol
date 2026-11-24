@@ -162,10 +162,10 @@ async function main() {
       assert.equal(await page.locator('#walk-trail').isHidden(), true, 'nothing of the sound heard yet');
       await h.through();
 
-      // place 2. Nothing is known to begin with: the first post has to be found by ear
+      // place 2. One square is the only one of its colour, so it must hold a post: Penny's seal lands on it before anything is touched
       const known = () => page.evaluate(() => [...document.querySelectorAll('#walk-board .cell.known')].map((cell) => Number(cell.dataset.cell)));
-      await sleep(2500);
-      assert.deepEqual(await known(), [], 'no seal before anything has been found');
+      await page.waitForFunction(() => document.querySelector('#walk-board .cell.known'), null, { timeout: 6000 });
+      assert.deepEqual(await known(), [14], 'the seal is on the only square of its colour, and nowhere else');
       // a quick tap crosses a square and takes the cross off; holding a finger down only asks
       await h.tap(10);
       await sleep(600);
@@ -193,7 +193,8 @@ async function main() {
       assert.equal(await h.board(), 'xLxxxxx..x...x..');
       // and what that leaves with nowhere else to be, Penny knows without listening: its seal lands there, untouched
       await page.waitForFunction(() => document.querySelector('#walk-board .cell.known'), null, { timeout: 6000 });
-      assert.deepEqual(await known(), [7], 'the seal is on the one square left in that row');
+      await page.waitForFunction(() => document.querySelectorAll('#walk-board .cell.known').length === 2, null, { timeout: 6000 });
+      assert.deepEqual(await known(), [7, 14], 'and on the one square left in that row');
       await h.tap(0);
       await h.says('shakes its head');
       for (const cell of [7, 8, 14]) await h.open(cell);
