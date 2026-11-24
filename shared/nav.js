@@ -12,6 +12,8 @@
 
 import { play } from '/postmarks/sound.js';
 import { newLife } from './screen.js';
+// (what is hidden on every screen, and the way through it: it listens for each screen as it arrives)
+import '/penny/tags.js';
 
 // (Opening and joining a room live at the home address with a word after the
 // question mark, so that they need no page of their own on the server.)
@@ -38,6 +40,10 @@ const MOVE_MS = 360;
 // and is given longer (penny/walk.css).
 const PORTAL_MS = 950;
 const throughPortal = (a, b) => [a, b].sort().join() === 'home,walk';
+// Between any screen and the night the move is a tumble, and is given longer
+// still (penny/tags.js, penny/tags.css).
+const TUMBLE_MS = 1180;
+const tumbling = (a, b) => a === 'sky' || b === 'sky';
 const still = matchMedia('(prefers-reduced-motion: reduce)');
 const stage = document.getElementById('screens');
 
@@ -70,7 +76,7 @@ async function show(url, { announce }) {
   current = { key: keyOf(url), screen, root, life };
   module[screen.mount ?? 'mount'](root, life);
   // (Penny, who stands over all the screens, wants to know whose turn it is: penny/pal.js)
-  window.dispatchEvent(new CustomEvent('screen', { detail: { name: screen.name, life } }));
+  window.dispatchEvent(new CustomEvent('screen', { detail: { name: screen.name, life, root } }));
 
   if (!leaving) return;
   if (announce) play(direction);
@@ -81,7 +87,7 @@ async function show(url, { announce }) {
   }
   leaving.root.classList.add('leaving', direction);
   root.classList.add('entering', direction);
-  await new Promise((done) => setTimeout(done, throughPortal(leaving.screen.name, screen.name) ? PORTAL_MS : MOVE_MS));
+  await new Promise((done) => setTimeout(done, throughPortal(leaving.screen.name, screen.name) ? PORTAL_MS : tumbling(leaving.screen.name, screen.name) ? TUMBLE_MS : MOVE_MS));
   leaving.life.end();
   leaving.root.remove();
   root.classList.remove('entering', direction);

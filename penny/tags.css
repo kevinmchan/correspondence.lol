@@ -1,34 +1,54 @@
-/* Tags (penny/tags.js): marks hidden in the game, to be found and kept. */
+/* Tags (penny/tags.js): marks hidden in the app, to be found and kept; and the
+   way through one, which is a tumble. */
 
-/* --- Hidden: one square of the map behind a game's board ------------------------------
-   Printed as faintly as the map itself, in the map's own ink, and on the same
-   layer as the map: whatever of the page lies over that square covers it. It
-   gives itself away only by a glint, now and then, to whoever has stopped. */
+/* --- Hidden: somewhere on every screen ---------------------------------------------------
+   Printed as faintly as the map itself, in the page's own ink. It gives itself
+   away only by a glint, now and then, to whoever has stopped. Once it has been
+   found it is a little plainer: it is known to be there. */
+main:has(> .tag-hidden) { position: relative; }
 .tag-hidden {
-  position: absolute; z-index: -1; padding: 0; border: 0; border-radius: 22%;
+  position: absolute; padding: 0; border: 0; border-radius: 22%;
   background: none; color: var(--ink); cursor: default;
   -webkit-tap-highlight-color: transparent;
 }
+.tag-hidden.on-dark { color: #dedede; }
 .tag-hidden svg { display: block; width: 100%; height: 100%; opacity: 0.12; }
+.tag-hidden.known svg { opacity: 0.2; }
 .tag-hidden.glint svg { animation: tag-glint 2s ease-in-out; }
-.tag-hidden.found svg { opacity: 0; }
+.tag-hidden.gone svg { opacity: 0; }
 .tag-hidden:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag-hidden:focus-visible svg { opacity: 0.6; }
-@keyframes tag-glint { 0%, 100% { opacity: 0.12; } 30% { opacity: 0.5; } 45% { opacity: 0.22; } 62% { opacity: 0.44; } }
+@keyframes tag-glint { 30% { opacity: 0.5; } 45% { opacity: 0.24; } 62% { opacity: 0.44; } }
+/* (the screen the app opens on raises its contents into place, and leaves them opaque for good: not this) */
+.screen.opening main > .tag-hidden { animation: none; }
 
-/* --- Found: the square turns to night, and grows until the night is all there is --- */
+/* --- Through it: a tumble -----------------------------------------------------------------
+   The picture comes up out of the place the mark was, turning a whole turn as
+   it grows, and is upright exactly where the night has it. */
 .tag-rise { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
-.tag-rise > i { position: absolute; inset: 0; background: #09090d; opacity: 0; }
 .tag-rise > div { position: absolute; background: #09090d; overflow: hidden; }
 .tag-rise svg { display: block; width: 100%; height: 100%; }
+/* And the screen it was on falls away into that place, turning the other way
+   as it goes, with the night coming up behind it. Coming back from the night
+   the screen tumbles up out of the dark again, and rights itself. */
+@media (prefers-reduced-motion: no-preference) {
+  .screen.leaving:has(~ .screen-sky.entering) { z-index: 1; transform-origin: var(--tumble-x, 50%) var(--tumble-y, 40vh); animation: tumble-away 1100ms cubic-bezier(0.5, 0, 0.75, 0.5) both; }
+  .screen.leaving ~ .screen-sky.entering { animation: night-comes 420ms ease both; }
+  .screen.screen-sky.leaving:is(.forth, .back) { animation: night-goes 560ms ease both; }
+  .screen-sky.leaving ~ .screen.entering { transform-origin: 50% 42vh; animation: tumble-back 1100ms cubic-bezier(0.2, 0.7, 0.25, 1) both; }
+}
+@keyframes tumble-away { 65% { opacity: 1; } to { transform: rotate(-0.6turn) scale(0.02); opacity: 0; } }
+@keyframes tumble-back { from { transform: rotate(0.45turn) scale(0.02); opacity: 0; } 30% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes night-comes { from { opacity: 0; } to { opacity: 1; } }
+@keyframes night-goes { to { opacity: 0; } }
 
 /* --- Kept: on the home page's map, across from the portal ----------------------------
-   A small square of night, with the picture in it, dim, as the night itself is. */
+   A small square of night, with the picture in it, dim and a little warm, as the night itself is. */
 .tag-kept {
   position: absolute; z-index: 1; display: block;
   right: calc(0.875rem + 3px + var(--nth, 0) * 2.625rem); top: calc(var(--map-y, 0px) + 1.75rem + 3px);
   width: calc(2.625rem - 6px); aspect-ratio: 1; border-radius: 22%;
-  background: #09090d; color: #dedede;
+  background: #09090d; color: #eee0cc;
   box-shadow: 0 0 0 2px var(--paper);
   -webkit-tap-highlight-color: transparent;
 }

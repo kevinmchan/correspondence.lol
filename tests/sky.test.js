@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  CORE, ECHO, GHOSTS, GLINT, NIGHT, PHRASE, PICTURE, POINTED, REST, ROWS, STEP, TALL, TURN,
-  drift, flicker, frame, nameOf, nearness, often, outline, reading, roam, rowOf, shimmer, soundOf, sway,
+  CORE, ECHO, EMBER, GHOSTS, GLINT, HALO, LIGHT, MOST, NIGHT, PHRASE, PICTURE, POINTED, REST, ROWS, SKY, STEP, TALL, TURN, WARM,
+  afloat, drift, flicker, frame, nameOf, nearness, often, outline, reading, roam, rowOf, shimmer, soundOf, sway,
 } from '../penny/stars.js';
 
 // The night is a picture come to life. These check that the picture is the
@@ -109,9 +109,23 @@ test('the night under it is the game\'s four chords, and no note of it rubs agai
 test('far dimmer than the picture: at rest under half its brightness, and never as bright even at a twinkle', () => {
   assert.ok(REST <= 0.45, 'at rest');
   assert.ok(GLINT > REST * 1.3 && GLINT <= 0.75, 'a twinkle is plainly brighter, and still well short of the picture');
+  assert.ok(MOST >= GLINT && MOST <= 0.8, 'and whatever comes together, flicker and twinkle and warmth, there is a most it can be');
+  // the picture's light is 222 of 255; the most the night's ever comes to, on the picture's black, is under that
+  assert.ok(9 + MOST * Math.max(...WARM) < 222 - 30, `${9 + MOST * Math.max(...WARM)}`);
   // a light is itself and its copies: together they come to its brightness at rest
   assert.ok(CORE > 0 && CORE < REST && GHOSTS >= 4);
   assert.ok(near(CORE + GHOSTS * ((REST - CORE) / GHOSTS), REST));
+});
+
+test('slightly warm: the picture\'s black is left alone, and its light is warmed a little', () => {
+  assert.equal(SKY, '#09090d');
+  assert.equal(LIGHT, '#dedede', 'the picture\'s own, as measured');
+  const warmth = ([red, , blue]) => red - blue;
+  assert.ok(WARM[0] > WARM[1] && WARM[1] > WARM[2], 'more red than green, more green than blue');
+  assert.ok(warmth(WARM) >= 20 && warmth(WARM) <= 45, `slightly: ${warmth(WARM)}`);
+  assert.ok(WARM.every((part) => part >= 200), 'and still nearly white');
+  assert.ok(warmth(HALO) > warmth(WARM), 'its glow is warmer than it is');
+  assert.ok(warmth(EMBER) > warmth(HALO), 'and warmed by a finger, it turns towards an ember');
 });
 
 test('a light wanders, but never far from where the picture has it', () => {
@@ -151,6 +165,8 @@ test('a light wanders, but never far from where the picture has it', () => {
     assert.ok(drift(light, 1).spread > wander.spread && shimmer(light, 1).spread > copies.spread, 'warmed, further');
     assert.ok(often(light, 1) < often(light) / 4, 'and warmed, it twinkles far sooner');
   }
+  // the whole picture is afloat as well: more slowly than any light wanders, and by no more
+  for (const light of PICTURE) assert.ok(afloat.pace < drift(light).pace && afloat.spread * (0.25 + nearness(light)) <= drift(light).spread * 1.3);
   // the far ones stray further, flicker more and twinkle oftener than the near one
   const [small, , , , big] = PICTURE;
   assert.ok(drift(small).spread > drift(big).spread && shimmer(small).spread > shimmer(big).spread);

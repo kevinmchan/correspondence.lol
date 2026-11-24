@@ -34,11 +34,11 @@
 // It is not on any menu. It is a tag: hidden in the game, to be found
 // (penny/tags.js).
 
-import { audio, holdMusic } from '/postmarks/sound.js';
+import { audio, holdMusic, isMuted, noise, tone } from '/postmarks/sound.js';
 import { createChimes } from './chimes.js';
 import {
-  CORE, ECHO, GHOSTS, GLINT, LIGHT, NIGHT, PICTURE, REST, SKY, STEP, TURN,
-  drift, flicker, frame, nearness, often, outline, reading, roam, shimmer, soundOf, sway,
+  CORE, ECHO, EMBER, GHOSTS, GLINT, HALO, MOST, NIGHT, PICTURE, REST, SKY, STEP, TURN, WARM,
+  afloat, drift, flicker, frame, nearness, often, outline, reading, roam, shimmer, soundOf, sway,
 } from './stars.js';
 
 const STEP_MS = STEP * 1000;
@@ -46,21 +46,22 @@ const TURN_MS = TURN * STEP_MS;
 const ECHO_MS = ECHO * STEP_MS;
 const AHEAD = 200; // sounds are written onto the engine's clock this far ahead of time
 const WAKING_MS = 2600; // how long a light takes to come alive, once it has first sounded
-const WARM = 0.22; // how far from a finger a light still feels it, as a share of the picture's side
+const REACH = 0.22; // how far from a finger a light still feels its warmth, as a share of the picture's side
 const NEEDLE = 0.0006; // how thick the very tip of a star's point is, as a share of the picture's side
 const MOTES = 60; // how many motes at once, at most
 const LOOSE = 0.028; // how far a mote gets in a second, on the whole, as a share of the picture's side
 const FROM_KEY = 'tags:from'; // where the night was come to from (penny/tags.js)
 const NAMES = ['The small star.', 'The lower dot.', 'The middle star.', 'The upper dot.', 'The big star.'];
 
-// A soft round glow, to be drawn at any size.
+// A soft round glow, to be drawn at any size: warmer than the lights
+// themselves, and spread round a light more than heaped on top of it.
 function glowSheet() {
   const sheet = document.createElement('canvas');
   sheet.width = 128;
   sheet.height = 128;
   const ink = sheet.getContext('2d');
   const fall = ink.createRadialGradient(64, 64, 0, 64, 64, 64);
-  for (const [stop, alpha] of [[0, 0.9], [0.12, 0.5], [0.3, 0.2], [0.6, 0.05], [1, 0]]) fall.addColorStop(stop, `rgb(222 222 222 / ${alpha})`);
+  for (const [stop, alpha] of [[0, 0.4], [0.2, 0.3], [0.45, 0.13], [0.7, 0.04], [1, 0]]) fall.addColorStop(stop, `rgb(${HALO.join(' ')} / ${alpha})`);
   ink.fillStyle = fall;
   ink.fillRect(0, 0, 128, 128);
   return sheet;
@@ -77,11 +78,17 @@ export function mount(root, life) {
   const pen = view.getContext('2d');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // The way back leads to wherever the night was found from.
+  // The way back leads to wherever the night was found from: a tumble the
+  // other way (penny/tags.js), with a breath of air and a note that rises.
   try {
     const from = sessionStorage.getItem(FROM_KEY);
-    if (from && /^\/(?!\/)/.test(from) && !/[?&]sky\b/.test(from)) back.href = from;
+    if (back && from && /^\/(?!\/)/.test(from) && !/[?&]sky\b/.test(from)) back.href = from;
   } catch { /* it leads home */ }
+  back?.addEventListener('click', () => {
+    if (!audio() || isMuted() || still) return;
+    tone({ freq: 185, to: 590, dur: 1.05, type: 'sine', gain: 0.04, attack: 0.08 });
+    noise({ dur: 0.95, from: 500, to: 2200, q: 0.8, gain: 0.028 });
+  });
 
   // The strip at the top of a phone takes the night's colour while it is up.
   const bar = document.querySelector('meta[name="theme-color"]');
@@ -136,6 +143,17 @@ export function mount(root, life) {
   let dense = 1;
   let place = { x: 0, y: 0, side: 1 };
   const spot = (light) => [place.x + light.x * place.side, place.y + light.y * place.side]; // where the picture has it, on the screen
+  // The whole picture is afloat: whoever is looking drifts a little, this way
+  // and that, and what is near goes by faster than what is far. (A wandering,
+  // across and up, kept as [where it has got to, how fast it is going].)
+  const adrift = [[0, 0], [0, 0]];
+  const moved = (light) => (still ? 0 : smooth(light.alive)); // how much of its movement it has yet: none while it is still a picture
+  // Where it is on the screen this moment.
+  const seen = (light) => {
+    const [x, y] = spot(light);
+    const depth = 0.25 + light.near;
+    return [x + (light.off[0][0] + adrift[0][0] * depth) * place.side * moved(light), y + (light.off[1][0] + adrift[1][0] * depth) * place.side * moved(light)];
+  };
   function fit() {
     const box = main.getBoundingClientRect();
     if (!box.width || !box.height || (Math.round(box.width) === wide && Math.round(box.height) === high)) return;
@@ -219,7 +237,10 @@ export function mount(root, life) {
   const hands = new Map(); // the fingers on it
   let heard = Boolean(audio()); // the engine was awake when the night began
   let lastTick = now();
-  begin(now() + 1000);
+  // Come to by a tumble (penny/tags.js), the picture is still on its way: the
+  // night's own lights are dark until it has landed, and it waits to begin.
+  const arriving = () => document.documentElement.classList.contains('tumbling');
+  begin(now() + (arriving() ? 1900 : 1000));
 
   function tick() {
     if (document.hidden) return;
@@ -269,7 +290,7 @@ export function mount(root, life) {
     let best = null;
     let nearest = Infinity;
     for (const light of lights) {
-      const [lx, ly] = spot(light);
+      const [lx, ly] = seen(light);
       const reach = Math.max(20, (light.kind === 'star' ? light.a * 0.62 : light.r * 1.5) * place.side);
       const off = Math.hypot(px - lx, py - ly);
       if (off <= reach && off < nearest) {
@@ -308,7 +329,7 @@ export function mount(root, life) {
       return;
     }
     // nothing under it: the nearest answers, more quietly, a moment after (the further off, the later)
-    const [nearest, far] = lights.map((light) => [light, Math.hypot(x - spot(light)[0], y - spot(light)[1])]).sort((one, other) => one[1] - other[1])[0];
+    const [nearest, far] = lights.map((light) => [light, Math.hypot(x - seen(light)[0], y - seen(light)[1])]).sort((one, other) => one[1] - other[1])[0];
     life.setTimeout(() => touch(nearest, 0.5), Math.min(360, (far / place.side) * 700));
   });
   life.on(window, 'pointermove', (event) => {
@@ -368,37 +389,45 @@ export function mount(root, life) {
     pen.setTransform(dense, 0, 0, dense, 0, 0);
   }
 
+  // The colour of a light: the night's own warm one, and warmer still for a finger near it.
+  const colourOf = (light) => WARM.map((part, i) => Math.round(part + (EMBER[i] - part) * Math.min(1, light.heat) * 0.6)).join(' ');
+
   function drawLight(light) {
     const living = smooth(light.alive);
-    const moving = still ? 0 : living;
-    const [hx, hy] = spot(light);
-    const px = hx + light.off[0][0] * place.side * moving;
-    const py = hy + light.off[1][0] * place.side * moving;
+    const moving = moved(light);
+    const [px, py] = seen(light);
     const flare = light.flare;
+    const colour = colourOf(light);
+    pen.fillStyle = `rgb(${colour})`;
     // its flicker: the far ones' brightness comes and goes by a good deal, the near one's hardly
-    const glint = Math.max(0.45, Math.min(1.9, 1 + light.waver[0] * living));
+    const glint = Math.max(0.45, Math.min(1.6, 1 + light.waver[0] * living));
     const warmth = 1 + light.heat * 0.35;
 
     // its glow, which breathes with it
     const size = light.kind === 'star' ? light.b * place.side : light.r * place.side * 3.4;
     const reach = size * (1.6 + flare * 0.6);
-    pen.globalAlpha = upTo1((0.08 * living * glint + flare * 0.12) * warmth);
+    pen.globalAlpha = upTo1((0.08 * living * glint + flare * 0.1) * warmth);
     pen.drawImage(glow, px - reach, py - reach, reach * 2, reach * 2);
+
+    // How bright it is to be, all told: at rest, as its flicker has it, and
+    // more at a twinkle (the big one less so: there is so much more of it).
+    // Never more than the most a light is allowed, which is short of the picture.
+    const lift = flare * (GLINT - REST) * (1.25 - 0.45 * light.near);
+    const fits = Math.min(1, MOST / (REST * glint * warmth + lift));
 
     // its copies, each a little out of place; at a twinkle they fall into place
     const gathered = 1 - Math.min(1, flare * 1.25);
-    const share = ((REST - CORE) / GHOSTS) * living * glint * warmth;
+    const share = ((REST - CORE) / GHOSTS) * living * glint * warmth * fits;
     if (share > 0.001) {
       for (const ghost of light.ghosts) {
-        pen.globalAlpha = upTo1(share * Math.max(0.2, 1 + ghost.glint[0]));
+        pen.globalAlpha = upTo1(share * Math.max(0.2, Math.min(1.6, 1 + ghost.glint[0])));
         shape(light, px + ghost.x[0] * place.side * moving * gathered, py + ghost.y[0] * place.side * moving * gathered);
       }
     }
 
     // itself: all of its brightness while it is still a picture, and only its own share once it is alive
     const own = REST + (CORE - REST) * living;
-    // (the big one twinkles less brightly than the small: there is so much more of it)
-    pen.globalAlpha = upTo1(own * glint * warmth + flare * (GLINT - REST) * (1.25 - 0.45 * light.near));
+    pen.globalAlpha = upTo1((own * glint * warmth + lift) * fits);
     shape(light, px, py, still ? 1 : 1 + flare * 0.04);
     if (light.kind === 'dot' || flare < 0.03 || still) return;
 
@@ -410,8 +439,8 @@ export function mount(root, life) {
       const [x0, y0] = [px + dx * tip, py + dy * tip];
       const [x1, y1] = [px + dx * tip * (1 + flare * 0.7), py + dy * tip * (1 + flare * 0.7)];
       const ray = pen.createLinearGradient(x0, y0, x1, y1);
-      ray.addColorStop(0, `rgb(222 222 222 / ${Math.min(0.6, flare * 0.6)})`);
-      ray.addColorStop(1, 'rgb(222 222 222 / 0)');
+      ray.addColorStop(0, `rgb(${colour} / ${Math.min(0.6, flare * 0.6)})`);
+      ray.addColorStop(1, `rgb(${colour} / 0)`);
       pen.globalAlpha = 1;
       pen.strokeStyle = ray;
       pen.beginPath();
@@ -427,9 +456,10 @@ export function mount(root, life) {
     pen.globalAlpha = 1;
     pen.fillStyle = SKY;
     pen.fillRect(0, 0, wide, high);
+    if (arriving()) return;
     // light on light adds up, as light does
     pen.globalCompositeOperation = 'lighter';
-    pen.fillStyle = LIGHT;
+    pen.fillStyle = `rgb(${WARM.join(' ')})`;
     for (const mote of motes) {
       const left = 1 - (t - mote.born) / mote.lasts;
       pen.globalAlpha = upTo1(0.34 * left ** 1.5);
@@ -464,24 +494,28 @@ export function mount(root, life) {
       light.flare = Math.max(light.flare, upTo1(show.strength));
       if (still || show.echo) continue;
       // a few motes come off it, somewhere along its points, and are lost
-      const [hx, hy] = spot(light);
+      const [hx, hy] = seen(light);
       for (let n = Math.round((2 + 5 * light.near) * show.strength); n > 0 && motes.length < MOTES; n--) {
         const along = (0.15 + 0.85 * Math.random()) * (Math.random() < 0.5 ? -1 : 1);
         const upright = Math.random() < 0.5;
         const [a, b] = light.kind === 'star' ? [light.a, light.b] : [light.r * 2, light.r * 2];
         motes.push({
-          x: hx + (light.off[0][0] + (upright ? 0 : along * a)) * place.side,
-          y: hy + (light.off[1][0] + (upright ? along * b : 0)) * place.side,
+          x: hx + (upright ? 0 : along * a) * place.side,
+          y: hy + (upright ? along * b : 0) * place.side,
           born: t, lasts: 1800 + Math.random() * 1700, half: 0.5 + Math.random() * 0.5,
         });
       }
     }
 
+    if (!still) {
+      adrift[0] = sway(adrift[0], seconds, afloat);
+      adrift[1] = sway(adrift[1], seconds, afloat);
+    }
     for (const light of lights) {
       // a finger near it warms it: quickly, and it cools slowly
       let warm = 0;
-      const [lx, ly] = spot(light);
-      for (const hand of hands.values()) warm = Math.max(warm, Math.exp(-((Math.hypot(hand.x - lx, hand.y - ly) / place.side / WARM) ** 2)));
+      const [lx, ly] = seen(light);
+      for (const hand of hands.values()) warm = Math.max(warm, Math.exp(-((Math.hypot(hand.x - lx, hand.y - ly) / place.side / REACH) ** 2)));
       light.heat += (warm - light.heat) * (1 - Math.exp(-seconds / (warm > light.heat ? 0.25 : 1.4)));
       if (light.woke != null && light.alive < 1) light.alive = Math.min(1, (t - light.woke) / WAKING_MS);
       if (!still) {

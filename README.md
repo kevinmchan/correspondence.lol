@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the game (`tags.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -506,28 +506,37 @@ looks at who has been winning beyond the length of the present reign.
 
 ## Tags, and the night
 
-A tag is something hidden in the game, to be found and kept, as on a
-scavenger hunt (`penny/tags.js`). Nothing in the app says that there are any.
-Whoever notices one and touches it has found it: it is theirs from then on
-(on this device), it is not hidden from them again, and it is kept on the
-home page's map, in the corner across from the portal, from where it can be
-gone back to. There is one so far.
+A tag is something hidden in the app, to be found and kept, as on a scavenger
+hunt (`penny/tags.js`). Nothing in the app says that there are any. Whoever
+notices one and touches it has found it: it is theirs from then on (on this
+device), and it is kept on the home page's map, in the corner across from the
+portal. There is one so far.
 
-**Where it hides.** On the map behind the board of a game, in one of the
-faint squares away from the board, and which square changes from game to
-game. It is printed there in the map's own ink and as faintly as the map
-itself: the picture described below, small. It is never up against the board,
-where a slip of the finger would be a move, nor where Penny stands, nor under
-anything else on the page, and it is not there at all while a time trial is
-being run. Nothing points at it, and Penny, who gives nothing away in the
-game, does not look at it. It glints, now and then, but only once nothing has
-been pressed for a few seconds: like everything else in Penny's world, it is
-found by whoever is not in a hurry. (It can also be reached with the Tab
-key.)
+**Where it hides.** On every screen, somewhere in what is empty of it, and
+somewhere else each visit: a small mark, the picture described below, printed
+in the page's own ink and as faintly as the map itself. On the map behind the
+board of a game it is in one of the map's own faint squares, and which square
+changes from game to game. It is never up against the board, where a slip of
+the finger would be a move, nor where Penny is standing, nor on or beside
+anything else on the page; if the page changes under it, it moves; and it is
+not there at all while a time trial is being run. Nothing points at it, and
+Penny, who gives nothing away, neither looks at it nor makes way for it. It
+glints, now and then, but only once nothing has been pressed for a few
+seconds: like everything else in Penny's world, it is found by whoever is not
+in a hurry. (It can also be reached with the Tab key.)
 
-**Found**, its square turns to night and grows until the night is all there
-is, the picture in it landing exactly where the night has it. The way back
-from the night leads to the game it was found in.
+**It is a way through**, and it goes on being one after it has been found.
+The mark stays on every screen, a little plainer for being known, so that
+from anywhere there is a way out into the night. (On the home page it is
+where it is kept, and nowhere else.)
+
+**Going through is a tumble.** The screen falls away, turning as it goes,
+down into the place the mark was, with the night coming up behind it; and the
+picture comes up out of that place, turning a whole turn the other way and
+growing, until it is upright exactly where the night has it. The way back
+from the night leads to wherever it was gone from, and tumbles the other way:
+the screen comes turning up out of the dark, and rights itself. With reduced
+motion there is no tumble, only the one screen and then the other.
 
 ### The night
 
@@ -541,8 +550,11 @@ as it is wide, with sides that curve in until its points are needles.
 The screen opens on that picture, as still as a picture: in a square window
 the size of it, laid one over the other, 98% of what is lit in either is lit
 in both. Only it is far dimmer, at well under half the picture's brightness:
-something to look at in the dark for a long time. Then it wakes, a light at a
-time, in the order it is read, left to right, each with its note.
+something to look at in the dark for a long time. And it is slightly warm:
+the black is the picture's own, and against it the lights are the colour of a
+lamp seen a long way off, not of a screen, with a glow a little warmer than
+they are. Then it wakes, a light at a time, in the order it is read, left to
+right, each with its note.
 
 **Nothing is ever added to it.** No more stars, no sky round them, no colour,
 and nobody standing under it: Penny is not in this scene. It is the same five
@@ -551,6 +563,9 @@ lights for as long as it is looked at. What is alive is how they are there.
 - **They wander.** Each strays a little from its place, the way a speck in
   water does, and is pulled back the further it goes: about a hundredth of
   the picture's side, on a path with no corners in it that never repeats.
+- **They are afloat.** The whole picture drifts a little as well, more slowly,
+  as whoever is looking at it does; and what is near goes by faster than what
+  is far, which is what makes it deep.
 - **They are not solid.** A light is itself, faintly, and six fainter copies
   of itself laid over it, each a little out of place. Where they lie on one
   another they add up to its brightness; at its edges and along its points it
@@ -565,8 +580,8 @@ lights for as long as it is looked at. What is alive is how they are there.
 
 A light that is touched twinkles. A touch anywhere else, and the nearest one
 answers, more quietly. A finger run across them sounds each as it is reached,
-and a finger held near them warms them: they stray further and twinkle
-oftener for as long as it is there. The keys 1 to 5 are the five lights, and
+and a finger held near them warms them: they stray further, twinkle oftener
+and turn towards the colour of an ember for as long as it is there. The keys 1 to 5 are the five lights, and
 the space bar is each of them in turn.
 
 **How it is heard.** These are the two columns of "How a place says it", as

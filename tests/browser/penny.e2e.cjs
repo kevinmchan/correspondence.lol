@@ -626,59 +626,75 @@ async function main() {
       assert.match(await page.locator('#lab-verdict').textContent(), /8 to go/);
     }),
 
-    check('a tag is hidden in the game: nothing leads to the night but finding it, and found, it turns to night and is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
-      // nothing on the home page leads to it, and nothing is kept there yet
-      await page.goto(origin);
-      await page.waitForSelector('#menu');
-      assert.equal(await page.locator('a[href="/?sky"]').count(), 0, 'the night is not chosen from a menu');
-      assert.equal(await page.locator('.tag-kept').count(), 0);
-      // in a game, one square of the map behind the board is not like the rest
-      await page.goto(`${origin}/postmarks/`);
-      await page.waitForSelector('#board .cell');
-      await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 8000 });
+    check('a tag is hidden on every screen: nothing leads to the night but finding it, going through it is a tumble, and found, it is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
+      // What the mark is like, where it is.
       const where = () => page.evaluate(() => {
         const box = (element) => {
           const b = element.getBoundingClientRect();
           return { left: Math.round(b.left), top: Math.round(b.top), right: Math.round(b.right), bottom: Math.round(b.bottom) };
         };
         const mark = document.querySelector('.tag-hidden');
-        const penny = document.querySelector('.pal-penny');
+        const grid = document.querySelector('#board');
+        const penny = document.querySelector('.pal:not([data-height="gone"]) .pal-penny');
+        const [x, y] = [(mark.getBoundingClientRect().left + mark.getBoundingClientRect().right) / 2, (mark.getBoundingClientRect().top + mark.getBoundingClientRect().bottom) / 2];
         return {
-          mark: box(mark), board: box(document.querySelector('#board')), penny: penny ? box(penny) : null,
-          shown: Number(getComputedStyle(mark.querySelector('svg')).opacity), words: mark.textContent.trim(),
-          over: mark.contains(document.elementFromPoint((mark.getBoundingClientRect().left + mark.getBoundingClientRect().right) / 2, (mark.getBoundingClientRect().top + mark.getBoundingClientRect().bottom) / 2)),
+          mark: box(mark), board: grid ? box(grid) : null, penny: penny ? box(penny) : null,
+          shown: Number(getComputedStyle(mark.querySelector('svg')).opacity), words: mark.textContent.trim(), label: mark.getAttribute('aria-label'),
+          pressed: mark.contains(document.elementFromPoint(x, y)),
+          // what of the page is under it: nothing but the page's own ground
+          under: document.elementsFromPoint(x, y).find((element) => !mark.contains(element) && !element.closest('.pal'))?.matches('main, .walk-ground, .radio-ground, .office-stage') ?? false,
         };
       });
       const apart = (a, b) => a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom;
+      // nothing on the home page's menu leads to the night, and nothing is kept there yet; but somewhere on the page there is a mark
+      await page.goto(origin);
+      await page.waitForSelector('#menu');
+      assert.equal(await page.locator('a[href="/?sky"]').count(), 0, 'the night is not chosen from a menu');
+      assert.equal(await page.locator('.tag-kept').count(), 0);
+      await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 9000 });
+      // and so there is on every other: the music maker, a form, the map, the film
+      for (const address of ['/jam/', '/?join', '/?walk', '/?slow']) {
+        await page.goto(origin + address);
+        await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 9000 });
+        const there = await where();
+        assert.ok(there.pressed && there.under, `${address}: the mark is under something, or over something`);
+        assert.ok(there.mark.left >= 0 && there.mark.top >= 0 && there.mark.right <= PHONE.width && there.mark.bottom <= PHONE.height, `${address}: off the screen`);
+        assert.ok(there.shown < 0.2 && there.words === '', `${address}: it is faint, and says nothing`);
+        assert.ok(!there.penny || apart(there.mark, { ...there.penny, top: PHONE.height - (there.penny.bottom - there.penny.top) }), `${address}: it was put where Penny stands`);
+      }
+      // in a game it is in one of the squares of the map behind the board, and stays in it
+      await page.goto(`${origin}/postmarks/`);
+      await page.waitForSelector('#board .cell');
+      await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 9000 });
+      await sleep(1200);
       const first = await where();
       assert.ok(apart(first.mark, first.board), 'the tag is on the board, where a touch is a move');
-      assert.ok(first.mark.left >= 0 && first.mark.top >= 0 && first.mark.right <= PHONE.width && first.mark.bottom <= PHONE.height, 'the tag is off the screen');
-      assert.ok(!first.penny || apart(first.mark, { ...first.penny, top: PHONE.height - (first.penny.bottom - first.penny.top) }), 'the tag is where Penny stands');
-      assert.ok(first.over, 'something of the page is over the tag');
-      assert.ok(first.shown < 0.2 && first.words === '', `it is faint, and says nothing: ${first.shown}`);
-      // it stays in its square
+      assert.ok(first.pressed && first.under);
       await sleep(2300);
       assert.deepEqual((await where()).mark, first.mark, 'the tag hopped about');
-      // and it glints for whoever has stopped: nothing has been pressed for a few seconds now
+      // it glints for whoever has stopped: nothing has been pressed for a few seconds now
       await page.waitForSelector('.tag-hidden.glint', { timeout: 14000 });
-      // found: its square turns to night and grows until the night is all there is
+      // found. Going through it is a tumble: the picture comes up out of where the mark was
       await page.mouse.click((first.mark.left + first.mark.right) / 2, (first.mark.top + first.mark.bottom) / 2);
       await page.waitForSelector('.tag-rise', { timeout: 2000 });
+      assert.equal(await page.evaluate(() => document.documentElement.classList.contains('tumbling')), true);
       await page.waitForURL((url) => url.pathname + url.search === '/?sky', { timeout: 5000 });
       await page.waitForSelector('.sky-view');
       assert.deepEqual(await h.stored('tags:found:v1'), ['night'], 'found, it is theirs');
-      await page.waitForFunction(() => !document.querySelector('.tag-rise'), null, { timeout: 6000 });
-      // the way back leads to the game, where it is not hidden a second time
+      await page.waitForFunction(() => !document.querySelector('.tag-rise') && !document.documentElement.classList.contains('tumbling'), null, { timeout: 6000 });
+      assert.equal(await page.locator('#screens .screen').count(), 1, 'the screen that fell away has gone');
+      // the way back leads to the game; and the mark is still there, known now: a way through from anywhere
       assert.equal(await page.locator('.sky .penny-back').getAttribute('href'), '/postmarks/');
       await page.locator('.sky .penny-back').click({ force: true });
       await page.waitForSelector('#board .cell');
-      await sleep(2500);
-      assert.equal(await page.locator('.tag-hidden').count(), 0, 'what has been found is not hidden again');
-      // it is kept on the home page's map, and that leads back to it; still on no menu
+      await page.waitForSelector('.tag-hidden.known:not([hidden])', { timeout: 9000 });
+      assert.equal((await where()).label, 'The night');
+      // it is kept on the home page's map, which leads back to it; still on no menu
       await page.goto(origin);
       await page.waitForSelector('.tag-kept');
       assert.equal(await page.locator('#menu a[href="/?sky"]').count(), 0);
       await sleep(3200); // (the splash, and the page settling)
+      assert.equal(await page.locator('.tag-hidden').count(), 0, 'on the home page it is where it is kept, and nowhere else');
       await page.locator('.tag-kept').click({ force: true });
       await page.waitForURL((url) => url.pathname + url.search === '/?sky', { timeout: 6000 });
       await page.waitForSelector('.sky-view');
@@ -713,7 +729,10 @@ async function main() {
       const opening = await look();
       assert.equal(await alive(), '0');
       assert.deepEqual(opening.corner, [9, 9, 13], 'the black of the picture');
-      for (const [i, light] of opening.lights.entries()) assert.ok(light.colour[0] > 70 && light.colour[0] < 125, `light ${i} of the picture is not there, or not dim: ${light.colour}`);
+      for (const [i, light] of opening.lights.entries()) {
+        assert.ok(light.colour[0] > 70 && light.colour[0] < 125, `light ${i} of the picture is not there, or not dim: ${light.colour}`);
+        assert.ok(light.colour[0] > light.colour[2] + 4, `light ${i} is not warm: ${light.colour}`);
+      }
       // then it wakes, a light at a time
       await page.waitForSelector('.sky[data-alive="1"]', { timeout: 6000 });
       assert.notEqual(await alive(), '5', 'the lights wake one at a time');
@@ -731,13 +750,17 @@ async function main() {
       assert.equal((await h.pal()).height, 'gone', 'Penny is in the night');
       assert.deepEqual(await h.words('.screen-sky'), []);
       assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top of a phone is the night');
-      // a light that is touched twinkles: for a moment it is brighter
-      const before = (await look()).lights[2].colour[0];
+      // a light that is touched twinkles: for a moment it is brighter. (Touched while it is at rest, to be sure of that.)
+      let before = 255;
+      for (let tries = 0; tries < 60 && before > 118; tries++) {
+        await sleep(150);
+        before = (await look()).lights[2].colour[0];
+      }
       await page.mouse.click(one.lights[2].x, one.lights[2].y);
       await sleep(70);
       const after = (await look()).lights[2].colour[0];
       assert.ok(after > before + 20, `the middle star, touched, did not twinkle: ${before} then ${after}`);
-      assert.ok(after < 222, 'and even then it is dimmer than the picture');
+      assert.ok(after < 222 - 20, `and even then it is well short of the picture: ${after}`);
       assert.equal(await said(), 'The middle star.');
       // a touch anywhere else, and the nearest answers
       await page.mouse.click(30, 800);
@@ -754,9 +777,10 @@ async function main() {
       assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.sky .penny-back')).opacity), '0');
       await page.mouse.click(30, 800);
       await page.waitForSelector('.sky:not(.idle)');
+      // the way back is a tumble too: the page comes turning up out of the dark, and then the night has gone
       await page.locator('.sky .penny-back').click({ force: true });
       await page.waitForSelector('.home-map');
-      await sleep(600);
+      await page.waitForFunction(() => document.querySelectorAll('#screens .screen').length === 1, null, { timeout: 5000 });
       assert.notEqual(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top is the page\'s again');
     }),
 
@@ -781,7 +805,7 @@ async function main() {
       await sleep(1500);
       for (const seen of [await outside(), await sleep(900).then(outside)]) {
         for (const [i, light] of seen.entries()) {
-          assert.ok(light.middle > 60 && light.middle < 222, `light ${i}: ${light.middle}`);
+          assert.ok(light.middle > 40 && light.middle < 222 - 20, `light ${i}: ${light.middle}`);
           if (i % 2 === 0) assert.ok(light.beside.every((value) => value <= 40), `star ${i} has moved: ${light.beside}`);
         }
       }

@@ -25,6 +25,13 @@
 // --- The picture -------------------------------------------------------------------
 export const SKY = '#09090d'; // both measured off it
 export const LIGHT = '#dedede';
+// The night's own light is the picture's, warmed a little: the black is left
+// as it is, and against it the lights are the colour of a lamp seen a long
+// way off, not of a screen. (Red, green, blue.) Their glow is warmer than
+// they are; and a light that a finger has warmed turns towards an ember.
+export const WARM = [238, 224, 204];
+export const HALO = [255, 212, 166];
+export const EMBER = [255, 194, 138];
 
 const SIDE = 1024; // the picture's side, in its own pixels
 // The five, in the order they are read: left to right. Places and sizes are in
@@ -126,6 +133,7 @@ export const NIGHT = [
 // place for a moment, and it is sharp, and brighter.
 export const REST = 0.4; // how bright a light is at rest, where 1 would be the picture's own
 export const GLINT = 0.62; // and at the top of a twinkle
+export const MOST = 0.66; // and the most it ever is, flicker, twinkle and a finger's warmth together: always short of the picture
 export const GHOSTS = 6; // how many copies
 export const CORE = 0.19; // how much of its brightness at rest is the light itself; the rest is its copies
 
@@ -158,6 +166,10 @@ export function sway([at, speed], seconds, { spread, pace }, chance = Math.rando
 // second.
 export const roam = (at, seconds, loose, chance = Math.random) => at + loose * Math.sqrt(seconds) * bell(chance);
 
+// The whole picture is afloat, as whoever is looking at it drifts: more
+// slowly than any light wanders by itself, and by no more. What is near goes
+// by faster than what is far, which is what makes it deep.
+export const afloat = { spread: 0.004, pace: 0.05 };
 // How a light wanders from its place, in units of the picture's side: the
 // far ones further than the near, and all of them further when stirred.
 // `heat` is how stirred it is, 0 to 1: a finger near it warms it.
