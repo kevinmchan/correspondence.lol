@@ -800,7 +800,16 @@ button.go { font-family: system-ui, sans-serif; }
 }
 @keyframes guess-wait { 0%, 100% { transform: scale(1.06) rotate(-2.5deg); } 50% { transform: scale(1.1) rotate(2.5deg); } }
 
-/* the hint, at the right-hand end of the row under the board */
+/* the room's chat and the hint, at the right-hand end of the row under the board */
 .toolbar #hint { margin-left: auto; }
+.toolbar #chat-toggle:not([hidden]) { margin-left: auto; }
+.toolbar #chat-toggle:not([hidden]) + #hint { margin-left: 0.2rem; }
 .toolbar #hint + #submit { margin-left: 0; }
+.chat-button { position: relative; border-style: solid; }
+.chat-button[aria-expanded="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.chat-button .count { position: absolute; top: -0.3rem; right: -0.3rem; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem; border-radius: 999px; background: var(--accent); color: #fff; font: 700 0.75rem/1.25rem system-ui, sans-serif; text-align: center; }
+.chat-button .count[hidden] { display: none; }
+/* the chat itself is only on the page while it is open: the button is what opens it */
+#chat-box:not([open]) { display: none; }
+#chat-box > summary { display: none; }
 .tools [aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
