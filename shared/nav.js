@@ -21,6 +21,7 @@ const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
   { name: 'penny', depth: 1, match: (path, url) => asks(url, 'penny'), load: () => import('/penny/story.js') },
+  { name: 'office', depth: 1, match: (path, url) => asks(url, 'office'), load: () => import('/penny/office.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },
