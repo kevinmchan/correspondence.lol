@@ -8,29 +8,14 @@
 // whichever of its two loops is showing.
 
 import { audio, holdMusic, noise, tone } from '/postmarks/sound.js';
+import { CHORDS, arrange, pitch, plain, up } from './form.js';
+
+export { CHORDS };
 
 export const STEPS = 8;
 export const ROWS = 7;
 export const keyOf = (step, row) => step * ROWS + row;
 export const TEMPOS = [84, 100, 120, 140]; // beats a minute; a step is half a beat
-
-// The chords, as the game's music has them, and the five-note scale that
-// goes with each (semitones from its root). `root` is semitones from C.
-const MAJOR = [0, 2, 4, 7, 9];
-const MINOR = [0, 3, 5, 7, 10];
-export const CHORDS = [
-  { name: 'C', root: 0, scale: MAJOR, triad: [0, 4, 7] },
-  { name: 'A minor', root: -3, scale: MINOR, triad: [0, 3, 7] },
-  { name: 'F', root: -7, scale: MAJOR, triad: [0, 4, 7] },
-  { name: 'G', root: -5, scale: MAJOR, triad: [0, 4, 7] },
-];
-export const up = (hz, semitones) => hz * 2 ** (semitones / 12);
-// The pitch of a row in a chord: the bottom row is the chord's root, and the
-// rows go up its scale from there, into the next octave.
-export function pitch(base, chord, row) {
-  const place = ROWS - 1 - row;
-  return up(base, chord.root + chord.scale[place % 5] + 12 * Math.floor(place / 5));
-}
 
 // Each layer: how it is named, drawn, and what one of its notes sounds like.
 // play(row, at, bus, chord, hard): `at` is seconds from now on the engine's
@@ -88,9 +73,11 @@ export const LAYERS = [
 ];
 
 // --- The loop -----------------------------------------------------------------------
-// read(): what should be sounding now, { tempo, sets } (sets: for each
+// read(): what should be sounding now, { tempo, sets, long } (sets: for each
 // instrument, the tiles that hold a note), or null for silence. It is asked
 // afresh for every step, so what is played can change under it at any time.
+// `long` plays the loop in its long form (jam/form.js): otherwise it is played
+// as it is written, round and round, through the four chords.
 export function createLoop(life, read) {
   let bus = null; // this screen's own volume, so leaving can fade it out
   let room = null; // where the tuned instruments go: the same, with an echo behind them
@@ -100,7 +87,16 @@ export function createLoop(life, read) {
   let bar = 0; // how many times round: which chord
   let chordHeard = 0;
   let tempoHeard = -1;
-  const queue = []; // steps written but not yet heard: [{ step, time, chord }]
+  let barHeard = 0;
+  const queue = []; // steps written but not yet heard: [{ step, time, chord, bar }]
+  // what is to be played in the bar being written: worked out once a bar, and again if what is playing changes under it
+  let shaped = null;
+  const shapeOf = (playing) => {
+    if (!shaped || shaped.bar !== bar || shaped.from !== playing.sets || shaped.long !== Boolean(playing.long)) {
+      shaped = { bar, from: playing.sets, long: Boolean(playing.long), shape: (playing.long ? arrange : plain)(playing.sets, bar) };
+    }
+    return shaped.shape;
+  };
   const stepLength = (tempo) => 60 / TEMPOS[tempo] / 2;
 
   function engine() {
@@ -136,7 +132,7 @@ export function createLoop(life, read) {
       nextTime = 0;
       return;
     }
-    const { tempo, sets } = playing;
+    const { tempo } = playing;
     const now = live.ctx.currentTime;
     if (nextTime < now) nextTime = now + 0.06; // starting, or back from being asleep
     const length = stepLength(tempo);
@@ -146,23 +142,25 @@ export function createLoop(life, read) {
       tempoHeard = tempo;
     }
     while (nextTime < now + 0.14) {
-      const chord = CHORDS[bar % CHORDS.length];
+      const shape = shapeOf(playing);
+      const { sets } = shape;
+      const chord = shape.key ? { ...CHORDS[shape.chord], root: CHORDS[shape.chord].root + shape.key } : CHORDS[shape.chord];
       // the off-steps come a hair late, and the beats are struck harder than what falls between
       const at = nextTime - now + (nextStep % 2 ? length * 0.1 : 0);
       const weight = nextStep % 4 === 0 ? 1 : nextStep % 2 === 0 ? 0.86 : 0.7;
-      if (nextStep === 0 && sets.some((set) => set.size > 0)) {
+      if (nextStep === 0 && playing.sets.some((set) => set.size > 0)) {
         // the chord itself, held under the whole bar: it swells in, and out again
         const whole = length * STEPS;
         for (const semitones of chord.triad) {
-          tone({ at, freq: up(261.63, chord.root + semitones), dur: whole * 1.08, type: 'sine', gain: 0.04, attack: whole * 0.35, into: room });
+          tone({ at, freq: up(261.63, chord.root + semitones), dur: whole * 1.08, type: 'sine', gain: 0.04 * shape.pad, attack: whole * 0.35, into: room });
         }
       }
       for (let index = 0; index < LAYERS.length; index++) {
         for (let row = 0; row < ROWS; row++) {
-          if (sets[index].has(keyOf(nextStep, row))) LAYERS[index].play(row, at, into(LAYERS[index]), chord, weight * (0.92 + Math.random() * 0.16));
+          if (sets[index].has(keyOf(nextStep, row))) LAYERS[index].play(row, at, into(LAYERS[index]), chord, weight * shape.level[index] * (0.92 + Math.random() * 0.16));
         }
       }
-      queue.push({ step: nextStep, time: nextTime, chord: bar % CHORDS.length });
+      queue.push({ step: nextStep, time: nextTime, chord: shape.chord, bar });
       nextStep = (nextStep + 1) % STEPS;
       if (nextStep === 0) bar += 1;
       nextTime += length;
@@ -180,7 +178,8 @@ export function createLoop(life, read) {
   return {
     // Whether the sound engine is awake (it needs a first touch).
     get awake() { return Boolean(audio()); },
-    // The step being heard this moment, and its chord: { step, chord }. step is -1 in silence.
+    // The step being heard this moment, its chord, and which bar it is in,
+    // counted from the start: { step, chord, bar }. step is -1 in silence.
     heard() {
       const live = audio();
       let step = -1;
@@ -189,9 +188,10 @@ export function createLoop(life, read) {
         if (queue.length && queue[0].time <= live.ctx.currentTime) {
           step = queue[0].step;
           chordHeard = queue[0].chord;
+          barHeard = queue[0].bar;
         }
       }
-      return { step, chord: chordHeard };
+      return { step, chord: chordHeard, bar: barHeard };
     },
     // One note now, by hand, in the chord being heard.
     tap(layerIndex, row) {
@@ -203,6 +203,7 @@ export function createLoop(life, read) {
       nextTime = 0;
       bar = 0;
       chordHeard = 0;
+      barHeard = 0;
       queue.length = 0;
     },
   };

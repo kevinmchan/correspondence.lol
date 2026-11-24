@@ -4,6 +4,7 @@
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
 import { myName, myToken, rememberRoom, roomUrl } from '/shared/identity.js';
+import { roof } from '/shared/place.js';
 
 // Both are for someone who already has an account: anyone else starts at home.
 function ready(title) {
@@ -52,6 +53,14 @@ export function mountJoin(root) {
   const form = root.querySelector('#join-room');
   const codeInput = root.querySelector('#join-code');
   const error = root.querySelector('#join-error');
+
+  // The building whose door this is: nobody knows which yet, so it has no
+  // colour. Once the code is all there, somebody inside puts the light on.
+  const house = root.querySelector('.roof-big');
+  house.append(roof({ kind: 0, wide: 330, high: 150 }));
+  codeInput.addEventListener('input', () => {
+    house.classList.toggle('lit', codeInput.value.replace(/[^0-9a-z]/gi, '').length === 6);
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

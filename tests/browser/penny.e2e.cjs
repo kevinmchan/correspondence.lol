@@ -5,7 +5,8 @@
 // where it should be and nowhere else, that the whole first quarter can be
 // walked from the home page to Dot, by touch and by keyboard and with reduced
 // motion, and that nothing throws on the way. It needs Playwright with
-// Chromium; where that is not installed it says so and passes.
+// Chromium; where that is not installed it says so and passes (unless
+// REQUIRE_BROWSER is set, as it is where pull requests are checked).
 //
 // It serves the repository itself, talks to no server, and takes about three
 // minutes: nothing in the app is sped up for it, so what passes here is what
@@ -20,8 +21,10 @@ let chromium;
 try {
   ({ chromium } = require('playwright'));
 } catch {
-  console.log('Playwright is not installed: skipping the browser checks.');
-  process.exit(0);
+  // (where pull requests are checked, REQUIRE_BROWSER is set: there a missing browser is a failure, not a pass)
+  const must = Boolean(process.env.REQUIRE_BROWSER);
+  console.log(`Playwright is not installed: ${must ? 'and here it has to be.' : 'skipping the browser checks.'}`);
+  process.exit(must ? 1 : 0);
 }
 
 const ROOT = path.join(__dirname, '..', '..');
@@ -49,6 +52,7 @@ async function main() {
 
   // One check: its own window, its own storage. Any error on the page fails it.
   async function check(name, { storage = {}, viewport = PHONE, ...options }, run) {
+    if (process.env.ONLY && !new RegExp(process.env.ONLY).test(name)) return null; // ONLY=regex runs the checks it names
     const started = Date.now();
     const context = await browser.newContext({ viewport, ...options });
     await context.route(/supabase\.co/, (route) => route.abort());
@@ -532,7 +536,7 @@ async function main() {
       assert.deepEqual(server, [], 'a beat deleted here is deleted from the account');
     }),
 
-    check('the radio: a swipe tunes to the other station, a double tap keeps one once both have been heard, and the experiment stays behind it', {}, async (page) => {
+    check('the radio: somebody shows how and never why; then Penny notices the tag on its side, cannot say what it is, and the tag opens the experiment', {}, async (page, h) => {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('#jam-lab');
       await page.locator('#jam-lab').click();
@@ -541,9 +545,9 @@ async function main() {
       await sleep(700); // the screen slides in
       const box = await page.locator('.radio .display').boundingBox(); // (its knob and buttons are pressed, not swiped)
       const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
-      // all of the set is on the screen, and nothing behind it is the white of a page
+      // all of the set is on the screen, its tag too, and nothing behind it is the white of a page
       const set = await page.evaluate(() => {
-        const parts = [...document.querySelectorAll('.radio .body, .radio .antenna, .radio .handle, .radio .feet')].map((part) => part.getBoundingClientRect());
+        const parts = [...document.querySelectorAll('.radio .body, .radio .antenna, .radio .handle, .radio .feet, .radio .lab-plate')].map((part) => part.getBoundingClientRect());
         const ground = getComputedStyle(document.querySelector('.radio-world')).backgroundImage;
         return { top: Math.min(...parts.map((r) => r.top)), bottom: Math.max(...parts.map((r) => r.bottom)), left: Math.min(...parts.map((r) => r.left)), right: Math.max(...parts.map((r) => r.right)), wide: innerWidth, high: innerHeight, ground, scrolls: document.scrollingElement.scrollHeight > innerHeight };
       });
@@ -551,8 +555,16 @@ async function main() {
       assert.equal(set.scrolls, false, 'the page scrolls');
       assert.match(set.ground, /gradient/, 'the radio stands in the world');
       assert.equal(await page.locator('.radio .plate').textContent(), 'Penny’s Radio');
-      const mood = () => page.evaluate(() => document.querySelector('.pal')?.dataset.mood);
-      await page.waitForFunction(() => document.querySelector('.pal')?.dataset.mood === 'hopeful', null, { timeout: 6000 }); // Penny shows how: a swipe
+      assert.equal(await page.locator('#taste-behind-open').isVisible(), true, 'the tag is on the side of the set from the start');
+      const tape = () => page.evaluate(() => document.querySelector('#dash-says span[aria-hidden]')?.textContent ?? ''); // what it says now: no waiting for words that are gone
+      const says = (words) => page.waitForFunction((want) => document.querySelector('#dash-says span[aria-hidden]')?.textContent === want, words, { timeout: 8000 });
+      const story = () => page.evaluate(() => JSON.parse(localStorage.getItem('radio:story:v1')));
+      const stage = (name, timeout = 15000) => page.waitForFunction((want) => document.querySelector('.radio-world').dataset.story === want, name, { timeout });
+      // somebody else shows how: it stands by the set and gives an order, and Penny only watches
+      await page.waitForSelector('#radio-dash:not([hidden])', { timeout: 6000 });
+      await says('Swipe.');
+      assert.equal((await h.pal()).mood, 'unsure', 'Penny is watching the one who shows how');
+      assert.match(await page.locator('#dash-says .sr-only').textContent(), /press Tune/, 'the order is given in a way a screen reader can follow');
       const swipe = async () => {
         await page.mouse.move(x + 60, y);
         await page.mouse.down();
@@ -567,20 +579,20 @@ async function main() {
       const turned = () => page.evaluate(() => document.querySelector('.taste-card').classList.contains('turned'));
       const kept = () => page.evaluate(() => JSON.parse(localStorage.getItem('jam:taste:v1')));
       assert.equal((await kept()).trials.length, 0);
-      // a swipe turns it over, and back
+      // a swipe tunes to the other station; and the next order is to listen
       const was = await turned();
       await swipe();
-      assert.equal(await turned(), !was, 'a swipe did not turn the card');
-      assert.equal(await mood(), 'thrilled', 'Penny is not delighted that it was done');
-      // too soon: neither side has been listened to
-      await sleep(300);
+      assert.equal(await turned(), !was, 'a swipe did not tune to the other station');
+      await says('Listen.');
+      // too soon: neither station has been listened to. The refusal is that one's, and has no reason in it
       await doubleTap();
-      await sleep(200);
-      assert.equal((await kept()).trials.length, 0, 'a pick counted before both sides had been heard');
-      assert.match(await page.locator('#taste-note').textContent(), /Tune to|Stay on/);
+      await sleep(250);
+      assert.equal((await kept()).trials.length, 0, 'a station was kept before both had been heard');
+      assert.equal(await tape(), 'Not yet.');
+      assert.match(await page.locator('#taste-note').textContent(), /Tune to|Stay on/, 'a screen reader is still told what to do');
       assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
       assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
-      // listened to both: now it counts
+      // listened to both: the order is to keep one, and it does not say which
       const pickOne = async () => {
         await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
         if ((await page.locator('.taste-card .face.heard').count()) < 2) await swipe();
@@ -590,40 +602,100 @@ async function main() {
         await sleep(250);
         return up;
       };
+      await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
+      if ((await page.locator('.taste-card .face.heard').count()) < 2) await says('The other one.');
       const first = await pickOne();
-      assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: Penny has shown all there is');
+      assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: that is all there was to show');
       let data = await kept();
       assert.equal(data.trials.length, 1);
-      assert.equal(data.trials[0].pick, first, 'the side that was up is the one picked');
-      assert.equal(data.current[first], data.trials[0][first], 'the loop that was picked stays where it is');
-      assert.notEqual(data.current[first === 'front' ? 'back' : 'front'], data.trials[0][first === 'front' ? 'back' : 'front'], 'and a new challenger takes the other side');
+      assert.equal(data.trials[0].pick, first, 'the station that was tuned in is the one kept');
+      assert.equal(data.current[first], data.trials[0][first], 'the station that was kept stays where it is');
+      assert.notEqual(data.current[first === 'front' ? 'back' : 'front'], data.trials[0][first === 'front' ? 'back' : 'front'], 'and a new one comes in beside it');
       assert.equal(data.current.reigning, first);
       assert.match(data.current.phantom, /^[A-Za-z0-9_-]{39}$/, 'a phantom was made beside the challenger');
+      // the one who showed how is gone, without a word of why; and Penny has noticed the tag
+      await page.waitForSelector('#radio-dash', { state: 'hidden', timeout: 5000 });
+      assert.equal(await tape(), '');
+      await page.waitForFunction(() => localStorage.getItem('radio:story:v1') === '"seen"', null, { timeout: 5000 });
+      // it goes and stands under it, tries to say what it is, and cannot: there is no Dot to say it
+      await page.waitForFunction(() => Number(document.querySelector('.pal').style.getPropertyValue('--x')) > 0.6, null, { timeout: 10000 });
+      await stage('stuck', 20000);
+      await stage('waiting', 8000);
+      assert.equal(await page.locator('#dot-says').textContent(), '', 'nothing is said');
+      assert.equal(await page.locator('#taste-behind').evaluate((sheet) => sheet.open), false, 'and nothing opens by itself');
+      // the tag is pressed: that is what it wanted
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      assert.equal((await h.pal()).mood, 'thrilled');
+      assert.equal(await story(), 'found');
+      assert.equal(await page.locator('#dot-told').isVisible(), false, 'Dot’s line with no Dot to say it');
       assert.equal(await page.locator('#lab-picks').textContent(), '1');
+      assert.match(await page.locator('#lab-verdict').textContent(), /9 to go/);
+      await page.locator('#taste-behind-close').click();
       assert.equal(await page.locator('#lab-picks').isVisible(), false);
       // the station that was kept says so when it is tuned in
       if (((await turned()) ? 'back' : 'front') !== first) await swipe();
       assert.match(await page.locator('#radio-tag').textContent(), /Kept 1 of 5/);
-      // behind the radio: the experiment, when asked for
-      await page.locator('#taste-behind-open').click();
-      assert.equal(await page.locator('#lab-picks').isVisible(), true);
-      assert.match(await page.locator('#lab-verdict').textContent(), /9 to go/);
-      await page.locator('#taste-behind-close').click();
-      assert.equal(await page.locator('#lab-picks').isVisible(), false);
-      // by keyboard, and by the buttons
+      // by keyboard: the arrows tune; Enter on the tag opens the sheet and keeps nothing
       await page.locator('.taste-card').focus();
       const before = await turned();
       await page.keyboard.press('ArrowRight');
       assert.equal(await turned(), !before);
+      await page.locator('#taste-behind-open').focus();
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('#taste-behind[open]');
+      assert.equal((await kept()).trials.length, 1, 'Enter on the tag kept a station');
+      await page.locator('#taste-behind-close').click();
+      // the presets have a sheet of their own
+      await page.locator('#taste-presets-open').click();
+      await page.waitForSelector('#taste-presets[open]');
+      assert.equal(await page.locator('#presets-none').isVisible(), true);
+      await page.locator('#taste-presets-close').click();
+      // and by the buttons
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 12000 }).catch(async () => { await page.locator('#taste-flip').click(); });
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 12000 });
       await page.locator('#taste-pick').click();
       await page.waitForFunction(() => document.querySelector('#lab-picks').textContent === '2');
-      // it is all still there after a reload
+      // it is all still there after a reload, and nobody comes to show how a second time
       await page.reload();
       await page.waitForSelector('.taste-card');
       assert.equal(await page.locator('#lab-picks').textContent(), '2');
       assert.match(await page.locator('#lab-verdict').textContent(), /8 to go/);
+      await sleep(2500);
+      assert.equal(await page.locator('#radio-dash').isVisible(), false);
+    }),
+
+    check('the radio, with Dot: Penny tells Dot, Dot says what Penny means, and the experiment opens by itself, once', { storage: { 'penny:dot:v1': true, 'penny:walked:v1': true, 'radio:taught:v1': true, 'radio:story:v1': 'seen' } }, async (page, h) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.taste-card');
+      assert.equal((await h.pal()).alone, false, 'Dot is with Penny');
+      // Penny goes under the tag, tries, cannot say it, and turns to Dot
+      await page.waitForFunction(() => document.querySelector('.radio-world').dataset.story === 'telling', null, { timeout: 20000 });
+      assert.equal(await page.locator('#dot-says').textContent(), '', 'Dot has not spoken yet');
+      // Dot says it, in words
+      await page.waitForFunction(() => /You[’']re part of an experiment\./.test(document.querySelector('#dot-says').textContent), null, { timeout: 10000 });
+      assert.match(await page.locator('#dot-says').textContent(), /^Dot says: /, 'a screen reader is told who is speaking');
+      const clear = await page.evaluate(() => {
+        const box = (element) => element.getBoundingClientRect();
+        const [said, dot] = [box(document.querySelector('#dot-says')), box(document.querySelector('.pal-dot'))];
+        return { right: said.right, dot: dot.left, left: said.left, wide: innerWidth };
+      });
+      assert.ok(clear.right <= clear.dot && clear.left >= 0, `the words are under Dot, or off the screen: ${JSON.stringify(clear)}`);
+      // and the sheet opens by itself, with Dot's line at the head of it
+      await page.waitForSelector('#taste-behind[open]', { timeout: 8000 });
+      assert.equal(await page.locator('#dot-told').isVisible(), true);
+      assert.match(await page.locator('#dot-told').textContent(), /You’re part of an experiment\./);
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('radio:story:v1'))), 'told');
+      await page.locator('#taste-behind-close').click();
+      // they go back to where they stand
+      await page.waitForFunction(() => document.querySelector('.radio-world').dataset.story === 'done' && Number(document.querySelector('.pal').style.getPropertyValue('--x')) < 0.3, null, { timeout: 8000 });
+      // once: on coming back nothing is said and nothing opens
+      await page.reload();
+      await page.waitForSelector('.taste-card');
+      await sleep(5000);
+      assert.equal(await page.locator('#dot-says').textContent(), '');
+      assert.equal(await page.locator('#taste-behind').evaluate((sheet) => sheet.open), false);
+      assert.equal(await page.locator('#radio-dash').isVisible(), false);
     }),
 
     check('a tag is hidden on every screen: nothing leads to the night but finding it, going through it is a tumble, and found, it is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
@@ -1013,8 +1085,9 @@ async function main() {
 
   await browser.close();
   server.close();
-  const failed = results.filter((ok) => !ok).length;
-  console.log(`# ${results.length - failed} passed, ${failed} failed`);
+  const failed = results.filter((ok) => ok === false).length;
+  const skipped = results.filter((ok) => ok === null).length;
+  console.log(`# ${results.length - failed - skipped} passed, ${failed} failed${skipped ? `, ${skipped} not asked for` : ''}`);
   process.exit(failed ? 1 : 0);
 }
 

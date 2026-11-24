@@ -176,13 +176,12 @@ export const BET = 0.4; // the most of the stake that rides on one pick
 export const NEEDED = 20; // the stake at which it is significant: 1 in 20
 export const REIGN = 5; // wins in a row after which a loop retires, undefeated
 const other = (side) => (side === 'front' ? 'back' : 'front');
-// A challenger for the reigning loop: something new, or the reigning loop
-// changed a little. The longer it has reigned, the likelier the second: a loop
-// that keeps winning is best tested by its own near relations, and a pick
-// between two loops that are much alike says more than one between a
-// favourite and a stranger. (How it is drawn depends only on what has already
-// happened, never on the pick to come, and the phantom is drawn the same way.)
-const draw = (reigning, streak, random) => (random() < Math.min(0.8, 0.4 + 0.1 * streak) ? mutate(reigning, random) : randomBeat(random));
+// A challenger for the reigning loop: more often something new, sometimes the
+// reigning loop changed a little. (It was once mostly the second, the more so
+// the longer a loop had reigned, as the harder test of a favourite. To listen
+// to, that was the same thing over and over.) How it is drawn never depends on
+// the pick to come, and the phantom is drawn the same way.
+const draw = (reigning, random) => (random() < 0.4 ? mutate(reigning, random) : randomBeat(random));
 
 // A new pair. With a reigning loop on `reigningSide`, the other side gets a
 // challenger; with none (the very start) both are new, and the back one is
@@ -191,7 +190,7 @@ const draw = (reigning, streak, random) => (random() < Math.min(0.8, 0.4 + 0.1 *
 function pair(state, front, back, reigningSide, random) {
   const challengerSide = reigningSide ? other(reigningSide) : 'back';
   const reigning = reigningSide ? (reigningSide === 'front' ? front : back) : null;
-  const phantom = reigning ? draw(reigning, state.streak, random) : randomBeat(random);
+  const phantom = reigning ? draw(reigning, random) : randomBeat(random);
   const first = random() < 0.5 ? 'front' : 'back';
   const current = { front, back, phantom, challengerSide, reigning: reigningSide, first, p: null, q: null, pPhantom: null };
   if (state.trials.length >= WARMUP) {
@@ -229,7 +228,7 @@ export function choose(state, pick, random = Math.random, note = {}) {
     state.current = pair(state, randomBeat(random), randomBeat(random), null, random);
     return state;
   }
-  const challenger = draw(winner, state.streak, random);
+  const challenger = draw(winner, random);
   state.current = pick === 'front' ? pair(state, winner, challenger, 'front', random) : pair(state, challenger, winner, 'back', random);
   return state;
 }

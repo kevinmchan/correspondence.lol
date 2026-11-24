@@ -8,9 +8,15 @@ import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js'
 import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
+import { miniBoard, roof, roomClass } from '/shared/place.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
+//
+// A room is drawn as a building on the map, seen from above (room/room.css):
+// with its roof off for the people in it, and with its roof on for anybody
+// else. What is made here is what goes in it: the tokens of the people at its
+// table, and the games laid on the table as small boards.
 export function mount(root, life) {
 
   const $ = (id) => root.querySelector(`#${id}`);
@@ -18,7 +24,7 @@ export function mount(root, life) {
   const el = {
     name: $('room-name'), loading: $('loading'),
     join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-    room: $('room'), members: $('members'), profile: $('profile'),
+    house: $('house'), room: $('room'), members: $('members'), profile: $('profile'), joinFaces: $('join-faces'),
     notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), roomCode: $('room-code'), shareButton: $('share-button'),
     games: $('games'), noGames: $('no-games'),
     modes: $('modes'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
@@ -41,6 +47,10 @@ export function mount(root, life) {
   let composing = false; // the write-a-phrase screen is showing in place of the room
   let present = false; // telling the server this room is on screen
 
+  // The building keeps one of the game's colours, by its id: its walls here, its roof on the home page.
+  if (roomId) root.classList.add(roomClass(roomId));
+  el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
+
   function fail(text) {
     el.loading.hidden = false;
     el.loading.textContent = `${text} `;
@@ -59,23 +69,28 @@ export function mount(root, life) {
 
   const MODE_NAMES = { coop: 'Together', trial: 'Time trial', phrase: 'Pass phrase' };
 
+  // Where a game stands for whoever is looking: in words, and as a state its
+  // board on the table shows ('go': theirs to play; 'wait'; 'won'; 'lost').
   function gameStatus(game) {
     if (game.mode === 'trial' || game.mode === 'phrase') {
       // the solo modes: where you stand, and how many have finished
       const done = `${game.finished} finished`;
-      if (game.phrase_by === room.you) return { text: `You wrote this one · ${done}` };
-      if (game.mine === 'won') return { text: `${game.mode === 'trial' ? 'You finished' : 'You solved it'} · ${done}` };
-      if (game.mine === 'lost') return { text: `You ran out of hearts · ${done}` };
-      if (game.mode === 'phrase') return { text: `${game.mine === 'playing' ? 'In progress' : 'Not started'} · ${done}`, go: true };
-      return { text: `${game.mine === 'playing' ? 'Your clock is running' : 'Not started'} · ${done}`, go: true };
+      if (game.phrase_by === room.you) return { text: `You wrote this one · ${done}`, state: 'wait' };
+      if (game.mine === 'won') return { text: `${game.mode === 'trial' ? 'You finished' : 'You solved it'} · ${done}`, state: 'won' };
+      if (game.mine === 'lost') return { text: `You ran out of hearts · ${done}`, state: 'lost' };
+      if (game.mode === 'phrase') return { text: `${game.mine === 'playing' ? 'In progress' : 'Not started'} · ${done}`, go: true, state: 'go' };
+      return { text: `${game.mine === 'playing' ? 'Your clock is running' : 'Not started'} · ${done}`, go: true, state: 'go' };
     }
     const hearts = '♥'.repeat(game.hearts) + '♡'.repeat(3 - game.hearts);
-    if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}` };
-    if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} posts found` };
+    if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}`, state: 'won' };
+    if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} posts found`, state: 'lost' };
     const progress = `${game.found}/${game.size} posts · ${hearts}`;
-    if (game.last_player === room.you) return { text: `Waiting for someone else · ${progress}` };
-    return { text: `Your move · ${progress}`, go: true };
+    if (game.last_player === room.you) return { text: `Waiting for someone else · ${progress}`, state: 'wait' };
+    return { text: `Your move · ${progress}`, go: true, state: 'go' };
   }
+
+  // The picture a kind of game goes by: the one on the tile that starts it.
+  const modeIcon = (mode) => el.modes.querySelector(`[data-mode="${mode}"] svg`)?.cloneNode(true) ?? null;
 
   // The room's name. For a member it is a button: a tap turns it into a field,
   // Enter (or leaving the field) saves, Escape puts it back.
@@ -162,11 +177,15 @@ export function mount(root, life) {
           : `${list(here)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
       if (!el.joinName.value) el.joinName.value = myName();
       $('join-sign-in').href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
+      // whoever is in shows at the skylight (as many as it has room for)
+      el.joinFaces.replaceChildren(...room.people.filter((person) => !person.left).slice(0, 5).map((person) => avatar(person)));
+      el.joinFaces.hidden = n === 0;
       // A device signed out of its profile cannot join as itself: home offers the ways back in.
       rpc('profile_get', { p_token: myToken() }).then((profile) => {
         if (profile.signed_out) go('/', { replace: true });
       }).catch(() => {});
       el.join.hidden = false;
+      el.house.hidden = true;
       el.room.hidden = true;
       el.compose.hidden = true;
       el.profile.hidden = true;
@@ -178,12 +197,19 @@ export function mount(root, life) {
       return;
     }
     el.join.hidden = true;
+    el.house.hidden = false;
+    el.house.classList.toggle('writing', composing); // (at the desk the door is shut)
     el.room.hidden = composing;
     el.compose.hidden = !composing;
+    // each person a token at the head of the table, with their name over it
     el.members.replaceChildren(...room.people.flatMap((person, seat) => {
       if (person.left) return [];
       const li = document.createElement('li');
-      li.append(avatar(person), person.name + (seat === room.you ? ' (you)' : ''));
+      li.className = seat === room.you ? 'seat you' : 'seat';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = person.name + (seat === room.you ? ' (you)' : '');
+      li.append(avatar(person), name);
       return [li];
     }));
     el.profile.hidden = false;
@@ -195,17 +221,35 @@ export function mount(root, life) {
       copyable(el.roomCode, code);
     }
 
+    // each game a small board on the table, on the slip that says where it stands
     el.games.replaceChildren(...room.games.map((game) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
+      a.className = 'game';
       a.href = gameUrl(game.kind, game.id);
       const title = document.createElement('strong');
       title.textContent = `${MODE_NAMES[game.mode] ?? 'Together'} ${game.size} × ${game.size}`;
       const status = gameStatus(game);
+      a.dataset.state = status.state;
+      // (said in pieces, so that where the line has to turn it turns between two of them)
       const line = document.createElement('span');
-      line.textContent = status.text;
+      status.text.split(' · ').forEach((piece, i) => {
+        const bit = document.createElement('span');
+        bit.className = 'bit';
+        bit.textContent = piece;
+        line.append(i ? ' · ' : '', bit);
+      });
       if (status.go) line.className = 'go';
-      a.append(title, line);
+      const board = miniBoard(game, status.state);
+      const kind = modeIcon(game.mode ?? 'coop');
+      if (kind) {
+        kind.setAttribute('class', 'kind');
+        board.append(kind);
+      }
+      const slip = document.createElement('span');
+      slip.className = 'slip';
+      slip.append(title, line);
+      a.append(board, slip);
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'quiet round delete';

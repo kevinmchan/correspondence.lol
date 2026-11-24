@@ -9,12 +9,13 @@ A static, no-build progressive web app served from the repository root at
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
-| `room/` | A room: members, invitation link, games list, chat |
+| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
-| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
+| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
-| `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) |
+| `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
+| `.github/workflows/` | What GitHub runs on every pull request: the control (`pr-control.yml`) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
@@ -25,6 +26,68 @@ Letter Office (`/?office`, `penny/office.js`), is still being worked out, so
 nobody is taken there who has not asked: the app opens on the home page. The
 scene is reached by a tap on Penny on the home page once the first places
 have been walked, and a door in its corner leads back.
+
+## Phones
+
+The interface is designed for an iPhone Pro (393 by 852 installed to the Home
+Screen, 393 by 659 inside Safari with its bars showing), and has to go on
+working on a Pro Max and on a mini. The mini is where it is tightest, so it
+has a suite of its own: `npm run e2e:mini` (`tests/browser/mini.e2e.cjs`) goes
+through every screen of the app, in every state worth looking at, on a mini
+both ways (375 by 629 in Safari; 375 by 812 installed, with the notch and the
+home bar), and holds each to the same rules:
+
+- the page cannot be scrolled sideways, and nothing sticks out past its edges;
+- everything there is to press is at least 44 by 44 (the few things that are
+  not are named in the suite, each with its reason);
+- no two things to press overlap;
+- installed, nothing to press lies under the notch or the home bar;
+- no text is under 11px, and no text field under 16px (Safari zooms the whole
+  page when a smaller one is tapped);
+- no text is cut off by its own box;
+- a screen meant to be seen whole is whole: it does not scroll, and the things
+  named for it are entirely on the screen.
+
+The same suite can be pointed at any of the phones in `tests/browser/phone.cjs`:
+`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all`; and at one screen:
+`ONLY=radio npm run e2e:mini`. There is no WebKit where the suites run, only
+Chromium told to be a phone (its size, touch, a phone's viewport and the
+insets of the notch and the home bar): what is checked is the layout an
+iPhone's screen gives, not Safari's own engine.
+
+A new screen, or a new state of one, gets a test screen in the suite in the
+same change that adds it.
+
+## The control on pull requests
+
+Nothing goes into `main` without two things (`tests/pr-control.cjs`, run on
+every pull request by `.github/workflows/pr-control.yml`):
+
+1. **New test screens.** The pull request adds at least one test screen to the
+   suite for the mini: there are more after it than before, and at least one
+   has a name that was not there. Renaming one, or swapping one for another, is
+   not adding one.
+2. **Passing runs.** `npm test`, `npm run e2e` and `npm run e2e:mini` all
+   pass. A browser that is missing is a failure there, not a skip.
+
+Besides which, every screen the app has must have at least one test screen at
+all times (`tests/control.test.js`).
+
+Not having either takes an **exception**, and an exception is two things, both
+on the pull request:
+
+- the label `test-exception`, which is the owner's to give; and
+- a line of its own in the description for each rule it is asked for, with the
+  reason in a sentence:
+  `Exception (no new test screens): …` or `Exception (failing tests): …`
+
+An exception lets the pull request through and says so in the result of the
+check; it does not hide what failed. The control can be run by hand before a
+pull request is opened: `node tests/pr-control.cjs --base origin/main`.
+
+For the control to be a bar and not only a report, `main` has to be protected
+on GitHub (Settings, Branches): require a pull request, and require the status
+check "New test screens and passing runs".
 
 ## Run locally
 
@@ -61,7 +124,9 @@ the letters of a phrase. A double tap on a square guesses a post there.
 Penny is a letter. Penny cannot speak, read or write, so nothing Penny is part
 of uses words (the lines for screen readers aside). What Penny has is a voice,
 a closed-mouth hum that comes from its seal (`penny/penny.js`), and feelings,
-which show.
+which show. Others can speak. Dot, once found, can say what Penny means, as it
+does at the radio: it translates Penny, it does not read. And the one who shows
+how the radio works uses words, but only for how.
 
 **Penny feels things hard.** Its highs are very high and its lows go all the
 way down, and both pass quickly. That intensity is what the adventure looks
@@ -85,6 +150,20 @@ same dash, with nothing riding on it. Competition in this story is play. Nobody
 is left behind for losing, whoever comes last is as welcome as whoever comes
 first, and help is allowed: a hint may be asked for in the middle of a race,
 and Penny thinks that a fine idea.
+
+**What the world is afraid of: losing music.** Taste is being averaged, more
+and more efficiently: what one person likes is worked out, set beside what
+everyone likes, and evened out, a little faster each time. The world Penny
+lives in is worried that, done well enough, this leaves no music at all: only
+the middle of it. It is kin to the hurry Penny comes from, efficiency turned on
+listening. Penny's Radio is where the story comes closest to it: a radio that
+learns what you like. Who is doing the averaging, and whether the fear is
+right, are not decided, and as everywhere the story does not say it in words.
+
+**The question Penny's Radio asks.** Is a radio that learns one person's taste
+a defence of that taste, or one more step in the averaging? The piece asks it
+and does not answer it. Nothing in it tilts the question either way: not the
+exhibit's words, not the meter, not Penny.
 
 ### How a place says it
 
@@ -413,6 +492,9 @@ when the screen opens, when the app is come back to, and after anything is
 saved, renamed or deleted. A beat saved offline is sent when it can be; one
 deleted on another device goes from this one too.
 
+A loop played here is played as it is written; the long form that Penny's
+Radio gives a loop (`jam/form.js`) is for listening, not for composing.
+
 What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, and any way to choose the chords.
 
@@ -425,7 +507,8 @@ choices, and can that be shown to be more than chance?
 
 **The set.** A small portable radio standing on the map: a handle, an aerial,
 a plate with its name, a dial, a display, a readout, and along the bottom a
-tuning knob, play and pause, five presets and Keep. It is drawn flat and
+tuning knob, play and pause, five preset lamps and Keep, and a tag hanging
+from its right side with a flask on it. It is drawn flat and
 given depth the way a drawing is: a solid edge down its right side and along
 its underside, a shadow on the ground, a slight lean. All of it is always on
 the screen, at any size (everything on it is sized from its own width), and
@@ -439,25 +522,74 @@ to the other, with a moment of static; the needle crosses the dial, the knob
 turns, and the readout gives the station in its own colour. A double tap, or
 Keep, keeps the station that is tuned in. It stays on the dial, marked "Kept 2
 of 5", and a new station comes in beside it: something new, or the kept one
-changed a little, and the longer a station has been kept the likelier the
-second, since a favourite is best tested by its near relations. A station
-kept five times running is saved to a preset (a press on one opens it in the
-music maker), and two new stations take the dial, so that no early favourite
-sits there for ever.
+changed a little, more often the first: mostly near relations of a favourite
+is the sharper test of it, and the same thing over and over to listen to. A
+station kept five times running is saved to a preset and lights a lamp, and
+two new stations take the dial, so that no early favourite sits there for
+ever. A press on the lamps opens a sheet of the presets, the latest first; a
+press on one opens it in the music maker.
 
-**Penny shows how.** Nothing is said. As on the walk, one thing is shown at a
-time, and the next waits until that has been done. That a swipe tunes: Penny
-comes up, looks at the radio and back at you, and a fingertip of light slides
-across the display, again every few seconds until you do it. That a station
-has to be listened to: Penny shuts its eyes and listens with you while the
-signal fills, nods when it has, and shows the swipe again for the other. That
-two taps keep one: the fingertip taps twice. Whatever is done is Penny's
-delight. After the first station is kept it is taught (on this device; the
-sheet behind the radio can ask for it again), and Penny only keeps time, one
-small hop at the top of each bar, the same whatever is playing: it gives no
-opinion of a station. It nods when one is kept, jumps for a preset, and
-shakes its head at a station kept before both have been heard. It hums once,
-before the radio is on, and not after.
+**A station is a piece, not a loop.** A loop is one bar of eight steps, and
+played round and round as it stands it is pleasant for a quarter of a minute
+and then a thing stuck: the same tune, the same kick in the same place. So a
+station plays its loop in a long form (`jam/form.js`): a loop inside a longer
+loop inside a longer one, each changing something the one inside it left
+alone. Which bar it is, counted from when the radio was turned on, says where
+it is in all of them at once:
+
+| The loop | How long (at 100 beats a minute) | What changes round it |
+| --- | --- | --- |
+| A bar in its phrase | 4 bars, ten seconds | The chord. And the tune goes said, answered (its second half a step higher), said again, turned round (its second half backwards). |
+| A phrase in its section | 16 bars, forty seconds | How hard it is played: stated; lighter (half the hats, the kick only on the one, the keys quieter); the keys answering half a bar late; a build, with a fill on the drums to end it. |
+| A section in its movement | 64 bars, two and a half minutes | The order of the four chords, different in each; a section with the bass only on the beats; and one that opens with a phrase of rest: no kick, no snare, no bass, the chord held under what is left. |
+| A movement in its piece, and the piece in whatever is longer, without end | 256 bars, ten minutes; then forty; and on | The key: each of these moves the whole thing up or down a few notes and brings it home again. |
+
+Nothing in it is chance: the same loop at the same bar is always the same, and
+the rules are the same for every station, so two stations side by side are at
+the same place in the same form and neither is flattered by it. It is still
+the loop it was: the tune is as written in more than half its bars. The
+display shows the bar that is being played, so it changes with the form. The
+clock of the form runs on from one pair of stations to the next, so a station
+that is kept is heard further into its piece each time, not from the top
+again; where it stood when a station was kept is written down with the pick.
+The music maker does not do this: there, what is on the board is what is
+heard.
+
+**Somebody shows how, and never why.** The first time the radio is on,
+somebody else comes to stand by it: an express letter, a red and blue stripe
+round its edge, all hurry, the kind of post Penny was left behind by. It uses
+words, and spends them only on how: an order on a strip of tape beside it,
+"Swipe.", "Play.", "Listen.", "The other one.", "Tap twice to keep one.", given
+again every few seconds until it has been done, and "Not yet." to a station
+kept before both have been heard. It never says why, and it does not cheer:
+when a thing is done it ticks. Penny watches it from under the edge, unsure,
+and shuts its eyes and listens when you listen. When a station has been kept
+it ticks a last time, looks at you, and is gone up the side of the radio. Its
+name, Dash, is in the code only. (On a screen reader the orders name the
+buttons too: "Swipe, or press Tune.")
+
+**Penny notices the tag.** The tag on the side of the set is in plain sight
+from the start, and can be pressed at any time. When the one who showed how
+has gone, Penny sees it. It goes and stands under it, looks at you, throws a
+fingertip of light at it and hums a question; the first time round it asks
+again, harder, jumping for it. Then it tries to say what it is, and cannot:
+the note sticks, and it sinks. Penny cannot speak, read or write.
+
+**Dot says it.** If Dot has been found, Penny turns to Dot. The radio goes
+quiet; Penny looks the way the express letter went, at the tag, and back at
+Dot, and pleads; Dot nods, and says it for Penny, in a bubble, a few words at
+a time on three falling bells: "You're part of an experiment." Then the sheet
+behind the radio opens by itself, once, and not while a finger is on the
+screen. Without Dot nothing is said and nothing opens by itself: Penny waits
+under the tag, asks once more, and goes back. Whenever the tag is pressed,
+that is what Penny wanted, and it is thrilled.
+
+After that Penny only keeps time, one small hop at the top of each bar, the
+same whatever is playing: it gives no opinion of a station. It nods when one
+is kept, jumps for a preset, and shakes its head at a station kept before
+both have been heard. It hums for the tag, and otherwise only before the
+radio is on. All of this happens once on a device; "Show me how again", in the
+sheet behind the radio, plays it all again.
 
 Two things are there for the experiment's sake: a station cannot be kept
 until both have been heard for a second and a half each (three bars of signal
@@ -474,9 +606,10 @@ top of every bar a gleam runs across it. At rest the notes twinkle. Both
 stations are lit by the same rules. With reduced motion only the bar moves.
 
 **Behind the radio.** Nothing on the face of the radio says it is an
-experiment. The flask at the top opens a sheet over it with the lab notes:
-where the test stands, the numbers, how it works, the data to copy out, and
-starting over.
+experiment but the tag on its side. The tag opens a sheet over it with the
+lab notes: where the test stands, the numbers, how it works, the data to copy
+out, showing how again, and starting over. Once Dot has said it, Dot's line
+is at the top of the sheet.
 
 **The model** (`jam/taste-model.js`). A loop is turned into fifteen numbers:
 tempo, how busy each instrument is, kick, snare and hats, how much falls off
@@ -642,6 +775,32 @@ People gather in rooms. A room has members, a chat and games; any member can
 start a game and every member can play in it, each on their own device. In
 Postmarks anyone may take the next turn except whoever took the last one.
 A solo game needs no room and is saved in the browser only.
+
+**A room is a place.** It is drawn as a building on the map, seen from above
+like everything else in the game (`room/room.css`, `shared/place.js`). Each
+room keeps one of the game's seven colours and one of three roofs (a ridge,
+hipped, or flat with a garden), chosen from its id, so it is the same
+building wherever it is drawn.
+
+- **Inside**, the roof is off. The walls are in the room's colour and the
+  floor is the map's own squares. Its name is the map's label for it, pinned
+  over the wall. The people in it are tokens at the head of a table, with
+  their names over them. The games lie on the table as small boards, each on a
+  slip that says where it stands, with a red pin on one that is yours to
+  play, a tick on one that is solved, and the board greyed when it is lost.
+  The boards are not the games' own districts: a room is not told those, as
+  they would give the game away. They are made from the game's id, the same
+  each time, so a game keeps its face. Three tiles start a game. The chat is
+  notes passed across a rug. At the door there is a bell (notifications) and
+  the mat, with the code friends join with, and a bush either side.
+- **Writing a pass phrase** is the same room, at its writing desk.
+- **Outside**, for somebody who is not in it, the roof is on. Whoever is in
+  shows at the skylight, and the mat at the door is where to ask in.
+- **On the home page** your rooms are a street of roofs, each with its name on
+  a plate at its door. A room with something waiting on you has its skylight
+  lit. **Opening a room** is a plot staked out on the map, with a board
+  planted in it to write the name on. **Joining one** is a grey building, its
+  colour not yet known, with its mat to write the code on.
 
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_leave`, `room_profile`, `room_say`,

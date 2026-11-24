@@ -49,6 +49,7 @@ export function createChat(root, { roomId, you, people, onSent }) {
         li.append(message.body);
         const url = message.game_id && gameUrl(message.game_kind, message.game_id);
         if (url) {
+          li.className = 'note game'; // it leads somewhere: a ticket, not just a line
           const link = document.createElement('a');
           link.href = url;
           link.textContent = 'Open';
