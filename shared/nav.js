@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: scene one of the film, where the app opens (/?office), home (/, and /?home), opening and joining a room (/?open, /?join), the map walked with Penny and its story (/?walk, /?penny), a room
+// The screens: scene one of the film (/?office), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), a room
 // (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -10,7 +10,6 @@
 // The address bar and the browser's back button work as they always did, and
 // every address still opens directly (each path serves this same page).
 
-import { hasBegun, hasWalked } from '/penny/penny.js';
 import { play } from '/postmarks/sound.js';
 import { newLife } from './screen.js';
 
@@ -21,8 +20,7 @@ const asks = (url, word) => isHome(url.pathname) && url.searchParams.has(word);
 const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
-  { name: 'penny', depth: 1, match: (path, url) => asks(url, 'penny'), load: () => import('/penny/story.js') },
-  { name: 'office', depth: 1, match: (path, url) => asks(url, 'office'), load: () => import('/penny/office.js') },
+  { name: 'office', depth: 1, match: (path, url) => asks(url, 'office') || asks(url, 'penny'), load: () => import('/penny/office.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },
@@ -147,17 +145,8 @@ document.addEventListener('close', (event) => {
   if (event.target instanceof HTMLDialogElement && !moving) play('shut');
 }, true);
 
-// The first screen: whichever one the address asks for. But the app is a film
-// before it is anything else, so opening it at its bare address starts the
-// film, or takes it up where it was left: scene one for someone new
-// (penny/office.js), the walk for someone part of the way along it. Only when
-// the film so far has been seen through does the app open on the home page.
-// Inside the app that same address is always the home page, which is how the
-// film's door to the rooms, and every way back, still leads there; and
-// /?home asks for it by name.
-const opening = new URL(location.href);
-if (isHome(opening.pathname) && !opening.search && !opening.hash && !hasWalked()) {
-  opening.search = hasBegun() ? '?walk' : '?office';
-  history.replaceState(null, '', opening);
-}
-move(opening, { announce: false });
+// The first screen: whichever one the address asks for. (The film's first
+// scene, penny/office.js, is not yet where the app opens: nobody is taken
+// there who has not asked. It is reached from the home page, by a tap on
+// Penny once the first places have been walked, and at /?office.)
+move(new URL(location.href), { announce: false });

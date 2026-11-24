@@ -30,3 +30,8 @@
 /* The door to the rooms: there, but no part of the scene, so it keeps quiet. */
 .office .office-door { background: transparent; color: #8a97a3; opacity: 0.55; }
 .office .office-door:hover, .office .office-door:focus-visible { opacity: 1; }
+
+/* No touch yet, so no sound: the seal beats, slowly. */
+.office.silent .seal:not(.sound) { animation: o-invite 2.2s ease-in-out infinite; }
+@keyframes o-invite { 0%, 100% { opacity: 1; scale: 1; } 50% { opacity: 0.55; scale: 1.25; } }
+@media (prefers-reduced-motion: reduce) { .office.silent .seal:not(.sound) { animation: none; } }

@@ -199,7 +199,7 @@ export function mount(root, life) {
   //
   // A tap on Penny while it is asking for the app to be installed is a yes to
   // that. Any other tap goes through the portal with it, until the first
-  // places have been walked; and after that opens its story (penny/story.js).
+  // places have been walked; and after that plays the film again from its first scene (penny/office.js).
   // Those moves are made without the usual sound, so the next thing heard is
   // Penny.
   const portal = $('portal');
@@ -420,7 +420,7 @@ export function mount(root, life) {
       return;
     }
     if (!hasWalked()) pal.sing(HELLO, 0.9);
-    setTimeout(() => go(hasWalked() ? '/?penny' : '/?walk', { quiet: true }), 300);
+    setTimeout(() => go(hasWalked() ? '/?office' : '/?walk', { quiet: true }), 300);
   });
   pal.onTap(() => pal.gesture('hop', 'dot').hearts(1, 'dot'), 'dot');
   // they glance toward wherever the page was last touched

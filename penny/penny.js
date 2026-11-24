@@ -38,8 +38,6 @@ const WALKED_KEY = 'penny:walked:v1';
 const PLACE_KEY = 'penny:place:v1';
 export const hasWalked = () => load(WALKED_KEY) === true;
 export const setWalked = () => save(WALKED_KEY, true);
-// Whether the film has been begun on this device: the walk has been set foot in.
-export const hasBegun = () => hasWalked() || load(PLACE_KEY) != null;
 export const placeReached = () => {
   const place = load(PLACE_KEY);
   return Number.isInteger(place) && place >= 0 ? place : 0; // whatever has got into storage
