@@ -9,7 +9,7 @@ A static, no-build progressive web app served from the repository root at
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
-| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat |
+| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
@@ -161,8 +161,9 @@ words"). But the calm is a place the story starts from, not where it stays:
 soothing turns, in time, to wrestling with the dark, and the change is
 written, as a scene is, never an accident of style. It is in the dark that
 the theme above matters most: what has gone dark in us is what others can
-help light. The two worlds (Seasons) are one way the turn may be seen; when
-and how it comes are not decided.
+help light. The two worlds (Seasons) are one way the turn may be seen, and
+the first in the app: a portal in a room, stepped through on purpose and
+stepped back out of. When and how the story itself turns are not decided.
 
 **What the world is afraid of: losing music.** Taste is being averaged, more
 and more efficiently: what one person likes is worked out, set beside what
@@ -661,14 +662,20 @@ looks at who has been winning beyond the length of the present reign.
 ## Seasons
 
 Some features are to come for a season and go again, as seasons do in games.
-The first planned is **the two worlds**: now and then a room flickers between
-its playful self and a serious, adult, live-action one, a story split between
-animation and live action, comedy and drama. It is switched on by a wordless
-toggle, off by default, on one screen. It is not in the app yet: prototypes of
-it were made (a film splice; a seam that splits the room in two) and wait for
-their season. When it comes it keeps the rules they were built to: never more
-than three flashes a second, nothing of it for anyone who asks for reduced
-motion, and nothing moving under a finger. Outside its season the app is
+The first is **the two worlds**, and its season has come: a room's other
+self, the same room as a serious, adult, live-action drama at night, a story
+split between animation and live action, comedy and drama. It is entered
+through a portal, a ring of light in a room's top bar with no words on it, there
+for members, on that one screen (Rooms, "Two worlds"). The room stays soothing
+for anybody who does not step through; stepping through is the turn from
+soothing to wrestling with the dark, taken on purpose, and the portal is as
+much the way back out. Nothing of it is kept: every visit to a room begins
+outside. Of the two prototypes made (a film splice; a seam that splits the room
+in two), the seam is the one in the app. It keeps the rules they were built to:
+never more than three flashes a second, nothing for anyone who asks for reduced
+motion but a slow cross-fade in and out and a still drama between, and nothing
+moving under a finger; and one more, for a world that is entered: the way out
+is always within reach. Outside its season, and outside the portal, the app is
 soothing (CLAUDE.md, "Look and words").
 
 ## Game modes
@@ -717,6 +724,42 @@ building wherever it is drawn.
   lit. **Opening a room** is a plot staked out on the map, with a board
   planted in it to write the name on. **Joining one** is a grey building, its
   colour not yet known, with its mat to write the code on.
+
+**Two worlds.** Inside a room, a member has a portal in the top bar: a ring of
+light like the home page's, with no words on it, still until somebody passes
+through it (`room/worlds.js`, `room/worlds.css`). Through it is the room's
+other self, the same room shot as live action, a drama, at night: concrete and
+floorboards for the map's squares, a lamp over a walnut table, the games as
+case files with photographs clipped to them, the people as passport
+photographs, the tiles as steel drawers, typed cards across a dark rug, a brass
+plate for the code, a title card for the name, and grain and hard light over
+all of it; the browser's own bars go dark with it. Stepping in is a passage: a
+seam is drawn down out of the portal, a hairline of light, and its two edges
+sweep apart across the room with the drama between them, until they meet again
+above the portal. Inside, the drama is the room, and while the portal is in
+sight the cartoon breaks back through it now and then (the first time soon
+after stepping in, then every quarter of a minute to a minute): a seam crosses
+the room, the cartoon on one side and the drama on the other, and travels,
+waits, sometimes takes the whole screen, and goes back. The portal is the way
+back, and the way back is always within reach: scrolled down to the games or
+the chat, where the portal is out of sight, nothing breaks through, and
+whatever had begun goes back gently, by a seam, with no cut. Stepping out is as
+much a passage as stepping in: the seam is drawn out of the portal again and
+sweeps back the other way, the drama closing into it until it is gone; then
+everything stops. A press on the way through turns round; a press while the
+cartoon is breaking through lets the seam go on and give the cartoon the room.
+Being inside is not kept: every visit to a room, and every reload, begins
+outside. The serious world is paint and never geometry, so nothing that can be
+pressed or typed in moves; where both worlds are seen, the other is an inert
+copy of the page that taps go through, with a hole where the portal is, which
+belongs to neither world. Never more than three changes come in a second (a
+passage turning round is one), however often the portal is pressed, and each
+way a passage goes is kept at least half a second, so that no part of the
+window changes more often either. With reduced motion, stepping in and out are
+slow cross-fades that never turn round, each world is kept a while before the
+next, and nothing moves inside. While the page is hidden nothing comes, and
+nothing jumps when it is back; leaving the room stops it all where it is. It is
+only on this screen.
 
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_leave`, `room_profile`, `room_say`,
