@@ -18,6 +18,7 @@
 .office-stage .o-map rect { fill: #2c3a47; transition: fill 600ms ease, filter 600ms ease; }
 .office-stage .o-map rect.took { animation: o-took 1300ms ease-out; }
 .office.heard .o-map rect { fill: #33424f; }
+.office.heard .o-map rect.near { fill: #4d5540; } /* where the sound comes from, once Penny has placed it */
 .office-stage .o-first { cursor: default; }
 .office-stage .o-first.lit { fill: #f8d95a; filter: drop-shadow(0 0 5px rgb(248 217 90 / 0.9)); cursor: pointer; }
 .office-stage .o-first:focus-visible { outline: 2px solid #fff; }

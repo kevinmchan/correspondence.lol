@@ -10,15 +10,22 @@
 // the map and looks at whoever is watching. One square of the map lights. That
 // square is where the walk begins (penny/walk.js).
 //
-// The scene is a handful of screens, and nothing moves on by itself: a swipe
-// up is what turns to the next (the up arrow does the same, and so does a
-// wheel). Nobody is told so in words. Whoever is caught waiting on the first
-// screen is shown: Penny looks out at them, then down at the floor, where a
-// fingertip of light appears and slides up the room, with Penny's eyes on it.
+// The scene is a handful of screens, and each of them is a loop: it plays,
+// and plays again, for as long as it is left up. No two turns of a loop are
+// quite the same, and the differences are the story. Letters leave the shelves
+// one at a time until there are none. Penny's call gets smaller every time
+// nothing answers it. The sound comes again, and Penny works out that it is
+// meant for it. A swipe up turns to the next screen at once (the up arrow does
+// the same, and so does a wheel); nothing else does.
+//
+// Nobody is told so in words. Whoever is caught waiting on the first screen
+// is shown, between turns of its loop: Penny looks out at them, then down at
+// the floor, where a fingertip of light appears and slides up the room, with
+// Penny's eyes on it.
 
 import { audio, isMuted } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, HELLO, SAG, createVoice } from './penny.js';
+import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, createVoice } from './penny.js';
 import { playMail, remembered } from './mail.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -34,7 +41,6 @@ export function mount(root, life) {
   const penny = stage.querySelector('.p-penny');
   const seal = penny.querySelector('.seal');
   const air = stage.querySelector('.o-air');
-  const leaving = stage.querySelector('.o-leaving');
   const first = stage.querySelector('.o-first');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // The rests between the beats of the scene are written at their full length
@@ -72,8 +78,8 @@ export function mount(root, life) {
     element.classList.add(name);
   };
   // a ring spreading from a point of the map: a sound, seen
-  function ring(at, colour) {
-    if (still) return;
+  function ring(at, colour, turnOf) {
+    if (still || turnOf !== run) return; // (a sound from a screen that has been left)
     const circle = document.createElementNS(SVG, 'circle');
     circle.setAttribute('cx', at.x);
     circle.setAttribute('cy', at.y);
@@ -94,163 +100,300 @@ export function mount(root, life) {
   main.addEventListener('pointerdown', () => life.setTimeout(quiet, 150));
   life.setInterval(quiet, 1000);
 
-  // The screens of the scene, in order. The first is only Penny, as it is
-  // found; each of the others is what a swipe up sets going.
+  // The mail still on the shelves: the one drawn into the page, which is the
+  // last to go, and four more in pigeonholes of their own. Each has a square
+  // of the map to go to.
+  const drawn = stage.querySelector('.o-leaving');
+  const letters = [[161, 163, 1, 3], [7, 141, 4, 0], [161, 31, 0, 2], [24, 75, 2, 1]].map(([x, y, col, row]) => {
+    const letter = drawn.cloneNode(true);
+    letter.setAttribute('x', x);
+    letter.setAttribute('y', y + 3);
+    letter.setAttribute('width', 13);
+    letter.setAttribute('height', 13);
+    drawn.before(letter);
+    return { letter, x: x + 6.5, y: y + 9.5, col, row };
+  });
+  letters.push({ letter: drawn, x: 177, y: 96, col: 3, row: 1 });
+  // One of them goes: it lights, lifts out of its slot, and crosses the room into the map.
+  function flight({ letter, x, y, col, row }, ms) {
+    const to = square(col, row);
+    const lift = x > 100 ? -20 : 20;
+    return letter.animate([
+      { transform: 'translate(0, 0) scale(1)' },
+      { transform: `translate(${lift}px, -26px) scale(1)`, offset: 0.35 },
+      { transform: `translate(${to.x - x}px, ${to.y - y}px) scale(0.3)` },
+    ], { duration: ms, easing: 'ease-in-out', fill: 'forwards' }).finished.catch(() => {});
+  }
+  function taken(mail) {
+    mail.letter.classList.add('gone');
+    flash(tile(mail.col, mail.row), 'took');
+  }
+  const light = () => { // one square of the map: the way on
+    main.classList.remove('heard');
+    first.classList.add('lit');
+    first.setAttribute('tabindex', '0'); // only now is it something to press
+    first.setAttribute('role', 'button');
+    first.setAttribute('aria-label', 'Begin');
+  };
+
+  let asked = false; // a tap on the first screen: shown how at the end of this turn of the loop
+  let pull = null; // a finger that is down: where it went down
+
+  // Shown how. Penny has no hands: it looks at you, looks at the floor, and a
+  // fingertip of light slides up the room from there, the room giving a little
+  // under it as it will under yours.
+  async function illustrate(s) {
+    asked = false;
+    penny.classList.remove('low');
+    look(0, 0);
+    act('wiggle');
+    await s.rest(900);
+    look(1.5, 1.7);
+    await s.rest(500);
+    const touch = document.createElementNS(SVG, 'circle');
+    touch.setAttribute('class', 'o-touch');
+    touch.setAttribute('cx', 100);
+    touch.setAttribute('cy', 284);
+    touch.setAttribute('r', 8);
+    air.append(touch);
+    look(1.6, -1.6);
+    act('hop');
+    voice.sing(ASK, 0.5); // one note that turns up at the end, as the finger does
+    if (!still && !pull) stage.style.translate = '0 -16px';
+    await touch.animate([
+      { transform: 'translateY(0)', opacity: 0 },
+      { transform: 'translateY(-12px)', opacity: 0.95, offset: 0.18 },
+      { transform: 'translateY(-110px)', opacity: 0.8, offset: 0.8 },
+      { transform: 'translateY(-128px)', opacity: 0 },
+    ], { duration: 1300, easing: still ? 'steps(5, end)' : 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
+    touch.remove();
+    if (!pull) stage.style.translate = '';
+    s.check();
+    look(0, 0);
+    await s.rest(1300);
+    penny.classList.add('low');
+    look(0, 1.4);
+    await s.rest(500);
+  }
+
+  // The screens, in order. `enter` sets a screen up, however the one before
+  // was left; `turn` is one turn of its loop, and is told which (from 0). The
+  // `s` it is given has the rests of the scene on it, and every one of them
+  // stops dead if the screen has been swiped away meanwhile.
   const screens = [
-    // A letter leaves: it lights, lifts out of its slot, and crosses the room into the map
-    async () => {
-      penny.classList.add('low');
-      leaving.classList.add('lit');
-      look(1.6, -1.4);
-      await wait(900);
-      const to = square(3, 1);
-      if (!still) {
-        await leaving.animate([
-          { transform: 'translate(0, 0) scale(1)' },
-          { transform: 'translate(-20px, -26px) scale(1)', offset: 0.35 },
-          { transform: `translate(${to.x - 177}px, ${to.y - 96}px) scale(0.3)` },
-        ], { duration: 1700, easing: 'ease-in-out', fill: 'forwards' }).finished.catch(() => {});
-      }
-      leaving.classList.add('gone');
-      flash(tile(3, 1), 'took');
-      seal.style.setProperty('--d', '900ms');
-      flash(seal, 'sound'); // Penny's seal brightens as it watches, and dims again
-      await wait(1200);
-      look(0, 1.4);
+    // The shelves empty. A letter leaves, and Penny watches it go; and another;
+    // and then there are none, and Penny looks along the shelves anyway.
+    {
+      enter() {
+        penny.classList.add('low');
+        look(0, 1.4);
+        stand(46);
+      },
+      async turn(n, s) {
+        await s.wait(1400);
+        const mail = letters[n];
+        const last = n === letters.length - 1;
+        if (mail) {
+          mail.letter.classList.add('lit');
+          if (last) penny.classList.remove('low'); // the last one: it gets up for it
+          look(mail.x > 100 ? 1.6 : -1.2, -1.4);
+          await s.wait(900);
+          if (!still) await s.after(flight(mail, 1700));
+          taken(mail);
+          look(1, -1.7);
+          seal.style.setProperty('--d', '900ms');
+          flash(seal, 'sound'); // Penny's seal brightens as it watches, and dims again
+          await s.wait(last ? 1800 : 1000);
+          if (last) {
+            await s.after(voice.sing(HELLO, 0.45)); // after it, quietly
+            await s.wait(1400);
+            penny.classList.add('low');
+          }
+          look(0, 1.4);
+        } else {
+          // nothing left to go: it looks all the same, one side and then the other
+          look(-1.5, -1.2);
+          await s.wait(1500);
+          look(1.6, -1.2);
+          await s.wait(1500);
+          look(0, 1.4);
+          if (n === letters.length) await s.after(voice.sing(SIGH, 0.45));
+          await s.wait(1200);
+        }
+        await s.wait(700);
+        if (asked || n % 2 === 0) await illustrate(s); // caught waiting
+      },
     },
 
-    // Penny tries: across the floor, under the map, and calls. Nothing lights
-    async () => {
-      penny.classList.remove('low');
-      stand(100);
-      act('wiggle');
-      await wait(1500);
-      look(0, -1.6);
-      await voice.sing(HELLO, 0.85);
-      await wait(1500);
-      act('hop');
-      await voice.sing(HELLO, 1.1);
-      await wait(1900);
-      penny.classList.add('low');
-      look(0, 1.3);
-      await voice.sing(SAG, 0.6);
-      await wait(600);
+    // Penny tries: across the floor, under the map, and calls. Nothing lights.
+    // It calls again, louder; then smaller; then it only looks.
+    {
+      enter() {
+        // whatever was still on the shelves has gone by now, all at once
+        for (const mail of letters) {
+          if (mail.letter.classList.contains('gone')) continue;
+          if (!still && !mail.letter.classList.contains('lit')) {
+            mail.letter.classList.add('lit');
+            flight(mail, 1100);
+          }
+          life.setTimeout(taken, still ? 0 : 1100, mail);
+        }
+        penny.classList.remove('low');
+        look(0, -1.2);
+        stand(100);
+        act('wiggle');
+      },
+      async turn(n, s) {
+        if (n === 0) {
+          await s.wait(2600);
+          look(0, -1.6);
+          await s.after(voice.sing(HELLO, 0.85));
+          await s.wait(2200);
+        } else if (n === 1) {
+          act('hop');
+          await s.after(voice.sing(HELLO, 1.1));
+          await s.wait(1900);
+          penny.classList.add('low');
+          look(0, 1.3);
+          await s.after(voice.sing(SAG, 0.6));
+          await s.wait(1600);
+        } else if (n === 2) {
+          look(0, -1.6);
+          await s.wait(900);
+          await s.after(voice.sing(HELLO, 0.4)); // hardly a call at all
+          await s.wait(2400);
+          look(0, 1.3);
+          await s.wait(1800);
+        } else {
+          // it has stopped calling. Now and then it looks up; less and less
+          await s.wait(1800 + Math.min(n, 8) * 500);
+          look(0, -1.5);
+          await s.wait(Math.max(500, 1500 - (n - 3) * 250));
+          look(0, 1.3);
+          await s.wait(1600);
+        }
+      },
     },
 
-    // The sound: from inside the map, one note, a long way off. Penny answers,
-    // and waits, as it has always waited
-    async () => {
-      const from = square(1, 0);
-      penny.classList.remove('low');
-      main.classList.add('heard');
-      look(-0.8, -1.7);
-      const note = remembered(0.95);
-      await playMail(life, note, () => ring(from, '#f8d95a'));
-      if (life.over) return;
-      await wait(500);
-      await voice.sing(note.echo, 0.8);
-      await wait(1200);
+    // The sound: from inside the map, a long way off. The first time Penny
+    // only starts at it. The second it answers, under its breath. After that
+    // it has gone to stand under the place, and answers as if it were known.
+    {
+      enter() {
+        penny.classList.add('low');
+        look(0, 1.3);
+        stand(100);
+      },
+      async turn(n, s) {
+        const from = square(1, 0);
+        const note = remembered(0.95);
+        await s.wait(n === 0 ? 1800 : 2600);
+        const turnOf = run;
+        const sound = playMail(life, note, () => ring(from, '#f8d95a', turnOf));
+        await s.wait(n === 0 ? 700 : 150);
+        penny.classList.remove('low');
+        main.classList.add('heard');
+        look(-0.8, -1.7);
+        if (n === 0) act('hop'); // it had not expected anything
+        await s.after(sound);
+        await s.wait(500);
+        if (n === 0) {
+          await s.wait(1800); // it does not know yet that it may answer
+        } else {
+          if (n === 2) {
+            stand(84); // under the square it came from
+            tile(1, 0).classList.add('near');
+            await s.wait(2600);
+          }
+          await s.after(voice.sing(note.echo, n === 1 ? 0.45 : 0.8));
+          if (n >= 2 && n % 2 === 0) act('hop');
+          await s.wait(1600);
+        }
+        if (n < 2) { // and it is quiet again
+          await s.wait(1200);
+          look(0, 1.3);
+          if (n === 0) penny.classList.add('low');
+        }
+      },
     },
 
-    // And then it turns from the map, and looks at you. One square of the map lights
-    async () => {
-      look(0, 0);
-      await wait(1700);
-      look(0, -1.6);
-      await wait(900);
-      look(0, 0);
-      await wait(900);
-      stand(100, 1.25); // one step towards you
-      await wait(1400);
-      main.classList.remove('heard');
-      first.classList.add('lit');
-      first.setAttribute('tabindex', '0'); // only now is it something to press
-      first.setAttribute('role', 'button');
-      first.setAttribute('aria-label', 'Begin');
-      act('hop');
-      look(0, -1.6);
-      await wait(900);
-      look(0, 0);
+    // And then it turns from the map, and looks at you. One step towards you;
+    // one square of the map lights. From then on it is only asking.
+    {
+      enter() {
+        penny.classList.remove('low');
+        look(-0.8, -1.7);
+      },
+      async turn(n, s) {
+        if (n === 0) {
+          await s.wait(1200);
+          look(0, 0);
+          await s.wait(1700);
+          look(0, -1.6);
+          await s.wait(900);
+          look(0, 0);
+          await s.wait(900);
+          stand(100, 1.25); // one step towards you
+          await s.wait(1400);
+          light();
+          act('hop');
+          look(0, -1.6);
+          await s.wait(900);
+          look(0, 0);
+          await s.wait(3000);
+          return;
+        }
+        look(0.3, -1.6); // the square,
+        await s.wait(1100);
+        look(0, 0); // and you
+        if (n === 2) stand(100, 1.4); // nearer still
+        act(n % 2 ? 'wiggle' : 'hop');
+        await s.after(voice.sing(n % 2 ? PLEASE : THIS_WAY, 0.6));
+        await s.wait(4200);
+      },
     },
   ];
 
-  // Which screen is up, and whether it is still playing. A swipe made while
-  // one plays is kept, and turns to the next as soon as it has finished:
-  // except out of the last, which is not to be left by accident.
+  // Which screen is up, and which turn of its loop. `run` counts the screens
+  // that have been started: a rest that wakes to find it has moved on throws
+  // this, and that is the end of that screen's loop.
+  const LEFT = Symbol('left');
   let at = 0;
-  let playing = false;
-  let kept = false;
-  const mark = () => {
-    main.dataset.screen = at;
-    main.classList.toggle('playing', playing);
-  };
+  let run = 0;
   const leave = () => go('/?walk', { quiet: true });
-  async function turn() {
-    if (life.over) return;
-    if (playing) { kept = true; return; }
-    if (at === screens.length) return leave(); // the lit square is the first place of the walk
-    playing = true;
-    kept = false;
+  async function show(index) {
+    run += 1;
+    const mine = run;
+    const check = () => { if (mine !== run || life.over) throw LEFT; };
+    const s = {
+      check,
+      wait: (ms) => wait(ms).then(check),
+      rest: (ms) => rest(ms).then(check),
+      after: (promise) => Promise.resolve(promise).then((value) => { check(); return value; }),
+    };
+    at = index;
+    asked = false;
     air.querySelectorAll('.o-touch').forEach((touch) => touch.remove());
-    const play = screens[at];
-    at += 1;
-    mark();
-    await play();
-    if (life.over) return;
-    playing = false;
-    mark();
-    if (kept && at < screens.length) turn();
-    kept = false;
-  }
-
-  // Shown how, if caught waiting on the first screen. Penny has no hands: it
-  // looks at you, looks at the floor, and a fingertip of light slides up the
-  // room from there, the room giving a little under it as it will under yours.
-  const waiting = () => at === 0 && !playing && !life.over;
-  let showing = false;
-  let pull = null; // a finger that is down: where, and since when
-  async function illustrate() {
-    if (!waiting() || showing || pull) return;
-    showing = true;
+    if (!pull) stage.style.translate = '';
+    main.dataset.screen = index;
+    screens[index].enter();
     try {
-      penny.classList.remove('low');
-      look(0, 0);
-      act('wiggle');
-      await rest(900);
-      if (!waiting()) return;
-      look(1.5, 1.7);
-      await rest(500);
-      if (!waiting()) return;
-      const touch = document.createElementNS(SVG, 'circle');
-      touch.setAttribute('class', 'o-touch');
-      touch.setAttribute('cx', 100);
-      touch.setAttribute('cy', 284);
-      touch.setAttribute('r', 8);
-      air.append(touch);
-      look(1.6, -1.6);
-      act('hop');
-      voice.sing(ASK, 0.5); // one note that turns up at the end, as the finger does
-      if (!still && !pull) stage.style.translate = '0 -16px';
-      await touch.animate([
-        { transform: 'translateY(0)', opacity: 0 },
-        { transform: 'translateY(-12px)', opacity: 0.95, offset: 0.18 },
-        { transform: 'translateY(-110px)', opacity: 0.8, offset: 0.8 },
-        { transform: 'translateY(-128px)', opacity: 0 },
-      ], { duration: 1300, easing: still ? 'steps(5, end)' : 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
-      touch.remove();
-      if (!pull) stage.style.translate = '';
-      if (!waiting()) return;
-      look(0, 0);
-      await rest(1300);
-      if (!waiting()) return;
-      penny.classList.add('low');
-      look(0, 1.4);
-    } finally {
-      showing = false;
-      if (waiting()) life.setTimeout(illustrate, 5200);
+      for (let n = 0; ; n += 1) {
+        main.dataset.turn = n;
+        await screens[index].turn(n, s);
+      }
+    } catch (error) {
+      if (error !== LEFT) throw error;
     }
   }
-  life.setTimeout(illustrate, 3800);
+  // A swipe up. Out of the last screen it goes through to the walk: once the
+  // square is lit, and a swipe before that lights it.
+  function turn() {
+    if (life.over) return;
+    if (at < screens.length - 1) show(at + 1);
+    else if (first.classList.contains('lit')) leave();
+    else light();
+  }
 
   // A swipe up: a finger (or a mouse held down) that travels up the screen
   // further than it travels across. The room follows it a little way, and
@@ -276,7 +419,7 @@ export function mount(root, life) {
     stage.style.translate = '';
     if (cancelled) return;
     if (up >= SWIPE && up > across) turn();
-    else if (waiting()) life.setTimeout(illustrate, 250); // a tap, or a swipe some other way: shown at once
+    else if (at === 0) asked = true; // a tap, or a swipe some other way
   };
   life.on(window, 'pointerup', (event) => letGo(event, false));
   life.on(window, 'pointercancel', (event) => letGo(event, true));
@@ -305,9 +448,5 @@ export function mount(root, life) {
     if ((event.key === 'Enter' || event.key === ' ') && first.classList.contains('lit')) leave();
   });
 
-  // The first screen: Penny, low, on the floor of the room. It waits.
-  penny.classList.add('low');
-  look(0, 1.4);
-  stand(46);
-  mark();
+  show(0);
 }
