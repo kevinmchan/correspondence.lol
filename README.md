@@ -188,8 +188,10 @@ its breath for exactly that long; the wait grows with each tap left alone.
 When a post is opened, the squares the place's newest rule takes away light up
 one after another, so the rule is seen as a shape, and Penny's eyes follow it.
 Then, every time, this could be the one: Penny can hardly bear it, and holds
-still to listen. If it is somebody else's mail, that goes all the way down, and
-then Penny is glad for them. In the second, third and fourth places the last
+still to listen. If it is somebody else's mail, Penny is glad of the find with
+you; that it was not the one is a breath and a glance up the map, no more.
+Penny's feelings are kept in proportion to what has happened between the two
+of you: a post found is the big thing, a cross is a small one. In the second, third and fourth places the last
 post found has a piece of the sound Penny is after; it hums the piece back,
 holds on to it a moment longer than it lasts, and looks a long way up the map.
 What has been heard is drawn at the top of the map, a mark a note, and can be

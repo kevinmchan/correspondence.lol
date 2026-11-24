@@ -46,9 +46,11 @@
 // Otherwise it waits for your finger; and now and then a loud post stirs of
 // its own accord.
 //
-// Penny feels all of this hard, and it shows on the map as well as on Penny:
-// a miss drains the colour from everything for a moment, a find floods it
-// with light. And every sound ends. A post is heard once; a piece of the
+// Penny feels all of this hard, and it shows on the map as well as on Penny,
+// in proportion to what has happened between the two of you. A post found is
+// the big thing: the map floods with light. A cross is a small thing: Penny
+// watches, or nods if it can see why. A guess that finds nothing drains the
+// colour for a moment. And every sound ends. A post is heard once; a piece of the
 // sound Penny is after is over almost as it begins, and Penny holds on to it
 // a moment longer than it lasts. One day passes over the five places, early
 // in the first and evening by the last, and it only goes one way.
@@ -63,7 +65,7 @@ import { PLACES, groupsOf, hear, mailIn, read, ruledOut, vouch } from './places.
 import { claim } from './pal.js';
 import { heard, murmur, playMail, remembered, soundSoFar } from './mail.js';
 import {
-  ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, SIGH, THIS_WAY, TRILL, WONDER, YES,
+  ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, THIS_WAY, TRILL, WONDER, YES,
   hasDot, hasWalked, placeReached, setDot, setPlaceReached, setWalked,
 } from './penny.js';
 
@@ -726,15 +728,18 @@ export function mount(root, life) {
         pal.mood('hopeful').look({ x: window.innerWidth / 2, y: 0 });
         await pal.sing(LONGING, 0.55);
       } else {
-        // Not it. That goes all the way down. And then: it was somebody's,
-        // and it has been delivered, and that is good too.
-        const firstHere = found.length === 1;
-        pal.mood('sad').gesture('sink');
-        hum(SIGH, 0.5, 'not it');
+        // Somebody else's. A post found is a good thing, and Penny is glad
+        // of it with you: that comes first and it is the larger part. That it
+        // was not the sound Penny is after is one breath, a glance up the map,
+        // and gone. (Nobody watching knows yet what Penny is looking for; a
+        // Penny that slumped at every find would only seem sad that you had
+        // done well.)
+        pal.mood('curious').look({ x: window.innerWidth / 2, y: 0 });
+        hum(LET_GO, 0.3, 'not it');
         say('Someone else’s post');
-        await wait(firstHere ? 950 : 620);
-        pal.mood(done ? 'glad' : 'calm').look(tile(cell)).gesture('nod');
-        pal.sing(done ? TRILL : MM, 0.7); // (not waited for: the map is yours again at once)
+        await wait(420);
+        pal.mood('glad').look(tile(cell)).gesture(done ? 'jump' : 'hop');
+        pal.sing(done ? TRILL : YES, 0.8); // (not waited for: the map is yours again at once)
       }
     }
     if (life.over) return;
@@ -841,9 +846,9 @@ export function mount(root, life) {
         hum(MM, 0.45, 'agree');
         say('Penny agrees');
       } else if (place.listen) {
-        // it hears nothing under it, and has no quarrel with it
-        pal.mood('calm').look(tile(changed[0]));
-        life.setTimeout(() => { if (!busy && touching === null) pal.look(null); }, 700);
+        // it hears nothing under it, and has no quarrel with it: it watches, no more
+        pal.mood('curious').look(tile(changed[0]));
+        life.setTimeout(() => { if (!busy && touching === null) pal.mood('calm').look(null); }, 700);
         say('');
       } else if (first) {
         // the first cross it has had to think about: it marvels at it
