@@ -64,14 +64,39 @@ and never delivered; the rain that smudged its address did not come off. A
 sound is heard once and is over. A day goes one way. This is meant to be both
 things at once, beautiful and painful, and nothing should resolve it.
 
+**What it is about: learning to slow down, where it had seemed that the thing
+was to be fastest.** Penny comes from a place that runs on hurry, where the
+quickest mail leaves first and Penny, slow and plain, is what is left. It
+takes itself to have been left because it was not quick enough, and tries to
+be. It gets nowhere by that. What it is looking for can only be heard by
+something that has stopped. The story never says this; the places do.
+
+### How a place says it
+
+The theme is carried by the surroundings, not by anything Penny does to camera.
+Wherever a new place is drawn, these hold:
+
+| | Hurry | Slowness |
+| --- | --- | --- |
+| Time | A clock whose hand races. | The same hand at the pace of a real second hand; a day that takes five places to pass. |
+| Things | Thin, striped, straight-edged, and going somewhere: express mail. | Round, plain, and drifting: dust in lamplight, Penny itself. |
+| Movement | Straight lines, quicker each time, over almost as they start. | Eased, and taking its own time; a walk where there was a dash. |
+| Light | Cold, and the same whatever happens. | Warmer, and only once things have slowed. |
+| Sound | Short and bright. | Long, low, with an echo: it has come a long way and took its time. |
+| What is asked of you | Nothing is ever timed, counted down or hurried in Penny's story. | Staying is rewarded: a screen left up tells more, and Penny hears only where a finger is held still. |
+
+A place does not start slow. It slows, and it slows because somebody in it
+has stopped: so the hurry has to be drawn first, and the same things that
+showed it (the one clock, the one lamp) are what show it easing.
+
 ### The adventure
 
 Only the first quarter is built. The shape of the whole:
 
 | Mark | What happens | State |
 | --- | --- | --- |
-| The start | Penny, alone, wants to take you through a portal. It is looking for someone, and all it knows of them is a sound. | built |
-| To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them. | built |
+| The start | A sorting office in a hurry. The express mail leaves, quicker and quicker, and Penny is left. It tries to be as fast, and cannot. When it stops, the room slows, and there is a sound. It is looking for whoever made it, and wants to take you through a portal to find them. | built |
+| To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them, and nothing in them is timed: Penny hears by holding still. | built |
 | **A quarter** | **Penny finds a friend, Dot**, a stamp, in the last post of the fifth place. From here on Penny is not alone. | built |
 | To a half | The search goes on, with Dot. | not written |
 | **A half** | **Who Penny is searching for is revealed.** | not written, and not decided |
@@ -247,14 +272,15 @@ square of the map is lit, goes through to the walk.
 
 Each screen is a loop. It plays, and plays again, for as long as it is left
 up, and no two turns of it are quite alike: the small differences are the
-story. Nothing is lost by swiping early, and whoever stays is told more.
+story. Nothing is lost by swiping early, and whoever stays is told more:
+which is the theme, in the one thing the scene asks of you.
 
-| Screen | Every turn | What changes |
-| --- | --- | --- |
-| The shelves | A letter lights, leaves its pigeonhole and goes into the map; Penny watches. | There is one fewer each time. Penny gets up for the last, and hums after it. Then nothing leaves, and Penny looks along the shelves anyway. |
-| The call | Penny, under the map, looks up at it. | It calls; calls louder, and sags; calls so quietly it is hardly a call; then only looks, for less time, less often. |
-| The sound | One far-off sound out of the map. | First Penny only starts at it. Then it answers under its breath. Then it goes and stands under the square it came from, which warms, and answers as if it were known. |
-| You | Penny looks from the map to you. | It turns; steps towards you, and a square lights; after that it only asks, coming nearer. |
+| Screen | Every turn | What changes | The room |
+| --- | --- | --- | --- |
+| The shelves | A letter of express mail, striped at the edge, lights, leaves its pigeonhole and goes into the map; Penny, who has no stripes, watches. | There is one fewer each time, and each goes quicker than the last. Penny gets up for the last, and hums after it. Then nothing leaves, and Penny looks along the shelves anyway. | The hand of the clock on the wall races, faster with every letter, and goes on racing when there is nothing left to hurry for. |
+| The rush | Penny tries to be as quick as they were. | A dash across the floor to the map, and a call. Then from further back, faster, and louder, and it sags. Then a run with no heart in it. Then it stops. | Faster than ever while Penny runs. Only once it has stopped does the clock ease, turn by turn, and the dust begin to show in the lamplight. |
+| The sound | One far-off sound out of the map, long and slow. | First Penny only starts at it. Then it answers under its breath. Then it walks, in its own time, to stand under the square it came from, which warms, and answers as if it were known. | Slow. The clock's hand has paled from red; the dust drifts; the lamplight is warmer. The sound was not to be heard over the hurry. |
+| You | Penny looks from the map to you. | It turns; takes one unhurried step towards you, and a square lights; after that it only asks, coming nearer. | The hand of the clock is a second hand and no more. The lit square breathes slowly. Nothing hurries you through. |
 
 Nobody is told any of this in words. Whoever is caught waiting on the first
 screen is shown by Penny, between turns of the loop: it looks out at them, then

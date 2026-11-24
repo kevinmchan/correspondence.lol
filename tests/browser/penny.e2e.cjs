@@ -159,14 +159,18 @@ async function main() {
       await swipe(600, 300);
       await turned(1, 0, 2000);
       assert.equal(await page.locator('.o-touch').count(), 0, 'still being shown how after doing it');
-      await turned(1, 2);
+      assert.equal(await page.locator('.office').getAttribute('data-pace'), 'fast', 'the room is in a hurry while Penny is');
+      await turned(1, 4);
+      await sleep(300);
       assert.equal(await left(), 0, 'mail still on the shelves when Penny is the last one left');
       assert.equal(await page.locator('.o-touch').count(), 0, 'shown how on a screen that is not the first');
-      assert.equal(await page.locator('.p-penny.low').count(), 1, 'by the third call it has sagged');
+      assert.equal(await page.locator('.p-penny.low').count(), 1, 'it has stopped trying to be quick');
+      assert.equal(await page.locator('.office').getAttribute('data-pace'), 'slowing', 'and only then does the room slow');
 
       await page.keyboard.press('ArrowUp');
       await turned(2, 2);
       await page.waitForSelector('.o-map rect.near'); // it has placed the sound
+      assert.equal(await page.locator('.office').getAttribute('data-pace'), 'slow');
       await swipe(600, 300);
       await turned(3, 0, 2000);
       assert.equal(await page.locator('.o-first.lit').count(), 0);

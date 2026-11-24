@@ -18,6 +18,15 @@
 // meant for it. A swipe up turns to the next screen at once (the up arrow does
 // the same, and so does a wheel); nothing else does.
 //
+// What it is about is learning to slow down, where it had seemed that the
+// thing was to be fastest; and the room is what says so. This is an office
+// that runs on hurry. The mail that leaves is express mail, striped at the
+// edge, and every letter goes quicker than the one before; the hand of the
+// clock on the wall races. Penny, plain and smudged, tries to be as quick, and
+// it gets it nowhere. It is only when it has stopped that the clock slows, the
+// dust shows in the lamplight, and there is a sound to hear. `pace` is the
+// one dial for all of it: how fast the room is going.
+//
 // Nobody is told so in words. Whoever is caught waiting on the first screen
 // is shown, between turns of its loop: Penny looks out at them, then down at
 // the floor, where a fingertip of light appears and slides up the room, with
@@ -66,8 +75,10 @@ export function mount(root, life) {
     body.classList.add(name);
   };
   const look = (dx, dy) => { penny.querySelector('.eyes').style.translate = `${dx}px ${dy}px`; };
-  const stand = (x, size = 1) => {
+  // `ms`: how long it takes over getting there. A dash, or its own time.
+  const stand = (x, size = 1, ms = 1500) => {
     pennyX = x;
+    penny.style.transitionDuration = `${still ? 0 : ms}ms, 1200ms`;
     penny.style.translate = `${x}px ${FLOOR}px`;
     penny.style.scale = size;
   };
@@ -100,7 +111,26 @@ export function mount(root, life) {
   main.addEventListener('pointerdown', () => life.setTimeout(quiet, 150));
   life.setInterval(quiet, 1000);
 
-  // The mail still on the shelves: the one drawn into the page, which is the
+  // How fast the room is going: the hand of the clock (1 is a real second
+  // hand, a turn a minute), and with it everything the stylesheet hangs on
+  // `data-pace`: the dust in the lamplight shows only once things have slowed.
+  const hand = stage.querySelector('.o-hand');
+  const clock = still ? null : hand.animate([{ transform: 'rotate(0turn)' }, { transform: 'rotate(1turn)' }], { duration: 60000, iterations: Infinity });
+  const pace = (rate) => {
+    clock?.updatePlaybackRate(rate);
+    main.dataset.pace = rate > 20 ? 'fast' : rate > 2 ? 'slowing' : 'slow';
+  };
+  const motes = stage.querySelector('.o-motes');
+  for (const [x, y, r, dx, dy, ms] of [[84, 150, 0.9, 5, -9, 11000], [112, 118, 0.7, -4, 7, 13000], [96, 196, 1, 6, 6, 15000], [128, 214, 0.8, -6, -8, 12000], [70, 228, 0.7, 5, -5, 14000], [104, 76, 0.6, 3, 6, 16000], [118, 168, 0.9, -5, -7, 17000]]) {
+    const mote = document.createElementNS(SVG, 'circle');
+    mote.setAttribute('cx', x);
+    mote.setAttribute('cy', y);
+    mote.setAttribute('r', r);
+    motes.append(mote);
+    if (!still) mote.animate([{ transform: 'translate(0, 0)' }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: ms, direction: 'alternate', easing: 'ease-in-out', iterations: Infinity });
+  }
+
+  // The mail still on the shelves, all of it express, striped at the edge: the one drawn into the page, which is the
   // last to go, and four more in pigeonholes of their own. Each has a square
   // of the map to go to.
   const drawn = stage.querySelector('.o-leaving');
@@ -114,6 +144,19 @@ export function mount(root, life) {
     return { letter, x: x + 6.5, y: y + 9.5, col, row };
   });
   letters.push({ letter: drawn, x: 177, y: 96, col: 3, row: 1 });
+  for (const { letter, x, y } of letters) {
+    // (shrunk about its own middle as it goes: said outright, in the units of
+    // the drawing, since a drawing inside a drawing has no box of its own to go by)
+    letter.style.transformBox = 'view-box';
+    letter.style.transformOrigin = `${x}px ${y}px`;
+    for (const stripe of ['o-stripe', 'o-stripe blue']) {
+      const edge = document.createElementNS(SVG, 'rect');
+      edge.setAttribute('class', stripe);
+      for (const [name, value] of [['x', 2.5], ['y', 5], ['width', 19], ['height', 14], ['rx', 1.6]]) edge.setAttribute(name, value);
+      letter.append(edge);
+    }
+  }
+  const HASTE = [1700, 1350, 1100, 900, 750]; // every one quicker out than the last
   // One of them goes: it lights, lifts out of its slot, and crosses the room into the map.
   function flight({ letter, x, y, col, row }, ms) {
     const to = square(col, row);
@@ -178,8 +221,9 @@ export function mount(root, life) {
   // `s` it is given has the rests of the scene on it, and every one of them
   // stops dead if the screen has been swiped away meanwhile.
   const screens = [
-    // The shelves empty. A letter leaves, and Penny watches it go; and another;
-    // and then there are none, and Penny looks along the shelves anyway.
+    // The shelves empty, in a hurry that grows: a letter leaves, and Penny
+    // watches it go; and another, quicker; and then there are none, and Penny
+    // looks along the shelves anyway, with the clock still racing over it.
     {
       enter() {
         penny.classList.add('low');
@@ -187,6 +231,7 @@ export function mount(root, life) {
         stand(46);
       },
       async turn(n, s) {
+        pace(40 + Math.min(n, letters.length) * 9);
         await s.wait(1400);
         const mail = letters[n];
         const last = n === letters.length - 1;
@@ -195,7 +240,7 @@ export function mount(root, life) {
           if (last) penny.classList.remove('low'); // the last one: it gets up for it
           look(mail.x > 100 ? 1.6 : -1.2, -1.4);
           await s.wait(900);
-          if (!still) await s.after(flight(mail, 1700));
+          if (!still) await s.after(flight(mail, HASTE[n]));
           taken(mail);
           look(1, -1.7);
           seal.style.setProperty('--d', '900ms');
@@ -222,8 +267,10 @@ export function mount(root, life) {
       },
     },
 
-    // Penny tries: across the floor, under the map, and calls. Nothing lights.
-    // It calls again, louder; then smaller; then it only looks.
+    // Penny tries to be as quick as they were: a dash across the floor to the
+    // map, and a call. Nothing lights. Again, from further back, faster, and
+    // louder. Then a run with no heart in it. And then it stops; and it is only
+    // then that the room does: the clock eases, and the dust shows in the light.
     {
       enter() {
         // whatever was still on the shelves has gone by now, all at once
@@ -231,55 +278,74 @@ export function mount(root, life) {
           if (mail.letter.classList.contains('gone')) continue;
           if (!still && !mail.letter.classList.contains('lit')) {
             mail.letter.classList.add('lit');
-            flight(mail, 1100);
+            flight(mail, 750);
           }
-          life.setTimeout(taken, still ? 0 : 1100, mail);
+          life.setTimeout(taken, still ? 0 : 750, mail);
         }
+        pace(85);
         penny.classList.remove('low');
-        look(0, -1.2);
-        stand(100);
+        look(1.4, -1.4);
+        stand(46, 1, 0);
         act('wiggle');
       },
       async turn(n, s) {
         if (n === 0) {
-          await s.wait(2600);
+          await s.wait(1600);
+          stand(100, 1, 420); // as fast as it can go
+          await s.rest(420);
+          act('hop');
           look(0, -1.6);
           await s.after(voice.sing(HELLO, 0.85));
           await s.wait(2200);
         } else if (n === 1) {
+          stand(36, 1, 700); // back, for a longer run at it
+          look(1.6, -1.2);
+          await s.wait(1700);
+          stand(104, 1, 300);
+          await s.rest(300);
           act('hop');
+          look(0, -1.6);
           await s.after(voice.sing(HELLO, 1.1));
+          act('hop');
           await s.wait(1900);
           penny.classList.add('low');
           look(0, 1.3);
           await s.after(voice.sing(SAG, 0.6));
           await s.wait(1600);
         } else if (n === 2) {
+          penny.classList.remove('low');
+          stand(78, 1, 800);
+          await s.wait(1800);
+          stand(100, 1, 800); // a run with no heart in it
           look(0, -1.6);
-          await s.wait(900);
+          await s.wait(1500);
           await s.after(voice.sing(HELLO, 0.4)); // hardly a call at all
           await s.wait(2400);
+          penny.classList.add('low');
           look(0, 1.3);
           await s.wait(1800);
         } else {
-          // it has stopped calling. Now and then it looks up; less and less
+          // it has stopped. And the room, which never has, begins to
+          penny.classList.add('low');
+          pace(n === 3 ? 30 : n === 4 ? 12 : 5);
           await s.wait(1800 + Math.min(n, 8) * 500);
-          look(0, -1.5);
-          await s.wait(Math.max(500, 1500 - (n - 3) * 250));
+          look(n % 2 ? 1.2 : -1, -0.4); // the dust, going nowhere in particular
+          await s.wait(2200);
           look(0, 1.3);
           await s.wait(1600);
         }
       },
     },
 
-    // The sound: from inside the map, a long way off. The first time Penny
-    // only starts at it. The second it answers, under its breath. After that
+    // The sound: from inside the map, a long way off, and slow. It was not to
+    // be heard over the hurry. The first time Penny only starts at it. The second it answers, under its breath. After that
     // it has gone to stand under the place, and answers as if it were known.
     {
       enter() {
+        pace(3);
         penny.classList.add('low');
         look(0, 1.3);
-        stand(100);
+        stand(100, 1, 2000);
       },
       async turn(n, s) {
         const from = square(1, 0);
@@ -298,7 +364,8 @@ export function mount(root, life) {
           await s.wait(1800); // it does not know yet that it may answer
         } else {
           if (n === 2) {
-            stand(84); // under the square it came from
+            pace(1.5);
+            stand(84, 1, 2400); // under the square it came from: and it walks there
             tile(1, 0).classList.add('near');
             await s.wait(2600);
           }
@@ -318,6 +385,7 @@ export function mount(root, life) {
     // one square of the map lights. From then on it is only asking.
     {
       enter() {
+        pace(1); // the hand of the clock is only a second hand now
         penny.classList.remove('low');
         look(-0.8, -1.7);
       },
@@ -330,7 +398,7 @@ export function mount(root, life) {
           await s.wait(900);
           look(0, 0);
           await s.wait(900);
-          stand(100, 1.25); // one step towards you
+          stand(100, 1.25, 2200); // one step towards you, unhurried
           await s.wait(1400);
           light();
           act('hop');
@@ -343,7 +411,7 @@ export function mount(root, life) {
         look(0.3, -1.6); // the square,
         await s.wait(1100);
         look(0, 0); // and you
-        if (n === 2) stand(100, 1.4); // nearer still
+        if (n === 2) stand(100, 1.4, 2200); // nearer still
         act(n % 2 ? 'wiggle' : 'hop');
         await s.after(voice.sing(n % 2 ? PLEASE : THIS_WAY, 0.6));
         await s.wait(4200);
