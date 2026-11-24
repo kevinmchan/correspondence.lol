@@ -120,7 +120,7 @@ at the bottom edge of the window, in the viewer's own space, life size, and
 looks up at the map with you (`penny/pal.js`). It is one layer over the whole
 app, so screens slide past and Penny stays; a screen that wants Penny asks,
 and Penny goes back under the edge when no screen does. At present the home
-page, the map and the game itself ask. In the game Penny has no part in the
+page, the map, the game itself and the music maker ask. In the game Penny has no part in the
 play and gives nothing away: it is glad when a post is found, flinches at a
 miss, and feels how the game ends (a time trial it takes as play: see Game
 modes); and the board there, as on the walk, is a
@@ -374,6 +374,16 @@ is made there sounds like it belongs with it:
   between them, no two notes quite alike, and the off-steps come a little late.
 - **The dice write a tune the way the game does**: likelier on the beats,
   moving by small steps, leaving rests; the bass keeps mostly to the root.
+
+**Penny dances to it.** Penny stands at the bottom edge of the window, as
+everywhere, still until the loop plays. Then every move it makes is on the
+beat and comes from what is being played: a hop on a kick or a tom, a wiggle
+on a snare or a clap, a hop on the beat itself where no drum marks it, a nod
+for a note that falls between, a jump when the four chords come round to the
+start, and a step to one side and back with each bar. Dot, once found, hops
+to the bells. Penny does not hum here: the music is yours. When the loop stops,
+so does it. As everywhere, it ducks down where something that can be pressed
+is under it.
 
 **Saving and sharing a beat.** Save keeps the beat on the board under a name
 that can be changed by tapping it; each saved beat shows as a small picture of

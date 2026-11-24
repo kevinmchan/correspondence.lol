@@ -44,6 +44,7 @@ const MOODS = {
   sure: { mouth: 'grin', eyes: 'open', eye: 1.15, brow: 0.86, cheek: 0.8, glow: 0.85, idle: 'breathe', tilt: 0 },
   pleading: { mouth: 'wavy', eyes: 'big', eye: 1.3, brow: 0.9, cheek: 0.8, glow: 0.4, idle: 'bob', tilt: 0 },
   surprised: { mouth: 'o', eyes: 'open', eye: 1.25, brow: 0.8, cheek: 0.6, glow: 0.9, idle: 'still', tilt: 0 },
+  dancing: { mouth: 'grin', eyes: 'happy', eye: 1.05, brow: 0.86, cheek: 1, glow: 0.8, idle: 'still', tilt: 0 }, // every move it makes is on the beat (jam/jam.js)
   sleepy: { mouth: 'flat', eyes: 'closed', eye: 1, brow: 1.02, cheek: 0.4, glow: 0.05, idle: 'breathe', tilt: 0 },
 };
 

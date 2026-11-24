@@ -592,12 +592,21 @@ async function main() {
     }),
 
     check('Penny is only where a screen has asked for it', { storage: ACCOUNT }, async (page, h) => {
-      for (const address of ['/jam/', '/?open', '/?join', '/?office', '/?slow']) {
+      for (const address of ['/?open', '/?join', '/?office', '/?slow']) {
         await page.goto(origin + address);
         await sleep(1200);
         assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, address, 'the address is still the one asked for');
         assert.equal((await h.pal()).height, 'gone', address);
       }
+      // the music maker asks for it: there it dances while the loop plays, and stops when the loop does
+      await page.goto(`${origin}/jam/`);
+      await sleep(1200);
+      assert.equal((await h.pal()).mood, 'calm', 'Penny is at the music maker, and still');
+      await page.locator('#jam-dice').click({ force: true });
+      await h.until('dancing', 3000);
+      assert.notEqual((await h.pal()).height, 'gone');
+      await page.locator('#jam-play').click();
+      await h.until('calm', 3000);
       // the game is one of the screens that asks for it
       await page.goto(`${origin}/postmarks/`);
       await sleep(1500);
