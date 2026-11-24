@@ -62,7 +62,8 @@ const rooms = (games) => (name, args) => (name === 'room_get' ? roomSays(args.p_
 //   at: its address.  storage: what is on the device.  server: what the server says.
 //   ready: what is there when it has come up.  then(page): what has to be done to get it into the state.
 //   whole: the things that must be entirely on the screen without scrolling (and the screen must not scroll).
-//   small: things to press that may be under 44 by 44, as [pattern, why]. The pattern is matched against how the thing is described.
+//   small: things to press that may be under 44 by 44, as [pattern, why, least]. The pattern is matched against how the
+//     thing is described; `least` is how small it may be, each way, and no smaller.
 async function states() {
   const { newGame } = await import('../../postmarks/game.js');
   const { encode } = await import('../../jam/beat.js');
@@ -71,6 +72,7 @@ async function states() {
   const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const beats = ['Morning', 'A beat with rather a long name to it', 'Three'].map((name, i) => ({ name, code: encode(randomBeat(random)), at: 1795000000000 + i }));
   const played = { 'postmarks:howto-solo:v1': true };
+  const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
     { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
@@ -80,14 +82,15 @@ async function states() {
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
     { name: 'the game, the smallest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
-    { name: 'the game, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
+    { name: 'the game, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'],
+      small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
     { name: 'the game, how to play', screen: 'game', at: '/postmarks/', ready: 'dialog.howto[open]' },
     { name: 'the walk, the first place', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 0 }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back'] },
     { name: 'the walk, the last place, with Dot', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:walked:v1': true }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back', '#walk-down'] },
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
-    { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad' },
-    { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li' },
+    { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
+    { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li', small: [PADS] },
     { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', whole: ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.penny-back', '#taste-behind-open'] },
     { name: 'Penny’s Radio, behind it', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog.behind[open]' },
   ];
@@ -105,10 +108,11 @@ async function look(browser, origin, phoneName, state) {
     await sleep(900); // whatever slides or rises into place has
     const seen = await measure(page, { insets: phone.insets });
     if (!String(seen.screen).split(' ').includes(`screen-${state.screen}`)) wrong.push(`the screen that came up is "${seen.screen}", not screen-${state.screen}`);
-    const allowed = (what) => (state.small ?? []).some(([pattern]) => new RegExp(pattern).test(what));
+    // (an exception has a floor of its own: under that it is too small whatever the reason)
+    const least = (what) => (state.small ?? []).find(([pattern]) => new RegExp(pattern).test(what))?.[2] ?? PRESS;
     if (seen.sideways) wrong.push('the page scrolls sideways');
     for (const one of seen.wide) wrong.push(`sticks out sideways: ${one.what} (from ${one.x} to ${one.x + one.w} on a screen ${seen.width} wide)`);
-    for (const one of seen.press) if ((one.w < PRESS || one.h < PRESS) && !allowed(one.what)) wrong.push(`too small to press: ${one.what} is ${one.w} by ${one.h}`);
+    for (const one of seen.press) if (one.w < least(one.what) || one.h < least(one.what)) wrong.push(`too small to press: ${one.what} is ${one.w} by ${one.h}${least(one.what) < PRESS ? ` (and ${least(one.what)} is the least it may be)` : ''}`);
     for (const one of seen.overlapping) wrong.push(`overlap: ${one.a} and ${one.b} (by ${one.by})`);
     for (const one of seen.unsafe) wrong.push(`under the notch or the home bar: ${one.what} (at ${one.y} to ${one.y + one.h} of ${seen.height})`);
     for (const one of seen.tinyText) wrong.push(`text too small to read: ${one.what} is ${one.px}px`);

@@ -420,7 +420,7 @@ button.round:disabled { opacity: 0.35; }
 .tools .glyph { font-weight: 600; }
 
 .top-actions { display: flex; align-items: center; gap: 0.6rem; }
-.top-actions .round { width: 2.2rem; height: 2.2rem; }
+.top-actions .round { width: 2.75rem; height: 2.75rem; }
 
 button.go { font-family: system-ui, sans-serif; }
 
@@ -660,8 +660,9 @@ button.go { font-family: system-ui, sans-serif; }
 
 .howto .feedback-link {
   display: block;
-  margin: 0.7rem auto 0;
+  margin: 0.4rem auto 0;
   padding: 0.3rem 0.6rem;
+  min-height: 2.75rem;
   background: none;
   color: var(--muted);
   font-size: 0.9375rem;
