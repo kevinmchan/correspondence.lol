@@ -445,7 +445,39 @@ async function main() {
       assert.equal(await page.locator('.install-banner').count(), 0, 'the banner goes once installed');
     }),
 
-    check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: ACCOUNT }, async (page, h) => {
+    check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });
+      const games = { // Book club: a move of yours, a race, and a game you are waiting on. Family: nothing
+        '11111111-1111-4111-8111-111111111111': [game({ last_player: 1 }), game({ mode: 'trial', finished: 2 }), game({ last_player: 0 })],
+        '22222222-2222-4222-8222-222222222222': [game({ status: 'won', last_player: 1 })],
+      };
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const id = JSON.parse(route.request().postData()).p_room;
+        return route.fulfill({ json: { id, name: id.startsWith('1') ? 'Book club' : 'Family', you: 0, people, messages: [], games: games[id] }, headers: cors });
+      });
+      await page.goto(origin);
+      await page.waitForSelector('.feed-item');
+      assert.equal(await page.locator('#tab-feed').getAttribute('aria-selected'), 'true', 'someone with rooms starts on the feed');
+      assert.deepEqual(await page.locator('.feed-item em').allTextContents(), ['Your move', 'New']);
+      assert.equal(await page.locator('.feed-item strong').first().textContent(), 'Ada played');
+      assert.equal(await page.locator('#feed-count').textContent(), '2');
+      assert.equal(await page.locator('#menu').isVisible(), false, 'the lobby is on the other tab');
+      await page.locator('#tab-lobby').click();
+      assert.equal(await page.locator('#menu').isVisible(), true);
+      assert.equal(await page.locator('#rooms').isVisible(), true);
+      assert.equal(await page.locator('.feed-item').first().isVisible(), false);
+      await page.reload();
+      await page.waitForSelector('#menu');
+      assert.equal(await page.locator('#tab-lobby').getAttribute('aria-selected'), 'true', 'the tab last up is remembered');
+      await page.locator('#tab-feed').click();
+      await page.locator('.feed-item').first().click();
+      await page.waitForURL(/\/postmarks\/\?game=33333333/, { timeout: 5000 });
+    }),
+
+    check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page, h) => {
       await page.goto(`${origin}/?home`);
       await sleep(2700);
       assert.equal((await h.pal()).height, 'low', 'a tile is under Penny: it ducks');

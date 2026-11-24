@@ -67,6 +67,28 @@
       <h1>correspondence<span>.lol</span></h1>
 
       <div class="stack">
+        <!-- Two tabs: what is waiting on you, and everything else. -->
+        <div id="tabs" class="tabs" role="tablist" aria-label="Home" hidden>
+          <button type="button" role="tab" id="tab-feed" class="tab" aria-controls="panel-feed" aria-selected="false" style="--tile: #f8d95a">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 13.5h6L10 21l9-11.5h-6z"/></svg>
+            <span>Feed</span><b id="feed-count" class="pip" hidden></b>
+          </button>
+          <button type="button" role="tab" id="tab-lobby" class="tab" aria-controls="panel-lobby" aria-selected="true" style="--tile: #9ad3f7">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 4.5l8 7M6.5 10v9.5h11V10"/></svg>
+            <span>Lobby</span>
+          </button>
+        </div>
+
+        <section id="panel-feed" class="stack" role="tabpanel" aria-labelledby="tab-feed" hidden>
+          <ul id="feed" class="feed"></ul>
+          <div id="feed-empty" class="feed-empty" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#mini-envelope"/></svg>
+            <strong>All clear</strong>
+            <span id="feed-empty-note">Nothing is waiting on you.</span>
+          </div>
+        </section>
+
+        <div id="panel-lobby" class="stack" role="tabpanel" aria-labelledby="tab-lobby">
         <section id="me" class="card me" aria-label="Your account">
           <button type="button" id="me-edit" class="profile-button" aria-label="Edit your profile" title="Edit your profile"></button>
           <div class="who">
@@ -124,6 +146,7 @@
             <span class="words"><strong>Make music</strong></span>
           </a>
         </nav>
+        </div>
 
         <p id="status" class="status" role="status" aria-live="polite"></p>
       </div>
