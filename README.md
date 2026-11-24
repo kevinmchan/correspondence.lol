@@ -408,6 +408,65 @@ deleted on another device goes from this one too.
 What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, and any way to choose the chords.
 
+## The taste test
+
+`/jam/?taste` (`jam/taste.js`, reached by the flask at the top of the music
+maker) is an experiment: can a model of what you like in a loop predict your
+picks, and can that be shown to be more than chance?
+
+**Giving labels.** One card with a loop on each side, A on the front and B on
+the back. A swipe across the card turns it over, and the side that is up is
+the one playing. A double tap picks the side that is up. The loop picked
+stays, wearing a crown, and a new challenger takes the other side: half the
+time something new, half the time the reigning loop changed a little. Two
+things are there for the experiment's sake: a pick does not count until both
+sides have been heard for a second and a half each (a light on each side
+shows it), and a coin decides which side is up when a new pair arrives. The
+card also answers to the arrow keys and Enter, and to buttons under it.
+
+**The model** (`jam/taste-model.js`). A loop is turned into fifteen numbers:
+tempo, how busy each instrument is, kick, snare and hats, how much falls off
+the beat, how high the tune and the keys sit, how far the tune leaps, whether
+the bass keeps to the root, how thick and how sparse it is, and whether there
+are drums. The model is a logistic regression on the difference between the
+two loops, with three more terms for habits that are not taste: a leaning to
+one side of the card, to the reigning loop, and to whichever was heard first.
+It is learnt afresh after every pick, and from the tenth pick on it says in
+advance which loop will be picked.
+
+**The test.** Being called right is not proof: someone who always keeps the
+reigning loop is easy to call and has shown no taste. So each time a
+challenger is needed, two are made in exactly the same way and one is thrown
+away unheard, the phantom. The model is asked about both. If the music made
+no difference to the pick, the real challenger would be no better a guide to
+it than the phantom: which of the two gives the actual pick the higher chance
+would be a fair coin, whatever the habits. A stake starting at 1 is bet on
+the real one each time, more the further apart the two predictions are. Such
+a stake reaches ×20 less than one time in twenty against a fair coin, however
+long one plays and however often one looks, so ×20 is significance at the 5%
+level with no number of picks fixed beforehand.
+
+**The picture is lit by the loop.** Each side shows its loop as the board,
+a dot for every note. Four lamps hang over it, one for each instrument, and
+each throws a beam when its instrument sounds. A note that sounds jumps and
+flares, and a ring spreads from it; a bar of light crosses with the beat; the
+edge of the card glows in the colour of what has just sounded, harder on the
+beat; and at the top of every bar a gleam runs across the card. At rest the
+notes twinkle. Both sides are lit by the same rules, so the lights favour
+neither. With reduced motion only the bar of light moves.
+
+The lab notes under the card show where it stands after every pick: the
+stake and a bar filling towards ×20, how often the model called the pick
+right, how often habit alone would have, how often the real challenger beat
+the phantom, and what the model thinks you go for, in words. The picks are
+kept on the device and can be copied out as JSON.
+
+In simulation (`tests/taste.test.js`) a marked taste is found in about 160
+picks, a mild one in about 400, and someone with no taste and a strong habit
+fools it about as often as the 1 in 20 allows. What it can find is limited to
+what the fifteen numbers can say, and by the winner staying: a loop that keeps
+winning makes for many easy picks that teach little.
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:

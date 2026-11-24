@@ -1,0 +1,129 @@
+/* The taste test (jam/taste.js): one card with a loop on each side, and the
+   lab notes of the experiment under it. */
+
+.taste { width: 100%; max-width: 30rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+.taste-hint { margin: 0; font-family: system-ui, sans-serif; font-size: 0.9375rem; color: var(--muted); }
+
+/* --- The card: two sides, turned over by a swipe -------------------------------------- */
+.taste-card {
+  width: min(100%, 22rem); aspect-ratio: 5 / 4; perspective: 60rem;
+  touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer;
+}
+.taste-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; border-radius: 1.6rem; }
+.taste-card .flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 460ms cubic-bezier(0.3, 1.3, 0.5, 1); }
+.taste-card.turned .flip { transform: rotateY(180deg); }
+.taste-card.still .flip { transition: none; }
+.taste-card .face {
+  --edge: #f08a76;
+  position: absolute; inset: 0; box-sizing: border-box; border-radius: 1.5rem;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: var(--card); color: #22303c;
+  box-shadow: 0 0.34rem 0 color-mix(in srgb, var(--edge) 62%, #000), inset 0 0 0 0.3rem var(--edge);
+}
+/* the other side is the same card seen from behind: dark, as the back of a card is */
+.taste-card .face.back { --edge: #2aa198; transform: rotateY(180deg); background: #22303c; color: #f6f1e7; }
+/* (the picture keeps to its own part of the card, whatever shape the card is) */
+.taste-card .pic { position: absolute; inset: 3.1rem 1.2rem 2.3rem; }
+.taste-card .pic svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.taste-card .pic svg { overflow: visible; }
+/* --- The picture, lit by the loop as it plays (jam/taste.js) ---------------------------
+   The bar that crosses with the beat is a bar of light: bright down its
+   middle, and soft at its edges. */
+.taste-card .pic .now { fill: currentColor; filter: blur(0.6px); transition: x 60ms linear; }
+.taste-card .face.back .pic .now { fill: #9ad3f7; }
+.taste-card .pic .dot { transform-box: fill-box; transform-origin: center; }
+/* the beams from the lamps: light added to light on the dark side, and a wash of colour on the pale one */
+.taste-card .pic .beam { transform-box: fill-box; transform-origin: 50% 0%; pointer-events: none; mix-blend-mode: multiply; }
+.taste-card .face.back .pic .beam { mix-blend-mode: screen; }
+.taste-card .pic .lamp { filter: drop-shadow(0 0 1.5px currentColor); }
+.taste-card .pic .rings { pointer-events: none; }
+/* a gleam that crosses the card at the top of each bar */
+.taste-card .face { overflow: hidden; }
+.taste-card .face::after {
+  content: ""; position: absolute; top: -20%; bottom: -20%; left: 0; width: 34%; pointer-events: none; opacity: 0;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.5), transparent); transform: translateX(-140%) skewX(-12deg);
+}
+.taste-card .face.back::after { background: linear-gradient(100deg, transparent, rgb(154 211 247 / 0.28), transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  /* at rest the notes twinkle, each in its own time */
+  .taste-card .pic .dot { animation: taste-twinkle 2.6s ease-in-out infinite; }
+  .taste-card .pic .dot:nth-of-type(3n) { animation-delay: -0.9s; }
+  .taste-card .pic .dot:nth-of-type(3n + 1) { animation-delay: -1.7s; }
+  /* a note that sounds jumps and flares in its own colour */
+  .taste-card .pic .dot.hit { animation: taste-hit 460ms cubic-bezier(0.2, 0.9, 0.3, 1), taste-twinkle 2.6s ease-in-out 460ms infinite; }
+  .taste-card .face.beat { animation: taste-beat 420ms ease-out; }
+  .taste-card .face.offbeat { animation: taste-offbeat 300ms ease-out; }
+  .taste-card .face.gleam::after { animation: taste-gleam 900ms ease-out; }
+}
+@keyframes taste-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.72; } }
+@keyframes taste-hit {
+  0% { scale: 1.75; filter: brightness(1.7) drop-shadow(0 0 3px currentColor) drop-shadow(0 0 7px currentColor); }
+  100% { scale: 1; filter: none; }
+}
+@keyframes taste-beat {
+  0% { box-shadow: 0 0.34rem 0 color-mix(in srgb, var(--edge) 62%, #000), inset 0 0 0 0.3rem var(--edge), inset 0 0 2.4rem color-mix(in srgb, var(--glow, var(--edge)) 55%, transparent), 0 0 1.6rem color-mix(in srgb, var(--glow, var(--edge)) 75%, transparent); }
+  100% { box-shadow: 0 0.34rem 0 color-mix(in srgb, var(--edge) 62%, #000), inset 0 0 0 0.3rem var(--edge), inset 0 0 2.4rem transparent, 0 0 1.6rem transparent; }
+}
+@keyframes taste-offbeat {
+  0% { box-shadow: 0 0.34rem 0 color-mix(in srgb, var(--edge) 62%, #000), inset 0 0 0 0.3rem var(--edge), inset 0 0 1.4rem color-mix(in srgb, var(--glow, var(--edge)) 30%, transparent), 0 0 0.8rem color-mix(in srgb, var(--glow, var(--edge)) 40%, transparent); }
+  100% { box-shadow: 0 0.34rem 0 color-mix(in srgb, var(--edge) 62%, #000), inset 0 0 0 0.3rem var(--edge), inset 0 0 1.4rem transparent, 0 0 0.8rem transparent; }
+}
+@keyframes taste-gleam { 0% { opacity: 1; transform: translateX(-140%) skewX(-12deg); } 100% { opacity: 1; transform: translateX(440%) skewX(-12deg); } }
+.taste-card .letter {
+  position: absolute; top: 0.75rem; left: 0.9rem; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 28%;
+  background: var(--edge); color: #22303c; font-family: system-ui, sans-serif; font-weight: 800; font-size: 1.0625rem;
+  box-shadow: inset 0 -0.18rem 0 rgb(0 0 0 / 0.16);
+}
+.taste-card .crown, .taste-card .new {
+  position: absolute; top: 0.85rem; right: 0.95rem; display: inline-flex; align-items: center; gap: 0.25rem;
+  font-family: system-ui, sans-serif; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.06em;
+}
+.taste-card .crown { color: #e0a81e; }
+.taste-card .crown svg { width: 1.5rem; height: 1.5rem; }
+.taste-card .crown b { color: inherit; }
+.taste-card .new { padding: 0.12rem 0.45rem; border-radius: 0.4rem; text-transform: uppercase; background: color-mix(in srgb, var(--edge) 55%, transparent); }
+.taste-card .tempo { position: absolute; bottom: 0.8rem; left: 1rem; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; opacity: 0.6; font-variant-numeric: tabular-nums; }
+/* a light that comes on when this side has been listened to long enough to be picked */
+.taste-card .ear { position: absolute; bottom: 0.85rem; right: 1rem; width: 0.7rem; height: 0.7rem; border-radius: 50%; border: 2px solid currentColor; opacity: 0.35; box-sizing: border-box; }
+.taste-card .face.heard .ear { background: #7cc46a; border-color: #7cc46a; opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .taste-card.nope { animation: taste-nope 360ms ease-in-out; }
+  .taste-card .face.won .pic { animation: taste-won 520ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+}
+@keyframes taste-nope { 0%, 100% { translate: 0; } 25% { translate: -0.4rem; } 75% { translate: 0.4rem; } }
+@keyframes taste-won { 0% { scale: 0.86; } 45% { scale: 1.1; } 100% { scale: 1; } }
+
+.taste-row { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6rem; }
+.taste-row button.quiet { height: 2.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.9375rem; }
+.taste-row button.quiet svg { width: 1.2rem; height: 1.2rem; }
+.taste-row button.round { width: 2.9rem; padding: 0; }
+.taste-row button.go { height: 2.9rem; padding: 0 1rem; font-size: 1rem; }
+.taste-row.end { grid-template-columns: 1fr 1fr; }
+#taste-play .pause { display: none; }
+#taste-play.playing .pause { display: block; }
+#taste-play.playing .go-on { display: none; }
+.taste-note { margin: 0; min-height: 1.2rem; font-family: system-ui, sans-serif; font-size: 0.875rem; color: var(--muted); }
+
+/* --- The lab notes ------------------------------------------------------------------------- */
+.taste-lab {
+  width: 100%; box-sizing: border-box; padding: 0.9rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.7rem;
+  border-radius: 1.1rem; background: var(--card); box-shadow: 0 0.22rem 0 var(--lip);
+  font-family: system-ui, sans-serif; text-align: left;
+}
+.taste-lab h2 { margin: 0; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 62%, var(--paper)); }
+/* how far the stake has got towards twenty times itself, like a bar filling in a game */
+.taste-lab .meter { height: 1.1rem; border-radius: 0.55rem; background: color-mix(in srgb, var(--ink) 10%, var(--paper)); box-shadow: inset 0 0.14rem 0 rgb(0 0 0 / 0.1); overflow: hidden; }
+.taste-lab .meter i { display: block; height: 100%; width: calc(var(--full, 0) * 100%); min-width: 0.4rem; border-radius: inherit; background: #f8d95a; box-shadow: inset 0 -0.2rem 0 rgb(0 0 0 / 0.14); transition: width 400ms ease; }
+.taste-lab .meter.done i { background: #7cc46a; }
+.taste-lab .verdict { margin: 0; font-size: 0.9375rem; font-weight: 600; }
+.taste-lab .verdict.yes { color: #3d8a2c; }
+:root[data-theme="dark"] .taste-lab .verdict.yes { color: #9fdb8f; }
+.taste-lab dl { margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.taste-lab dl div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.875rem; }
+.taste-lab dt { color: var(--muted); }
+.taste-lab dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.taste-lab .likes { margin: 0; font-size: 0.875rem; color: var(--muted); }
+.taste-lab .likes:empty { display: none; }
+.taste-lab details { font-size: 0.875rem; color: var(--muted); }
+.taste-lab summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.taste-lab details p { margin: 0.5rem 0 0; }
