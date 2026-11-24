@@ -85,3 +85,8 @@
 #jam-play .pause { display: none; }
 #jam-play.playing .pause { display: block; }
 #jam-play.playing .go-on { display: none; }
+
+/* The four chords the loop goes through, one light each: the lit one is being played. */
+.jam-chords { display: flex; gap: 0.4rem; height: 0.5rem; }
+.jam-chords i { width: 1.6rem; height: 0.5rem; border-radius: 0.25rem; background: color-mix(in srgb, var(--ink) 12%, var(--paper)); transition: background-color 200ms ease; }
+.jam-chords i.on { background: var(--accent); }

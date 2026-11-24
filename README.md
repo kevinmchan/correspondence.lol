@@ -333,6 +333,29 @@ opens in the corner and leads on to the walk. It opens for slowness and never
 for speed, and it does not hurry anybody through. What was drawn is not kept
 when the scene is left.
 
+## Loops, the music maker
+
+`/jam/` (`jam/jam.js`) is a board of tiles, eight steps across and seven rows
+high, with four instruments that loop together. It is built on the same
+things as the game's background music (`postmarks/sound.js`), so that what
+is made there sounds like it belongs with it:
+
+- **The harmony moves.** The board is played four times over, once for each of
+  the game's four chords (C, A minor, F, G), and a row is a place in the chord
+  being played, not a fixed note: the bottom row is its root. Eight steps
+  tapped once come back four ways. Four lights over the board show which chord
+  is playing.
+- **A chord is held under it**, quietly, swelling in and out with each bar.
+- **There is room round it.** Bells and keys have an echo a step and a half
+  behind them, in time with the tempo. Bass and drums are kept dry.
+- **It is played, not triggered.** Beats are struck harder than what falls
+  between them, no two notes quite alike, and the off-steps come a little late.
+- **The dice write a tune the way the game does**: likelier on the beats,
+  moving by small steps, leaving rests; the bass keeps mostly to the root.
+
+What it still does not have, next to the game's music: more than eight steps,
+notes of different lengths, and any way to choose the chords.
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:
