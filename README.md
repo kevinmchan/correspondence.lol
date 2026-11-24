@@ -79,7 +79,10 @@ at the bottom edge of the window, in the viewer's own space, life size, and
 looks up at the map with you (`penny/pal.js`). It is one layer over the whole
 app, so screens slide past and Penny stays; a screen that wants Penny asks,
 and Penny goes back under the edge when no screen does. At present the home
-page and the map ask. Once Dot has been found, Dot stands tucked in beside it.
+page, the map and the game itself ask. In the game Penny has no part in the
+play and gives nothing away: it is glad when a post is found, flinches at a
+miss, and feels how the game ends; and the board there, as on the walk, is a
+few lit districts of a larger map that goes on, faint, all round. Once Dot has been found, Dot stands tucked in beside it.
 
 Everything Penny says is a feeling. A mood sets its face and how it holds
 itself (the point of its flap works as a brow); a gesture is one movement; it
@@ -217,7 +220,8 @@ loud post stirs of its own accord.
 One day passes over the five places: early light in the first, evening by the
 last. In the last post of the last place there is no sound. There is Dot, who
 looks out, map-small, and then crosses over to stand beside Penny. The portal
-that opens after that leads out to a real solo game.
+that opens after that leads out to a real solo game, and Penny and Dot come
+through with you.
 
 The places can be walked again afterwards, from the same portal, now quieter.
 Dot is beside Penny from the start then, and is not found a second time: that

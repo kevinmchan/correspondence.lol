@@ -15,6 +15,8 @@ import { applyPatterns } from '/shared/profile.js';
 import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
+import { claim as callPal } from '/penny/pal.js';
+import { OOPS, SAG, TRILL, YES, hasDot } from '/penny/penny.js';
 
 // A game's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -31,6 +33,38 @@ export function mount(root, life) {
 
   const $ = (id) => root.querySelector(`#${id}`);
   const { setTimeout, setInterval } = life; // timers that stop when the screen leaves
+
+  // --- Penny, and the map ---------------------------------------------------------
+  // The game looks the way the walk with Penny does (penny/walk.js): the board
+  // is a few lit districts of a much larger map, faint all round, and Penny
+  // stands at the bottom edge of the window, with Dot once Dot has been
+  // found. Penny has no part in the play here and gives nothing away: it is
+  // glad when a post is found, flinches at a miss, and feels how the game
+  // ends. It keeps low, out of the way of everything there is to press.
+  const pal = callPal(life, { x: 0.74, height: 'low', mood: 'calm', dot: hasDot(), colours: true });
+  let calming = null;
+  const calm = (after) => {
+    clearTimeout(calming);
+    calming = setTimeout(() => pal.mood('calm').look(null).settle('peek'), after);
+  };
+  calm(600);
+  const map = root.querySelector('.game-map');
+  // line the faint squares of the map up with the lit ones of the board
+  function layMap() {
+    const board = root.querySelector('#board');
+    const first = board?.firstElementChild;
+    if (!first || !first.offsetWidth) return;
+    const frame = map.parentElement.getBoundingClientRect();
+    const box = board.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(board).columnGap) || 0;
+    map.style.setProperty('--pitch', `${first.offsetWidth + gap}px`);
+    map.style.setProperty('--map-x', `${box.left - frame.left - gap / 2}px`);
+    map.style.setProperty('--map-y', `${box.top - frame.top - gap / 2}px`);
+    map.style.setProperty('--lit-x', `${box.left - frame.left + box.width / 2}px`);
+    map.style.setProperty('--lit-y', `${box.top - frame.top + box.height / 2}px`);
+    map.hidden = false;
+  }
+  life.on(window, 'resize', layMap);
   const el = {
     back: $('back'), profile: $('profile'), loading: $('loading'),
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
@@ -207,6 +241,8 @@ export function mount(root, life) {
     }
     builtFor = key;
     fresh = true;
+    requestAnimationFrame(layMap);
+    setTimeout(layMap, 400); // (and once whatever else is on the page has found its place)
   }
 
   const where = (cell) => `row ${Math.floor(cell / game.size) + 1}, column ${(cell % game.size) + 1}`;
@@ -328,6 +364,9 @@ export function mount(root, life) {
       ripple(post.cell);
       sfx('post');
       sfx('cascade', { delays: delays.sort((x, y) => x - y) });
+      pal.rise().mood('thrilled').look(el.board.children[post.cell]).gesture('jump');
+      pal.sing(YES, 0.7);
+      calm(1700);
     } else if (crossed.length) {
       crossed.forEach((c, i) => effects.set(c.cell, { name: 'fx-cross', delay: i * 35 }));
       sfx('cross', { count: crossed.length });
@@ -341,6 +380,9 @@ export function mount(root, life) {
       if (c.name === 'miss') {
         effects.set(c.cell, { name: 'fx-miss', delay: 0 });
         sfx('miss');
+        pal.rise().mood('sad').look(el.board.children[c.cell]).gesture('sink');
+        pal.sing(OOPS, 0.6);
+        calm(1500);
       } else if (c.name === 'guess') {
         effects.set(c.cell, { name: 'fx-pick', delay: 0 });
         sfx('pick');
@@ -655,10 +697,20 @@ export function mount(root, life) {
       if (!quiet && seen.status === 'playing' && game.status === 'won') {
         sfx('win', { delay: settle });
         setTimeout(confetti, settle);
+        setTimeout(() => {
+          clearTimeout(calming);
+          pal.rise().mood('glad').look(null).gesture('jump').hearts(3);
+          pal.sing(TRILL, 0.9);
+        }, settle + 200);
         setTimeout(finale, settle + 1700); // the board has its moment first
       } else if (!quiet && seen.status === 'playing' && game.status === 'lost') {
         sfx('lose', { delay: 450 });
         setTimeout(finale, 1900);
+        setTimeout(() => {
+          clearTimeout(calming);
+          pal.rise().mood('sad').look(null).gesture('sink');
+          pal.sing(SAG, 0.6);
+        }, 500);
       }
       el.board.classList.toggle('won', game.status === 'won');
       el.board.classList.toggle('lost', game.status === 'lost');
@@ -735,7 +787,7 @@ export function mount(root, life) {
     el.hintNote.hidden = !hint || over;
     if (hint) el.hintNote.textContent = hint.text;
     for (const button of el.tools.children) {
-      button.setAttribute('aria-checked', String(button.dataset.tool === tool));
+      button.setAttribute('aria-pressed', String(button.dataset.tool === tool));
     }
     // Room games go back to the room with the arrow at the top; only a solo
     // game needs a way to start over.
@@ -743,7 +795,8 @@ export function mount(root, life) {
     el.retryRun.disabled = el.revealRun.disabled = deciding;
     el.newGame.hidden = Boolean(online);
     el.restart.hidden = !game || (Boolean(online) && !online.practice) || (game.moves === 0 && !over); // nothing to start over yet
-    el.newGame.textContent = over ? 'Play again' : 'New game';
+    el.newGame.title = over ? 'Play again' : 'New game';
+    el.newGame.setAttribute('aria-label', el.newGame.title);
   }
 
   // --- Taking a turn --------------------------------------------------------
@@ -993,6 +1046,15 @@ export function mount(root, life) {
     else render();
   });
 
+  // From the keyboard, where there is no double tap: Enter opens the square in
+  // focus. (Space crosses it, as a click does.)
+  el.board.addEventListener('keydown', (event) => {
+    const button = event.target.closest?.('.cell');
+    if (!button || event.key !== 'Enter' || event.repeat) return;
+    event.preventDefault();
+    guessAt(Number(button.dataset.cell));
+  });
+
   el.submit.addEventListener('click', submitDraft);
 
   // Arrow keys move between squares.
@@ -1016,7 +1078,7 @@ export function mount(root, life) {
   el.tools.addEventListener('click', (event) => {
     const button = event.target.closest('[data-tool]');
     if (!button) return;
-    tool = button.dataset.tool;
+    tool = tool === button.dataset.tool ? 'mark' : button.dataset.tool; // pressed again, it is put away
     render();
     if (tool === 'phrase') el.phraseInput.focus();
   });

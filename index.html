@@ -278,6 +278,13 @@
     <header class="topbar">
       <a id="back" href="/">← correspondence.lol</a>
       <div class="top-actions">
+        <!-- Start over, and a new game: only for a game played alone (postmarks/ui.js). -->
+        <button type="button" id="restart" class="quiet round" aria-label="Start over" title="Start over" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a7 7 0 1 0 2.2-5.1"/><path d="M5 4.5v4h4"/></svg>
+        </button>
+        <button type="button" id="new-game" class="quiet round" aria-label="New game" title="New game" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>
+        </button>
         <div class="sound-wrap">
           <button type="button" id="sound" class="quiet round" aria-label="Sound" title="Sound" aria-haspopup="true" aria-expanded="false" aria-controls="sound-menu">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4z"/><path class="waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="slash" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
@@ -296,7 +303,9 @@
     </header>
 
     <main>
-      <h1>Postmarks</h1>
+      <!-- The rest of the map, faint, all round the board (postmarks/ui.js). -->
+      <div class="map-far game-map" aria-hidden="true" hidden></div>
+      <h1 class="sr-only">Postmarks</h1>
       <p id="loading" class="lede" hidden>Opening game…</p>
 
       <div id="trial" class="stack" hidden>
@@ -329,14 +338,9 @@
 
         <p id="hint-note" class="hint-note" role="status" hidden></p>
         <div class="toolbar">
-          <div id="tools" class="tools" role="radiogroup" aria-label="What your turn does">
-            <button type="button" role="radio" data-tool="mark" aria-checked="true" aria-label="Cross" title="Cross">
-              <span class="glyph" aria-hidden="true">×</span>
-            </button>
-            <button type="button" role="radio" data-tool="guess" aria-checked="false" aria-label="Post" title="Post">
-              <svg class="glyph" aria-hidden="true" viewBox="0 0 24 24"><use href="#envelope"/></svg>
-            </button>
-            <button type="button" role="radio" data-tool="phrase" aria-checked="false" hidden>
+          <!-- A tap crosses a square and a double tap opens it, so there is nothing to switch between; only the pass phrase has a button of its own. -->
+          <div id="tools" class="tools">
+            <button type="button" data-tool="phrase" aria-pressed="false" hidden>
               <span class="glyph" aria-hidden="true">Aa</span> Phrase
             </button>
           </div>
@@ -359,10 +363,6 @@
         <div id="lost-choice" class="row lost-choice" hidden>
           <button type="button" id="reveal-run" class="quiet">Reveal the phrase</button>
           <button type="button" id="retry-run" class="go">Try again</button>
-        </div>
-        <div class="row solo-actions">
-          <button type="button" id="restart" class="quiet" hidden>Start over</button>
-          <button type="button" id="new-game" class="quiet">New game</button>
         </div>
         <ol id="runs" class="runs" hidden></ol>
 

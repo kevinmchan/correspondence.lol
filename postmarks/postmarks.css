@@ -799,3 +799,8 @@ button.go { font-family: system-ui, sans-serif; }
   .cell.guessing { animation: guess-wait 520ms ease-in-out infinite; }
 }
 @keyframes guess-wait { 0%, 100% { transform: scale(1.06) rotate(-2.5deg); } 50% { transform: scale(1.1) rotate(2.5deg); } }
+
+/* the hint, at the right-hand end of the row under the board */
+.toolbar #hint { margin-left: auto; }
+.toolbar #hint + #submit { margin-left: 0; }
+.tools [aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }

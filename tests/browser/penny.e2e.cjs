@@ -239,7 +239,8 @@ async function main() {
       await page.waitForURL(/\/postmarks\//);
       await sleep(900);
       assert.equal(await h.stored('penny:walked:v1'), true);
-      assert.equal((await h.pal()).height, 'gone', 'the game has not asked for Penny');
+      assert.notEqual((await h.pal()).height, 'gone', 'Penny comes through into the game');
+      assert.equal((await h.pal()).alone, false, 'and Dot with it');
     }),
 
     check('walked again afterwards: Dot is there from the start and is not found twice', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:place:v1': 4 } }, async (page, h) => {
@@ -362,12 +363,17 @@ async function main() {
     }),
 
     check('Penny is only where a screen has asked for it', { storage: ACCOUNT }, async (page, h) => {
-      for (const address of ['/jam/', '/postmarks/', '/?open', '/?join', '/?penny']) {
+      for (const address of ['/jam/', '/?open', '/?join', '/?penny']) {
         await page.goto(origin + address);
         await sleep(1200);
         assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, address, 'the address is still the one asked for');
         assert.equal((await h.pal()).height, 'gone', address);
       }
+      // the game is one of the screens that asks for it
+      await page.goto(`${origin}/postmarks/`);
+      await sleep(1500);
+      assert.notEqual((await h.pal()).height, 'gone', 'Penny is in the game');
+      assert.equal(await page.locator('.game-map').isVisible(), true, 'and the map is behind the board');
       // and leaving the map in the middle of something leaves nothing behind
       await page.goto(`${origin}/?walk`);
       await sleep(1500);
