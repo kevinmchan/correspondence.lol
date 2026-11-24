@@ -53,6 +53,14 @@ are made.
   passing runs" to pass before merging. Merge only when the owner has said to
   deploy.
 
+## Cloud sessions
+
+- A cloud session's machine has 4 cores. Run at most two or three agents that
+  run browser suites at the same time; past that, builds crawl and timing
+  checks fail for reasons that have nothing to do with the change (#92).
+- Work in order of how near it is to deploying: finish and ship before starting
+  new explorations.
+
 ## Things that have gone wrong before
 
 - `version.js` names the offline cache and is shown on the home page. Bump it
