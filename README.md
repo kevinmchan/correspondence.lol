@@ -152,6 +152,11 @@ listening. Penny's Radio is where the story comes closest to it: a radio that
 learns what you like. Who is doing the averaging, and whether the fear is
 right, are not decided, and as everywhere the story does not say it in words.
 
+**The question Penny's Radio asks.** Is a radio that learns one person's taste
+a defence of that taste, or one more step in the averaging? The piece asks it
+and does not answer it. Nothing in it tilts the question either way: not the
+exhibit's words, not the meter, not Penny.
+
 ### How a place says it
 
 The theme is carried by the surroundings, not by anything Penny does to camera.
