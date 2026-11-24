@@ -8,8 +8,8 @@
 // Penny is after (penny/mail.js). The way on is always up the map.
 //
 // Nothing here is told, and no gesture is shown to be copied: no ring, no
-// arrow, no rhythm in a hum. You play, on five places each
-// with one more rule than the last, and Penny is beside you while you do.
+// arrow, no rhythm in a hum. You play, on five places, all by the game's own
+// rules, each there to show one thing, and Penny is beside you while you do.
 // Penny does not know where the posts are. All Penny can give you is how it
 // feels about the square your finger is on, and that comes from its head and
 // its ear and nothing else (penny/places.js):
@@ -46,9 +46,11 @@
 // Otherwise it waits for your finger; and now and then a loud post stirs of
 // its own accord.
 //
-// Penny feels all of this hard, and it shows on the map as well as on Penny:
-// a miss drains the colour from everything for a moment, a find floods it
-// with light. And every sound ends. A post is heard once; a piece of the
+// Penny feels all of this hard, and it shows on the map as well as on Penny,
+// in proportion to what has happened between the two of you. A post found is
+// the big thing: the map floods with light. A cross is a small thing: Penny
+// watches, or nods if it can see why. A guess that finds nothing drains the
+// colour for a moment. And every sound ends. A post is heard once; a piece of the
 // sound Penny is after is over almost as it begins, and Penny holds on to it
 // a moment longer than it lasts. One day passes over the five places, early
 // in the first and evening by the last, and it only goes one way.
@@ -63,7 +65,7 @@ import { PLACES, groupsOf, hear, mailIn, read, ruledOut, vouch } from './places.
 import { claim } from './pal.js';
 import { heard, murmur, playMail, remembered, soundSoFar } from './mail.js';
 import {
-  ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, SIGH, THIS_WAY, TRILL, WONDER, YES,
+  ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, THIS_WAY, TRILL, WONDER, YES,
   hasDot, hasWalked, placeReached, setDot, setPlaceReached, setWalked,
 } from './penny.js';
 
@@ -651,39 +653,40 @@ export function mount(root, life) {
       say('Penny is amazed');
     }
 
-    // What the post takes away. Rules met before go quickly; the one this
-    // place is here for goes slowly, square by square, and is lit as it goes,
-    // so that it is seen as a shape. Its eyes follow it.
+    // What the post takes away: everything the game's rules say it does. The
+    // rule this place is there to show goes first and slowly, square by
+    // square, lit as it goes, so that it is seen as a shape, and Penny's eyes
+    // follow it. The rest follows quickly.
     const { n, regions, rules } = place;
-    const newest = place.marks ? null : rules.at(-1);
+    const shown = place.shows ?? null;
     const delays = [];
     let at = 240;
-    for (const rule of rules.filter((r) => r !== newest)) {
-      for (const other of ruledOut(rule, cell, n, regions)) {
-        if (cells[other] !== 'empty') continue;
-        cells[other] = 'cross';
-        paint(other, 'fx-cross', at);
-        delays.push(at);
-        at += place.marks ? 45 : 25;
-      }
-    }
-    if (newest) {
-      at += 260;
+    if (shown) {
       const first = at;
-      for (const other of ruledOut(newest, cell, n, regions)) {
+      for (const other of ruledOut(shown, cell, n, regions)) {
         if (cells[other] === 'letter') continue;
         const fresh = cells[other] === 'empty';
         if (fresh) cells[other] = 'cross';
         paint(other, fresh ? 'fx-cross' : null, at, true);
         life.setTimeout(() => { if (busy) pal.look(tile(other)); }, at);
         delays.push(at);
-        at += 130;
+        at += 150;
       }
       life.setTimeout(() => {
         pal.mood('curious');
         if (!wondered) pal.sing(WONDER, 0.5, { breath: 0 });
         wondered = true;
       }, first);
+      at += 220;
+    }
+    for (const rule of rules.filter((r) => r !== shown)) {
+      for (const other of ruledOut(rule, cell, n, regions)) {
+        if (cells[other] !== 'empty') continue;
+        cells[other] = 'cross';
+        paint(other, 'fx-cross', at);
+        delays.push(at);
+        at += shown ? 30 : 45;
+      }
     }
     // a cross of yours on a square the post has now ruled out is the post's cross from here on
     const ruled = read(place, found, [...misses]);
@@ -726,15 +729,18 @@ export function mount(root, life) {
         pal.mood('hopeful').look({ x: window.innerWidth / 2, y: 0 });
         await pal.sing(LONGING, 0.55);
       } else {
-        // Not it. That goes all the way down. And then: it was somebody's,
-        // and it has been delivered, and that is good too.
-        const firstHere = found.length === 1;
-        pal.mood('sad').gesture('sink');
-        hum(SIGH, 0.5, 'not it');
+        // Somebody else's. A post found is a good thing, and Penny is glad
+        // of it with you: that comes first and it is the larger part. That it
+        // was not the sound Penny is after is one breath, a glance up the map,
+        // and gone. (Nobody watching knows yet what Penny is looking for; a
+        // Penny that slumped at every find would only seem sad that you had
+        // done well.)
+        pal.mood('curious').look({ x: window.innerWidth / 2, y: 0 });
+        hum(LET_GO, 0.3, 'not it');
         say('Someone else’s post');
-        await wait(firstHere ? 950 : 620);
-        pal.mood(done ? 'glad' : 'calm').look(tile(cell)).gesture('nod');
-        pal.sing(done ? TRILL : MM, 0.7); // (not waited for: the map is yours again at once)
+        await wait(420);
+        pal.mood('glad').look(tile(cell)).gesture(done ? 'jump' : 'hop');
+        pal.sing(done ? TRILL : YES, 0.8); // (not waited for: the map is yours again at once)
       }
     }
     if (life.over) return;
@@ -841,9 +847,9 @@ export function mount(root, life) {
         hum(MM, 0.45, 'agree');
         say('Penny agrees');
       } else if (place.listen) {
-        // it hears nothing under it, and has no quarrel with it
-        pal.mood('calm').look(tile(changed[0]));
-        life.setTimeout(() => { if (!busy && touching === null) pal.look(null); }, 700);
+        // it hears nothing under it, and has no quarrel with it: it watches, no more
+        pal.mood('curious').look(tile(changed[0]));
+        life.setTimeout(() => { if (!busy && touching === null) pal.mood('calm').look(null); }, 700);
         say('');
       } else if (first) {
         // the first cross it has had to think about: it marvels at it

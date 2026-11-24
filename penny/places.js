@@ -2,15 +2,19 @@
 // No page here, only data and arithmetic, so the tests can run it. What is in
 // each post is at the end of the file.
 //
-// Each place is a small piece of the map, and each asks one thing more than
-// the last:
+// Every place is played by all the rules of the game, so nothing on the map
+// ever contradicts it: a post found crosses out its colour, its row and
+// column, and the squares that touch it. What changes from place to place is
+// which one thing the place is there to show:
 //
-//   1. a post is opened with a double tap
+//   1. a post is opened with a double tap (one square: no rules to speak of)
 //   2. one post per colour
 //   3. one post per row and column
 //   4. posts cannot touch
 //   5. nothing to hear: the rules alone
 //
+// The rule a place shows is the one whose crosses come first and slowly, lit
+// one by one, so that it is seen as a shape; the others follow quickly.
 // From the second place on, a quick tap crosses a square out, as in the game.
 // The last place is made to be gentle: one cross in the right corner leaves a
 // colour with a single square.
@@ -40,8 +44,9 @@ import { A4, A5, C5, C6, D4, D5, E4, E5, G4, G5 } from './notes.js';
 
 // rows: the place's colours, a letter a square. tiles: which of the game's
 // colours each letter is. posts: where they are (only opening a square, and
-// the list of loud ones, ever look at this). rules: the rules this place has;
-// the last is the one it is here for. loud: the posts it can hear. reach: how
+// the list of loud ones, ever look at this). rules: the rules this place is played by
+// (all of them, but for the first, which is one square). shows: the one rule
+// it is there to show. loud: the posts it can hear. reach: how
 // many squares off it hears them. listen: how long it listens before it can
 // say, in milliseconds. twice: how soon the second tap of a double tap has to
 // come. crosses: a quick tap crosses a square out (holding, or sliding, is
@@ -49,9 +54,9 @@ import { A4, A5, C5, C6, D4, D5, E4, E5, G4, G5 } from './notes.js';
 // crosses too, and Penny can take its one extra step of thought.
 export const PLACES = [
   { rows: ['A'], tiles: { A: 1 }, posts: [0], rules: [], loud: [0], reach: 0, listen: 250, twice: 500 },
-  { rows: ['AABB', 'AABB', 'CCBB', 'CCDB'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour'], loud: [1, 7, 8], reach: 2, listen: 300, twice: 450, crosses: true },
-  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line'], loud: [2, 4], reach: 2, listen: 380, twice: 350, crosses: true },
-  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], loud: [1], reach: 2, listen: 460, twice: 350, crosses: true },
+  { rows: ['AABB', 'AABB', 'CCDB', 'CCDD'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], shows: 'colour', loud: [1, 7, 8], reach: 2, listen: 300, twice: 450, crosses: true },
+  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], shows: 'line', loud: [2, 4], reach: 2, listen: 380, twice: 350, crosses: true },
+  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], shows: 'touch', loud: [1], reach: 2, listen: 460, twice: 350, crosses: true },
   { rows: ['BBAA', 'BBCC', 'DDDC', 'DDDC'], tiles: { A: 1, B: 0, C: 3, D: 6 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], loud: [], reach: 0, listen: 0, twice: 350, crosses: true, marks: true },
 ].map((place) => ({ ...place, n: place.rows.length, regions: place.rows.join('').split('').map((letter) => place.tiles[letter]) }));
 

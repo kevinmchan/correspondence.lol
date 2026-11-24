@@ -128,9 +128,11 @@ Through the portal is the map itself (`/?walk`, `penny/walk.js`): a few
 districts lit, the rest faint all round. The way on is always up the screen,
 and the places already walked stay on the map, flat, below. There is no
 tutorial, nothing is told, and no gesture is shown to be copied: no ring, no
-arrow, no rhythm in a hum. There are five places, each a small piece of the game that
-asks one thing more than the last (`penny/places.js`), and you play them while
-Penny stands beside you:
+arrow, no rhythm in a hum. There are five places (`penny/places.js`), and you play them
+while Penny stands beside you. Every one is played by all the rules of the
+game, so nothing on the map ever contradicts it: a post found crosses out its
+colour, its row and column, and the squares that touch it. What changes is the
+one thing each place is there to show:
 
 1. a double tap opens a post
 2. one post per colour
@@ -168,11 +170,10 @@ finger sliding across the map is answered square by square.
 where the eyes are, and the two are made to look nothing alike. What Penny
 hears is an amber warmth under your finger. What Penny knows is its own red
 seal, stamped on a square that nobody touched, the moment a rule leaves a
-colour, row or column with one square. The second place opens with it: one
-square is the only one of its colour, and the seal lands on it before anything
-is pressed, while every other square has to be listened at. After that, each
-time a post is opened and its crosses spread and a seal lands, that is a rule,
-seen. In the later places the seal holds back a while, to leave the working
+colour, row or column with one square. Each place goes the same way: nothing
+is known to begin with, so the first post has to be found by ear; then its
+crosses spread, and a seal lands on a square nobody has touched. Each time
+that happens it is a rule, seen. In the later places the seal holds back a while, to leave the working
 out to you.
 
 While Penny listens to what was inside a post, the map goes dim, so that for
@@ -185,11 +186,14 @@ In the first place, which is one square, a tap leaves it ajar for as long as a
 second tap would count, and if Penny thinks there is a post in it, Penny holds
 its breath for exactly that long; the wait grows with each tap left alone.
 
-When a post is opened, the squares the place's newest rule takes away light up
-one after another, so the rule is seen as a shape, and Penny's eyes follow it.
+When a post is opened, the crosses of the rule the place is there to show come
+first and slowly, lit one after another, so the rule is seen as a shape, and
+Penny's eyes follow it. The other rules' crosses follow quickly.
 Then, every time, this could be the one: Penny can hardly bear it, and holds
-still to listen. If it is somebody else's mail, that goes all the way down, and
-then Penny is glad for them. In the second, third and fourth places the last
+still to listen. If it is somebody else's mail, Penny is glad of the find with
+you; that it was not the one is a breath and a glance up the map, no more.
+Penny's feelings are kept in proportion to what has happened between the two
+of you: a post found is the big thing, a cross is a small one. In the second, third and fourth places the last
 post found has a piece of the sound Penny is after; it hums the piece back,
 holds on to it a moment longer than it lasts, and looks a long way up the map.
 What has been heard is drawn at the top of the map, a mark a note, and can be

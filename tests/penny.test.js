@@ -35,8 +35,9 @@ test('a place played by all the rules has only one answer', () => {
   }
 });
 
-test('each place has one more rule than the last, and fewer posts it can hear', () => {
-  assert.deepEqual(PLACES.map((place) => place.rules.length), [0, 1, 2, 3, 3]);
+test('every place is played by all the rules, shows one of them, and has fewer posts it can hear', () => {
+  assert.deepEqual(PLACES.map((place) => place.rules.length), [0, 3, 3, 3, 3], 'all the rules, but for the one square of the first');
+  assert.deepEqual(PLACES.map((place) => place.shows ?? null), [null, 'colour', 'line', 'touch', null], 'one rule shown at a time');
   assert.ok(PLACES.at(-1).marks, 'in the last place a slide crosses too');
   assert.deepEqual(PLACES.map((place) => Boolean(place.crosses)), [false, true, true, true, true], 'a tap crosses from the second place on');
   const quiet = PLACES.map((place) => place.posts.length - place.loud.length);
