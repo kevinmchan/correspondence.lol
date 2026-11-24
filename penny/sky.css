@@ -7,8 +7,8 @@
 }
 html:has(.screen-sky), html:has(.screen-sky) body { overscroll-behavior: none; }
 .sky .sky-view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-/* (The screen the app opens on raises its contents into place, and leaves them
-   fully opaque for good. Not here: what is faint in the night is meant to be.) */
+/* (The screen the app opens on raises its contents into place. Not here: the
+   night opens as still as a picture.) */
 .screen.opening main.sky > * { animation: none; }
 /* The way back: dim, and gone when the picture has been left alone a moment.
    A touch, a move of the mouse or the keyboard brings it back. */

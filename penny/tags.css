@@ -19,7 +19,7 @@ main:has(> .tag-hidden) { position: relative; }
 .tag-hidden:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag-hidden:focus-visible svg { opacity: 0.6; }
 @keyframes tag-glint { 30% { opacity: 0.5; } 45% { opacity: 0.24; } 62% { opacity: 0.44; } }
-/* (the screen the app opens on raises its contents into place, and leaves them opaque for good: not this) */
+/* (the screen the app opens on raises its contents into place: not this, which would be given away by it) */
 .screen.opening main > .tag-hidden { animation: none; }
 
 /* --- Through it: a tumble -----------------------------------------------------------------

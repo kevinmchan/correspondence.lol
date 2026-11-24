@@ -32,7 +32,7 @@ import { audio, noise } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode } from './beat.js';
-import { LAYERS, ROWS, STEPS, TEMPOS, createLoop } from './engine.js';
+import { LAYERS, ROWS, STEPS, createLoop } from './engine.js';
 import { claim as callPal } from '/penny/pal.js';
 import { ASK, hasDot } from '/penny/penny.js';
 import { NEEDED, REIGN, WARMUP, begin, choose, fit, leanings, pairVector, standing } from './taste-model.js';

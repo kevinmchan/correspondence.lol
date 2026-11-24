@@ -160,8 +160,11 @@ const QUIET_MS = 5000; // how long nothing has to have been pressed before it gl
 const SETTLING_MS = 1600; // how long a screen is given to settle before anything is hidden in it
 // What counts as the empty ground of a screen, besides its own <main>: the
 // wrappers that only lay a screen out, and the bare room of the film's scenes.
-const WRAPPERS = '.walk-ground, .radio-ground';
-const GROUND = `${WRAPPERS}, .office-stage`;
+const GROUND = '.walk-ground, .radio-ground, .office-stage';
+// And what is drawn on that ground but lets a finger straight through it, so
+// that looking under a point does not find it: the places already walked,
+// lying below the one Penny is at. The mark is not put on those either.
+const THROUGH = '.walk-known .cell';
 
 // Hide the mark on a screen. `main` is the screen's main. On a game's screen,
 // `map` is the map behind its board (its squares are lined up by --pitch,
@@ -179,12 +182,11 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
   mark.hidden = true;
   mark.setAttribute('aria-label', hasFound(tag.name) ? tag.label : 'A place on the page that is not like the rest');
   mark.innerHTML = SMALL;
-  // It lies on the screen's ground, under whatever else is put there after
-  // it: where a wrapper lays the screen out, inside that, first; and otherwise
-  // on the page itself.
-  const wrapper = main.querySelector(WRAPPERS);
-  if (wrapper) wrapper.prepend(mark);
-  else main.append(mark);
+  // It is the last thing on the page: whoever goes through the page by
+  // keyboard comes to everything else first. It is printed over the page's
+  // ground, and lies under whatever the page raises above that: a board, a
+  // portal, the light of the day.
+  main.append(mark);
   life.onEnd(() => mark.remove());
 
   let at = null; // where it is: a square of the map as [column, row], or a place on the page as [left, top]
@@ -211,6 +213,7 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
     const spot = ([column, row]) => [x0 + column * step + inset, y0 + row * step + inset]; // where a place is, within main
     const play = board()?.getBoundingClientRect();
     const penny = document.querySelector('.pal:not([data-height="gone"]) .pal-penny')?.getBoundingClientRect();
+    const drawn = [...main.querySelectorAll(THROUGH)].map((each) => each.getBoundingClientRect());
 
     // Whether the mark may stay where it is: still on the page, and nothing of the page come over it.
     const holds = (where) => {
@@ -230,6 +233,8 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
       // walk over it later, Penny is simply in front of it: pal.js does not
       // count it among what it must keep out of the way of.)
       if (penny && left + size > penny.left - 12 && left < penny.right + 12 && top + size > window.innerHeight - penny.height * 1.05) return false;
+      // nor on anything drawn there that a finger goes through
+      if (drawn.some((box) => box.width > 0 && left + size > box.left - 4 && left < box.right + 4 && top + size > box.top - 4 && top < box.bottom + 4)) return false;
       // and nothing of the page's on any of it, or right beside it
       return [[0.5, 0.5], [-0.12, -0.12], [1.12, -0.12], [-0.12, 1.12], [1.12, 1.12], [0.5, -0.12], [0.5, 1.12], [-0.12, 0.5], [1.12, 0.5]].every(([across, down]) => {
         const [x, y] = [left + size * across, top + size * down];

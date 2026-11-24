@@ -826,6 +826,99 @@ async function main() {
       await page.waitForSelector('.home-map');
     }),
 
+    // The screen the app opens on is the only one whose parts rise into place
+    // (the others slide in whole). They rise, and no more than that: the game
+    // has a letter arrive on its square with a turn and a bounce, and for as
+    // long as that had the same name, that is how every part of the page
+    // arrived. And once risen, each is what it would be on any other visit.
+    // They were once left fully opaque for good: scene two opened with its
+    // fingertip of light, which is there to show how to whoever is caught
+    // waiting, standing in the middle of the room.
+    check('the screen the app opens on rises into place, and is then as it would be anywhere', {}, async (page) => {
+      await page.goto(`${origin}/?slow`);
+      await page.waitForSelector('.screen.opening .office-door');
+      const onTheWay = await page.evaluate(() => {
+        const door = document.querySelector('.screen.opening .office-door');
+        const rise = door.getAnimations().find((each) => each.animationName === 'arrive');
+        if (!rise) return null;
+        rise.pause();
+        rise.currentTime = rise.effect.getComputedTiming().delay + 90; // a quarter of the way
+        const { a, b, c, d, f } = new DOMMatrix(getComputedStyle(door).transform);
+        const seen = { turned: [a, b, c, d], below: f, opacity: Number(getComputedStyle(door).opacity) };
+        rise.finish();
+        return seen;
+      });
+      assert.ok(onTheWay, 'its parts arrive');
+      assert.deepEqual(onTheWay.turned, [1, 0, 0, 1], 'neither turned nor grown on the way');
+      assert.ok(onTheWay.below > 0 && onTheWay.below < 8, `a little below where it will be (${onTheWay.below})`);
+      assert.ok(onTheWay.opacity > 0 && onTheWay.opacity < 0.55, `and fainter than it will be (${onTheWay.opacity})`);
+      await sleep(1200);
+      const settled = await page.evaluate(() => {
+        const tip = document.querySelector('.slow-tip');
+        return { door: getComputedStyle(document.querySelector('.office-door')).opacity, tip: getComputedStyle(tip).opacity, shown: tip.classList.contains('on') };
+      });
+      assert.equal(settled.door, '0.55', 'the door back is as dim as on any other visit');
+      assert.deepEqual([settled.shown, settled.tip], [false, '0'], 'and the fingertip is not to be seen: nobody has been caught waiting yet');
+      // the same on the radio, opened directly: the way behind it is dim until it is reached for
+      await page.goto(`${origin}/jam/?taste`);
+      await sleep(1500);
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.radio-behind')).opacity), '0.6');
+    }),
+
+    // A hop is Penny's own: down a little first, then up and stretched, then
+    // down again on landing. (For as long as the end of a game had a hop of
+    // the same name, that plainer one was the only hop there was, anywhere.)
+    // And at the end of a game won, what was kept hops, one after another: the
+    // hearts of a game won alone, the faces of one won together. (Neither ever
+    // did. The rule for it could match nothing, and counted on a number the
+    // hearts were never given.)
+    check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('#jam-play');
+      await sleep(1500);
+      // the first hop there is, stopped as it starts and looked at in three places
+      await page.evaluate(() => {
+        window.hopSeen = new Promise((done) => {
+          document.addEventListener('animationstart', function heard(event) {
+            if (event.animationName !== 'hop') return;
+            document.removeEventListener('animationstart', heard);
+            const hop = event.target.getAnimations().find((each) => each.animationName === 'hop');
+            hop.pause();
+            const at = (share) => {
+              hop.currentTime = share * hop.effect.getComputedTiming().duration;
+              const { a, d, f } = new DOMMatrix(getComputedStyle(event.target).transform);
+              return { wide: a, tall: d, up: -f };
+            };
+            const seen = [at(0.18), at(0.48), at(0.78)];
+            hop.play();
+            done(seen);
+          });
+        });
+      });
+      await page.locator('#jam-play').click(); // (with nothing on the board, Penny hops on the beat itself)
+      const [crouch, leap, landing] = await page.evaluate(() => Promise.race([window.hopSeen, new Promise((done) => setTimeout(() => done([null, null, null]), 8000))]));
+      await page.locator('#jam-play').click();
+      assert.ok(crouch, 'Penny hops to the beat');
+      assert.ok(crouch.wide > 1.03 && crouch.tall < 0.95 && crouch.up === 0, `first it gathers itself (${JSON.stringify(crouch)})`);
+      assert.ok(leap.up > 2 && leap.tall > 1.02 && leap.wide < 1, `then it is up, and stretched (${JSON.stringify(leap)})`);
+      assert.ok(landing.wide > 1.01 && landing.tall < 0.97 && landing.up === 0, `and it lands (${JSON.stringify(landing)})`);
+
+      // The end of a game, opened as the game opens it (without a game being played to get there).
+      await page.goto(`${origin}/postmarks/`);
+      await sleep(1500);
+      const kept = (mode) => page.evaluate(async (how) => {
+        const before = document.querySelector('dialog.finale');
+        before?.close();
+        while (before?.isConnected) await new Promise((done) => setTimeout(done, 20)); // (it takes itself away once it has closed)
+        const { openFinale } = await import('/postmarks/finale.js');
+        openFinale({ won: true, mode: how, title: 'Delivered', detail: '', hearts: 3, people: [{ avatar: '🦊', color: 1 }, { avatar: '🐼', color: 2 }], about: {}, leave: 'Done', onDone() {} });
+        return [...document.querySelectorAll('dialog.finale .kept .heart, dialog.finale .team .avatar')].map((each) => `${getComputedStyle(each).animationName} ${getComputedStyle(each).animationDelay}`);
+      }, mode);
+      assert.deepEqual(await kept('solo'), ['finale-hop 0.5s', 'finale-hop 0.62s', 'finale-hop 0.74s'], 'the hearts kept, one after another');
+      assert.deepEqual(await kept('coop'), ['finale-hop 0.5s', 'finale-hop 0.62s'], 'the faces of everyone who played, one after another');
+      await page.evaluate(() => document.querySelector('dialog.finale')?.close());
+    }),
+
     check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
       const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
       const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });

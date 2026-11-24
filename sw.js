@@ -121,7 +121,7 @@ self.addEventListener('fetch', (event) => {
 // The server sends { title, body, url, tag }. One notification per game: a
 // newer one for the same game replaces the older.
 self.addEventListener('push', (event) => {
-  let message = {};
+  let message;
   try {
     message = event.data?.json() ?? {};
   } catch {

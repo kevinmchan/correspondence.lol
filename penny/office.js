@@ -60,7 +60,6 @@ export function mount(root, life) {
   const PACE = 0.55;
   const wait = (ms) => new Promise((done) => life.setTimeout(done, ms * PACE));
   const rest = (ms) => new Promise((done) => life.setTimeout(done, ms)); // (not part of the scene: at its own length)
-  let pennyX = 46;
 
   const voice = createVoice(life, {
     alone: true,
@@ -80,7 +79,6 @@ export function mount(root, life) {
   const look = (dx, dy) => { penny.querySelector('.eyes').style.translate = `${dx}px ${dy}px`; };
   // `ms`: how long it takes over getting there. A dash, or its own time.
   const stand = (x, size = 1, ms = 1500) => {
-    pennyX = x;
     penny.style.transitionDuration = `${still ? 0 : ms}ms, 1200ms`;
     penny.style.translate = `${x}px ${FLOOR}px`;
     penny.style.scale = size;

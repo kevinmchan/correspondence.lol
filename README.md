@@ -45,6 +45,14 @@ files; they start after the first tap, as browsers require, and a button at the
 top of the game turns them off. Animations are skipped for people who ask their
 device for reduced motion.
 
+At the end of a game that was won, what was kept hops, one after another: the
+hearts of a game won alone, the faces of everyone in one won together.
+
+To the browser all the app's stylesheets are one sheet, so every animation
+has a name of its own: a second animation of the same name anywhere takes the
+place of the first everywhere, and nothing says so. `npm test` checks that no
+two share a name, and that every animation asked for is one there is.
+
 The envelopes on the board are called posts, so that "letters" only ever means
 the letters of a phrase. A double tap on a square guesses a post there.
 
@@ -301,8 +309,8 @@ after any turn in which the screen was tapped. Only the first screen does it.
 
 The scene is silent until the first touch, with Penny's seal beating slowly
 as the sign that there is something to hear. (An older scene of
-Penny's story lived at `/?penny`; that address now opens scene one, and its
-styles in `penny/story.css` are still used by the office.)
+Penny's story lived at `/?penny`; that address now opens scene one, and what
+the film still uses of its styles is in `penny/story.css`.)
 
 ### Scene two: what slow hands make
 
@@ -518,12 +526,14 @@ in the page's own ink and as faintly as the map itself. On the map behind the
 board of a game it is in one of the map's own faint squares, and which square
 changes from game to game. It is never up against the board, where a slip of
 the finger would be a move, nor where Penny is standing, nor on or beside
-anything else on the page; if the page changes under it, it moves; and it is
+anything else on the page, nor on the places already walked that lie below
+the one Penny is at; if the page changes under it, it moves; and it is
 not there at all while a time trial is being run. Nothing points at it, and
 Penny, who gives nothing away, neither looks at it nor makes way for it. It
 glints, now and then, but only once nothing has been pressed for a few
 seconds: like everything else in Penny's world, it is found by whoever is not
-in a hurry. (It can also be reached with the Tab key.)
+in a hurry. (It can also be reached with the Tab key: it is the last thing
+on every page.)
 
 **It is a way through**, and it goes on being one after it has been found.
 The mark stays on every screen, a little plainer for being known, so that
@@ -710,7 +720,9 @@ offline fallback. When `sw.js` itself changes, open pages reload once to pick up
 the new version. The app's version is set in `version.js`: bump it with every
 release. It names the offline cache and is shown at the bottom of the home
 page. When adding a file the app needs offline, also add it to `PRECACHE` in
-`sw.js`.
+`sw.js`: `npm test` fails if anything the page loads is missing from that
+list, or if anything on the list is not there to be fetched (with one file
+missing, nothing at all is kept).
 
 ## Deploy (GitHub Pages)
 

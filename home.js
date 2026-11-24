@@ -9,7 +9,7 @@ import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/a
 import { load, save } from '/shared/identity.js';
 import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
-import { notesHeard, playMail, remembered } from '/penny/mail.js';
+import { playMail, remembered } from '/penny/mail.js';
 import { showKept } from '/penny/tags.js';
 
 // How Penny's asking has gone this visit. It is kept here, outside the screen,
