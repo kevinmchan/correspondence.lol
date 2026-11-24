@@ -379,18 +379,19 @@ export function mount(root, life) {
   });
   // Roll the dice: a pattern for this layer that is likely to sound good.
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // The dice wear the four instruments' colours: round their edge, and in what flies out of them.
+  LAYERS.forEach((kind, index) => el.dice.style.setProperty(`--c${index}`, kind.colour));
   function roll() { // seen: the tile jumps, and small tiles of every layer's colour fly out of it
     if (still) return;
     el.dice.classList.remove('rolled');
     void el.dice.offsetWidth;
     el.dice.classList.add('rolled');
-    const colours = ['#f08a76', '#f8d95a', '#7cc46a', '#2aa198', '#9ad3f7', '#736dd0', '#f3b3e6'];
     for (let i = 0; i < 10; i++) {
       const spark = document.createElement('i');
       spark.className = 'spark';
       const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.5;
       const far = 3 + Math.random() * 2.2;
-      spark.style.setProperty('--c', colours[i % colours.length]);
+      spark.style.setProperty('--c', LAYERS[i % LAYERS.length].colour);
       spark.style.setProperty('--dx', `${(Math.cos(angle) * far).toFixed(2)}rem`);
       spark.style.setProperty('--dy', `${(Math.sin(angle) * far).toFixed(2)}rem`);
       el.dice.append(spark);

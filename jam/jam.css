@@ -78,8 +78,8 @@
 .jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
 /* The dice are the big button, in the middle. Play and pause sit beside them. */
 #jam-dice {
-  /* A dark tile, like the app's own mark, inside a ring of the game's colours
-     that never stops turning (the same ring the portals have). */
+  /* A dark tile, like the app's own mark, inside a ring that never stops
+     turning, made of the colours of the four instruments it writes for. */
   --tile: #22303c;
   position: relative; width: 4.6rem; height: 4.6rem; padding: 0; border: 0; border-radius: 28%; display: grid; place-items: center;
   background: var(--tile); color: #f6f1e7;
@@ -91,12 +91,13 @@
 @property --dice-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 #jam-dice::before {
   content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.28rem; pointer-events: none;
-  background: conic-gradient(from var(--dice-turn), #f08a76, #f8d95a, #7cc46a, #2aa198, #9ad3f7, #736dd0, #f3b3e6, #f08a76);
+  /* the four instruments' own colours (jam.js hands them over), each running into the next */
+  background: conic-gradient(from var(--dice-turn), var(--c0, #f08a76), var(--c1, #f8d95a), var(--c2, #736dd0), var(--c3, #2aa198), var(--c0, #f08a76));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-/* When they are rolled, small tiles of the game's colours fly out of it (jam.js makes them). */
+/* When they are rolled, small tiles of those four colours fly out of it (jam.js makes them). */
 #jam-dice .spark {
   position: absolute; left: 50%; top: 50%; width: 0.55rem; height: 0.55rem; margin: -0.275rem; border-radius: 26%;
   background: var(--c); pointer-events: none; opacity: 0;
