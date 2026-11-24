@@ -470,6 +470,7 @@ async function main() {
         const box = document.querySelector(part).getBoundingClientRect();
         return [box.left, box.top, box.width, box.height].map(Math.round).join(' ');
       }));
+      await sleep(700); // (the page the app opens on rises into place: measured once it has)
       const onFeed = await placed();
       await page.locator('#tab-lobby').click();
       assert.deepEqual(await placed(), onFeed, 'the page shifted when the tab changed');
