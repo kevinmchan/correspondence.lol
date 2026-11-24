@@ -488,6 +488,50 @@ async function main() {
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat']);
     }),
 
+    check('the music maker: saved beats follow the account, to another device and back', {}, async (page) => {
+      // the server, as far as beats go: one profile's list
+      let server = [];
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/beats_(get|put|drop)/, (route) => {
+        const request = route.request();
+        if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const call = request.url().match(/beats_(\w+)/)[1];
+        const args = JSON.parse(request.postData());
+        if (call === 'put') server = [{ code: args.p_code, name: args.p_name, at: Date.now() }, ...server.filter((one) => one.code !== args.p_code)];
+        if (call === 'drop') server = server.filter((one) => one.code !== args.p_code);
+        return route.fulfill({ json: server, headers: cors });
+      });
+      const names = () => page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value));
+      const settled = (count) => page.waitForFunction((n) => document.querySelectorAll('.jam-saved li').length === n, count);
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      for (const pad of [0, 9, 18]) await page.locator('.jam-board .pad').nth(pad).click();
+      await page.locator('#jam-save').click();
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('jam:saved:v1'))?.[0]?.synced === true);
+      assert.deepEqual(server.map((one) => one.name), ['Beat 1'], 'a saved beat goes to the account');
+      await page.locator('.jam-saved input').fill('Morning');
+      await page.locator('.jam-saved input').press('Enter');
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('jam:saved:v1'))?.[0]?.synced === true);
+      assert.deepEqual(server.map((one) => one.name), ['Morning'], 'and so does its new name');
+      // another device of the same account: nothing kept on it yet
+      await page.evaluate(() => { localStorage.removeItem('jam:saved:v1'); localStorage.removeItem('jam:v1'); });
+      await page.reload();
+      await settled(1);
+      assert.deepEqual(await names(), ['Morning'], 'the account’s beats arrive on a device that had none');
+      // a beat saved on yet another device turns up here; one deleted there goes from here
+      const other = 'EQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+      server = [{ code: other, name: 'From my tablet', at: Date.now() }];
+      await page.reload();
+      await page.waitForFunction(() => document.querySelector('.jam-saved input')?.value === 'From my tablet');
+      assert.deepEqual(await names(), ['From my tablet']);
+      // deleted here: gone from the account
+      await page.locator('.jam-saved button[aria-label^="Delete"]').click();
+      await page.locator('dialog.ask button.yes').click();
+      await settled(0);
+      await page.waitForFunction(() => (JSON.parse(localStorage.getItem('jam:gone:v1')) ?? []).length === 0);
+      assert.deepEqual(server, [], 'a beat deleted here is deleted from the account');
+    }),
+
     check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
       const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
       const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });

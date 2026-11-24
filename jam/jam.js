@@ -16,8 +16,11 @@
 // Every row is a note of a five-note scale built on the chord, so whatever is
 // tapped still fits.
 //
-// A beat can be kept, and passed on. Saved beats are a list on this device,
-// each with a name that can be changed. Sharing one hands over a link with the
+// A beat can be kept, and passed on. Saved beats belong to the profile: the
+// list is kept on the server (beats_get, beats_put, beats_drop) and a copy of
+// it on the device, so that it is there at once and when offline, and every
+// device of the same account has the same list. Each has a name that can be
+// changed. Sharing one hands over a link with the
 // whole beat written into it (jam/beat.js): whoever opens it finds it on their
 // own board, ready to play and to change, and nothing of theirs is lost by it.
 //
@@ -25,14 +28,16 @@
 // clock, so the loop keeps exact time however busy the screen is.
 
 import { audio, holdMusic, noise, tone } from '/postmarks/sound.js';
-import { load, save } from '/shared/identity.js';
+import { load, myToken, save } from '/shared/identity.js';
+import { rpc } from '/shared/api.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode, isEmpty } from './beat.js';
 
 const STEPS = 8;
 const ROWS = 7;
 const SAVE_KEY = 'jam:v1'; // the beat on the board
-const SAVED_KEY = 'jam:saved:v1'; // the beats kept: [{ name, code, at, auto }]
+const SAVED_KEY = 'jam:saved:v1'; // the beats kept: [{ name, code, at, auto, synced }]
+const GONE_KEY = 'jam:gone:v1'; // beats deleted here that the server has still to be told of
 const MOST = 30;
 const TEMPOS = [84, 100, 120, 140]; // beats a minute; a step is half a beat
 
@@ -450,6 +455,46 @@ export function mount(root, life) {
     clearTimeout(noteTimer);
     noteTimer = life.setTimeout(() => { el.note.textContent = ''; }, 4000);
   }
+  // --- The same list on every device of the profile -----------------------------------
+  // The device's copy is brought into line with the server's whenever the
+  // screen opens, the app is come back to, and after anything is saved,
+  // renamed or deleted. An entry is `synced` once the server has it as it is
+  // here. So: one that is not synced is sent; one that is synced and no
+  // longer on the server was deleted on another device, and goes from this
+  // one too; and anything the server has that this device has not is added.
+  // "Unsaved beat" is a convenience of this device and is never sent.
+  // Offline, or signed out, the device's own copy simply stands.
+  let syncing = Promise.resolve();
+  const sync = () => {
+    syncing = syncing.then(async () => {
+      let theirs;
+      try {
+        for (const code of Array.isArray(load(GONE_KEY)) ? load(GONE_KEY) : []) {
+          await rpc('beats_drop', { p_token: myToken(), p_code: code });
+          save(GONE_KEY, (load(GONE_KEY) ?? []).filter((one) => one !== code));
+        }
+        theirs = await rpc('beats_get', { p_token: myToken() });
+        for (const one of kept$()) {
+          if (!one.auto && !one.synced) theirs = await rpc('beats_put', { p_token: myToken(), p_code: one.code, p_name: one.name });
+        }
+      } catch {
+        return;
+      }
+      if (life.over || !Array.isArray(theirs)) return;
+      const gone = new Set(Array.isArray(load(GONE_KEY)) ? load(GONE_KEY) : []);
+      const mine = kept$();
+      const sent = new Set(theirs.map((one) => one.code));
+      save(SAVED_KEY, [
+        ...mine.filter((one) => one.auto && !sent.has(one.code)),
+        ...theirs.filter((one) => decode(one.code) && !gone.has(one.code)).map((one) => ({ name: String(one.name).slice(0, 30), code: one.code, at: Number(one.at) || Date.now(), synced: true })),
+        ...mine.filter((one) => !one.auto && !one.synced && !sent.has(one.code)), // saved since it asked
+      ]);
+      showSaved();
+    });
+    return syncing;
+  };
+  life.on(document, 'visibilitychange', () => { if (!document.hidden) sync(); });
+
   // Put a beat on the board. What was there is not lost: if it was not
   // already among the saved beats, it is put by as "Unsaved beat" (one of
   // those at a time: the next takes its place).
@@ -518,7 +563,8 @@ export function mount(root, life) {
       name.addEventListener('change', () => {
         const to = name.value.trim() || one.name;
         name.value = to;
-        save(SAVED_KEY, kept$().map((each) => (each.code === one.code ? { ...each, name: to, auto: false } : each)));
+        save(SAVED_KEY, kept$().map((each) => (each.code === one.code ? { ...each, name: to, auto: false, synced: false } : each)));
+        sync();
       });
       name.addEventListener('keydown', (event) => { if (event.key === 'Enter') name.blur(); });
       const send = document.createElement('button');
@@ -536,7 +582,9 @@ export function mount(root, life) {
         const current = kept$().find((each) => each.code === one.code)?.name ?? one.name;
         if (!(await ask(`Delete “${current}”?`, { detail: 'It will be gone from this device. A link you have shared will still work.', yes: 'Delete', danger: true }))) return;
         save(SAVED_KEY, kept$().filter((each) => each.code !== one.code));
+        if (!one.auto) save(GONE_KEY, [...new Set([...(load(GONE_KEY) ?? []), one.code])].slice(-MOST));
         showSaved();
+        sync();
       });
       li.append(open, name, send, bin);
       return li;
@@ -556,8 +604,10 @@ export function mount(root, life) {
     let n = 1;
     while (taken.has(`Beat ${n}`)) n += 1;
     save(SAVED_KEY, [{ name: `Beat ${n}`, code, at: Date.now() }, ...list.filter((one) => one.code !== code)].slice(0, MOST));
+    save(GONE_KEY, (load(GONE_KEY) ?? []).filter((one) => one !== code)); // (saved again after being deleted: it is wanted)
     say(`Saved as “Beat ${n}”. Tap its name to change it.`);
     showSaved();
+    sync();
   });
   el.share.addEventListener('click', () => {
     if (!isEmpty(now())) share(encode(now()));
@@ -581,6 +631,7 @@ export function mount(root, life) {
     }
   }
   showSaved();
+  sync();
 
   // The app's background music stands aside while this screen is up.
   holdMusic(true);
