@@ -238,9 +238,33 @@ last post is somebody's ordinary mail. Nothing already heard is lost.
 ### Seeing the film again
 
 Once the first places have been walked, a tap on Penny on the home page plays
-the film again from scene one (`/?office`, `penny/office.js`). The scene
-begins by itself, in silence until the first touch, with Penny's seal beating
-slowly as the sign that there is something to hear. (An older scene of
+the film again from scene one (`/?office`, `penny/office.js`).
+
+The story is gone through by swiping up. The scene is a handful of screens,
+and none of them moves on by itself: a swipe up turns to the next at once (the
+up arrow and a wheel do the same), and a swipe up from the last, once one
+square of the map is lit, goes through to the walk.
+
+Each screen is a loop. It plays, and plays again, for as long as it is left
+up, and no two turns of it are quite alike: the small differences are the
+story. Nothing is lost by swiping early, and whoever stays is told more.
+
+| Screen | Every turn | What changes |
+| --- | --- | --- |
+| The shelves | A letter lights, leaves its pigeonhole and goes into the map; Penny watches. | There is one fewer each time. Penny gets up for the last, and hums after it. Then nothing leaves, and Penny looks along the shelves anyway. |
+| The call | Penny, under the map, looks up at it. | It calls; calls louder, and sags; calls so quietly it is hardly a call; then only looks, for less time, less often. |
+| The sound | One far-off sound out of the map. | First Penny only starts at it. Then it answers under its breath. Then it goes and stands under the square it came from, which warms, and answers as if it were known. |
+| You | Penny looks from the map to you. | It turns; steps towards you, and a square lights; after that it only asks, coming nearer. |
+
+Nobody is told any of this in words. Whoever is caught waiting on the first
+screen is shown by Penny, between turns of the loop: it looks out at them, then
+down at the floor, and a fingertip of light slides up the room from there with
+Penny's eyes on it, the room giving a little as it does under a real finger.
+That is after the first letter has gone, then after every second turn, and
+after any turn in which the screen was tapped. Only the first screen does it.
+
+The scene is silent until the first touch, with Penny's seal beating slowly
+as the sign that there is something to hear. (An older scene of
 Penny's story lived at `/?penny`; that address now opens scene one, and its
 styles in `penny/story.css` are still used by the office.)
 

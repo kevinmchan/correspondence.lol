@@ -132,6 +132,50 @@ async function main() {
       await page.waitForSelector('.home-map');
     }),
 
+    check('scene one: every screen loops, no two turns alike; a swipe up goes on; Penny shows how to whoever waits on the first', {}, async (page) => {
+      await page.goto(`${origin}/?office`);
+      await page.waitForSelector('.office[data-screen="0"]');
+      const where = () => page.evaluate(() => { const it = document.querySelector('.office'); return [Number(it.dataset.screen), Number(it.dataset.turn)]; });
+      const turned = (screen, turn, timeout = 40000) => page.waitForSelector(`.office[data-screen="${screen}"][data-turn="${turn}"]`, { timeout });
+      const left = () => page.locator('.o-leaving:not(.gone)').count();
+      const swipe = async (fromY, toY, x = 195) => {
+        await page.mouse.move(x, fromY);
+        await page.mouse.down();
+        await page.mouse.move(x, toY, { steps: 6 });
+        await page.mouse.up();
+      };
+      assert.equal(await left(), 5, 'the mail on the shelves at the start');
+      await page.waitForSelector('.o-touch', { state: 'attached', timeout: 9000 }); // caught waiting: shown
+      assert.equal(await left(), 4, 'one letter gone after one turn of the loop');
+      await swipe(300, 600); // down: not the way
+      await swipe(600, 590); // a tap
+      await sleep(300);
+      assert.equal((await where())[0], 0, 'something other than a swipe up moved it on');
+      // left alone it only loops, and each turn another letter has gone
+      await turned(0, 2);
+      assert.equal(await left(), 3);
+      assert.equal((await where())[0], 0, 'the scene moved on by itself');
+
+      await swipe(600, 300);
+      await turned(1, 0, 2000);
+      assert.equal(await page.locator('.o-touch').count(), 0, 'still being shown how after doing it');
+      await turned(1, 2);
+      assert.equal(await left(), 0, 'mail still on the shelves when Penny is the last one left');
+      assert.equal(await page.locator('.o-touch').count(), 0, 'shown how on a screen that is not the first');
+      assert.equal(await page.locator('.p-penny.low').count(), 1, 'by the third call it has sagged');
+
+      await page.keyboard.press('ArrowUp');
+      await turned(2, 2);
+      await page.waitForSelector('.o-map rect.near'); // it has placed the sound
+      await swipe(600, 300);
+      await turned(3, 0, 2000);
+      assert.equal(await page.locator('.o-first.lit').count(), 0);
+      await turned(3, 1);
+      assert.equal(await page.locator('.o-first.lit').count(), 1, 'the square lit');
+      await swipe(600, 300);
+      await page.waitForURL(/\?walk/, { timeout: 5000 });
+    }),
+
     check('home, first visit: Penny alone, not a word, and the way through the portal', {}, async (page, { pal, words }) => {
       await page.goto(`${origin}/?home`);
       await sleep(2700);
