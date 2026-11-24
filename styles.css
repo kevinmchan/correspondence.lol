@@ -998,6 +998,13 @@ dialog.ask .buttons .yes.danger:active { box-shadow: 0 0.04rem 0 color-mix(in sr
    Two chunky tiles side by side, like the pause menu of a game: the one that
    is up is pressed in and lit in its own colour. The feed's count sits on its
    tab the way a count sits on an inventory slot. */
+/* With tabs the page hangs from the top and is not centred: the mark, the name
+   and the tabs stay exactly where they are whichever tab is up, however much
+   or little is under them. (Centred, a short feed and a long lobby put them
+   at different heights.) The room for a scrollbar is kept either way, so that
+   one coming or going does not nudge the page sideways. */
+main:has(> .stack > .tabs:not([hidden])) { justify-content: flex-start; }
+html:has(.tabs:not([hidden])) { scrollbar-gutter: stable; }
 .tabs { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .tab {
   position: relative; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
