@@ -532,15 +532,27 @@ async function main() {
       assert.deepEqual(server, [], 'a beat deleted here is deleted from the account');
     }),
 
-    check('the taste test: a swipe turns the card, a double tap picks once both sides have been heard, and every pick is kept with what the model said', {}, async (page) => {
+    check('the radio: a swipe tunes to the other station, a double tap keeps one once both have been heard, and the experiment stays behind it', {}, async (page) => {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('#jam-lab');
       await page.locator('#jam-lab').click();
       await page.waitForURL(/\/jam\/\?taste/);
       await page.waitForSelector('.taste-card');
       await sleep(700); // the screen slides in
-      const box = await page.locator('.taste-card').boundingBox();
+      const box = await page.locator('.radio .display').boundingBox(); // (its knob and buttons are pressed, not swiped)
       const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+      // all of the set is on the screen, and nothing behind it is the white of a page
+      const set = await page.evaluate(() => {
+        const parts = [...document.querySelectorAll('.radio .body, .radio .antenna, .radio .handle, .radio .feet')].map((part) => part.getBoundingClientRect());
+        const ground = getComputedStyle(document.querySelector('.radio-world')).backgroundImage;
+        return { top: Math.min(...parts.map((r) => r.top)), bottom: Math.max(...parts.map((r) => r.bottom)), left: Math.min(...parts.map((r) => r.left)), right: Math.max(...parts.map((r) => r.right)), wide: innerWidth, high: innerHeight, ground, scrolls: document.scrollingElement.scrollHeight > innerHeight };
+      });
+      assert.ok(set.top >= 0 && set.left >= 0 && set.right <= set.wide && set.bottom <= set.high, `the radio is not all on the screen: ${JSON.stringify(set)}`);
+      assert.equal(set.scrolls, false, 'the page scrolls');
+      assert.match(set.ground, /gradient/, 'the radio stands in the world');
+      assert.equal(await page.locator('.radio .plate').textContent(), 'Penny’s Radio');
+      const mood = () => page.evaluate(() => document.querySelector('.pal')?.dataset.mood);
+      await page.waitForFunction(() => document.querySelector('.pal')?.dataset.mood === 'hopeful', null, { timeout: 6000 }); // Penny shows how: a swipe
       const swipe = async () => {
         await page.mouse.move(x + 60, y);
         await page.mouse.down();
@@ -559,12 +571,15 @@ async function main() {
       const was = await turned();
       await swipe();
       assert.equal(await turned(), !was, 'a swipe did not turn the card');
+      assert.equal(await mood(), 'thrilled', 'Penny is not delighted that it was done');
       // too soon: neither side has been listened to
       await sleep(300);
       await doubleTap();
       await sleep(200);
       assert.equal((await kept()).trials.length, 0, 'a pick counted before both sides had been heard');
-      assert.match(await page.locator('#taste-note').textContent(), /Listen to/);
+      assert.match(await page.locator('#taste-note').textContent(), /Tune to|Stay on/);
+      assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
+      assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
       // listened to both: now it counts
       const pickOne = async () => {
         await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
@@ -576,6 +591,7 @@ async function main() {
         return up;
       };
       const first = await pickOne();
+      assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: Penny has shown all there is');
       let data = await kept();
       assert.equal(data.trials.length, 1);
       assert.equal(data.trials[0].pick, first, 'the side that was up is the one picked');
@@ -584,7 +600,16 @@ async function main() {
       assert.equal(data.current.reigning, first);
       assert.match(data.current.phantom, /^[A-Za-z0-9_-]{39}$/, 'a phantom was made beside the challenger');
       assert.equal(await page.locator('#lab-picks').textContent(), '1');
-      assert.equal(await page.locator('.taste-card .crown:not([hidden])').count(), 1, 'the reigning loop wears the crown');
+      assert.equal(await page.locator('#lab-picks').isVisible(), false);
+      // the station that was kept says so when it is tuned in
+      if (((await turned()) ? 'back' : 'front') !== first) await swipe();
+      assert.match(await page.locator('#radio-tag').textContent(), /Kept 1 of 5/);
+      // behind the radio: the experiment, when asked for
+      await page.locator('#taste-behind-open').click();
+      assert.equal(await page.locator('#lab-picks').isVisible(), true);
+      assert.match(await page.locator('#lab-verdict').textContent(), /9 to go/);
+      await page.locator('#taste-behind-close').click();
+      assert.equal(await page.locator('#lab-picks').isVisible(), false);
       // by keyboard, and by the buttons
       await page.locator('.taste-card').focus();
       const before = await turned();

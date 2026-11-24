@@ -4,7 +4,7 @@
 // tempo (jam/beat.js). This is what a beat sounds like: the instruments, the
 // four chords the loop goes through, and the clockwork that writes each step
 // onto the sound engine's clock a little ahead of time. The music maker
-// (jam.js) plays the board through it, and the taste test (taste.js) plays
+// (jam.js) plays the board through it, and the radio (taste.js) plays
 // whichever of its two loops is showing.
 
 import { audio, holdMusic, noise, tone } from '/postmarks/sound.js';

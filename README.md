@@ -346,7 +346,7 @@ one that is up is pressed in and lit.
   the tab. Games that are over, games you are waiting on someone else in, and
   phrases you wrote yourself are left out.
 - **Lobby**: everything else. Your account, your rooms, and the tiles for
-  opening or joining a room, playing solo and making music.
+  opening or joining a room, playing solo, making music and Penny's Radio.
 
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
@@ -408,26 +408,67 @@ deleted on another device goes from this one too.
 What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, and any way to choose the chords.
 
-## The taste test
+## Penny's Radio
 
-`/jam/?taste` (`jam/taste.js`, reached by the flask at the top of the music
-maker) is an experiment: can a model of what you like in a loop predict your
-picks, and can that be shown to be more than chance?
+`/jam/?taste` (`jam/taste.js`), "Penny's Radio" on the home page's menu and a
+radio at the top of the music maker, is a radio to whoever is using it, and an
+experiment behind that: can a model of what you like in a loop predict your
+choices, and can that be shown to be more than chance?
 
-**Giving labels.** One card with a loop on each side, A on the front and B on
-the back. A swipe across the card turns it over, and the side that is up is
-the one playing. A double tap picks the side that is up. The loop picked
-stays, wearing a crown, and a new challenger takes the other side: something
-new, or the reigning loop changed a little, and the longer a loop has reigned
-the likelier the second, since a favourite is best tested by its near
-relations. A loop that wins five times running retires undefeated to a hall
-of fame under the card (a tap on one opens it in the music maker) and two
-new loops start again, so that no early favourite sits there for ever
-winning picks that teach the model nothing. Two
-things are there for the experiment's sake: a pick does not count until both
-sides have been heard for a second and a half each (a light on each side
-shows it), and a coin decides which side is up when a new pair arrives. The
-card also answers to the arrow keys and Enter, and to buttons under it.
+**The set.** A small portable radio standing on the map: a handle, an aerial,
+a plate with its name, a dial, a display, a readout, and along the bottom a
+tuning knob, play and pause, five presets and Keep. It is drawn flat and
+given depth the way a drawing is: a solid edge down its right side and along
+its underside, a shadow on the ground, a slight lean. All of it is always on
+the screen, at any size (everything on it is sized from its own width), and
+what is behind it is never the white of a page: it is the map, as everywhere,
+at dusk.
+
+**Playing it.** Two stations are on the dial at a time, each a loop, each at a
+place on the dial worked out from the loop itself (so a loop is always the
+same station). A swipe across the set, or a press on the knob, tunes from one
+to the other, with a moment of static; the needle crosses the dial, the knob
+turns, and the readout gives the station in its own colour. A double tap, or
+Keep, keeps the station that is tuned in. It stays on the dial, marked "Kept 2
+of 5", and a new station comes in beside it: something new, or the kept one
+changed a little, and the longer a station has been kept the likelier the
+second, since a favourite is best tested by its near relations. A station
+kept five times running is saved to a preset (a press on one opens it in the
+music maker), and two new stations take the dial, so that no early favourite
+sits there for ever.
+
+**Penny shows how.** Nothing is said. As on the walk, one thing is shown at a
+time, and the next waits until that has been done. That a swipe tunes: Penny
+comes up, looks at the radio and back at you, and a fingertip of light slides
+across the display, again every few seconds until you do it. That a station
+has to be listened to: Penny shuts its eyes and listens with you while the
+signal fills, nods when it has, and shows the swipe again for the other. That
+two taps keep one: the fingertip taps twice. Whatever is done is Penny's
+delight. After the first station is kept it is taught (on this device; the
+sheet behind the radio can ask for it again), and Penny only keeps time, one
+small hop at the top of each bar, the same whatever is playing: it gives no
+opinion of a station. It nods when one is kept, jumps for a preset, and
+shakes its head at a station kept before both have been heard. It hums once,
+before the radio is on, and not after.
+
+Two things are there for the experiment's sake: a station cannot be kept
+until both have been heard for a second and a half each (three bars of signal
+fill as one is listened to, and its mark on the dial fills in), and a coin
+decides which is tuned in when a new pair arrives. The set also answers to
+the arrow keys and Enter.
+
+**The display is lit by the loop.** It shows the station as the board, a dot
+for every note. Four lamps hang over it, one for each instrument, and each
+throws a beam when its instrument sounds. A note that sounds jumps and flares,
+and a ring spreads from it; a bar of light crosses with the beat; the display
+glows in the colour of what has just sounded, harder on the beat; and at the
+top of every bar a gleam runs across it. At rest the notes twinkle. Both
+stations are lit by the same rules. With reduced motion only the bar moves.
+
+**Behind the radio.** Nothing on the face of the radio says it is an
+experiment. The flask at the top opens a sheet over it with the lab notes:
+where the test stands, the numbers, how it works, the data to copy out, and
+starting over.
 
 **The model** (`jam/taste-model.js`). A loop is turned into fifteen numbers:
 tempo, how busy each instrument is, kick, snare and hats, how much falls off
@@ -451,16 +492,7 @@ a stake reaches ×20 less than one time in twenty against a fair coin, however
 long one plays and however often one looks, so ×20 is significance at the 5%
 level with no number of picks fixed beforehand.
 
-**The picture is lit by the loop.** Each side shows its loop as the board,
-a dot for every note. Four lamps hang over it, one for each instrument, and
-each throws a beam when its instrument sounds. A note that sounds jumps and
-flares, and a ring spreads from it; a bar of light crosses with the beat; the
-edge of the card glows in the colour of what has just sounded, harder on the
-beat; and at the top of every bar a gleam runs across the card. At rest the
-notes twinkle. Both sides are lit by the same rules, so the lights favour
-neither. With reduced motion only the bar of light moves.
-
-The lab notes under the card show where it stands after every pick: the
+The lab notes show where it stands after every choice: the
 stake and a bar filling towards ×20, how often the model called the pick
 right, how often habit alone would have, how often the real challenger beat
 the phantom, and what the model thinks you go for, in words. The picks are

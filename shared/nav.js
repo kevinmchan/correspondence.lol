@@ -1,7 +1,7 @@
 // The app's one page, and the moves between its screens.
 //
 // The screens: scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), a room
-// (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its taste test (/jam/?taste). Each is a template in the page and a module with a
+// (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its radio (/jam/?taste). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
 // screens can be on stage together for a moment: the one being left slides
