@@ -39,7 +39,11 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Nor does it play before the film, which is what the bare address opens
+    // on until the film so far has been seen through (shared/nav.js).
+    var film = false;
+    try { film = !location.search && !location.hash && localStorage.getItem('penny:walked:v1') !== 'true'; } catch (e) {}
+    if (film || (location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -415,7 +419,8 @@
   <template id="screen-office">
     <!-- Scene one: the Dead Letter Office. No words: see penny/office.js. -->
     <main class="office">
-      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <!-- The one thing here that is not the scene: a door, to the rooms and the friends in them. -->
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
       <svg class="office-stage penny-art" viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Penny, alone in a sorting room at night">
         <path class="o-lamp-light" d="M100 16 L20 262 L180 262 Z"/>
         <path class="o-lamp" d="M100 -600 V10 M92 16 q8 -9 16 0 z" stroke="#3b4d63" stroke-width="1.5"/>

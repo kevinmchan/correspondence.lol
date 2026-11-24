@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: home (/), opening and joining a room (/?open, /?join), the map walked with Penny and its story (/?walk, /?penny), a room
+// The screens: scene one of the film, where the app opens (/?office), home (/, and /?home), opening and joining a room (/?open, /?join), the map walked with Penny and its story (/?walk, /?penny), a room
 // (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -10,6 +10,7 @@
 // The address bar and the browser's back button work as they always did, and
 // every address still opens directly (each path serves this same page).
 
+import { hasBegun, hasWalked } from '/penny/penny.js';
 import { play } from '/postmarks/sound.js';
 import { newLife } from './screen.js';
 
@@ -146,5 +147,17 @@ document.addEventListener('close', (event) => {
   if (event.target instanceof HTMLDialogElement && !moving) play('shut');
 }, true);
 
-// The first screen: whichever one the address asks for.
-move(new URL(location.href), { announce: false });
+// The first screen: whichever one the address asks for. But the app is a film
+// before it is anything else, so opening it at its bare address starts the
+// film, or takes it up where it was left: scene one for someone new
+// (penny/office.js), the walk for someone part of the way along it. Only when
+// the film so far has been seen through does the app open on the home page.
+// Inside the app that same address is always the home page, which is how the
+// film's door to the rooms, and every way back, still leads there; and
+// /?home asks for it by name.
+const opening = new URL(location.href);
+if (isHome(opening.pathname) && !opening.search && !opening.hash && !hasWalked()) {
+  opening.search = hasBegun() ? '?walk' : '?office';
+  history.replaceState(null, '', opening);
+}
+move(opening, { announce: false });

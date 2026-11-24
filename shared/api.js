@@ -28,7 +28,7 @@ export async function rpc(name, args, signIn = null) {
   } catch (failure) {
     // This device was signed out of its profile (it became an account, or was
     // signed out here): the home page offers the ways back in.
-    if (failure.message === SIGNED_OUT && location.pathname !== '/') location.replace('/');
+    if (failure.message === SIGNED_OUT && location.pathname !== '/') location.replace('/?home');
     throw failure;
   }
 }

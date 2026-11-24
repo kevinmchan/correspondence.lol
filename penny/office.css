@@ -26,3 +26,7 @@
 }
 @keyframes o-took { 0% { fill: #f8d95a; filter: brightness(1.4); } 100% { fill: #2c3a47; filter: none; } }
 @keyframes o-first { 0%, 100% { filter: drop-shadow(0 0 4px rgb(248 217 90 / 0.8)); } 50% { filter: drop-shadow(0 0 9px rgb(248 217 90 / 1)); } }
+
+/* The door to the rooms: there, but no part of the scene, so it keeps quiet. */
+.office .office-door { background: transparent; color: #8a97a3; opacity: 0.55; }
+.office .office-door:hover, .office .office-door:focus-visible { opacity: 1; }

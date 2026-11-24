@@ -18,6 +18,16 @@ A static, no-build progressive web app served from the repository root at
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
+## The app is a film first
+
+Opening the app at its bare address starts the film, not a menu
+(`shared/nav.js`): scene one, the Dead Letter Office (`/?office`), for someone
+new; the walk (`/?walk`), where it was left, for someone part of the way along
+it. Only once the film so far has been seen through does the app open on the
+home page. The home page, with the rooms and the friends in them, is reached
+from inside the film by a quiet door in the corner of scene one, and by every
+way back; `/?home` asks for it by name.
+
 ## Run locally
 
 ```sh
