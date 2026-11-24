@@ -78,33 +78,46 @@
 .jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
 /* The dice are the big button, in the middle. Play and pause sit beside them. */
 #jam-dice {
-  /* A tile like the app's other tiles: flat, in the game's own yellow, with a
-     lip. No shine and no glow. (Red is for the things that start and send.) */
-  --tile: #f8d95a;
-  width: 4.6rem; height: 4.6rem; padding: 0; border: 0; border-radius: 28%; display: grid; place-items: center;
-  background: var(--tile); color: #22303c;
-  box-shadow: 0 0.26rem 0 color-mix(in srgb, var(--tile) 62%, #000), inset 0 -0.24rem 0 rgb(0 0 0 / 0.1);
+  /* A dark tile, like the app's own mark, inside a ring of the game's colours
+     that never stops turning (the same ring the portals have). */
+  --tile: #22303c;
+  position: relative; width: 4.6rem; height: 4.6rem; padding: 0; border: 0; border-radius: 28%; display: grid; place-items: center;
+  background: var(--tile); color: #f6f1e7;
+  box-shadow: 0 0.26rem 0 #0c1217;
   transition: transform 70ms ease, box-shadow 70ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-#jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--tile) 62%, #000), inset 0 -0.24rem 0 rgb(0 0 0 / 0.1); }
-/* Its border shimmers: one glint of light going round the edge of the tile,
-   slowly, and a second fainter one opposite. Only the edge: the face stays flat. */
+#jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 #0c1217; }
 @property --dice-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-#jam-dice { position: relative; }
 #jam-dice::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.2rem; pointer-events: none;
-  background: conic-gradient(from var(--dice-turn),
-    #d9a92a 0deg, #d9a92a 40deg, #fffdf0 78deg, #d9a92a 116deg,
-    #d9a92a 220deg, #fbeeb0 258deg, #d9a92a 296deg, #d9a92a 360deg);
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.28rem; pointer-events: none;
+  background: conic-gradient(from var(--dice-turn), #f08a76, #f8d95a, #7cc46a, #2aa198, #9ad3f7, #736dd0, #f3b3e6, #f08a76);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-@media (prefers-reduced-motion: no-preference) {
-  #jam-dice::before { animation: dice-shimmer 3.6s linear infinite; }
+/* When they are rolled, small tiles of the game's colours fly out of it (jam.js makes them). */
+#jam-dice .spark {
+  position: absolute; left: 50%; top: 50%; width: 0.55rem; height: 0.55rem; margin: -0.275rem; border-radius: 26%;
+  background: var(--c); pointer-events: none; opacity: 0;
+  animation: dice-spark 620ms cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
 }
-@keyframes dice-shimmer { to { --dice-turn: 360deg; } }
+@media (prefers-reduced-motion: no-preference) {
+  /* Never quite still: the ring turns, the tile breathes, and every few seconds the dice give a rattle. */
+  #jam-dice::before { animation: dice-ring 2.6s linear infinite; }
+  #jam-dice:not(:active) { animation: dice-breathe 1.5s ease-in-out infinite; }
+  #jam-dice svg { animation: dice-rattle 3.2s ease-in-out infinite; }
+  /* Rolled: the tile jumps, the dice tumble right over, and the ring whips round. */
+  #jam-dice.rolled { animation: dice-pop 520ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+  #jam-dice.rolled svg { animation: dice-tumble 560ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+  #jam-dice.rolled::before { animation-duration: 0.45s; }
+}
+@keyframes dice-ring { to { --dice-turn: 360deg; } }
+@keyframes dice-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.05; } }
+@keyframes dice-rattle { 0%, 78%, 100% { rotate: 0deg; } 82% { rotate: -14deg; } 86% { rotate: 12deg; } 90% { rotate: -8deg; } 94% { rotate: 5deg; } }
+@keyframes dice-pop { 0% { scale: 0.86; } 45% { scale: 1.16; } 100% { scale: 1; } }
+@keyframes dice-tumble { from { rotate: 0deg; scale: 0.7; } 60% { scale: 1.2; } to { rotate: 360deg; scale: 1; } }
+@keyframes dice-spark { 0% { opacity: 1; translate: 0 0; rotate: 0deg; scale: 1; } 100% { opacity: 0; translate: var(--dx) var(--dy); rotate: 200deg; scale: 0.5; } }
 #jam-dice:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 #jam-dice svg { width: 2.3rem; height: 2.3rem; }
 @media (prefers-reduced-motion: no-preference) {
