@@ -259,7 +259,8 @@ story. Nothing is lost by swiping early, and whoever stays is told more.
 Nobody is told any of this in words. Whoever is caught waiting on the first
 screen is shown by Penny, between turns of the loop: it looks out at them, then
 down at the floor, and a fingertip of light slides up the room from there with
-Penny's eyes on it, the room giving a little as it does under a real finger.
+Penny's eyes on it. Nothing on the screen moves under a swipe, and the page
+does not scroll.
 That is after the first letter has gone, then after every second turn, and
 after any turn in which the screen was tapped. Only the first screen does it.
 
