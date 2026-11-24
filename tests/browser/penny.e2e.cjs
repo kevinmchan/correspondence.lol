@@ -1037,6 +1037,359 @@ async function main() {
       assert.equal((await h.pal()).mood === 'listening', false, 'Penny is not still listening to a post on a screen that has gone');
       assert.equal(await page.evaluate(() => document.documentElement.classList.contains('pal-tinted')), false, 'the home page is not left coloured');
     }),
+    // A room's two worlds (room/worlds.js). A portal in the room's top bar is the way into its serious world, the same
+    // room as a drama at night; inside, the cartoon breaks back through now and then, while the portal is in sight; the
+    // portal is the way back. Every visit begins outside. The worlds change paint and never geometry, never more than 3
+    // times a second, and with reduced motion only by a slow cross-fade.
+    check('two worlds: a portal in the room, outside by default and after a reload; stepping in opens the seam from the portal and the drama is seen to sweep in from there; every box the same in both worlds and between them; typing and focus carry through, and the page is not copied again for it; never more than 3 changes a second inside; stepping out passes back through, seen the same way, and stops everything', { storage: ACCOUNT }, async (page) => {
+      const w = await worldsHelpers(page, { clock: true });
+      const portal = page.locator('.screen-room > header #worlds');
+      assert.equal(await portal.isVisible(), true, 'the portal is there for a member inside');
+      assert.equal(await portal.getAttribute('aria-pressed'), 'false', 'outside to begin with');
+      assert.equal(await portal.getAttribute('aria-label'), 'The other world', 'named for screen readers');
+      assert.equal((await portal.innerText()).trim(), '', 'and no words to read on it');
+      assert.equal(await portal.getAttribute('title'), null, 'nor a tooltip');
+      const size = await portal.boundingBox();
+      assert.ok(size.width >= 44 && size.height >= 44, `the portal is big enough for a finger (${size.width} by ${size.height})`);
+      assert.ok(size.y + size.height <= 844 && size.y >= 0, 'and on the screen without scrolling');
+      assert.match(await portal.evaluate((el) => getComputedStyle(el, '::before').backgroundImage), /conic-gradient/, 'a ring of light, as the home page\'s portal is');
+      assert.equal(await w.turning(), false, 'and still, as the room is, until somebody passes through it');
+      const light = await w.tint();
+      await w.watch();
+      await sleep(3000);
+      assert.deepEqual(await w.seen(), [], 'outside, nothing crosses');
+      assert.equal(await w.world(), 'playful');
+      assert.equal(await w.left(), 0, 'and nothing of the other world is there');
+      const calm = await w.boxes();
+      assert.ok(calm.length > 10, 'the things to press were found');
+      const heard = await w.hear();
+      const liveCalm = await w.live();
+      const cartoon = await page.screenshot(); // (the cartoon whole, to tell the worlds apart by part-way)
+
+      // stepping in: the seam opens from the portal, and its two edges sweep apart. (The page's clock is held still
+      // at the press and run on by hand, to look at the passage part-way, whatever else this machine is doing.)
+      await w.record();
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 5000)); // (it jumps there and holds: far enough ahead of a busy machine)
+      await page.evaluate(() => document.querySelector('.screen-room > header #worlds').click());
+      const pressed = await w.pressed();
+      assert.equal(await portal.getAttribute('aria-pressed'), 'true', 'pressed: inside is where the person has asked to be');
+      assert.equal(await portal.getAttribute('aria-label'), 'The other world', 'and its name stays the same');
+      const first = (await w.seen())[0];
+      assert.ok(first && first.at - pressed < 2000, `the first crossing (the step in) comes at once (after ${Math.round(first?.at - pressed)} ms)`);
+      assert.equal(first.world, 'split', 'by a seam');
+      assert.equal(await w.passage(), 'in');
+      const going = { at: 0, photo: 600, seen: [] };
+      await w.partWay(going, 300);
+      await page.clock.runFor(100);
+      going.at = 400;
+      const centre = await w.centre();
+      const part = await w.seam();
+      assert.ok(part && Math.hypot(part.x - centre.x, part.y - centre.y) < 2, `the seam is drawn out of the portal (${JSON.stringify(part)}, the portal at ${JSON.stringify(centre)})`);
+      assert.ok(part.spread > 0.05 && part.spread < Math.PI, `its edges part-way apart (${part.spread.toFixed(2)})`);
+      assert.equal(await w.turning(), true, 'the portal\'s ring turns while somebody passes through it');
+      // the other world is an inert copy laid over the page, after it, hidden from screen readers; and taps go through
+      assert.deepEqual(await w.copy(), { hidden: 'true', inert: true, pointer: 'none', after: true, decoration: true, through: true, ids: true }, 'the copy is inert, hidden and never pressed, after the page; and so is all that is drawn over it');
+      assert.equal(await w.live(), liveCalm, 'nothing more is there to be announced');
+      w.same(calm, await w.boxes(), 'stepping in');
+      assert.equal(await w.hear(), heard, 'a screen reader hears the same room on the way through');
+      await w.partWay(going, 600);
+      await w.partWay(going, 900);
+      await page.clock.resume();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.screen-room').dataset.passage, null, { timeout: 4000 });
+      w.sweep(await w.edges(), centre, 'in');
+      assert.equal(await page.evaluate(() => document.querySelectorAll('.worlds-copy, .worlds-splice').length), 0, 'once the drama has it all, the copy and the seam are gone');
+      assert.equal(await page.evaluate(() => [...document.querySelectorAll('.screen-room > :is(header, main)')].every((part) => part.dataset.paint === 'serious')), true);
+      const drama = await page.screenshot();
+      await w.judge(going, 'in', cartoon, drama);
+      const film = (await w.holed()).film;
+      assert.deepEqual([film.inner, film.outer], [0, 3], `inside, the film over the drama leaves the portal out too (${JSON.stringify(film)})`);
+      assert.equal(await w.turning(), false, 'once through, the portal is still again');
+      assert.equal(await w.tint(), '#050505', `the browser's own bars go dark with the drama (from ${light})`);
+      w.same(calm, await w.boxes(), 'inside');
+      assert.equal(await w.hear(), heard, 'a screen reader hears the same room, inside');
+
+      // inside, with the portal in sight, the cartoon breaks back through; typing goes on through it, keeping the focus
+      // and everything typed, and the page is not copied again for it. Then the person goes down to the chat, where the
+      // portal (the way out) is out of sight: what the cartoon was doing goes back, gently, with no cut, and nothing
+      // breaks through again while it is out of sight.
+      const field = page.locator('.screen-room > main .chat form input');
+      await field.evaluate((el) => el.focus({ preventScroll: true }));
+      assert.equal(await w.inSight(), true, 'the portal is in sight, at the top');
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world !== 'serious', null, { timeout: 15000 });
+      assert.equal(await w.passage(), undefined, 'a crossing, not a passage');
+      w.same(calm, await w.boxes(), 'the cartoon breaking through');
+      await w.fills();
+      await page.keyboard.type('across ', { delay: 60 });
+      const down = await page.evaluate(() => performance.now());
+      await w.scroll('chat');
+      assert.equal(await w.inSight(), false, 'down at the chat, the portal is out of sight');
+      const gone = await page.evaluate(() => performance.now()); // (by now the page has seen it go)
+      await page.keyboard.type('the seam', { delay: 60 });
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.worlds-copy'), null, { timeout: 6000 });
+      const since = (await w.seen()).filter((one) => one.at > gone);
+      assert.ok(since.every((one) => one.world === 'split' || one.world === 'serious'), `the cartoon went back by a seam, with no cut (${JSON.stringify((await w.seen()).filter((one) => one.at > down).map((one) => [Math.round(one.at - down), one.world]))})`);
+      assert.equal(await field.inputValue(), 'across the seam', 'what was typed is all there');
+      assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.screen-room > main .chat form input')), true, 'and the field still has the focus');
+      assert.equal(await w.filled(), 0, 'and the page was not copied again for the typing, nor for the room\'s poll putting back what was there');
+      assert.equal(await page.evaluate(() => document.querySelectorAll('.worlds-copy, .worlds-splice').length), 0, 'the drama has it all again');
+      assert.deepEqual(await w.timers(), [], 'and while the portal is out of sight, nothing waits to break through');
+      w.same(calm, await w.boxes(), 'the drama back');
+      assert.equal(await w.hear(), heard, 'a screen reader hears the same room');
+
+      // stepping out passes back through: the seam opens from the portal again and sweeps back the other way (back up
+      // where the portal is; the clock held still again at the press)
+      await w.scroll('top');
+      await w.record();
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 5000)); // (no sooner than 15 s will the cartoon break through again)
+      await page.evaluate(() => document.querySelector('.screen-room > header #worlds').click());
+      const out = await w.pressed();
+      const there = await w.centre();
+      assert.equal(await portal.getAttribute('aria-pressed'), 'false');
+      assert.equal(await portal.getAttribute('aria-label'), 'The other world');
+      w.same(calm, await w.boxes(), 'stepping out');
+      const leaving = { at: 0, photo: 600, seen: [] };
+      for (const at of [300, 600, 900]) await w.partWay(leaving, at);
+      await page.clock.resume();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'playful', null, { timeout: 2500 });
+      w.sweep(await w.edges(), there, 'out');
+      assert.deepEqual(await w.ways(), ['in', 'out'], 'in through the portal, and back out through it');
+      const back = (await w.seen()).at(-1);
+      assert.ok(back.at - out < 2000, `and the room is the cartoon within 2 s (after ${Math.round(back.at - out)} ms)`);
+      await sleep(300);
+      await w.judge(leaving, 'out', await page.screenshot(), drama);
+      assert.equal(await w.left(), 0, 'back outside, nothing of the other world is left over');
+      assert.deepEqual(await w.timers(), [], 'and no timer is left');
+      assert.equal(await w.tint(), light, 'the browser\'s bars as they were');
+      w.same(calm, await w.boxes(), 'back outside');
+      assert.equal(await w.hear(), heard, 'a screen reader hears the same room');
+      const changes = await w.changes();
+      assert.ok(w.most(changes) <= 3, `never more than 3 changes in a second, the step in and out with them (${JSON.stringify(changes.map((one) => [Math.round(one.at), one.world, one.way]))})`);
+      await w.watch();
+      await sleep(4500);
+      assert.deepEqual(await w.seen(), [], 'and nothing crosses after');
+      assert.deepEqual(await w.timers(), []);
+
+      // not kept: after a reload the room begins outside
+      await page.reload();
+      await page.waitForSelector('.screen-room #games li');
+      assert.equal(await portal.getAttribute('aria-pressed'), 'false', 'every visit begins outside');
+      assert.equal(await page.evaluate(() => Object.keys(localStorage).filter((key) => /world|portal/i.test(key)).length), 0, 'nothing of it is kept on the device');
+      await w.watch();
+      await sleep(3000);
+      assert.deepEqual(await w.seen(), [], 'and nothing crosses');
+      assert.equal(await w.left(), 0);
+    }),
+
+    check('two worlds: a press on the way through turns round; a burst of presses never flashes; a press while the cartoon breaks through is taken smoothly', { storage: ACCOUNT }, async (page) => {
+      const w = await worldsHelpers(page);
+      const portal = page.locator('.screen-room > header #worlds');
+      const calm = await w.boxes();
+      await w.watch();
+      // stepping in, and straight back out: it turns round, never having been all the way in (pressed in the page, the
+      // second time on the frame after the passage has begun: Playwright's own click can take longer than a passage)
+      await page.evaluate(() => new Promise((done) => {
+        const root = document.querySelector('.screen-room');
+        const it = root.querySelector(':scope > header #worlds');
+        it.click();
+        const look = () => requestAnimationFrame(() => (root.dataset.passage === 'in' ? requestAnimationFrame(() => done(it.click())) : look()));
+        look();
+      }));
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.screen-room').dataset.passage, null, { timeout: 2500 });
+      assert.deepEqual(await w.ways(), ['in', 'out'], 'stepping in, it turned round and stepped back out');
+      assert.ok((await w.seen()).every((one) => one.world !== 'serious'), 'never all the way in');
+      await sleep(300);
+      assert.equal(await w.left(), 0);
+      assert.deepEqual(await w.timers(), [], 'and back outside, nothing is left going');
+
+      // a burst of presses: taken one way at a time, no stacking, no burst of flashes
+      await w.watch();
+      for (let i = 0; i < 9; i++) {
+        await portal.click();
+        await sleep(110);
+      }
+      assert.equal(await portal.getAttribute('aria-pressed'), 'true', 'nine presses: in');
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.screen-room').dataset.passage, null, { timeout: 8000 });
+      w.same(calm, await w.boxes(), 'after the burst');
+      let changes = await w.changes();
+      assert.ok(w.most(changes) <= 3, `never more than 3 changes in a second, a passage turning round counted as one (${JSON.stringify(changes.map((one) => [Math.round(one.at), one.world, one.way]))})`);
+      // and each way a passage went was kept at least half a second: any part of the window changes once at most each
+      // way, so no part of it changes more than 3 times in a second either
+      const off = await w.setOff();
+      assert.ok(off.length >= 2 && off.slice(1).every((at, i) => at - off[i] >= 480), `each way kept at least half a second (${JSON.stringify(off.map((at) => Math.round(at - off[0])))})`);
+
+      // inside, wait for the cartoon to break through; and step out in the middle of it
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world !== 'serious', null, { timeout: 15000 });
+      await portal.click();
+      const out = await w.pressed();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.worlds-copy'), null, { timeout: 2500 });
+      changes = await w.changes();
+      assert.ok(changes.filter((one) => one.at > out).every((one) => one.world !== 'serious'), `taken smoothly on to the cartoon, with no flash of the drama (${JSON.stringify(changes.map((one) => [Math.round(one.at - out), one.world]))})`);
+      assert.ok(w.most(changes) <= 3, `never more than 3 changes in a second (${JSON.stringify(changes.map((one) => [Math.round(one.at), one.world, one.way]))})`);
+      await sleep(300);
+      assert.equal(await w.left(), 0);
+      assert.deepEqual(await w.timers(), [], 'and nothing is left going');
+      w.same(calm, await w.boxes(), 'back outside');
+    }),
+
+    check('two worlds, with reduced motion: stepping in and out are slow cross-fades, with no seam; nothing moves inside; every box the same', { storage: ACCOUNT, reducedMotion: 'reduce' }, async (page) => {
+      const w = await worldsHelpers(page, { clock: true });
+      const portal = page.locator('.screen-room > header #worlds');
+      assert.equal(await portal.evaluate((el) => getComputedStyle(el, '::before').animationName), 'none', 'the portal\'s ring does not turn');
+      const calm = await w.boxes();
+      await w.watch();
+      // (the page's clock held still at the press, and run on by hand to part-way through the fade, to look at it there)
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 5000)); // (it jumps there and holds: far enough ahead of a busy machine)
+      await page.evaluate(() => document.querySelector('.screen-room > header #worlds').click());
+      const pressed = await w.pressed();
+      await page.clock.runFor(350);
+      const fading = await page.evaluate(() => ({
+        world: document.querySelector('.screen-room').dataset.world,
+        seams: document.querySelectorAll('.worlds-splice').length,
+        opacity: Number(getComputedStyle(document.querySelector('.worlds-copy')).opacity),
+        grain: getComputedStyle(document.querySelector('.worlds-film .grain')).animationName,
+      }));
+      assert.equal(fading.world, 'fade', 'it fades');
+      assert.equal(fading.seams, 0, 'there is no seam');
+      assert.ok(fading.opacity > 0 && fading.opacity < 1, `the drama fading in (${fading.opacity})`);
+      assert.equal(fading.grain, 'none', 'and the grain is still');
+      w.same(calm, await w.boxes(), 'fading in');
+      await page.clock.resume();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious', null, { timeout: 4000 });
+      const inside = (await w.seen()).at(-1);
+      assert.ok(inside.at - pressed >= 600, `slowly (${Math.round(inside.at - pressed)} ms)`);
+      w.same(calm, await w.boxes(), 'inside');
+      // inside, nothing moves: no crossing at all, however long it is left
+      await w.watch();
+      await sleep(12000);
+      assert.deepEqual(await w.seen(), [], 'nothing crosses inside');
+      assert.equal(await page.evaluate(() => document.querySelectorAll('.worlds-copy, .worlds-splice').length), 0);
+      assert.deepEqual(await w.timers(), [], 'nor is anything waiting to');
+      // and out, as slowly
+      await portal.click();
+      const out = await w.pressed();
+      w.same(calm, await w.boxes(), 'fading out');
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'playful', null, { timeout: 2500 });
+      const leaving = await w.seen();
+      assert.deepEqual(leaving.map((one) => one.world), ['fade', 'playful'], 'out by a fade');
+      const back = leaving.at(-1);
+      assert.ok(back.at - out >= 600 && back.at - out < 2000, `out slowly, and within 2 s (${Math.round(back.at - out)} ms)`);
+      await sleep(300);
+      assert.equal(await w.left(), 0);
+      assert.deepEqual(await w.timers(), []);
+      const changes = await w.seen();
+      assert.ok(changes.every((one) => one.world !== 'split'), 'never split');
+      // a press during a fade does not turn it round (that would make the whole screen pulse): the fade goes on, the
+      // world it comes to is kept a while, and only then does it fade back
+      await w.watch();
+      await portal.click();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'fade', null, { timeout: 2000 });
+      await sleep(250);
+      await portal.click();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.worlds-copy'), null, { timeout: 8000 });
+      const twice = await w.seen();
+      assert.deepEqual(twice.map((one) => one.world), ['fade', 'serious', 'fade', 'playful'], 'in all the way, and only then back out');
+      const kept = twice[2].at - twice[1].at;
+      assert.ok(kept >= 1450, `the drama kept a while before fading back (${Math.round(kept)} ms)`);
+      assert.ok(w.most(twice) <= 2, `the whole screen changes no more than twice in a second (${JSON.stringify(twice.map((one) => [Math.round(one.at - twice[0].at), one.world]))})`);
+      await sleep(300);
+      assert.equal(await w.left(), 0);
+      assert.deepEqual(await w.timers(), []);
+    }),
+    // The way out is always within reach. The portal is in the top bar, which scrolls away; while it is out of sight
+    // the cartoon does not break through, and if it was breaking through, it goes back gently, with no cut. (The page's
+    // clock is held, and run on by hand; and the chances room/worlds.js takes are set, one crossing at a time.)
+    check('two worlds: the way out is always within reach: while the portal is out of sight nothing breaks through, and what had begun goes back gently, with no cut; however presses fall on a cut, never more than 3 changes a second; leaving the room in the middle of it stops it where it is', { storage: ACCOUNT }, async (page) => {
+      const w = await worldsHelpers(page, { clock: true, steer: true });
+      const world = () => page.evaluate(() => document.querySelector('.screen-room').dataset.world);
+      const press = () => page.evaluate(() => document.querySelector('.screen-room > header #worlds').click());
+      // the clock run on a little at a time until `done` (in the page) is true; how long that took, in the page's time
+      const until = async (done, { step = 50, most = 20000 } = {}) => {
+        for (let spent = 0; spent <= most; spent += step) {
+          if (await page.evaluate(done)) return spent;
+          await page.clock.runFor(step);
+        }
+        throw new Error(`not so after ${most} ms: ${done}`);
+      };
+      await w.steer([0]); // the seam's way down, straight
+      await press();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.screen-room').dataset.passage, null, { timeout: 4000 });
+      const calm = await w.boxes();
+
+      // down at the chat, the portal out of sight: a minute and more, and nothing breaks through
+      await w.scroll('chat');
+      assert.equal(await w.inSight(), false, 'down at the chat, the portal is out of sight');
+      await w.watch();
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+      await page.clock.runFor(75000);
+      assert.deepEqual(await w.seen(), [], 'while the portal is out of sight, nothing breaks through (75 s)');
+      assert.deepEqual(await w.timers(), [], 'nor is anything waiting to');
+
+      // back up, the portal in sight: the cartoon breaks through again (set: in 15 s, a takeover, straight, from the
+      // right, over 1.3 s); it has the room; and down at the chat, it goes back, by a seam from a side (straight, from
+      // the right), with no cut
+      await w.steer([0]);
+      await w.scroll('top');
+      assert.equal(await w.inSight(), true);
+      await w.steer([0.99, 0, 0.9, 0]);
+      await until(() => document.querySelector('.screen-room').dataset.world !== 'serious', { step: 500, most: 16000 });
+      await until(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.worlds-copy'), { most: 3000 });
+      w.same(calm, await w.boxes(), 'the cartoon breaking through');
+      await w.watch();
+      await w.steer([0, 0.9]);
+      await w.scroll('chat');
+      await until(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.worlds-copy'), { most: 4000 });
+      let seen = await w.seen();
+      assert.deepEqual(seen.map((one) => one.world), ['split', 'serious'], 'the drama came back by a seam, gently, with no cut');
+      assert.ok(seen[1].at - seen[0].at >= 900, `over a second or so (${Math.round(seen[1].at - seen[0].at)} ms)`);
+      w.same(calm, await w.boxes(), 'the drama back');
+      await page.clock.runFor(75000);
+      assert.equal((await w.seen()).length, 2, 'and nothing breaks through again while the portal is out of sight');
+
+      // a burst of presses on a cut (set: in 15 s, a splice, straight, the cartoon from the left): out just after the
+      // cut, straight back in, and back out as soon as it can turn. Every change counted, turns too: never more than 3
+      // in a second
+      await w.steer([0]);
+      await w.scroll('top');
+      await w.steer([0, 0, 0.1]);
+      await w.watch();
+      await until(() => document.querySelector('.screen-room').dataset.world !== 'serious', { step: 100, most: 16000 });
+      assert.equal(await world(), 'playful', 'the cut');
+      await until(() => document.querySelector('.screen-room').dataset.world === 'split', { step: 10, most: 400 });
+      await press();
+      await until(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.worlds-copy'), { step: 16, most: 3000 });
+      await press();
+      await until(() => document.querySelector('.screen-room').dataset.passage === 'in', { step: 16, most: 3000 });
+      await press();
+      await until(() => document.querySelector('.screen-room').dataset.passage === 'out', { step: 16, most: 3000 });
+      await until(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.screen-room').dataset.passage && !document.querySelector('.worlds-copy'), { step: 16, most: 3000 });
+      const changes = await w.changes();
+      assert.ok(changes.length >= 5, `the cut, back to half, the cartoon, in, and turning round (${JSON.stringify(changes.map((one) => [Math.round(one.at - changes[0].at), one.world, one.way]))})`);
+      assert.ok(w.most(changes) <= 3, `never more than 3 changes in a second, however the presses fell (${JSON.stringify(changes.map((one) => [Math.round(one.at - changes[0].at), one.world, one.way]))})`);
+      w.same(calm, await w.boxes(), 'after the burst');
+
+      // leaving the room in the middle of a crossing (set: a takeover, straight, from the right, over 1.3 s):
+      // it all stops where it is, and the film goes with the room as it slides away, the size of the window still
+      await press();
+      await until(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.screen-room').dataset.passage, { step: 50, most: 3000 });
+      await w.steer([0.99, 0, 0.9, 0]); // (when it comes, 7 to 11 s after stepping in)
+      await until(() => document.querySelector('.screen-room').dataset.world === 'split', { step: 500, most: 16000 });
+      await page.clock.runFor(400);
+      await page.evaluate(() => document.querySelector('.screen-room > header > a').click());
+      await page.waitForFunction(() => document.querySelector('.screen-room.leaving'), null, { timeout: 4000 });
+      await sleep(150);
+      const going = await page.evaluate(() => {
+        const root = document.querySelector('.screen-room.leaving');
+        const film = root.querySelector('.worlds-film').getBoundingClientRect();
+        return { film: [film.top, film.width, film.height].map(Math.round), window: [0, innerWidth, innerHeight], world: root.dataset.world };
+      });
+      assert.deepEqual(going.film, going.window, `the film stays the size of the window, where it was (${JSON.stringify(going)})`);
+      assert.deepEqual(await w.timers(), [], 'and nothing of it is left going');
+      await page.clock.runFor(1000);
+      await page.waitForFunction(() => !document.querySelector('.screen-room'), null, { timeout: 4000 });
+      assert.deepEqual(await w.timers(), []);
+      assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#f6f1e7', 'the browser\'s bars as they were');
+      await page.clock.resume();
+    }),
   ]);
 
   // The night, the tags, and the checks that came with them. These are run once
@@ -1354,6 +1707,333 @@ async function main() {
       await page.evaluate(() => document.querySelector('dialog.finale')?.close());
     }),
   ]));
+
+  // A room, with games and a chat, opened by a member; and what is needed to watch its worlds. (`steer`: the chances
+  // room/worlds.js takes can be set, one at a time, with w.steer([...]): what each is for is said where it is used.)
+  async function worldsHelpers(page, { clock = false, steer = false } = {}) {
+    const ROOM = '11111111-1111-4111-8111-111111111111';
+    const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+    const game = (n, over) => ({ id: `${String(n).repeat(8)}-3333-4333-8333-333333333333`, kind: 'postmarks', mode: 'coop', size: 6, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: 1, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });
+    const messages = Array.from({ length: 14 }, (_, i) => ({ id: i + 1, seat: i % 3 ? 1 : 0, body: i % 4 ? 'a note passed across the rug' : 'a longer note, passed across the rug, that has to turn a line or two before it ends', at: new Date(Date.UTC(2026, 10, 24, 18, i)).toISOString(), game_kind: null, game_id: null }));
+    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+    await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => {
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+      const after = JSON.parse(route.request().postData()).p_after ?? 0;
+      return route.fulfill({ json: { id: ROOM, name: 'Book club', code: 'K7M2QP', you: 0, people, messages: messages.filter((one) => one.id > after), games: [game(1), game(2, { mode: 'trial', finished: 1 }), game(3, { status: 'won', found: 6 })] }, headers: cors });
+    });
+    if (clock) await page.clock.install(); // (before what follows, which keeps account of the page's timers)
+    // the timers and frames room/worlds.js has asked for and that have not yet come (from its own calls, by the stack)
+    await page.addInitScript(() => {
+      const pending = new Map();
+      const ours = () => /\/room\/worlds\.js/.test(new Error().stack);
+      const where = () => new Error().stack.split('\n').filter((line) => line.includes('/room/worlds.js')).map((line) => line.trim().replace(/^at /, '').replace(/\(?https?:\/\/[^/]+/, '')).slice(0, 3).join(' < ');
+      const [later, unlater, frame, unframe] = [window.setTimeout, window.clearTimeout, window.requestAnimationFrame, window.cancelAnimationFrame];
+      window.setTimeout = function (fn, ms, ...rest) {
+        if (typeof fn !== 'function' || !ours()) return later.call(window, fn, ms, ...rest);
+        const id = later.call(window, (...args) => { pending.delete(`timer ${id}`); fn(...args); }, ms, ...rest);
+        pending.set(`timer ${id}`, where());
+        return id;
+      };
+      window.clearTimeout = function (id) { pending.delete(`timer ${id}`); return unlater.call(window, id); };
+      window.requestAnimationFrame = function (fn) {
+        if (!ours()) return frame.call(window, fn);
+        const id = frame.call(window, (now) => { pending.delete(`frame ${id}`); fn(now); });
+        pending.set(`frame ${id}`, where());
+        return id;
+      };
+      window.cancelAnimationFrame = function (id) { pending.delete(`frame ${id}`); return unframe.call(window, id); };
+      window.worldsTimers = () => [...pending].map(([what, from]) => `${what}: ${from}`);
+      // when the portal was last pressed, as the page has it
+      document.addEventListener('click', (event) => {
+        if (event.target.closest?.('.screen-room > header #worlds')) window.worldsPressed = performance.now();
+      }, true);
+    });
+    if (steer) {
+      await page.addInitScript(() => {
+        const real = Math.random;
+        window.worldsSteer = [];
+        Math.random = () => (window.worldsSteer.length && /\/room\/worlds\.js/.test(new Error().stack) ? window.worldsSteer.shift() : real());
+      });
+    }
+    await page.goto(`${origin}/room/?id=${ROOM}`);
+    await page.waitForSelector('.screen-room #games li');
+    await sleep(800); // (the furniture settles into place)
+    const w = {
+      world: () => page.evaluate(() => document.querySelector('.screen-room').dataset.world),
+      passage: () => page.evaluate(() => document.querySelector('.screen-room').dataset.passage),
+      pressed: () => page.evaluate(() => window.worldsPressed),
+      // what is left going (given up to 2 s for the last frames of a change to come, on a busy machine)
+      timers: async () => {
+        await page.waitForFunction(() => window.worldsTimers().length === 0, null, { timeout: 2000 }).catch(() => {});
+        return page.evaluate(() => window.worldsTimers());
+      },
+      // what of the other world is on the page: the copy, the film, a seam (and the layer they are on), the page painted serious
+      left: () => page.evaluate(() => document.querySelectorAll('.worlds-copy, .worlds-over, .worlds-film, .worlds-splice, .screen-room [data-paint], .screen-room[data-passage]').length),
+      // the next chances room/worlds.js takes (Math.random), in order; after them, chance again
+      steer: (values) => page.evaluate((list) => { window.worldsSteer = [...list]; }, values),
+      // whether the portal is in sight (at least half of it)
+      inSight: () => page.evaluate(() => {
+        const r = document.querySelector('.screen-room > header #worlds').getBoundingClientRect();
+        return Math.min(r.bottom, innerHeight) - Math.max(r.top, 0) >= r.height / 2;
+      }),
+      // the page scrolled to the top, or down to the chat; and time for the page to see where the portal now is
+      scroll: async (to) => {
+        await page.evaluate((where) => {
+          if (where === 'top') window.scrollTo(0, 0);
+          else document.querySelector('.screen-room > main .chat form').scrollIntoView({ block: 'center' });
+        }, to);
+        await sleep(250);
+      },
+      // how much of the window each part of the other world has, from the shape it is cut to (a point every 8 px):
+      // the copy of the page (and which world it is), and the film over the drama
+      shares: () => page.evaluate(() => {
+        const root = document.querySelector('.screen-room');
+        const ctx = document.createElement('canvas').getContext('2d');
+        const shape = (el) => {
+          const m = el?.style.clipPath.match(/^polygon\((?:(evenodd|nonzero),\s*)?(.*)\)$/);
+          if (!m) return null;
+          const path = new Path2D();
+          m[2].split(',').map((p) => p.trim().split(/\s+/).map(parseFloat)).forEach(([x, y], i) => (i ? path.lineTo(x, y) : path.moveTo(x, y)));
+          path.closePath();
+          return { path, rule: m[1] ?? 'nonzero' };
+        };
+        const box = root.getBoundingClientRect();
+        const copy = root.querySelector(':scope > .worlds-copy');
+        const [cut, film] = [shape(copy), shape(root.querySelector('.worlds-film'))];
+        let [c, f, n] = [0, 0, 0];
+        for (let y = 4; y < innerHeight; y += 8) {
+          for (let x = 4; x < innerWidth; x += 8) {
+            n += 1;
+            if (cut && ctx.isPointInPath(cut.path, x - box.left, y - box.top, cut.rule)) c += 1;
+            if (film && ctx.isPointInPath(film.path, x, y, film.rule)) f += 1;
+          }
+        }
+        return { copy: c / n, film: f / n, world: copy?.dataset.paint };
+      }),
+      // whether the portal is left out of the copy and the film (it belongs to neither world): of points inside its
+      // ring, and of points just beyond it, how many each covers (round the way a passage faces, or else below it)
+      holed: () => page.evaluate(() => {
+        const root = document.querySelector('.screen-room');
+        const ctx = document.createElement('canvas').getContext('2d');
+        const shape = (el) => {
+          const m = el?.style.clipPath.match(/^polygon\((?:(evenodd|nonzero),\s*)?(.*)\)$/);
+          if (!m) return null;
+          const path = new Path2D();
+          m[2].split(',').map((p) => p.trim().split(/\s+/).map(parseFloat)).forEach(([x, y], i) => (i ? path.lineTo(x, y) : path.moveTo(x, y)));
+          path.closePath();
+          return { path, rule: m[1] ?? 'nonzero' };
+        };
+        const box = root.getBoundingClientRect();
+        const r = root.querySelector(':scope > header #worlds').getBoundingClientRect();
+        const o = { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
+        const edges = [...root.querySelectorAll('.worlds-splice.edge')].map((edge) => Number(edge.style.transform.match(/rotate\(([-\d.]+)rad\)/)?.[1]) + Math.PI / 2);
+        const [mid, half] = edges.length === 2 ? [(edges[0] + edges[1]) / 2, Math.abs(edges[1] - edges[0]) / 2] : [Math.PI / 2, 0.5];
+        const at = (d, a) => [o.x + d * Math.cos(a), o.y + d * Math.sin(a)];
+        const inner = [0.35, 0.65, 0.9].flatMap((k) => [-0.3, 0, 0.3].map((da) => at(k * o.r, mid + da)));
+        const outer = [-0.4, 0, 0.4].map((k) => at(o.r + 10, mid + k * Math.min(half, 0.5))); // (inside the seam's opening)
+        const count = (el, points, dx, dy) => {
+          const it = shape(el);
+          return it ? points.filter(([x, y]) => ctx.isPointInPath(it.path, x - dx, y - dy, it.rule)).length : null;
+        };
+        const [copy, film] = [root.querySelector(':scope > .worlds-copy'), root.querySelector('.worlds-film')];
+        return {
+          copy: copy && { inner: count(copy, inner, box.left, box.top), outer: count(copy, outer, box.left, box.top) },
+          film: film && { inner: count(film, inner, 0, 0), outer: count(film, outer, 0, 0) },
+          points: { inner: inner.length, outer: outer.length },
+        };
+      }),
+      // the light at points of the window, in a screenshot (each the mean over a small square round it)
+      light: (png, points) => {
+        return page.evaluate(async ({ b64, points }) => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${b64}`;
+          await img.decode();
+          const canvas = document.createElement('canvas');
+          [canvas.width, canvas.height] = [img.width, img.height];
+          const g = canvas.getContext('2d');
+          g.drawImage(img, 0, 0);
+          const scale = img.width / innerWidth;
+          const lin = (v) => ((v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+          return points.map(([x, y]) => {
+            const d = g.getImageData(Math.round(x * scale) - 4, Math.round(y * scale) - 4, 9, 9).data;
+            let sum = 0;
+            for (let i = 0; i < d.length; i += 4) sum += 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]);
+            return sum / (d.length / 4);
+          });
+        }, { b64: png.toString('base64'), points });
+      },
+      // points below the portal, down the middle of a passage's seam (the way it faces), and points beside the portal,
+      // level with it, which the drama reaches last on the way in and leaves first on the way out
+      sights: () => page.evaluate(() => {
+        const root = document.querySelector('.screen-room');
+        const r = root.querySelector(':scope > header #worlds').getBoundingClientRect();
+        const o = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        const edges = [...root.querySelectorAll('.worlds-splice.edge')].map((edge) => Number(edge.style.transform.match(/rotate\(([-\d.]+)rad\)/)?.[1]) + Math.PI / 2);
+        const mid = (edges[0] + edges[1]) / 2;
+        const down = [];
+        for (let d = 80; o.y + d * Math.sin(mid) < innerHeight - 20; d += 40) down.push([o.x + d * Math.cos(mid), o.y + d * Math.sin(mid)]);
+        const beside = [];
+        for (let x = 24; x < o.x - 60; x += 24) beside.push([x, o.y]);
+        return { down: down.filter(([x]) => x > 8 && x < innerWidth - 8), beside };
+      }),
+      // which world each of `points` shows in the screenshot `png`: the one whose whole screenshot is nearer there (only
+      // where the two differ)
+      which: async (png, points, cartoon, drama) => {
+        const [seen, c, d] = [await w.light(png, points), await w.light(cartoon, points), await w.light(drama, points)];
+        return seen.map((one, i) => (Math.abs(c[i] - d[i]) < 0.12 ? null : Math.abs(one - c[i]) < Math.abs(one - d[i]) ? 'cartoon' : 'drama')).filter(Boolean);
+      },
+      // how many times the copy of the page is made again while it is up, from now on (making a new one is not counted)
+      fills: () => page.evaluate(() => {
+        const root = document.querySelector('.screen-room');
+        window.worldsFills = 0;
+        window.worldsFillsWatch?.forEach((one) => one.disconnect());
+        const each = new MutationObserver((list) => { window.worldsFills += list.filter((one) => one.addedNodes.length).length; });
+        const look = () => root.querySelectorAll(':scope > .worlds-copy').forEach((copy) => each.observe(copy, { childList: true }));
+        const come = new MutationObserver(look);
+        look();
+        come.observe(root, { childList: true });
+        window.worldsFillsWatch = [each, come];
+      }),
+      filled: () => page.evaluate(() => window.worldsFills),
+      // the colour the browser is asked to give its own bars round the page; and whether the portal's ring is turning
+      tint: () => page.evaluate(() => document.querySelector('meta[name="theme-color"]').content),
+      turning: () => page.evaluate(() => getComputedStyle(document.querySelector('.screen-room > header #worlds'), '::before').animationName !== 'none'),
+      // A passage held part-way (the page's clock held still since the press), looked at `at` ms after the press: how
+      // much of the window the other world has, from the shapes the copy and the film are cut to; whether the portal is
+      // left out of both; and at `photo` ms, a screenshot, with points down the middle of the opening and beside the
+      // portal, level with it (to be judged once both worlds have been seen whole: see judge).
+      partWay: async (held, at) => {
+        await page.clock.runFor(at - held.at);
+        held.at = at;
+        const one = { at, ...(await w.shares()), holed: await w.holed() };
+        if (at === held.photo) [one.sights, one.png] = [await w.sights(), await page.screenshot()];
+        held.seen.push(one);
+        return one;
+      },
+      // ...and the passage so looked at, judged: the other world's part of the window grew (in: the drama's, from the
+      // copy; out: the cartoon's) at the pace the passage goes; the film over exactly the drama's part; the portal in
+      // neither; and half-way, what is seen: the drama below the portal, the way the seam was drawn out (stepping in,
+      // opening from there; stepping out, closing back into it), and beside the portal, level with it, the cartoon
+      // (where the drama comes last, and the cartoon first). `cartoon` and `drama` are screenshots of each world whole,
+      // from the same place.
+      judge: async (held, way, cartoon, drama) => {
+        const other = way === 'in' ? 'serious' : 'playful';
+        const what = JSON.stringify(held.seen.map((one) => [one.at, one.world, Number(one.copy.toFixed(3)), Number(one.film.toFixed(3))]));
+        held.seen.forEach((one, i) => {
+          const eased = (1 - Math.cos((Math.PI * one.at) / 1200)) / 2; // (as far through as the passage is, at an even pace over the window)
+          assert.equal(one.world, other, `${way}: the copy laid over the page is the other world (${what})`);
+          assert.ok(one.copy > 0.02 && one.copy < 0.95, `${way}, ${one.at} ms: the other world has part of the window, neither none nor all of it (${what})`);
+          assert.ok(Math.abs(one.copy - eased) < 0.1, `${way}, ${one.at} ms: as much of it as the passage has come (${eased.toFixed(2)}: ${what})`);
+          if (i) assert.ok(one.copy > held.seen[i - 1].copy + 0.05, `${way}: more of it at every look (${what})`);
+          const drama = way === 'in' ? one.copy : 1 - one.copy;
+          assert.ok(Math.abs(one.film - drama) < 0.03, `${way}, ${one.at} ms: the film is over the drama's part, and only that (${what})`);
+          const { copy: c, film: f, points } = one.holed;
+          assert.deepEqual([c.inner, f.inner], [0, 0], `${way}, ${one.at} ms: the portal is in neither world: the copy and the film leave it out (${JSON.stringify(one.holed)})`);
+          if (one.at >= 600) assert.deepEqual([c.outer, f.outer], [way === 'in' ? points.outer : 0, points.outer], `${way}, ${one.at} ms: ...and only it: just beyond it, below, the drama (${JSON.stringify(one.holed)})`);
+        });
+        const photo = held.seen.find((one) => one.png);
+        const [down, beside] = [await w.which(photo.png, photo.sights.down, cartoon, drama), await w.which(photo.png, photo.sights.beside, cartoon, drama)];
+        assert.ok(down.length >= 4 && down.filter((one) => one === 'drama').length >= 0.8 * down.length, `${way}, ${photo.at} ms: below the portal, the drama is seen (${JSON.stringify(down)})`);
+        assert.ok(beside.length >= 3 && beside.filter((one) => one === 'cartoon').length >= 0.8 * beside.length, `${way}, ${photo.at} ms: beside it, the cartoon (${JSON.stringify(beside)})`);
+      },
+      // the middle of the portal, in the window
+      centre: () => page.evaluate(() => {
+        const r = document.querySelector('.screen-room > header #worlds').getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }),
+      // a passage's seam: where its two edges start from, and how far apart they are (radians)
+      seam: () => page.evaluate(() => {
+        const edges = [...document.querySelectorAll('.worlds-splice.edge')].map((edge) => edge.style.transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\) rotate\(([-\d.]+)rad\)/)?.slice(1).map(Number));
+        if (edges.length !== 2 || !edges.every(Boolean)) return null;
+        return { x: edges[0][0], y: edges[0][1], spread: edges[1][2] - edges[0][2], same: edges[0][0] === edges[1][0] && edges[0][1] === edges[1][1] };
+      }),
+      // every frame of a passage's seam from now on: where its two edges start from, and how far apart they are
+      record: () => page.evaluate(() => {
+        const root = document.querySelector('.screen-room');
+        window.worldsEdges = [];
+        window.worldsEdgesWatch?.disconnect();
+        window.worldsEdgesWatch = new MutationObserver(() => {
+          const edges = [...root.querySelectorAll(':scope > .worlds-over > .worlds-splice.edge')].map((edge) => edge.style.transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\) rotate\(([-\d.]+)rad\)/)?.slice(1).map(Number));
+          if (edges.length !== 2 || !edges.every(Boolean)) return;
+          const one = { x: edges[0][0], y: edges[0][1], spread: edges[1][2] - edges[0][2] };
+          const last = window.worldsEdges.at(-1);
+          if (!last || last.spread !== one.spread || last.x !== one.x || last.y !== one.y) window.worldsEdges.push(one);
+        });
+        window.worldsEdgesWatch.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+      }),
+      edges: () => page.evaluate(() => window.worldsEdges),
+      // a whole passage: drawn out of the portal every frame, and its edges going one way only, from together below
+      // the portal to together above it (in), or back (out)
+      sweep: (edges, centre, way) => {
+        const what = JSON.stringify(edges.map((one) => Number(one.spread.toFixed(2))));
+        assert.ok(edges.length >= 3, `the seam was seen on the way (${what})`);
+        for (const one of edges) assert.ok(Math.hypot(one.x - centre.x, one.y - centre.y) < 2, `the seam is drawn out of the portal (${JSON.stringify(one)}, the portal at ${JSON.stringify(centre)})`);
+        const [from, to] = way === 'in' ? [0, 2 * Math.PI] : [2 * Math.PI, 0];
+        assert.ok(Math.abs(edges[0].spread - from) < 0.3 && Math.abs(edges.at(-1).spread - to) < 0.6, `from ${from.toFixed(2)} to ${to.toFixed(2)} radians apart (${what})`);
+        edges.slice(1).forEach((one, i) => assert.ok(way === 'in' ? one.spread >= edges[i].spread - 1e-6 : one.spread <= edges[i].spread + 1e-6, `${way === 'in' ? 'opening' : 'closing'} all the way, never back (${what})`));
+      },
+      // the copy and all that is drawn over the page: inert, hidden, after the page, and never pressed
+      copy: () => page.evaluate(() => {
+        const it = document.querySelector('.worlds-copy');
+        const root = document.querySelector('.screen-room');
+        const more = root.querySelector(':scope > header #more').getBoundingClientRect();
+        const hit = document.elementFromPoint(more.left + more.width / 2, more.top + more.height / 2);
+        return {
+          hidden: it.getAttribute('aria-hidden'), inert: it.inert, pointer: getComputedStyle(it).pointerEvents,
+          after: [...root.querySelectorAll(':scope > :is(header, main)')].every((part) => part.compareDocumentPosition(it) & Node.DOCUMENT_POSITION_FOLLOWING),
+          decoration: [...document.querySelectorAll('.worlds-over, .worlds-film, .worlds-splice')].every((one) => one.getAttribute('aria-hidden') === 'true' && getComputedStyle(one).pointerEvents === 'none'),
+          through: hit?.closest('#more') === root.querySelector(':scope > header #more'),
+          // (the copy has the page's ids too: anything looked for by its id is still found on the page)
+          ids: [...it.querySelectorAll('[id]')].every((twin) => !root.querySelector(`#${CSS.escape(twin.id)}`).closest('.worlds-copy') && !document.getElementById(twin.id).closest('.worlds-copy')),
+        };
+      }),
+      // what a screen reader is told of the room (but for whether the portal is pressed, which pressing it changes, and
+      // what is typed in the message field, which the checks type)
+      hear: async () => (await page.locator('.screen-room').ariaSnapshot())
+        .replace(/(button "The other world")(?: \[pressed\])?/, '$1')
+        .replace(/( *)- textbox "Message"[^\n]*\n(?:\1 +[^\n]*\n)*/, (all, indent) => `${indent}- textbox "Message"\n`),
+      live: () => page.evaluate(() => [...document.querySelectorAll('.screen-room [aria-live], .screen-room [role="log"], .screen-room [role="alert"], .screen-room [role="status"]')].filter((one) => !one.closest('[aria-hidden="true"]')).length),
+      // every change of world from now on, with when it was (and which way through the portal anybody was going)
+      watch: () => page.evaluate(() => {
+        const root = document.querySelector('.screen-room');
+        window.worldsFrom = root.dataset.world;
+        window.worldsWayFrom = root.dataset.passage ?? '';
+        window.worldsSeen = [];
+        window.worldsWatch?.disconnect();
+        window.worldsWatch = new MutationObserver(() => window.worldsSeen.push({ at: performance.now(), world: root.dataset.world, way: root.dataset.passage ?? '' }));
+        window.worldsWatch.observe(root, { attributes: true, attributeFilter: ['data-world', 'data-passage'] });
+      }),
+      seen: () => page.evaluate(() => window.worldsSeen.filter((one, i, all) => one.world !== (i ? all[i - 1].world : window.worldsFrom))),
+      // every change to the screen since then: a change of world, or a passage turning round (which changes what part of
+      // the window is in which world, though not the world as a whole)
+      changes: () => page.evaluate(() => window.worldsSeen.filter((one, i, all) => {
+        const [world, way] = i ? [all[i - 1].world, all[i - 1].way] : [window.worldsFrom, window.worldsWayFrom];
+        return one.world !== world || (one.way && way && one.way !== way);
+      })),
+      // when a passage set off, or turned round, since then
+      setOff: () => page.evaluate(() => window.worldsSeen.filter((one, i, all) => one.way && one.way !== (i ? all[i - 1].way : window.worldsWayFrom)).map((one) => one.at)),
+      // the ways through the portal since then, in order ('in', 'out')
+      ways: () => page.evaluate(() => window.worldsSeen.map((one) => one.way).filter(Boolean).filter((one, i, all) => i === 0 || one !== all[i - 1])),
+      most: (changes) => Math.max(0, ...changes.map((one) => changes.filter((other) => other.at >= one.at && other.at < one.at + 1000).length)),
+      // where everything that can be pressed, typed in or scrolled is on the page (not in the copy of it)
+      boxes: () => page.evaluate(() => [...document.querySelectorAll('.screen-room > :is(header, main)')]
+        .flatMap((part) => [...part.querySelectorAll('a[href], button, input, textarea, select, [tabindex], .chat-log')])
+        .filter((el) => el.getClientRects().length)
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return { what: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.className && typeof el.className === 'string' ? `.${el.className.trim().split(/\s+/).join('.')}` : ''}`, x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height };
+        })),
+      same: (before, after, when) => {
+        assert.equal(after.length, before.length, `${when}: the same things to press`);
+        before.forEach((one, i) => {
+          const two = after[i];
+          const off = Math.max(...['x', 'y', 'w', 'h'].map((key) => Math.abs(one[key] - two[key])));
+          assert.ok(two.what === one.what && off <= 1, `${when}: ${one.what} moved or changed size (${JSON.stringify(one)} then ${JSON.stringify(two)})`);
+        });
+      },
+    };
+    return w;
+  }
 
   await browser.close();
   server.close();
