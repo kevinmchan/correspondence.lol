@@ -492,6 +492,40 @@ async function main() {
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat']);
     }),
 
+    check('the background music stands aside for the music maker and the radio, and still does going from one to the other', { storage: { 'radio:taught:v1': true, 'radio:story:v1': 'told' } }, async (page) => {
+      // every fade of the background music: to MUSIC_LEVEL (0.3) when it comes back, to 0 when it stands aside
+      await page.addInitScript(() => {
+        window.__music = [];
+        const set = AudioParam.prototype.setTargetAtTime;
+        AudioParam.prototype.setTargetAtTime = function (value, ...rest) {
+          if (value === 0.3 || value === 0) window.__music.push(value);
+          return set.call(this, value, ...rest);
+        };
+      });
+      const follow = (href) => page.evaluate((to) => { const a = document.createElement('a'); a.href = to; document.body.append(a); a.click(); }, href);
+      const last = () => page.evaluate(() => window.__music.at(-1));
+      await page.goto(origin);
+      await page.waitForSelector('.home-map');
+      await page.mouse.click(5, 5); // a first touch wakes the sound, and the background music with it
+      await sleep(400);
+      await follow('/jam/');
+      await page.waitForSelector('.jam');
+      await sleep(1500);
+      assert.equal(await last(), 0, 'the music maker has the floor');
+      await follow('/jam/?taste');
+      await page.waitForSelector('.taste-card');
+      await sleep(1500); // the music maker has gone by now
+      assert.equal(await last(), 0, 'the radio has the floor: the music maker leaving did not bring the background music back');
+      await follow('/jam/');
+      await page.waitForSelector('.jam');
+      await sleep(1500);
+      assert.equal(await last(), 0, 'and back again');
+      await follow('/');
+      await page.waitForSelector('.home-map');
+      await sleep(1500);
+      assert.equal(await last(), 0.3, 'home again: the background music comes back');
+    }),
+
     check('the music maker: saved beats follow the account, to another device and back', {}, async (page) => {
       // the server, as far as beats go: one profile's list
       let server = [];
