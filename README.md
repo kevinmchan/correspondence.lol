@@ -9,9 +9,9 @@ A static, no-build progressive web app served from the repository root at
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
-| `room/` | A room: members, invitation link, games list, chat |
+| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
-| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
+| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
 | `tests/` | Tests for the game rules, the puzzle generator and Penny's places (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
@@ -643,6 +643,32 @@ People gather in rooms. A room has members, a chat and games; any member can
 start a game and every member can play in it, each on their own device. In
 Postmarks anyone may take the next turn except whoever took the last one.
 A solo game needs no room and is saved in the browser only.
+
+**A room is a place.** It is drawn as a building on the map, seen from above
+like everything else in the game (`room/room.css`, `shared/place.js`). Each
+room keeps one of the game's seven colours and one of three roofs (a ridge,
+hipped, or flat with a garden), chosen from its id, so it is the same
+building wherever it is drawn.
+
+- **Inside**, the roof is off. The walls are in the room's colour and the
+  floor is the map's own squares. Its name is the map's label for it, pinned
+  over the wall. The people in it are tokens at the head of a table, with
+  their names over them. The games lie on the table as small boards, each on a
+  slip that says where it stands, with a red pin on one that is yours to
+  play, a tick on one that is solved, and the board greyed when it is lost.
+  The boards are not the games' own districts: a room is not told those, as
+  they would give the game away. They are made from the game's id, the same
+  each time, so a game keeps its face. Three tiles start a game. The chat is
+  notes passed across a rug. At the door there is a bell (notifications) and
+  the mat, with the code friends join with, and a bush either side.
+- **Writing a pass phrase** is the same room, at its writing desk.
+- **Outside**, for somebody who is not in it, the roof is on. Whoever is in
+  shows at the skylight, and the mat at the door is where to ask in.
+- **On the home page** your rooms are a street of roofs, each with its name on
+  a plate at its door. A room with something waiting on you has its skylight
+  lit. **Opening a room** is a plot staked out on the map, with a board
+  planted in it to write the name on. **Joining one** is a grey building, its
+  colour not yet known, with its mat to write the code on.
 
 Rooms live in Supabase and are reached only through database functions
 (`room_create`, `room_get`, `room_join`, `room_leave`, `room_profile`, `room_say`,
