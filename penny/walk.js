@@ -228,8 +228,8 @@ export function mount(root, life) {
   function start(at) {
     index = at;
     setPlaceReached(Math.max(furthest(), index));
-    down.disabled = index === 0;
-    up.disabled = index >= furthest();
+    down.hidden = index === 0; // a tile that would lead nowhere is not shown
+    up.hidden = index >= furthest();
     place = PLACES[index];
     cells = place.regions.map(() => 'empty');
     found = [];

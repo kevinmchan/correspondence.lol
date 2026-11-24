@@ -96,8 +96,8 @@
 }
 
 /* Back to the place before, and on to the place after: two tiles like the
-   game's own, in the bottom corners where a thumb is. A tile that leads
-   nowhere yet stays in its place, greyed. */
+   game's own, in the bottom corners where a thumb is. A tile that would
+   lead nowhere is not shown. */
 .walk-step {
   position: absolute; z-index: 3; bottom: calc(env(safe-area-inset-bottom, 0px) + 0.9rem);
   width: 3.25rem; height: 3.25rem; padding: 0; border: 0; border-radius: 24%;
@@ -114,7 +114,7 @@
 .walk-step svg { width: 1.7rem; height: 1.7rem; margin-top: -0.16rem; }
 .walk-step:hover { filter: brightness(1.06); }
 .walk-step:active { transform: translateY(0.14rem) scale(0.97); box-shadow: inset 0 -0.1rem 0 rgb(0 0 0 / 0.16); }
-.walk-step:disabled { opacity: 0.28; filter: saturate(0.3); cursor: default; box-shadow: inset 0 -0.14rem 0 rgb(0 0 0 / 0.12); }
+.walk-step[hidden] { display: none; }
 .walk-step:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .walk.through .walk-step { opacity: 0; }
 
