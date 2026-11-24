@@ -19,9 +19,7 @@
 // Behind it, out of sight until the flask at the top is pressed, it is an
 // experiment in whether what you like in a loop can be predicted. Every
 // station kept is a label; what is measured about a loop, the model, and the
-// test of whether the model can really tell are in jam/taste-model.js. The
-// longer a station has been kept, the likelier the next one beside it is a
-// near relation of it, which is the harder choice.
+// test of whether the model can really tell are in jam/taste-model.js.
 //
 // Two things are done for the sake of the experiment and not of the radio. A
 // station cannot be kept until both have been listened to. And which of the
@@ -33,6 +31,7 @@ import { load, save } from '/shared/identity.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode } from './beat.js';
 import { LAYERS, ROWS, STEPS, TEMPOS, createLoop } from './engine.js';
+import { arrange } from './form.js';
 import { claim as callPal } from '/penny/pal.js';
 import { ASK, hasDot } from '/penny/penny.js';
 import { NEEDED, REIGN, WARMUP, begin, choose, fit, leanings, pairVector, standing } from './taste-model.js';
@@ -97,7 +96,13 @@ export function mount(root, life) {
   // --- Sound: whichever side is up, round and round -------------------------------------
   const setsOf = (beat) => beat.notes.map((tiles) => new Set(tiles));
   let sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
-  const loop = createLoop(life, () => (started ? { tempo: state.current[up].tempo, sets: sets[up] } : null));
+  // A station is not its loop played round and round: that goes stale in a
+  // quarter of a minute. It is played in its long form (jam/form.js), loops
+  // within loops, the same rules for every station; and the clock of that
+  // form runs on from one pair to the next, so a station that is kept is
+  // heard further into its piece each time, not from the top again.
+  const loop = createLoop(life, () => (started ? { tempo: state.current[up].tempo, sets: sets[up], long: true } : null));
+  let barNow = 0; // the bar being heard, counted from when the radio was turned on
 
   // --- The card ------------------------------------------------------------------------------
   // Each side is a picture of its loop, and the picture is lit by the loop as
@@ -108,20 +113,29 @@ export function mount(root, life) {
   // the card glows in the colour of what has just sounded, and at the top of
   // every bar a gleam runs across the whole card.
   const [WIDE, HIGH] = [STEPS * 10, ROWS * 10];
-  function picture(beat) {
+  // The picture of one bar: what is played in it (jam/form.js), which is the
+  // station's loop as that bar of its long form has it. `level` is how hard
+  // each instrument is played: one that is resting has its lamp out.
+  function picture({ sets: playing, level }) {
     const beams = LAYERS.map((kind, index) => {
       const x = WIDE * ((index + 0.5) / LAYERS.length);
       return `<path class="beam" data-layer="${index}" d="M${x - 2} -6 L${x + 2} -6 L${x + 17} ${HIGH + 4} L${x - 17} ${HIGH + 4} Z" fill="${kind.colour}" opacity="0"/>`
-        + `<circle class="lamp" data-layer="${index}" cx="${x}" cy="-5" r="2.2" fill="${kind.colour}" opacity="${beat.notes[index].length ? 0.55 : 0.15}"/>`;
+        + `<circle class="lamp" data-layer="${index}" cx="${x}" cy="-5" r="2.2" fill="${kind.colour}" opacity="${playing[index].size && level[index] > 0 ? 0.55 : 0.15}"/>`;
     });
     const dots = [];
-    beat.notes.forEach((tiles, index) => {
+    playing.forEach((tiles, index) => {
       for (const tile of tiles) {
         const [step, row] = [Math.floor(tile / ROWS), tile % ROWS];
         dots.push(`<rect class="dot" data-step="${step}" data-layer="${index}" x="${step * 10 + 1.5}" y="${row * 10 + 1.5}" width="7" height="7" rx="2" fill="currentColor" style="color:${LAYERS[index].colour}"/>`);
       }
     });
     return `<svg viewBox="0 -8 ${WIDE} ${HIGH + 8}" aria-hidden="true"><g class="beams">${beams.join('')}</g><rect class="now" x="0" y="0" width="10" height="${HIGH}" rx="3" opacity="0"/>${dots.join('')}<g class="rings"></g></svg>`;
+  }
+  // Put on a side's display the bar that is being played (or is about to be).
+  const painted = { front: -1, back: -1 };
+  function paint(side) {
+    faces[side].querySelector('.pic').innerHTML = picture(arrange(sets[side], barNow));
+    painted[side] = barNow;
   }
   // One step of the side that is up has just sounded: light it.
   let bars = 0;
@@ -204,7 +218,7 @@ export function mount(root, life) {
   function show() {
     place();
     for (const side of SIDES) {
-      faces[side].querySelector('.pic').innerHTML = picture(state.current[side]);
+      paint(side);
       el.card.querySelector(`.mark.${side}`).style.left = along(dial[side]);
     }
     tune();
@@ -227,6 +241,7 @@ export function mount(root, life) {
       el.card.classList.add('retune');
     }
     if (audio()) noise({ dur: 0.13, from: 2600, to: 5200, q: 0.5, gain: 0.035 });
+    if (painted[up] !== barNow) paint(up); // (its display was left at the bar it was last tuned in at)
     tune();
     lesson.did('tune');
   }
@@ -249,7 +264,8 @@ export function mount(root, life) {
     }
     const picked = up;
     const keptName = name(picked);
-    choose(state, picked, Math.random, { at: Date.now(), ms: Math.round(performance.now() - shownAt), flips, heardFront: Math.round(heardMs.front), heardBack: Math.round(heardMs.back) });
+    // (bar: where in the long form the radio was when this was kept, for whoever studies the data)
+    choose(state, picked, Math.random, { at: Date.now(), ms: Math.round(performance.now() - shownAt), flips, heardFront: Math.round(heardMs.front), heardBack: Math.round(heardMs.back), bar: barNow });
     keep();
     sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
     heardMs = { front: 0, back: 0 };
@@ -406,7 +422,11 @@ export function mount(root, life) {
   let lit = -1;
   function draw() {
     const now = performance.now();
-    const { step } = loop.heard();
+    const { step, bar } = loop.heard();
+    if (step >= 0 && bar !== barNow) { // a new bar of the form: the display shows what this one has in it
+      barNow = bar;
+      paint(up);
+    }
     if (step !== lit) {
       lit = step;
       if (step >= 0) light(up, step);

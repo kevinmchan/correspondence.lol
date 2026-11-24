@@ -468,6 +468,9 @@ when the screen opens, when the app is come back to, and after anything is
 saved, renamed or deleted. A beat saved offline is sent when it can be; one
 deleted on another device goes from this one too.
 
+A loop played here is played as it is written; the long form that Penny's
+Radio gives a loop (`jam/form.js`) is for listening, not for composing.
+
 What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, and any way to choose the chords.
 
@@ -494,11 +497,38 @@ to the other, with a moment of static; the needle crosses the dial, the knob
 turns, and the readout gives the station in its own colour. A double tap, or
 Keep, keeps the station that is tuned in. It stays on the dial, marked "Kept 2
 of 5", and a new station comes in beside it: something new, or the kept one
-changed a little, and the longer a station has been kept the likelier the
-second, since a favourite is best tested by its near relations. A station
+changed a little, more often the first: mostly near relations of a favourite
+is the sharper test of it, and the same thing over and over to listen to. A
+station
 kept five times running is saved to a preset (a press on one opens it in the
 music maker), and two new stations take the dial, so that no early favourite
 sits there for ever.
+
+**A station is a piece, not a loop.** A loop is one bar of eight steps, and
+played round and round as it stands it is pleasant for a quarter of a minute
+and then a thing stuck: the same tune, the same kick in the same place. So a
+station plays its loop in a long form (`jam/form.js`): a loop inside a longer
+loop inside a longer one, each changing something the one inside it left
+alone. Which bar it is, counted from when the radio was turned on, says where
+it is in all of them at once:
+
+| The loop | How long (at 100 beats a minute) | What changes round it |
+| --- | --- | --- |
+| A bar in its phrase | 4 bars, ten seconds | The chord. And the tune goes said, answered (its second half a step higher), said again, turned round (its second half backwards). |
+| A phrase in its section | 16 bars, forty seconds | How hard it is played: stated; lighter (half the hats, the kick only on the one, the keys quieter); the keys answering half a bar late; a build, with a fill on the drums to end it. |
+| A section in its movement | 64 bars, two and a half minutes | The order of the four chords, different in each; a section with the bass only on the beats; and one that opens with a phrase of rest: no kick, no snare, no bass, the chord held under what is left. |
+| A movement in its piece, and the piece in whatever is longer, without end | 256 bars, ten minutes; then forty; and on | The key: each of these moves the whole thing up or down a few notes and brings it home again. |
+
+Nothing in it is chance: the same loop at the same bar is always the same, and
+the rules are the same for every station, so two stations side by side are at
+the same place in the same form and neither is flattered by it. It is still
+the loop it was: the tune is as written in more than half its bars. The
+display shows the bar that is being played, so it changes with the form. The
+clock of the form runs on from one pair of stations to the next, so a station
+that is kept is heard further into its piece each time, not from the top
+again; where it stood when a station was kept is written down with the pick.
+The music maker does not do this: there, what is on the board is what is
+heard.
 
 **Penny shows how.** Nothing is said. As on the walk, one thing is shown at a
 time, and the next waits until that has been done. That a swipe tunes: Penny
