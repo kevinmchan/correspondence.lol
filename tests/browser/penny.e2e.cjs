@@ -5,7 +5,8 @@
 // where it should be and nowhere else, that the whole first quarter can be
 // walked from the home page to Dot, by touch and by keyboard and with reduced
 // motion, and that nothing throws on the way. It needs Playwright with
-// Chromium; where that is not installed it says so and passes.
+// Chromium; where that is not installed it says so and passes (unless
+// REQUIRE_BROWSER is set, as it is where pull requests are checked).
 //
 // It serves the repository itself, talks to no server, and takes about three
 // minutes: nothing in the app is sped up for it, so what passes here is what
@@ -20,8 +21,10 @@ let chromium;
 try {
   ({ chromium } = require('playwright'));
 } catch {
-  console.log('Playwright is not installed: skipping the browser checks.');
-  process.exit(0);
+  // (where pull requests are checked, REQUIRE_BROWSER is set: there a missing browser is a failure, not a pass)
+  const must = Boolean(process.env.REQUIRE_BROWSER);
+  console.log(`Playwright is not installed: ${must ? 'and here it has to be.' : 'skipping the browser checks.'}`);
+  process.exit(must ? 1 : 0);
 }
 
 const ROOT = path.join(__dirname, '..', '..');

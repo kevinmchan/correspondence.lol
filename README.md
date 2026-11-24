@@ -14,7 +14,8 @@ A static, no-build progressive web app served from the repository root at
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
-| `tests/` | Tests for the game rules, the puzzle generator and Penny's places (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) |
+| `tests/` | Tests for the game rules, the puzzle generator and Penny's places (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
+| `.github/workflows/` | What GitHub runs on every pull request: the control (`pr-control.yml`) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
@@ -25,6 +26,68 @@ Letter Office (`/?office`, `penny/office.js`), is still being worked out, so
 nobody is taken there who has not asked: the app opens on the home page. The
 scene is reached by a tap on Penny on the home page once the first places
 have been walked, and a door in its corner leads back.
+
+## Phones
+
+The interface is designed for an iPhone Pro (393 by 852 installed to the Home
+Screen, 393 by 659 inside Safari with its bars showing), and has to go on
+working on a Pro Max and on a mini. The mini is where it is tightest, so it
+has a suite of its own: `npm run e2e:mini` (`tests/browser/mini.e2e.cjs`) goes
+through every screen of the app, in every state worth looking at, on a mini
+both ways (375 by 629 in Safari; 375 by 812 installed, with the notch and the
+home bar), and holds each to the same rules:
+
+- the page cannot be scrolled sideways, and nothing sticks out past its edges;
+- everything there is to press is at least 44 by 44 (the few things that are
+  not are named in the suite, each with its reason);
+- no two things to press overlap;
+- installed, nothing to press lies under the notch or the home bar;
+- no text is under 11px, and no text field under 16px (Safari zooms the whole
+  page when a smaller one is tapped);
+- no text is cut off by its own box;
+- a screen meant to be seen whole is whole: it does not scroll, and the things
+  named for it are entirely on the screen.
+
+The same suite can be pointed at any of the phones in `tests/browser/phone.cjs`:
+`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all`; and at one screen:
+`ONLY=radio npm run e2e:mini`. There is no WebKit where the suites run, only
+Chromium told to be a phone (its size, touch, a phone's viewport and the
+insets of the notch and the home bar): what is checked is the layout an
+iPhone's screen gives, not Safari's own engine.
+
+A new screen, or a new state of one, gets a test screen in the suite in the
+same change that adds it.
+
+## The control on pull requests
+
+Nothing goes into `main` without two things (`tests/pr-control.cjs`, run on
+every pull request by `.github/workflows/pr-control.yml`):
+
+1. **New test screens.** The pull request adds at least one test screen to the
+   suite for the mini: there are more after it than before, and at least one
+   has a name that was not there. Renaming one, or swapping one for another, is
+   not adding one.
+2. **Passing runs.** `npm test`, `npm run e2e` and `npm run e2e:mini` all
+   pass. A browser that is missing is a failure there, not a skip.
+
+Besides which, every screen the app has must have at least one test screen at
+all times (`tests/control.test.js`).
+
+Not having either takes an **exception**, and an exception is two things, both
+on the pull request:
+
+- the label `test-exception`, which is the owner's to give; and
+- a line of its own in the description for each rule it is asked for, with the
+  reason in a sentence:
+  `Exception (no new test screens): …` or `Exception (failing tests): …`
+
+An exception lets the pull request through and says so in the result of the
+check; it does not hide what failed. The control can be run by hand before a
+pull request is opened: `node tests/pr-control.cjs --base origin/main`.
+
+For the control to be a bar and not only a report, `main` has to be protected
+on GitHub (Settings, Branches): require a pull request, and require the status
+check "New test screens and passing runs".
 
 ## Run locally
 

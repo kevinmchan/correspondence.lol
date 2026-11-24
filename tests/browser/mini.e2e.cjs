@@ -19,24 +19,35 @@
 //     and the things named for it are entirely on the screen.
 //
 // KEEPING IT UP. A new screen, or a new state of one (a sheet, a list that can
-// grow, a step of a lesson), gets an entry in STATES below in the same change
-// that adds it. An exception is written next to the state it is for, with the
-// reason, and is the smallest that will do.
+// grow, a step of a lesson), gets an entry in states() below in the same
+// change that adds it. An exception is written next to the state it is for,
+// with the reason, and is the smallest that will do. This is not left to
+// memory: every pull request has to add a test screen here and pass, or carry
+// an exception (tests/pr-control.cjs), and every screen the app has must have
+// at least one (tests/control.test.js).
+//
+//   node tests/browser/mini.e2e.cjs --list     the test screens, as JSON, without a browser
 //
 // The same suite can be pointed at the other phones:
 //   PHONES=pro-app,pro-safari npm run e2e:mini      (all of them: PHONES=all)
 // It needs Playwright with Chromium; where that is not installed it says so and
-// passes. It serves the repository itself and talks to no server.
+// passes, unless REQUIRE_BROWSER is set (as it is where pull requests are
+// checked), when that is a failure. It serves the repository itself and talks
+// to no server.
 
 const assert = require('node:assert/strict');
 const { PHONES, serve, open, measure, ACCOUNT, ROOM, listed, roomSays } = require('./phone.cjs');
 
-let chromium;
-try {
-  ({ chromium } = require('playwright'));
-} catch {
-  console.log('Playwright is not installed: skipping the phone checks.');
-  process.exit(0);
+const LISTING = process.argv.includes('--list');
+let chromium = null;
+if (!LISTING) {
+  try {
+    ({ chromium } = require('playwright'));
+  } catch {
+    const must = Boolean(process.env.REQUIRE_BROWSER);
+    console.log(`Playwright is not installed: ${must ? 'and here it has to be.' : 'skipping the phone checks.'}`);
+    process.exit(must ? 1 : 0);
+  }
 }
 
 const PRESS = 44; // the least a thing to press may be, each way
@@ -47,6 +58,7 @@ const GAMES = [listed({ last_player: 1, found: 2, hearts: 2 }), listed({ mode: '
 const rooms = (games) => (name, args) => (name === 'room_get' ? roomSays(args.p_room, args.p_room === ROOM ? 'Book club' : 'Family', args.p_room === ROOM ? games : []) : undefined);
 
 // Every screen, in every state worth looking at.
+//   screen: which screen of the app it is (the name of its template in index.html, without "screen-").
 //   at: its address.  storage: what is on the device.  server: what the server says.
 //   ready: what is there when it has come up.  then(page): what has to be done to get it into the state.
 //   whole: the things that must be entirely on the screen without scrolling (and the screen must not scroll).
@@ -60,24 +72,24 @@ async function states() {
   const beats = ['Morning', 'A beat with rather a long name to it', 'Three'].map((name, i) => ({ name, code: encode(randomBeat(random)), at: 1795000000000 + i }));
   const played = { 'postmarks:howto-solo:v1': true };
   return [
-    { name: 'home, somebody new', at: '/', ready: '#welcome-new' },
-    { name: 'home, the lobby', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
-    { name: 'home, the feed with things waiting', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
-    { name: 'home, the feed with nothing waiting', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
-    { name: 'opening a room', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
-    { name: 'joining a room', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
-    { name: 'a room, with games in it', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
-    { name: 'the game, the smallest board', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
-    { name: 'the game, the biggest board', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
-    { name: 'the game, how to play', at: '/postmarks/', ready: 'dialog.howto[open]' },
-    { name: 'the walk, the first place', at: '/?walk', storage: { 'penny:place:v1': 0 }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back'] },
-    { name: 'the walk, the last place, with Dot', at: '/?walk', storage: { 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:walked:v1': true }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back', '#walk-down'] },
-    { name: 'the film, scene one', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
-    { name: 'the film, scene two', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
-    { name: 'the music maker, empty', at: '/jam/', ready: '.jam-board .pad' },
-    { name: 'the music maker, with beats saved', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li' },
-    { name: 'Penny’s Radio', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', whole: ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.penny-back', '#taste-behind-open'] },
-    { name: 'Penny’s Radio, behind it', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog.behind[open]' },
+    { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
+    { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
+    { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
+    { name: 'home, the feed with nothing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
+    { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
+    { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
+    { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
+    { name: 'the game, the smallest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
+    { name: 'the game, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
+    { name: 'the game, how to play', screen: 'game', at: '/postmarks/', ready: 'dialog.howto[open]' },
+    { name: 'the walk, the first place', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 0 }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back'] },
+    { name: 'the walk, the last place, with Dot', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:walked:v1': true }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back', '#walk-down'] },
+    { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
+    { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
+    { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad' },
+    { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li' },
+    { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', whole: ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.penny-back', '#taste-behind-open'] },
+    { name: 'Penny’s Radio, behind it', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog.behind[open]' },
   ];
 }
 
@@ -92,6 +104,7 @@ async function look(browser, origin, phoneName, state) {
     if (state.settle) await page.waitForSelector(state.settle, { timeout: 8000 });
     await sleep(900); // whatever slides or rises into place has
     const seen = await measure(page, { insets: phone.insets });
+    if (!String(seen.screen).split(' ').includes(`screen-${state.screen}`)) wrong.push(`the screen that came up is "${seen.screen}", not screen-${state.screen}`);
     const allowed = (what) => (state.small ?? []).some(([pattern]) => new RegExp(pattern).test(what));
     if (seen.sideways) wrong.push('the page scrolls sideways');
     for (const one of seen.wide) wrong.push(`sticks out sideways: ${one.what} (from ${one.x} to ${one.x + one.w} on a screen ${seen.width} wide)`);
@@ -123,6 +136,12 @@ async function look(browser, origin, phoneName, state) {
 }
 
 async function main() {
+  if (LISTING) { // the test screens there are: what the pull request control counts
+    const names = (await states()).map((state) => ({ name: state.name, screen: state.screen }));
+    assert.equal(new Set(names.map((one) => one.name)).size, names.length, 'two test screens have the same name');
+    console.log(JSON.stringify(names));
+    return;
+  }
   const asked = process.env.PHONES === 'all' ? Object.keys(PHONES) : (process.env.PHONES ?? 'mini-safari,mini-app').split(',').map((name) => name.trim()).filter(Boolean);
   for (const name of asked) assert.ok(PHONES[name], `No such phone: ${name}. There are: ${Object.keys(PHONES).join(', ')}`);
   const only = process.env.ONLY ? new RegExp(process.env.ONLY, 'i') : null; // ONLY=radio, to look at one screen
