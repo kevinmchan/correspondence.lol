@@ -140,8 +140,7 @@ export function mount(root, life) {
   let pull = null; // a finger that is down: where it went down
 
   // Shown how. Penny has no hands: it looks at you, looks at the floor, and a
-  // fingertip of light slides up the room from there, the room giving a little
-  // under it as it will under yours.
+  // fingertip of light slides up the room from there.
   async function illustrate(s) {
     asked = false;
     penny.classList.remove('low');
@@ -159,7 +158,6 @@ export function mount(root, life) {
     look(1.6, -1.6);
     act('hop');
     voice.sing(ASK, 0.5); // one note that turns up at the end, as the finger does
-    if (!still && !pull) stage.style.translate = '0 -16px';
     await touch.animate([
       { transform: 'translateY(0)', opacity: 0 },
       { transform: 'translateY(-12px)', opacity: 0.95, offset: 0.18 },
@@ -167,7 +165,6 @@ export function mount(root, life) {
       { transform: 'translateY(-128px)', opacity: 0 },
     ], { duration: 1300, easing: still ? 'steps(5, end)' : 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
     touch.remove();
-    if (!pull) stage.style.translate = '';
     s.check();
     look(0, 0);
     await s.rest(1300);
@@ -374,7 +371,6 @@ export function mount(root, life) {
     at = index;
     asked = false;
     air.querySelectorAll('.o-touch').forEach((touch) => touch.remove());
-    if (!pull) stage.style.translate = '';
     main.dataset.screen = index;
     screens[index].enter();
     try {
@@ -396,27 +392,21 @@ export function mount(root, life) {
   }
 
   // A swipe up: a finger (or a mouse held down) that travels up the screen
-  // further than it travels across. The room follows it a little way, and
-  // settles back when it is let go.
+  // further than it travels across.
   const SWIPE = 44;
   const apart = (event) => event.target.closest?.('a, button, [role="button"]');
   main.addEventListener('pointerdown', (event) => {
     if (apart(event) || pull || (event.pointerType === 'mouse' && event.button !== 0)) return;
     pull = { id: event.pointerId, x: event.clientX, y: event.clientY };
-    stage.classList.add('held');
   });
-  life.on(window, 'pointermove', (event) => {
-    if (!pull || event.pointerId !== pull.id) return;
-    const up = pull.y - event.clientY;
-    if (!still) stage.style.translate = `0 ${-Math.max(0, Math.min(up * 0.22, 26))}px`;
-  });
+  // Nothing on the screen moves under the finger, and the page behind it must
+  // not either: no scrolling, no pull to refresh, no rubber band.
+  main.addEventListener('touchmove', (event) => { if (event.cancelable) event.preventDefault(); }, { passive: false });
   const letGo = (event, cancelled) => {
     if (!pull || event.pointerId !== pull.id) return;
     const up = pull.y - event.clientY;
     const across = Math.abs(event.clientX - pull.x);
     pull = null;
-    stage.classList.remove('held');
-    stage.style.translate = '';
     if (cancelled) return;
     if (up >= SWIPE && up > across) turn();
     else if (at === 0) asked = true; // a tap, or a swipe some other way
