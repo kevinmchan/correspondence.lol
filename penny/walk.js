@@ -342,7 +342,7 @@ export function mount(root, life) {
           hum(YES, 0.75, 'knows');
         }
         say('Penny knows there is a post in one square: the rules leave nowhere else');
-      }, SEAL_AFTER[index] + 500));
+      }, (found.length ? SEAL_AFTER[index] : 200) + 500)); // (what is certain before anything is found is marked at once: it is where to begin)
     }
   }
 

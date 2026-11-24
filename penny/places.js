@@ -15,6 +15,9 @@
 //
 // The rule a place shows is the one whose crosses come first and slowly, lit
 // one by one, so that it is seen as a shape; the others follow quickly.
+// The second, third and fourth places each begin with something certain: one
+// square is the only one of its colour, so there is no wondering where to
+// start. What follows from opening it is what the place is there to show.
 // From the second place on, a quick tap crosses a square out, as in the game.
 // The last place is made to be gentle: one cross in the right corner leaves a
 // colour with a single square.
@@ -55,8 +58,8 @@ import { A4, A5, C5, C6, D4, D5, E4, E5, G4, G5 } from './notes.js';
 export const PLACES = [
   { rows: ['A'], tiles: { A: 1 }, posts: [0], rules: [], loud: [0], reach: 0, listen: 250, twice: 500 },
   { rows: ['AABB', 'AABB', 'CCBB', 'CCDB'], tiles: { A: 0, B: 4, C: 2, D: 1 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], shows: 'colour', loud: [1, 7, 8], reach: 2, listen: 300, twice: 450, crosses: true },
-  { rows: ['BBAA', 'BBCC', 'DBBC', 'DDBB'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], shows: 'line', loud: [2, 4], reach: 2, listen: 380, twice: 350, crosses: true },
-  { rows: ['AAAB', 'AABB', 'CCDB', 'CDDD'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], shows: 'touch', loud: [1], reach: 2, listen: 460, twice: 350, crosses: true },
+  { rows: ['ABBB', 'ABCC', 'ACCC', 'ADCC'], tiles: { A: 6, B: 3, C: 1, D: 0 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], shows: 'line', loud: [2, 4], reach: 2, listen: 380, twice: 350, crosses: true },
+  { rows: ['AAAB', 'AABB', 'DCCB', 'CCCB'], tiles: { A: 2, B: 5, C: 0, D: 4 }, posts: [1, 7, 8, 14], rules: ['colour', 'line', 'touch'], shows: 'touch', loud: [1], reach: 2, listen: 460, twice: 350, crosses: true },
   { rows: ['BBAA', 'BBCC', 'DDDC', 'DDDC'], tiles: { A: 1, B: 0, C: 3, D: 6 }, posts: [2, 4, 11, 13], rules: ['colour', 'line', 'touch'], loud: [], reach: 0, listen: 0, twice: 350, crosses: true, marks: true },
 ].map((place) => ({ ...place, n: place.rows.length, regions: place.rows.join('').split('').map((letter) => place.tiles[letter]) }));
 
