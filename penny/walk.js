@@ -25,8 +25,8 @@
 // where the eyes are, on the squares, and the two look nothing alike: what is
 // heard is an amber warmth under your finger; what is known is Penny's own
 // red seal, stamped on a square nobody touched, the moment a rule settles it.
-// And while Penny listens to what was inside a post, the map goes dim, so
-// that for once the thing to look at is Penny.
+// (The map is never dimmed for any of this: a board gone dark reads as a
+// board that has stopped working.)
 //
 // The hand has three things it can do, the same three as in the game. A
 // double tap opens a square. From the second place on, a quick tap crosses
@@ -268,7 +268,6 @@ export function mount(root, life) {
     lay();
     say('');
     // it looks the new place over, then at you
-    main.classList.remove('hush');
     main.dataset.hour = index; // each place is later in the one day (walk.css)
     pal.height('face').goTo(spot()).mood('curious').look(board);
     pal.gesture('hop');
@@ -577,7 +576,6 @@ export function mount(root, life) {
   const open = (cell) => opening(cell).catch((error) => {
     console.error(error);
     if (life.over) return;
-    main.classList.remove('hush');
     setBusy(false);
     pal.height('face').mood('calm').look(null);
     if (!done) return;
@@ -700,7 +698,6 @@ export function mount(root, life) {
     // hardly bear it. Then it holds still to listen.
     await wait(Math.max(900, Math.min(at + 250, 1700)));
     const mail = mailIn(index, found.length - 1, place.posts.length, hasDot()); // (Dot is only there to be found once)
-    main.classList.add('hush'); // the map goes dim: for this moment the thing to watch is Penny
     if (mail.dot) {
       await findDot(cell);
     } else {
@@ -744,7 +741,6 @@ export function mount(root, life) {
       }
     }
     if (life.over) return;
-    main.classList.remove('hush');
     setBusy(false);
     if (done) {
       board.classList.add('won');
