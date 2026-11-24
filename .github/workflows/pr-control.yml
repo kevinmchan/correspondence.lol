@@ -3,19 +3,24 @@
 # an exception is, are written at the top of tests/pr-control.cjs.
 #
 # It runs again when the description or the labels change, because that is
-# where an exception is asked for and given.
+# where an exception is asked for and given. It also runs on every push to a
+# branch that is not main, so that what it will say of a pull request is known
+# before there is one (there, with no description to read, there can be no
+# exception: it says what is met and what is not).
 name: PR control
 
 on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  push:
+    branches-ignore: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: pr-control-${{ github.event.pull_request.number }}
+  group: pr-control-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -40,4 +45,4 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
           REQUIRE_BROWSER: '1'
-        run: node tests/pr-control.cjs --base "origin/${{ github.base_ref }}"
+        run: node tests/pr-control.cjs --base "origin/${{ github.base_ref || 'main' }}"
