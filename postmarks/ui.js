@@ -16,7 +16,7 @@ import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
 import { claim as callPal } from '/penny/pal.js';
-import { OOPS, SAG, TRILL, YES, hasDot } from '/penny/penny.js';
+import { ASK, GASP, LONGING, OOPS, SAG, TRILL, WONDER, YES, hasDot } from '/penny/penny.js';
 
 // A game's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -48,6 +48,46 @@ export function mount(root, life) {
     calming = setTimeout(() => pal.mood('calm').look(null).settle('peek'), after);
   };
   calm(600);
+  // A pass phrase is the one place here where the story is: a letter somebody
+  // wrote, face down, and Penny cannot read. So it does there what you do for
+  // it on the walk, the other way round: you cannot hear what is in a post,
+  // and it listens for you; it cannot read what is on a card, and you read
+  // for it. It looks the cards over when they are first put down. Each time
+  // one turns, it looks at the word and then at you: what does it say? And
+  // when the whole of it is out, and the envelope is about to open, it is not
+  // a cheer it gives. It is a letter too, and has never been opened.
+  let met = false; // it has looked the cards over
+  const meetPhrase = (cards) => {
+    if (met) return;
+    met = true;
+    const look = () => {
+      if (game?.status !== 'playing') return;
+      if (document.querySelector('dialog[open]')) { // something is in front of it: once that has gone
+        setTimeout(look, 700);
+        return;
+      }
+      clearTimeout(calming);
+      pal.rise().mood('curious').look(cards);
+      pal.sing(WONDER, 0.5);
+      calm(2400);
+    };
+    setTimeout(look, 1100);
+  };
+  const askWhatItSays = (card) => {
+    setTimeout(() => { // once it has been glad of the post
+      if (game?.status !== 'playing') return;
+      clearTimeout(calming);
+      pal.rise().mood('curious').look(card);
+      pal.sing(WONDER, 0.5);
+    }, 1000);
+    setTimeout(() => {
+      if (game?.status !== 'playing') return;
+      clearTimeout(calming);
+      pal.mood('hopeful').look(null); // at you
+      pal.sing(ASK, 0.55);
+      calm(1800);
+    }, 2100);
+  };
   const map = root.querySelector('.game-map');
   // line the faint squares of the map up with the lit ones of the board
   function layMap() {
@@ -324,6 +364,7 @@ export function mount(root, life) {
     // rest stay still when the page refreshes.
     while (target.children.length > tokens.length) target.lastElementChild.remove();
     let turned = 0;
+    let last = null; // the card that has just turned over
     tokens.forEach((token, i) => {
       const card = target.children[i] ?? target.appendChild(document.createElement('span'));
       const text = token.t === null ? '•'.repeat(token.len) : token.t.toUpperCase();
@@ -331,12 +372,19 @@ export function mount(root, life) {
       const className = ['word', token.t === null && 'hidden', i > 0 && !tokens[i - 1].gap && 'join', !token.gap && i < tokens.length - 1 && 'cont']
         .filter(Boolean).join(' ');
       if (card.className !== className) {
-        if (card.classList.contains('hidden') && token.t !== null) turned++;
+        if (card.classList.contains('hidden') && token.t !== null) {
+          turned++;
+          last = card;
+        }
         card.className = className;
       }
     });
     if (turned) sfx('token', { delay: 300 }); // just after the post that held it opens
     const left = tokens.filter((token) => token.t === null).length;
+    if (target === el.phrase && game?.status === 'playing') {
+      if (turned && left > 0) askWhatItSays(last);
+      else if (!turned && left > 0) meetPhrase(target);
+    }
     target.setAttribute('aria-label', left === 0
       ? `The phrase: ${online.phrase.shown}`
       : `The phrase, ${tokens.length} tokens, ${left} still hidden: ${tokens.map((token) => (token.t ?? 'hidden') + (token.gap ? ',' : '')).join(' ')}`);
@@ -709,12 +757,25 @@ export function mount(root, life) {
       if (!quiet && seen.status === 'playing' && game.status === 'won') {
         sfx('win', { delay: settle });
         setTimeout(confetti, settle);
+        const letter = online?.mode === 'phrase'; // somebody's letter, read: it takes that in before it is glad
         setTimeout(() => {
           clearTimeout(calming);
-          pal.rise().mood('glad').look(null).gesture('jump').hearts(3);
-          pal.sing(TRILL, 0.9);
+          if (letter) {
+            pal.rise().mood('surprised').look(el.phrase);
+            pal.sing(GASP, 0.6);
+          } else {
+            pal.rise().mood('glad').look(null).gesture('jump').hearts(3);
+            pal.sing(TRILL, 0.9);
+          }
         }, settle + 200);
-        setTimeout(finale, settle + 1700); // the board has its moment first
+        if (letter) {
+          setTimeout(() => {
+            pal.mood('listening');
+            pal.sing(LONGING, 0.75);
+          }, settle + 900);
+          setTimeout(() => pal.mood('glad').look(null).hearts(3), settle + 2100);
+        }
+        setTimeout(finale, settle + (letter ? 2600 : 1700)); // the board has its moment first
       } else if (!quiet && seen.status === 'playing' && game.status === 'lost') {
         sfx('lose', { delay: 450 });
         setTimeout(finale, 1900);
