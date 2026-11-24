@@ -417,14 +417,15 @@
         <div id="jam-layers" class="jam-layers" role="radiogroup" aria-label="Instrument"></div>
         <div class="jam-controls">
           <div class="side">
-            <button type="button" id="jam-tempo" class="quiet" aria-label="Tempo" title="Tempo"></button>
-            <button type="button" id="jam-dice" class="quiet" aria-label="Surprise me" title="Surprise me">
-              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
+            <button type="button" id="jam-play" class="quiet" aria-label="Play" aria-pressed="false">
+              <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
+              <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
             </button>
+            <button type="button" id="jam-tempo" class="quiet" aria-label="Tempo" title="Tempo"></button>
           </div>
-          <button type="button" id="jam-play" aria-label="Play" aria-pressed="false">
-            <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
-            <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
+          <!-- The dice, biggest and in the middle: the quickest way to something worth hearing. -->
+          <button type="button" id="jam-dice" aria-label="Surprise me" title="Surprise me">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
           </button>
           <div class="side">
             <button type="button" id="jam-clear" class="quiet" aria-label="Clear this instrument" title="Clear this instrument">

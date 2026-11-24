@@ -68,20 +68,28 @@
 .layer[aria-checked="true"] .name { color: var(--ink); }
 
 /* --- Play, tempo, start over ----------------------------------------------------------- */
-.jam-controls { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6rem; }
+.jam-controls { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0.6rem; }
 .jam-controls .side { display: flex; align-items: center; gap: 0.5rem; }
 .jam-controls .side:last-child { justify-content: flex-end; }
 .jam-controls button.quiet { height: 2.9rem; min-width: 2.9rem; padding: 0 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.9375rem; }
 .jam-controls button.quiet svg { width: 1.2rem; height: 1.2rem; }
-.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 3.4rem; }
-.jam-controls #jam-tempo::after { content: " bpm"; font-weight: 400; font-size: 0.75rem; color: var(--muted); }
-#jam-play {
-  width: 4.2rem; height: 4.2rem; padding: 0; border-radius: 50%; display: grid; place-items: center;
+/* (the tempo is kept narrow, its unit under its number, so that the two sides weigh the same and the dice sit dead centre) */
+.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 2.9rem; padding: 0 0.35rem; flex-direction: column; gap: 0; line-height: 1.05; }
+.jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
+/* The dice are the big button, in the middle. Play and pause sit beside them. */
+#jam-dice {
+  width: 4.6rem; height: 4.6rem; padding: 0; border-radius: 50%; display: grid; place-items: center;
   background: var(--accent); color: #fff; box-shadow: 0 0.26rem 0 color-mix(in srgb, var(--accent) 68%, #000);
   transition: transform 70ms ease, box-shadow 70ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
-#jam-play:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
-#jam-play svg { width: 1.9rem; height: 1.9rem; }
+#jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
+#jam-dice svg { width: 2.3rem; height: 2.3rem; }
+@media (prefers-reduced-motion: no-preference) {
+  #jam-dice:active svg { transform: rotate(40deg); transition: transform 90ms ease; }
+}
+.jam-controls #jam-play.quiet { padding: 0; }
+#jam-play svg { width: 1.3rem; height: 1.3rem; }
 #jam-play .pause { display: none; }
 #jam-play.playing .pause { display: block; }
 #jam-play.playing .go-on { display: none; }
