@@ -16,7 +16,7 @@ import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
 import { claim as callPal } from '/penny/pal.js';
-import { ASK, GASP, LONGING, OOPS, SAG, TRILL, WONDER, YES, hasDot } from '/penny/penny.js';
+import { ASK, GASP, LONGING, OOPS, SAG, THIS_WAY, TRILL, WONDER, YES, hasDot } from '/penny/penny.js';
 
 // A game's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -40,7 +40,9 @@ export function mount(root, life) {
   // stands at the bottom edge of the window, with Dot once Dot has been
   // found. Penny has no part in the play here and gives nothing away: it is
   // glad when a post is found, flinches at a miss, and feels how the game
-  // ends. It keeps low, out of the way of everything there is to press.
+  // ends. A race it takes as play: it is all for the start, as glad of a
+  // finish that comes last as of one that comes first, pleased when a hint is
+  // asked for, and not cast down when the hearts run out. It keeps low, out of the way of everything there is to press.
   const pal = callPal(life, { x: 0.74, height: 'low', mood: 'calm', dot: hasDot(), colours: true });
   let calming = null;
   const calm = (after) => {
@@ -636,6 +638,11 @@ export function mount(root, life) {
     if (!game || game.status !== 'playing') return;
     hint = findHint(game) ?? { kind: 'none', cells: [], because: [], text: 'Nothing left to work out.' };
     sfx('pick');
+    if (online?.mode === 'trial') { // asking for help in a race: Penny thinks that is a fine idea
+      pal.rise().mood('glad').look(null).gesture('nod');
+      pal.sing(YES, 0.5);
+      calm(1600);
+    }
     render();
     el.hintNote.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
@@ -666,7 +673,7 @@ export function mount(root, life) {
       // may try the board for themselves: a test run, which is not ranked.
       el.trialTitle.textContent = online.mode === 'trial' ? 'Time trial' : 'Pass phrase';
       el.trialHint.textContent = online.mode === 'trial'
-        ? 'Everyone solves the same board on their own. Fastest time wins, and three wrong guesses put you out. Your clock starts when you press Start.'
+        ? 'A friendly race. Everyone solves the same board on their own and the quickest comes first, but it’s only for fun: take a hint whenever you like. Three wrong guesses put you out. Your clock starts when you press Start.'
         : 'You wrote this one. Everyone else solves the board on their own, and each post they find shows them one token. You can test the board yourself: it won’t count.';
       el.trialStart.hidden = false;
       el.trialStart.lastChild.textContent = wrote ? 'Test your board' : 'Start';
@@ -781,6 +788,12 @@ export function mount(root, life) {
         setTimeout(finale, 1900);
         setTimeout(() => {
           clearTimeout(calming);
+          if (online?.mode === 'trial') { // out of a race: an oops, and no more than that
+            pal.rise().mood('unsure').look(null).gesture('wiggle');
+            pal.sing(OOPS, 0.6);
+            setTimeout(() => pal.mood('glad').hearts(1), 1100);
+            return;
+          }
           pal.rise().mood('sad').look(null).gesture('sink');
           pal.sing(SAG, 0.6);
         }, 500);
@@ -855,8 +868,8 @@ export function mount(root, life) {
     el.phraseEntry.hidden = !(phrase && tool === 'phrase' && !over);
     el.tools.querySelector('[data-tool="phrase"]').hidden = !phrase;
     el.tools.hidden = over;
-    // no hints in a race against the clock
-    el.hint.hidden = over || online?.mode === 'trial';
+    // (a hint is there in a race as well: the race is for fun)
+    el.hint.hidden = over;
     el.hintNote.hidden = !hint || over;
     if (hint) el.hintNote.textContent = hint.text;
     for (const button of el.tools.children) {
@@ -1168,7 +1181,13 @@ export function mount(root, life) {
     el.trialError.textContent = '';
     try {
       accept(await rpc('postmarks_trial_start', { p_game: online.id, p_token: myToken() }));
-      if (online.mode === 'trial') sfx('start');
+      if (online.mode === 'trial') {
+        sfx('start');
+        // a race, and Penny is all for it: this is a game, not a hurry
+        pal.rise().mood('thrilled').look(null).gesture('wiggle');
+        pal.sing(THIS_WAY, 0.6);
+        calm(1500);
+      }
       render();
       greet();
       watcher?.poke();

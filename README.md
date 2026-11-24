@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -64,14 +64,47 @@ and never delivered; the rain that smudged its address did not come off. A
 sound is heard once and is over. A day goes one way. This is meant to be both
 things at once, beautiful and painful, and nothing should resolve it.
 
+**What it is about: learning to slow down, where it had seemed that the thing
+was to be fastest.** Penny comes from a place that runs on hurry, where the
+quickest mail leaves first and Penny, slow and plain, is what is left. It
+takes itself to have been left because it was not quick enough, and tries to
+be. It gets nowhere by that. What it is looking for can only be heard by
+something that has stopped. The story never says this; the places do.
+
+**And about playing at being fastest.** Going fast was never the trouble;
+having to was. Once Penny has slowed, it races again, for the fun of it: the
+same dash, with nothing riding on it. Competition in this story is play. Nobody
+is left behind for losing, whoever comes last is as welcome as whoever comes
+first, and help is allowed: a hint may be asked for in the middle of a race,
+and Penny thinks that a fine idea.
+
+### How a place says it
+
+The theme is carried by the surroundings, not by anything Penny does to camera.
+Wherever a new place is drawn, these hold:
+
+| | Hurry | Slowness |
+| --- | --- | --- |
+| Time | A clock whose hand races. | The same hand at the pace of a real second hand; a day that takes five places to pass. |
+| Things | Thin, striped, straight-edged, and going somewhere: express mail. | Round, plain, and drifting: dust in lamplight, Penny itself. |
+| Movement | Straight lines, quicker each time, over almost as they start. | Eased, and taking its own time; a walk where there was a dash. |
+| Light | Cold, and the same whatever happens. | Warmer, and only once things have slowed. |
+| Sound | Short and bright. | Long, low, with an echo: it has come a long way and took its time. |
+| A race | In earnest: the quickest leave, and whoever is slow is left. The room speeds up with it. | For fun: the clock does not change for it, anyone may have a hint, and every finish is cheered the same. |
+| What is asked of you | Nothing is ever timed, counted down or hurried in Penny's story. | Staying is rewarded: a screen left up tells more, and Penny hears only where a finger is held still. |
+
+A place does not start slow. It slows, and it slows because somebody in it
+has stopped: so the hurry has to be drawn first, and the same things that
+showed it (the one clock, the one lamp) are what show it easing.
+
 ### The adventure
 
 Only the first quarter is built. The shape of the whole:
 
 | Mark | What happens | State |
 | --- | --- | --- |
-| The start | Penny, alone, wants to take you through a portal. It is looking for someone, and all it knows of them is a sound. | built |
-| To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them. | built |
+| The start | Two scenes. A sorting office in a hurry. The express mail leaves, quicker and quicker, and Penny is left. It tries to be as fast, and cannot. When it stops, the room slows, and there is a sound. It is looking for whoever made it. Then the same room, slowed, where what you draw slowly stays and grows, and a portal out of it to go and look. | built |
+| To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them, and nothing in them is timed: Penny hears by holding still. | built |
 | **A quarter** | **Penny finds a friend, Dot**, a stamp, in the last post of the fifth place. From here on Penny is not alone. | built |
 | To a half | The search goes on, with Dot. | not written |
 | **A half** | **Who Penny is searching for is revealed.** | not written, and not decided |
@@ -89,7 +122,8 @@ app, so screens slide past and Penny stays; a screen that wants Penny asks,
 and Penny goes back under the edge when no screen does. At present the home
 page, the map and the game itself ask. In the game Penny has no part in the
 play and gives nothing away: it is glad when a post is found, flinches at a
-miss, and feels how the game ends; and the board there, as on the walk, is a
+miss, and feels how the game ends (a time trial it takes as play: see Game
+modes); and the board there, as on the walk, is a
 few lit districts of a larger map that goes on, faint, all round. Once Dot has been found, Dot stands tucked in beside it.
 
 Everything Penny says is a feeling. A mood sets its face and how it holds
@@ -243,18 +277,19 @@ the film again from scene one (`/?office`, `penny/office.js`).
 The story is gone through by swiping up. The scene is a handful of screens,
 and none of them moves on by itself: a swipe up turns to the next at once (the
 up arrow and a wheel do the same), and a swipe up from the last, once one
-square of the map is lit, goes through to the walk.
+square of the map is lit, goes on to scene two.
 
 Each screen is a loop. It plays, and plays again, for as long as it is left
 up, and no two turns of it are quite alike: the small differences are the
-story. Nothing is lost by swiping early, and whoever stays is told more.
+story. Nothing is lost by swiping early, and whoever stays is told more:
+which is the theme, in the one thing the scene asks of you.
 
-| Screen | Every turn | What changes |
-| --- | --- | --- |
-| The shelves | A letter lights, leaves its pigeonhole and goes into the map; Penny watches. | There is one fewer each time. Penny gets up for the last, and hums after it. Then nothing leaves, and Penny looks along the shelves anyway. |
-| The call | Penny, under the map, looks up at it. | It calls; calls louder, and sags; calls so quietly it is hardly a call; then only looks, for less time, less often. |
-| The sound | One far-off sound out of the map. | First Penny only starts at it. Then it answers under its breath. Then it goes and stands under the square it came from, which warms, and answers as if it were known. |
-| You | Penny looks from the map to you. | It turns; steps towards you, and a square lights; after that it only asks, coming nearer. |
+| Screen | Every turn | What changes | The room |
+| --- | --- | --- | --- |
+| The shelves | A letter of express mail, striped at the edge, lights, leaves its pigeonhole and goes into the map; Penny, who has no stripes, watches. | There is one fewer each time, and each goes quicker than the last. Penny gets up for the last, and hums after it. Then nothing leaves, and Penny looks along the shelves anyway. | The hand of the clock on the wall races, faster with every letter, and goes on racing when there is nothing left to hurry for. |
+| The rush | Penny tries to be as quick as they were. | A dash across the floor to the map, and a call. Then from further back, faster, and louder, and it sags. Then a run with no heart in it. Then it stops. | Faster than ever while Penny runs. Only once it has stopped does the clock ease, turn by turn, and the dust begin to show in the lamplight. |
+| The sound | One far-off sound out of the map, long and slow. | First Penny only starts at it. Then it answers under its breath. Then it walks, in its own time, to stand under the square it came from, which warms, and answers as if it were known. | Slow. The clock's hand has paled from red; the dust drifts; the lamplight is warmer. The sound was not to be heard over the hurry. |
+| You | Penny looks from the map to you. | It turns; takes one unhurried step towards you, and a square lights. After that it asks, and every other turn it plays: it races you to the square, the same dash as before, and trills at getting there first. | The hand of the clock is a second hand and no more, and stays so while Penny dashes: a race for fun is not a hurry. The lit square breathes slowly. |
 
 Nobody is told any of this in words. Whoever is caught waiting on the first
 screen is shown by Penny, between turns of the loop: it looks out at them, then
@@ -269,12 +304,41 @@ as the sign that there is something to hear. (An older scene of
 Penny's story lived at `/?penny`; that address now opens scene one, and its
 styles in `penny/story.css` are still used by the office.)
 
+### Scene two: what slow hands make
+
+Scene one is about stopping. Scene two (`/?slow`, `penny/slow.js`) is the
+reason it is worth it: slowing down is beautiful because of what can be made.
+It is the same room, slowed, and it is yours to draw in. There is nothing to
+solve and nothing is counted. What a finger makes depends on one thing only,
+how fast it goes:
+
+| The hand | What it leaves |
+| --- | --- |
+| Fast | A thin cold scratch, straight, gone almost as it is made. |
+| Slow | A wide warm ribbon in the game's colours, which stays. Shoots grow out of it, curl away and end in buds: the slower the line, the more of them and the longer they grow. |
+| Still | A flower, opening for as long as the finger is held there. |
+
+Everything is drawn twice, once each side of the middle of the screen, as ink
+goes through a letter folded while it is wet. The room keeps to the rules in
+"How a place says it": the clock on the wall goes at the speed of your hand,
+its hand red in a rush and pale at rest. Penny watches the finger, winces at
+a rush and warms to anything slow, and hums a note for a slow line now and
+then, higher the higher up the screen it is. The arrow keys draw too, at a
+walk (with shift, at a rush).
+
+Whoever is caught waiting is shown, as in scene one: Penny looks out, and a
+fingertip of light crosses the room slowly, leaving what a slow hand leaves.
+That fades; it was only to show. Once a little has been made slowly, a portal
+opens in the corner and leads on to the walk. It opens for slowness and never
+for speed, and it does not hurry anybody through. What was drawn is not kept
+when the scene is left.
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:
 
 - **Together**: one board for the whole room, taking turns. Each move is drafted and then submitted. Whoever made the last move waits until someone else has moved, even when alone in the room; the last submitted move is outlined on the board.
-- **Time trial**: a solo mode. Everyone solves their own copy of the same board; the clock starts when you press Start and the board is withheld until then. Three wrong guesses put you out. Results are ranked by time.
+- **Time trial**: a solo mode, and a friendly race. Everyone solves their own copy of the same board; the clock starts when you press Start and the board is withheld until then. Three wrong guesses put you out. Results are ranked by time, and that is as seriously as it is taken: hints are there throughout, cost nothing and are not counted. This is the playful competition of Penny's story. Penny is all for the start, pleased when a hint is asked for, as glad of a last place as a first, and takes running out of hearts as an oops.
 - **Pass phrase**: a solo mode. Everyone solves their own copy of the same board, and each letter found turns over one token of a hidden phrase. The phrase is split into exactly as many tokens as the board has letters: whole words where the counts match, with long words split and short neighbours joined otherwise (`tokenize` in `postmarks/game.js`, mirrored by `postmarks.tokenize` in the database). You can guess the whole phrase at any point (right wins, wrong costs a heart). Results are ranked by how few letters were opened. Whoever starts the game may write the phrase, in which case they have no board and watch the results, or leave it empty for a random one. The board is sized to the phrase so each word has its own letter. This is where the game meets Penny's story: a phrase is a letter somebody wrote, and Penny cannot read. It looks the face-down cards over when they are put down; each time one turns it looks at the word and then at you, asking what it says (you read for it, as it listens for you on the walk); and when the whole phrase is out it does not cheer but goes still and hums, before it is glad: it is a letter too, and has never been opened.
 
 In the solo modes there are no turns and no Submit: moves are played at once. Any game can be shared by its link: room members open it directly, and anyone else joins the room first and is then taken to the game.

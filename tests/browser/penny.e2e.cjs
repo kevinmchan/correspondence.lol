@@ -159,20 +159,67 @@ async function main() {
       await swipe(600, 300);
       await turned(1, 0, 2000);
       assert.equal(await page.locator('.o-touch').count(), 0, 'still being shown how after doing it');
-      await turned(1, 2);
+      assert.equal(await page.locator('.office').getAttribute('data-pace'), 'fast', 'the room is in a hurry while Penny is');
+      await turned(1, 4);
+      await sleep(300);
       assert.equal(await left(), 0, 'mail still on the shelves when Penny is the last one left');
       assert.equal(await page.locator('.o-touch').count(), 0, 'shown how on a screen that is not the first');
-      assert.equal(await page.locator('.p-penny.low').count(), 1, 'by the third call it has sagged');
+      assert.equal(await page.locator('.p-penny.low').count(), 1, 'it has stopped trying to be quick');
+      assert.equal(await page.locator('.office').getAttribute('data-pace'), 'slowing', 'and only then does the room slow');
 
       await page.keyboard.press('ArrowUp');
       await turned(2, 2);
       await page.waitForSelector('.o-map rect.near'); // it has placed the sound
+      assert.equal(await page.locator('.office').getAttribute('data-pace'), 'slow');
       await swipe(600, 300);
       await turned(3, 0, 2000);
       assert.equal(await page.locator('.o-first.lit').count(), 0);
       await turned(3, 1);
       assert.equal(await page.locator('.o-first.lit').count(), 1, 'the square lit');
       await swipe(600, 300);
+      await page.waitForURL(/\?slow/, { timeout: 5000 }); // on, to scene two
+    }),
+
+    check('scene two: what is drawn fast is gone, what is drawn slowly stays, and then there is a way on', {}, async (page) => {
+      await page.goto(`${origin}/?slow`);
+      await page.waitForSelector('.slow-keep');
+      // how much is on the sheet that keeps things
+      const kept = () => page.evaluate(() => {
+        const sheet = document.querySelector('.slow-keep');
+        const data = sheet.getContext('2d').getImageData(0, 0, sheet.width, sheet.height).data;
+        let marked = 0;
+        for (let i = 3; i < data.length; i += 4) if (data[i] > 40) marked += 1;
+        return marked;
+      });
+      await page.waitForSelector('.slow-tip.on', { timeout: 9000 }); // caught waiting: shown
+      await sleep(4500);
+      assert.equal(await kept(), 0, 'what Penny showed was left on the page');
+      // a rush across the room
+      await page.mouse.move(40, 300);
+      await page.mouse.down();
+      await page.mouse.move(350, 380, { steps: 1 });
+      await page.mouse.move(40, 460, { steps: 1 });
+      await page.mouse.up();
+      assert.equal(await kept(), 0, 'a rush left something behind');
+      assert.equal(await page.locator('#slow-portal').isVisible(), false, 'the way on opened for nothing');
+      assert.equal(await page.locator('.slow-tip.on').count(), 0, 'still being shown how after a touch');
+      // and the same room, taken slowly
+      await page.mouse.move(110, 520);
+      await page.mouse.down();
+      for (let i = 0; i < 220; i++) {
+        await page.mouse.move(130 + Math.cos(i / 20) * (30 + i * 0.3), 430 + Math.sin(i / 20) * (30 + i * 0.3));
+        await sleep(12);
+      }
+      await sleep(2500); // held still: a flower
+      await page.mouse.up();
+      assert.ok(await kept() > 2000, 'a slow line did not stay');
+      assert.equal(await page.locator('.slow').getAttribute('data-pace'), 'slow');
+      // the keyboard draws too
+      const before = await kept();
+      for (let i = 0; i < 40; i++) { await page.keyboard.press(i < 20 ? 'ArrowRight' : 'ArrowUp'); await sleep(30); }
+      assert.ok(await kept() > before, 'the arrow keys drew nothing');
+      await page.waitForSelector('#slow-portal:not([hidden])', { timeout: 20000 });
+      await page.locator('#slow-portal').click({ force: true }); // (it breathes: it is never quite still)
       await page.waitForURL(/\?walk/, { timeout: 5000 });
     }),
 
@@ -417,7 +464,7 @@ async function main() {
     }),
 
     check('Penny is only where a screen has asked for it', { storage: ACCOUNT }, async (page, h) => {
-      for (const address of ['/jam/', '/?open', '/?join', '/?office']) {
+      for (const address of ['/jam/', '/?open', '/?join', '/?office', '/?slow']) {
         await page.goto(origin + address);
         await sleep(1200);
         assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, address, 'the address is still the one asked for');

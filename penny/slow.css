@@ -1,0 +1,22 @@
+/* Scene two, what slow hands make (penny/slow.js). The room of scene one,
+   slowed (its drawing and its clock are styled in penny/office.css), with two
+   sheets over it to draw on. */
+.screen-slow main.slow {
+  position: relative; padding: 0; overflow: clip;
+  background: radial-gradient(120% 70% at 50% 0%, #2a3644 0%, #18212b 55%, #0f161d 100%);
+  touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  cursor: crosshair;
+}
+html:has(.screen-slow), html:has(.screen-slow) body { overscroll-behavior: none; }
+.slow canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.slow .slow-keep { mix-blend-mode: screen; }
+.slow .office-stage .p-penny { translate: 46px 262px; }
+/* the way on, once a little has been made: up in the corner, and in no hurry */
+.slow .portal { position: absolute; z-index: 2; top: max(0.75rem, env(safe-area-inset-top)); right: max(0.75rem, env(safe-area-inset-right)); width: 2.75rem; }
+/* the fingertip of light that shows how */
+.slow .slow-tip {
+  position: absolute; left: -0.6rem; top: -0.6rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; pointer-events: none;
+  background: rgb(246 241 231 / 0.3); border: 1.5px solid #f6f1e7; box-shadow: 0 0 0.5rem rgb(246 241 231 / 0.7);
+  opacity: 0; transition: opacity 500ms ease;
+}
+.slow .slow-tip.on { opacity: 0.9; }
