@@ -435,10 +435,21 @@ async function main() {
         offer.userChoice = new Promise((done) => setTimeout(() => done({ outcome: 'dismissed' }), 500));
         window.dispatchEvent(offer);
       });
+      // (Penny is thrilled only for as long as that prompt is up, which is half a second: on a busy machine a look can
+      // come after it. So what Penny goes through is written down in the page as it happens, and read from there.)
+      await page.evaluate(() => {
+        const pal = document.querySelector('.pal');
+        window.moods = [pal.dataset.mood];
+        new MutationObserver(() => {
+          if (window.moods.at(-1) !== pal.dataset.mood) window.moods.push(pal.dataset.mood);
+        }).observe(pal, { attributes: true, attributeFilter: ['data-mood'] });
+      });
       await page.locator('.pal-penny .paper').click({ force: true });
-      await h.until('thrilled', 3000);
-      await h.until('sad', 3000);
-      await h.until('calm', 6000);
+      const went = (...through) => page.waitForFunction((moods) => {
+        let from = 0;
+        return moods.every((mood) => (from = window.moods.indexOf(mood, from) + 1) > 0);
+      }, through, { timeout: 12000 });
+      await went('thrilled', 'sad', 'calm');
       assert.equal(await page.evaluate(() => sessionStorage.getItem('penny:install-no')), '1', 'a no is kept for the visit');
       await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
       await h.until('thrilled', 3000);
@@ -698,6 +709,106 @@ async function main() {
       assert.equal(await page.locator('#radio-dash').isVisible(), false);
     }),
 
+    check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });
+      const games = { // Book club: a move of yours, a race, and a game you are waiting on. Family: nothing
+        '11111111-1111-4111-8111-111111111111': [game({ last_player: 1 }), game({ mode: 'trial', finished: 2 }), game({ last_player: 0 })],
+        '22222222-2222-4222-8222-222222222222': [game({ status: 'won', last_player: 1 })],
+      };
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const id = JSON.parse(route.request().postData()).p_room;
+        return route.fulfill({ json: { id, name: id.startsWith('1') ? 'Book club' : 'Family', you: 0, people, messages: [], games: games[id] }, headers: cors });
+      });
+      await page.goto(origin);
+      await page.waitForSelector('.feed-item');
+      assert.equal(await page.locator('#tab-feed').getAttribute('aria-selected'), 'true', 'someone with rooms starts on the feed');
+      assert.deepEqual(await page.locator('.feed-item em').allTextContents(), ['Your move', 'New']);
+      assert.equal(await page.locator('.feed-item strong').first().textContent(), 'Ada played');
+      assert.equal(await page.locator('#feed-count').textContent(), '2');
+      assert.equal(await page.locator('#menu').isVisible(), false, 'the lobby is on the other tab');
+      // nothing above the tabs, nor the tabs themselves, moves when the other one is picked
+      const placed = () => page.evaluate(() => ['.mark', 'h1', '#tabs'].map((part) => {
+        const box = document.querySelector(part).getBoundingClientRect();
+        return [box.left, box.top, box.width, box.height].map(Math.round).join(' ');
+      }));
+      await sleep(700); // (the page the app opens on rises into place: measured once it has)
+      const onFeed = await placed();
+      await page.locator('#tab-lobby').click();
+      assert.deepEqual(await placed(), onFeed, 'the page shifted when the tab changed');
+      assert.equal(await page.locator('#menu').isVisible(), true);
+      assert.equal(await page.locator('#rooms').isVisible(), true);
+      assert.equal(await page.locator('.feed-item').first().isVisible(), false);
+      await page.reload();
+      await page.waitForSelector('#menu');
+      assert.equal(await page.locator('#tab-lobby').getAttribute('aria-selected'), 'true', 'the tab last up is remembered');
+      await page.locator('#tab-feed').click();
+      await page.locator('.feed-item').first().click();
+      await page.waitForURL(/\/postmarks\/\?game=33333333/, { timeout: 5000 });
+    }),
+
+    check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page, h) => {
+      await page.goto(`${origin}/?home`);
+      await sleep(2700);
+      assert.equal((await h.pal()).height, 'low', 'a tile is under Penny: it ducks');
+      await h.until('hopeful', 12000); // Penny comes up to ask
+      await sleep(400);
+      const spot = await page.evaluate(() => {
+        const paper = document.querySelector('.pal-penny .paper').getBoundingClientRect();
+        const x = paper.left + paper.width / 2;
+        const y = paper.top + 8;
+        const under = document.elementsFromPoint(x, y).find((element) => !element.closest('.pal'))?.closest('a[href]');
+        return { x, y, href: under?.getAttribute('href') ?? null };
+      });
+      if (spot.href) {
+        await page.mouse.click(spot.x, spot.y);
+        await page.waitForURL((url) => url.pathname + url.search === spot.href, { timeout: 5000 });
+      }
+    }),
+
+    check('Penny is only where a screen has asked for it', { storage: ACCOUNT }, async (page, h) => {
+      for (const address of ['/?open', '/?join', '/?office', '/?slow']) {
+        await page.goto(origin + address);
+        await sleep(1200);
+        assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, address, 'the address is still the one asked for');
+        assert.equal((await h.pal()).height, 'gone', address);
+      }
+      // the music maker asks for it: there it dances while the loop plays, and stops when the loop does
+      await page.goto(`${origin}/jam/`);
+      await sleep(1200);
+      assert.equal((await h.pal()).mood, 'calm', 'Penny is at the music maker, and still');
+      await page.locator('#jam-dice').click({ force: true });
+      await h.until('dancing', 3000);
+      assert.notEqual((await h.pal()).height, 'gone');
+      await page.locator('#jam-play').click();
+      await h.until('calm', 3000);
+      // the game is one of the screens that asks for it
+      await page.goto(`${origin}/postmarks/`);
+      await sleep(1500);
+      assert.notEqual((await h.pal()).height, 'gone', 'Penny is in the game');
+      assert.equal(await page.locator('.game-map').isVisible(), true, 'and the map is behind the board');
+      // and leaving the map in the middle of something leaves nothing behind
+      await page.goto(`${origin}/?walk`);
+      await sleep(1500);
+      await page.mouse.click(...(await h.centre(0)), { clickCount: 2, delay: 40 });
+      await sleep(500);
+      await page.locator('.penny-back').click();
+      await sleep(6000);
+      assert.equal((await h.pal()).mood === 'listening', false, 'Penny is not still listening to a post on a screen that has gone');
+      assert.equal(await page.evaluate(() => document.documentElement.classList.contains('pal-tinted')), false, 'the home page is not left coloured');
+    }),
+  ]);
+
+  // The night, the tags, and the checks that came with them. These are run once
+  // the ones above are done, not beside them. All of those run at once, in a
+  // window each, and several of them have to see something that does not last
+  // (a mood Penny is in for a second or two): every check put beside them
+  // makes the machine busier and such a thing easier to miss. On the machine
+  // that checks pull requests, five more beside them was enough for one to be
+  // missed. So what is added after them waits for them.
+  results.push(...await Promise.all([
     check('a tag is hidden wherever a screen has room for it: nothing leads to the night but finding it, going through it is a tumble, and found, it is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
       // What the mark is like, where it is.
       const where = () => page.evaluate(() => {
@@ -1004,98 +1115,7 @@ async function main() {
       assert.deepEqual(await kept('coop'), ['finale-hop 0.5s', 'finale-hop 0.62s'], 'the faces of everyone who played, one after another');
       await page.evaluate(() => document.querySelector('dialog.finale')?.close());
     }),
-
-    check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
-      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
-      const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });
-      const games = { // Book club: a move of yours, a race, and a game you are waiting on. Family: nothing
-        '11111111-1111-4111-8111-111111111111': [game({ last_player: 1 }), game({ mode: 'trial', finished: 2 }), game({ last_player: 0 })],
-        '22222222-2222-4222-8222-222222222222': [game({ status: 'won', last_player: 1 })],
-      };
-      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
-      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => {
-        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
-        const id = JSON.parse(route.request().postData()).p_room;
-        return route.fulfill({ json: { id, name: id.startsWith('1') ? 'Book club' : 'Family', you: 0, people, messages: [], games: games[id] }, headers: cors });
-      });
-      await page.goto(origin);
-      await page.waitForSelector('.feed-item');
-      assert.equal(await page.locator('#tab-feed').getAttribute('aria-selected'), 'true', 'someone with rooms starts on the feed');
-      assert.deepEqual(await page.locator('.feed-item em').allTextContents(), ['Your move', 'New']);
-      assert.equal(await page.locator('.feed-item strong').first().textContent(), 'Ada played');
-      assert.equal(await page.locator('#feed-count').textContent(), '2');
-      assert.equal(await page.locator('#menu').isVisible(), false, 'the lobby is on the other tab');
-      // nothing above the tabs, nor the tabs themselves, moves when the other one is picked
-      const placed = () => page.evaluate(() => ['.mark', 'h1', '#tabs'].map((part) => {
-        const box = document.querySelector(part).getBoundingClientRect();
-        return [box.left, box.top, box.width, box.height].map(Math.round).join(' ');
-      }));
-      await sleep(700); // (the page the app opens on rises into place: measured once it has)
-      const onFeed = await placed();
-      await page.locator('#tab-lobby').click();
-      assert.deepEqual(await placed(), onFeed, 'the page shifted when the tab changed');
-      assert.equal(await page.locator('#menu').isVisible(), true);
-      assert.equal(await page.locator('#rooms').isVisible(), true);
-      assert.equal(await page.locator('.feed-item').first().isVisible(), false);
-      await page.reload();
-      await page.waitForSelector('#menu');
-      assert.equal(await page.locator('#tab-lobby').getAttribute('aria-selected'), 'true', 'the tab last up is remembered');
-      await page.locator('#tab-feed').click();
-      await page.locator('.feed-item').first().click();
-      await page.waitForURL(/\/postmarks\/\?game=33333333/, { timeout: 5000 });
-    }),
-
-    check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page, h) => {
-      await page.goto(`${origin}/?home`);
-      await sleep(2700);
-      assert.equal((await h.pal()).height, 'low', 'a tile is under Penny: it ducks');
-      await h.until('hopeful', 12000); // Penny comes up to ask
-      await sleep(400);
-      const spot = await page.evaluate(() => {
-        const paper = document.querySelector('.pal-penny .paper').getBoundingClientRect();
-        const x = paper.left + paper.width / 2;
-        const y = paper.top + 8;
-        const under = document.elementsFromPoint(x, y).find((element) => !element.closest('.pal'))?.closest('a[href]');
-        return { x, y, href: under?.getAttribute('href') ?? null };
-      });
-      if (spot.href) {
-        await page.mouse.click(spot.x, spot.y);
-        await page.waitForURL((url) => url.pathname + url.search === spot.href, { timeout: 5000 });
-      }
-    }),
-
-    check('Penny is only where a screen has asked for it', { storage: ACCOUNT }, async (page, h) => {
-      for (const address of ['/?open', '/?join', '/?office', '/?slow']) {
-        await page.goto(origin + address);
-        await sleep(1200);
-        assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, address, 'the address is still the one asked for');
-        assert.equal((await h.pal()).height, 'gone', address);
-      }
-      // the music maker asks for it: there it dances while the loop plays, and stops when the loop does
-      await page.goto(`${origin}/jam/`);
-      await sleep(1200);
-      assert.equal((await h.pal()).mood, 'calm', 'Penny is at the music maker, and still');
-      await page.locator('#jam-dice').click({ force: true });
-      await h.until('dancing', 3000);
-      assert.notEqual((await h.pal()).height, 'gone');
-      await page.locator('#jam-play').click();
-      await h.until('calm', 3000);
-      // the game is one of the screens that asks for it
-      await page.goto(`${origin}/postmarks/`);
-      await sleep(1500);
-      assert.notEqual((await h.pal()).height, 'gone', 'Penny is in the game');
-      assert.equal(await page.locator('.game-map').isVisible(), true, 'and the map is behind the board');
-      // and leaving the map in the middle of something leaves nothing behind
-      await page.goto(`${origin}/?walk`);
-      await sleep(1500);
-      await page.mouse.click(...(await h.centre(0)), { clickCount: 2, delay: 40 });
-      await sleep(500);
-      await page.locator('.penny-back').click();
-      await sleep(6000);
-      assert.equal((await h.pal()).mood === 'listening', false, 'Penny is not still listening to a post on a screen that has gone');
-      assert.equal(await page.evaluate(() => document.documentElement.classList.contains('pal-tinted')), false, 'the home page is not left coloured');
-    }),
-  ]);
+  ]));
 
   await browser.close();
   server.close();
