@@ -136,7 +136,11 @@ export function openFinale({ won, mode, title, detail, time, phrase, people, hea
     stamped.innerHTML = ENVELOPE;
     stamped.append(make('i', 'stamp'));
     const kept = make('div', 'kept');
-    for (let i = 0; i < hearts; i++) kept.append(make('span', 'heart', '♥'));
+    for (let i = 0; i < hearts; i++) {
+      const heart = make('span', 'heart', '♥');
+      heart.style.setProperty('--i', i); // (its place in the row: they hop one after another)
+      kept.append(heart);
+    }
     stage.append(stamped, kept);
   }
 

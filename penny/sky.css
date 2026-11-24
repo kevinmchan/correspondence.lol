@@ -1,0 +1,18 @@
+/* The night (penny/sky.js): a picture of five lights on black, come to life.
+   All of it is one canvas, and its black is the picture's own. */
+.screen-sky main.sky {
+  position: relative; padding: 0; overflow: clip;
+  background: #09090d;
+  touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+html:has(.screen-sky), html:has(.screen-sky) body { overscroll-behavior: none; }
+.sky .sky-view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* (The screen the app opens on raises its contents into place. Not here: the
+   night opens as still as a picture.) */
+.screen.opening main.sky > * { animation: none; }
+/* The way back: dim, and gone when the picture has been left alone a moment.
+   A touch, a move of the mouse or the keyboard brings it back. */
+.sky .penny-back { background: rgb(222 222 222 / 0.08); color: #dedede; opacity: 0.4; z-index: 3; transition: opacity 600ms ease; }
+.sky .penny-back:hover, .sky .penny-back:focus-visible { opacity: 0.9; }
+.sky .penny-back:focus-visible { outline-color: #dedede; }
+.sky.idle .penny-back:not(:hover):not(:focus-visible) { opacity: 0; }

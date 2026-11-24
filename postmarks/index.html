@@ -36,20 +36,22 @@
   <link rel="stylesheet" href="/penny/office.css">
   <link rel="stylesheet" href="/penny/slow.css">
   <link rel="stylesheet" href="/room/room.css">
+  <link rel="stylesheet" href="/penny/sky.css">
+  <link rel="stylesheet" href="/penny/tags.css">
   <script>
     // The splash plays whenever the page is loaded on the home screen: opening
     // the app, a new tab, or a refresh. (Moving between screens inside the app
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
 </head>
 <body>
   <!--
-    The whole app is this one page. Its three screens are the templates below;
+    The whole app is this one page. Its screens are the templates below;
     shared/nav.js puts the right one on stage for the address and swaps them as
     people move about. /room/, /postmarks/ and /jam/ serve copies of this same file
     (npm run shell), so every address opens directly.
@@ -662,6 +664,16 @@
       <canvas class="slow-pass" aria-hidden="true"></canvas>
       <i class="slow-tip" aria-hidden="true"></i>
       <button type="button" id="slow-portal" class="portal" aria-label="On, to the map" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
+    </main>
+  </template>
+
+  <template id="screen-sky">
+    <!-- The night: a picture of five lights, come to life. It is on no menu: it is a tag, hidden in the game, to be found (penny/tags.js). No words: see penny/sky.js. -->
+    <main class="sky">
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <p class="sr-only">A picture of the night, come to life. Its five lights twinkle and wander, and each has a note. Touch one to hear it, or anywhere else and the nearest answers; a finger held near them stirs them. With a keyboard, the keys 1 to 5 are the five lights, and the space bar is each of them in turn.</p>
+      <canvas class="sky-view" role="img" aria-label="Five dim lights on black. Three stars with four points fall in a line from the top left, each bigger than the last, with two small round lights beside them."></canvas>
+      <p id="sky-said" class="sr-only" role="status"></p>
     </main>
   </template>
 

@@ -17,6 +17,12 @@ const PRECACHE = [
   '/penny/office.css',
   '/penny/slow.js',
   '/penny/slow.css',
+  '/penny/sky.js',
+  '/penny/sky.css',
+  '/penny/stars.js',
+  '/penny/chimes.js',
+  '/penny/tags.js',
+  '/penny/tags.css',
   '/penny/pal.js',
   '/penny/pal.css',
   '/penny/notes.js',
@@ -118,7 +124,7 @@ self.addEventListener('fetch', (event) => {
 // The server sends { title, body, url, tag }. One notification per game: a
 // newer one for the same game replaces the older.
 self.addEventListener('push', (event) => {
-  let message = {};
+  let message;
   try {
     message = event.data?.json() ?? {};
   } catch {
