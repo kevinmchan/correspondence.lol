@@ -433,6 +433,22 @@
             </button>
           </div>
         </div>
+        <!-- Keeping a beat, and passing one on. -->
+        <div class="jam-keep">
+          <button type="button" id="jam-save" class="quiet">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5h11v15.5l-5.5-4-5.5 4z"/></svg>
+            <span>Save</span>
+          </button>
+          <button type="button" id="jam-share" class="quiet">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg>
+            <span>Share</span>
+          </button>
+        </div>
+        <p id="jam-note" class="jam-note" role="status"></p>
+        <section id="jam-saved" class="jam-saved" aria-label="Your beats" hidden>
+          <h2>Your beats</h2>
+          <ul></ul>
+        </section>
       </div>
     </main>
   </template>
