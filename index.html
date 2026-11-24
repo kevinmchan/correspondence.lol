@@ -411,10 +411,9 @@
     <!-- Walking the map with Penny. No words on this screen: see penny/walk.js. -->
     <main class="walk">
       <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
-      <div class="walk-steps">
-        <button type="button" id="walk-down" aria-label="Back down the map, to the place before" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg></button>
-        <button type="button" id="walk-up" aria-label="Up the map again, to the place after" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></svg></button>
-      </div>
+      <!-- Back to the place before, and on to the place after: two tiles of the game's own, in the bottom corners. -->
+      <button type="button" id="walk-down" class="walk-step back" aria-label="Back to the place before" disabled><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+      <button type="button" id="walk-up" class="walk-step on" aria-label="On to the place after" disabled><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button>
       <button type="button" id="walk-trail" class="walk-trail" aria-label="The sound Penny is looking for, as far as it has been heard" hidden></button>
       <p id="walk-feeling" class="sr-only" role="status"></p>
       <div class="walk-ground">

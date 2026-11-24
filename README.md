@@ -141,8 +141,9 @@ Penny stands beside you:
 The hand has the same things to do as in the game. A double tap opens a
 square. A finger on a square, or slid across the map, asks Penny to listen
 there. And from the second place on, a finger lifted again quickly leaves a
-cross as well, and the next quick tap takes it off. Two arrows at the top right go back down the map
-to a place already walked, and up again as far as has been reached.
+cross as well, and the next quick tap takes it off. Two tiles in the bottom corners, left and right,
+go back to the place before and on to the place after, as far as has been
+reached.
 
 Penny does not know where the posts are; it is looking too. How it feels about
 the square under your finger comes from two things and nothing else.

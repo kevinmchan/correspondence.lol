@@ -101,7 +101,7 @@ export function mount(root, life) {
   // --- The place ------------------------------------------------------------------
   // Where to begin: at the furthest place reached; or, once all of them have
   // been walked, at the first again. Any place already reached can be gone
-  // back to, and come on from, by the two arrows at the top.
+  // back to, and come on from, by the two tiles in the bottom corners.
   const furthest = () => Math.max(0, Math.min(placeReached(), PLACES.length - 1));
   let index = hasWalked() ? 0 : furthest();
   let place = null;
@@ -228,8 +228,8 @@ export function mount(root, life) {
   function start(at) {
     index = at;
     setPlaceReached(Math.max(furthest(), index));
-    down.hidden = index === 0;
-    up.hidden = index >= furthest();
+    down.disabled = index === 0;
+    up.disabled = index >= furthest();
     place = PLACES[index];
     cells = place.regions.map(() => 'empty');
     found = [];

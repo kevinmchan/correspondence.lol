@@ -241,12 +241,12 @@ async function main() {
       assert.equal((await h.pal()).alone, false);
       // it begins at the first place again; the arrow goes up the map as far as has been reached, and back
       assert.equal((await h.board()).length, 1);
-      assert.equal(await page.locator('#walk-down').isHidden(), true);
+      assert.equal(await page.locator('#walk-down').isDisabled(), true);
       for (let i = 0; i < 4; i++) {
         await page.locator('#walk-up').click();
         await sleep(900);
       }
-      assert.equal(await page.locator('#walk-up').isHidden(), true, 'no further than has been reached');
+      assert.equal(await page.locator('#walk-up').isDisabled(), true, 'no further than has been reached');
       await page.locator('#walk-down').click();
       await sleep(900);
       await page.locator('#walk-up').click();
