@@ -800,8 +800,7 @@ button.go { font-family: system-ui, sans-serif; }
 }
 @keyframes guess-wait { 0%, 100% { transform: scale(1.06) rotate(-2.5deg); } 50% { transform: scale(1.1) rotate(2.5deg); } }
 
-/* The game's name, with New game beside it at the right. */
-.game-title { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
-.game-title h1 { margin: 0; }
-.game-title #new-game { position: absolute; right: 0; top: 50%; translate: 0 -50%; white-space: nowrap; }
+/* the hint, at the right-hand end of the row under the board */
+.toolbar #hint { margin-left: auto; }
+.toolbar #hint + #submit { margin-left: 0; }
 .tools [aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }

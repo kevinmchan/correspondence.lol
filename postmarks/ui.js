@@ -795,7 +795,8 @@ export function mount(root, life) {
     el.retryRun.disabled = el.revealRun.disabled = deciding;
     el.newGame.hidden = Boolean(online);
     el.restart.hidden = !game || (Boolean(online) && !online.practice) || (game.moves === 0 && !over); // nothing to start over yet
-    el.newGame.textContent = over ? 'Play again' : 'New game';
+    el.newGame.title = over ? 'Play again' : 'New game';
+    el.newGame.setAttribute('aria-label', el.newGame.title);
   }
 
   // --- Taking a turn --------------------------------------------------------
