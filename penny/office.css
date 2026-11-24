@@ -1,0 +1,32 @@
+/* Scene one, the Dead Letter Office at night (penny/office.js). One room: the
+   shelves, the lamp, the map on the far wall, and Penny on the floor. */
+.screen-office main.office {
+  position: relative; padding: 0; overflow: clip;
+  background: radial-gradient(120% 70% at 50% 0%, #2a3644 0%, #18212b 55%, #0f161d 100%);
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.office-stage { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.office-stage .o-floor { fill: #0b1116; }
+.office-stage .o-hole { fill: none; stroke: #33424f; stroke-width: 1.1; }
+.office-stage .o-lamp-light { fill: #f8d95a; opacity: 0.07; }
+.office-stage .o-lamp { fill: #3b4d63; }
+.office-stage .o-wall { fill: #1c2732; stroke: #33424f; stroke-width: 1.2; }
+.office-stage .o-map rect { fill: #2c3a47; transition: fill 600ms ease, filter 600ms ease; }
+.office-stage .o-map rect.took { animation: o-took 1300ms ease-out; }
+.office.heard .o-map rect { fill: #33424f; }
+.office-stage .o-first { cursor: default; }
+.office-stage .o-first.lit { fill: #f8d95a; filter: drop-shadow(0 0 5px rgb(248 217 90 / 0.9)); cursor: pointer; }
+.office-stage .o-first:focus-visible { outline: 2px solid #fff; }
+.office-stage .o-leaving { transition: filter 700ms ease, opacity 300ms ease; filter: brightness(0.55); transform-box: fill-box; transform-origin: center; }
+.office-stage .o-leaving.lit { filter: brightness(1.15) drop-shadow(0 0 4px rgb(248 217 90 / 0.8)); }
+.office-stage .o-leaving.gone { opacity: 0; }
+.office-stage .p-penny { translate: 46px 262px; scale: 1; transform-origin: 0 0; transition: translate 1500ms ease-in-out, scale 1200ms ease-in-out; }
+@media (prefers-reduced-motion: no-preference) {
+  .office-stage .o-first.lit { animation: o-first 1.6s ease-in-out infinite; }
+}
+@keyframes o-took { 0% { fill: #f8d95a; filter: brightness(1.4); } 100% { fill: #2c3a47; filter: none; } }
+@keyframes o-first { 0%, 100% { filter: drop-shadow(0 0 4px rgb(248 217 90 / 0.8)); } 50% { filter: drop-shadow(0 0 9px rgb(248 217 90 / 1)); } }
+
+/* The door to the rooms: there, but no part of the scene, so it keeps quiet. */
+.office .office-door { background: transparent; color: #8a97a3; opacity: 0.55; }
+.office .office-door:hover, .office .office-door:focus-visible { opacity: 1; }

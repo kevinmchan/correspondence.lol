@@ -122,8 +122,26 @@ async function main() {
   };
 
   const results = await Promise.all([
-    check('home, first visit: Penny alone, not a word, and the way through the portal', {}, async (page, { pal, words }) => {
+    check('opening the app starts the film, or takes it up where it was left', {}, async (page, h) => {
+      const at = () => new URL(page.url()).search;
       await page.goto(origin);
+      await page.waitForSelector('.office-stage');
+      assert.equal(at(), '?office', 'someone new: scene one');
+      await page.locator('.office-door').click({ force: true }); // the door out of the film
+      await page.waitForSelector('.home-map');
+      assert.equal(at(), '', 'the door leads to the home page');
+      await page.evaluate(() => localStorage.setItem('penny:place:v1', '2'));
+      await page.goto(origin);
+      await page.waitForSelector('.walk');
+      assert.equal(at(), '?walk', 'part of the way along: the walk');
+      await page.evaluate(() => localStorage.setItem('penny:walked:v1', 'true'));
+      await page.goto(origin);
+      await page.waitForSelector('.home-map');
+      assert.equal(at(), '', 'the film so far seen through: the home page');
+    }),
+
+    check('home, first visit: Penny alone, not a word, and the way through the portal', {}, async (page, { pal, words }) => {
+      await page.goto(`${origin}/?home`);
       await sleep(2700);
       let it = await pal();
       assert.ok(['peek', 'low'].includes(it.height), `at rest Penny waits low, not ${it.height}`);
@@ -344,7 +362,7 @@ async function main() {
     }),
 
     check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: ACCOUNT }, async (page, h) => {
-      await page.goto(origin);
+      await page.goto(`${origin}/?home`);
       await sleep(2700);
       assert.equal((await h.pal()).height, 'low', 'a tile is under Penny: it ducks');
       await h.until('hopeful', 12000); // Penny comes up to ask
