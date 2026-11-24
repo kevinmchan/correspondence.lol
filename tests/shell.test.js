@@ -13,7 +13,7 @@ test('every address serves the same page', () => {
 
 test('the page has a template for each screen', () => {
   const shell = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  for (const name of ['home', 'open', 'join', 'office', 'slow', 'walk', 'room', 'game', 'jam', 'taste']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
+  for (const name of ['home', 'open', 'join', 'office', 'slow', 'walk', 'sky', 'room', 'game', 'jam', 'taste']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
 });
 
 // The version names the offline cache and is shown on the home page. A release

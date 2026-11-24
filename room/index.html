@@ -35,13 +35,14 @@
   <link rel="stylesheet" href="/jam/taste.css">
   <link rel="stylesheet" href="/penny/office.css">
   <link rel="stylesheet" href="/penny/slow.css">
+  <link rel="stylesheet" href="/penny/sky.css">
   <script>
     // The splash plays whenever the page is loaded on the home screen: opening
     // the app, a new tab, or a refresh. (Moving between screens inside the app
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -149,6 +150,10 @@
           <a href="/jam/?taste" class="menu-button" style="--tile: #2aa198">
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></span>
             <span class="words"><strong>Penny’s Radio</strong></span>
+          </a>
+          <a href="/?sky" class="menu-button" style="--tile: #736dd0">
+            <span class="tile" style="color: #f6f1e7" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.2 1.8C6.2 3.8 7.65 5.8 9.1 5.8C7.65 5.8 6.2 7.8 6.2 9.8C6.2 7.8 4.75 5.8 3.3 5.8C4.75 5.8 6.2 3.8 6.2 1.8zM11.2 5.7C11.2 8.5 13.25 11.3 15.3 11.3C13.25 11.3 11.2 14.1 11.2 16.9C11.2 14.1 9.15 11.3 7.1 11.3C9.15 11.3 11.2 8.5 11.2 5.7zM17.3 10.8C17.3 14.05 19.75 17.3 22.2 17.3C19.75 17.3 17.3 20.55 17.3 23.8C17.3 20.55 14.85 17.3 12.4 17.3C14.85 17.3 17.3 14.05 17.3 10.8z"/><circle cx="15.7" cy="6.2" r="1.1"/><circle cx="6.3" cy="15.9" r="1"/></svg></span>
+            <span class="words"><strong>Night sky</strong></span>
           </a>
         </nav>
         </div>
@@ -585,6 +590,17 @@
       <canvas class="slow-pass" aria-hidden="true"></canvas>
       <i class="slow-tip" aria-hidden="true"></i>
       <button type="button" id="slow-portal" class="portal" aria-label="On, to the map" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
+    </main>
+  </template>
+
+  <template id="screen-sky">
+    <!-- The night sky: five lights from a picture, and whatever a hand adds. No words: see penny/sky.js. -->
+    <main class="sky">
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <p class="sr-only">Touch the sky to put a light in it. A tap leaves a point of light, short and bright. A finger held still grows a star for as long as it is held, and the bigger it is the fuller and longer it rings. Higher up the sky is higher in pitch. A finger moved slowly sows small stars; one flicked fast sends a shooting star. With a keyboard, the arrow keys move a point of light and the space bar is a finger put down there.</p>
+      <canvas class="sky-view" role="img" aria-label="A night sky. Three stars with four points fall in a line from the top left, each bigger than the last, with two small round lights beside them."></canvas>
+      <i class="sky-tip" aria-hidden="true"></i>
+      <p id="sky-said" class="sr-only" role="status"></p>
     </main>
   </template>
 
