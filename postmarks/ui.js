@@ -70,7 +70,7 @@ export function mount(root, life) {
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
     roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
     narration: $('narration'), message: $('message'), newGame: $('new-game'), restart: $('restart'), lostChoice: $('lost-choice'), retryRun: $('retry-run'), revealRun: $('reveal-run'), hint: $('hint'), hintNote: $('hint-note'),
-    chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'),
+    chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'), chatToggle: $('chat-toggle'), chatCount: $('chat-count'),
     trial: $('trial'), trialTitle: $('trial-title'), trialHint: $('trial-hint'), trialPhrase: $('trial-phrase'),
     trialRuns: $('trial-runs'), trialStart: $('trial-start'), trialShare: $('trial-share'), trialError: $('trial-error'),
     runs: $('runs'), phrase: $('phrase'), phraseNote: $('phrase-note'), phraseEntry: $('phrase-entry'), phraseInput: $('phrase-input'),
@@ -209,13 +209,25 @@ export function mount(root, life) {
     const fromOthers = chat.add(room.messages);
     if (!history && fromOthers && (!el.chatBox.open || document.hidden)) unread += fromOthers;
     el.chatBox.hidden = false;
-    el.chatUnread.textContent = unread ? `· ${unread} new` : '';
+    el.chatToggle.hidden = false;
+    showUnread();
   }
+  // The chat is opened and shut by a button in the row under the board; how
+  // many messages are waiting shows on the button.
+  function showUnread() {
+    el.chatUnread.textContent = unread ? `· ${unread} new` : '';
+    el.chatCount.textContent = unread || '';
+    el.chatCount.hidden = !unread;
+    el.chatToggle.setAttribute('aria-label', unread ? `Room chat, ${unread} new` : 'Room chat');
+  }
+  el.chatToggle.addEventListener('click', () => { el.chatBox.open = !el.chatBox.open; });
 
   el.chatBox.addEventListener('toggle', () => {
+    el.chatToggle.setAttribute('aria-expanded', String(el.chatBox.open));
     if (!el.chatBox.open) return;
     unread = 0;
-    el.chatUnread.textContent = '';
+    showUnread();
+    el.chatBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     const log = el.chat.querySelector('.chat-log');
     if (log) log.scrollTop = log.scrollHeight;
   });
