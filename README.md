@@ -143,6 +143,15 @@ is left behind for losing, whoever comes last is as welcome as whoever comes
 first, and help is allowed: a hint may be asked for in the middle of a race,
 and Penny thinks that a fine idea.
 
+**What the world is afraid of: losing music.** Taste is being averaged, more
+and more efficiently: what one person likes is worked out, set beside what
+everyone likes, and evened out, a little faster each time. The world Penny
+lives in is worried that, done well enough, this leaves no music at all: only
+the middle of it. It is kin to the hurry Penny comes from, efficiency turned on
+listening. Penny's Radio is where the story comes closest to it: a radio that
+learns what you like. Who is doing the averaging, and whether the fear is
+right, are not decided, and as everywhere the story does not say it in words.
+
 ### How a place says it
 
 The theme is carried by the surroundings, not by anything Penny does to camera.
