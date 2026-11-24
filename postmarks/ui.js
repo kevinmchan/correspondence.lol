@@ -787,7 +787,7 @@ export function mount(root, life) {
     el.hintNote.hidden = !hint || over;
     if (hint) el.hintNote.textContent = hint.text;
     for (const button of el.tools.children) {
-      button.setAttribute('aria-checked', String(button.dataset.tool === tool));
+      button.setAttribute('aria-pressed', String(button.dataset.tool === tool));
     }
     // Room games go back to the room with the arrow at the top; only a solo
     // game needs a way to start over.
@@ -1045,6 +1045,15 @@ export function mount(root, life) {
     else render();
   });
 
+  // From the keyboard, where there is no double tap: Enter opens the square in
+  // focus. (Space crosses it, as a click does.)
+  el.board.addEventListener('keydown', (event) => {
+    const button = event.target.closest?.('.cell');
+    if (!button || event.key !== 'Enter' || event.repeat) return;
+    event.preventDefault();
+    guessAt(Number(button.dataset.cell));
+  });
+
   el.submit.addEventListener('click', submitDraft);
 
   // Arrow keys move between squares.
@@ -1068,7 +1077,7 @@ export function mount(root, life) {
   el.tools.addEventListener('click', (event) => {
     const button = event.target.closest('[data-tool]');
     if (!button) return;
-    tool = button.dataset.tool;
+    tool = tool === button.dataset.tool ? 'mark' : button.dataset.tool; // pressed again, it is put away
     render();
     if (tool === 'phrase') el.phraseInput.focus();
   });
