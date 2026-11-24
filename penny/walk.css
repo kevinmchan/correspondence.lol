@@ -162,9 +162,6 @@
   border-radius: 50%; background: #c8442e; box-shadow: 0 0 0 0.055em #f6f1e7, 0 0.05em 0.12em rgb(0 0 0 / 0.35);
 }
 .walk-board .cell.known[data-state="cross"]::after { opacity: 0.55; }
-/* While Penny listens to what was in a post, the map dims: the thing to watch is Penny. */
-.walk-ground { transition: filter 450ms ease; }
-.walk.hush .walk-ground { filter: brightness(0.5) saturate(0.6); }
 
 /* One tap leaves a square ajar, for as long as a second tap would count. */
 .walk-board .cell.ajar { z-index: 3; filter: brightness(1.1); box-shadow: 0 0 0 0.06em var(--paper), 0 0.16em 0.3em rgb(0 0 0 / 0.28), inset 0 -0.14em 0 rgb(0 0 0 / 0.14); }

@@ -179,9 +179,6 @@ opening it is the rule that place is there to show. Each time a post's crosses
 spread and a seal lands on a square nobody has touched, that is a rule, seen. In the later places the seal holds back a while, to leave the working
 out to you.
 
-While Penny listens to what was inside a post, the map goes dim, so that for
-that moment the thing to look at is Penny.
-
 So a rule is learnt by Penny no longer needing to listen. Penny can be unsure,
 and can be outdone: open a post it had no idea about and it is amazed at you.
 
