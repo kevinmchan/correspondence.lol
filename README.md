@@ -653,7 +653,7 @@ notices one and touches it has found it: it is theirs from then on (on this
 device), and it is kept on the home page's map, in the corner across from the
 portal. There is one so far.
 
-**Where it hides.** On every screen, somewhere in what is empty of it, and
+**Where it hides.** On a screen, somewhere in what is empty of it, and
 somewhere else each visit: a small mark, the picture described below, printed
 in the page's own ink and as faintly as the map itself. On the map behind the
 board of a game it is in one of the map's own faint squares, and which square
@@ -668,10 +668,25 @@ seconds: like everything else in Penny's world, it is found by whoever is not
 in a hurry. (It can also be reached with the Tab key: it is the last thing
 on every page.)
 
+**It is small, and it is still something to press.** So it is held to what
+everything to press on a phone is held to (`CLAUDE.md`,
+`tests/browser/mini.e2e.cjs`). However small it is drawn, the room it has for
+a finger is never under 44 by 44. Its box never overlaps the box of anything
+else there is to press, and is put a little way off from all of them. And it
+is never under a phone's notch or its home bar. What follows from that is
+that it is only where there is room for it. In a room, which is a building
+that fills the page, that is on the map outside the door, beside the path, at
+the bottom of the page. In the music maker, on a phone, there is seldom room
+for it (only on the taller screen the app has when it is installed, and only
+until a beat has been saved), and where there is none it is not there:
+between two buttons is no place for something that is found by a slip of the
+finger. Everywhere else it has been tried, on every phone the app is held
+to, there is a place for it.
+
 **It is a way through**, and it goes on being one after it has been found.
-The mark stays on every screen, a little plainer for being known, so that
-from anywhere there is a way out into the night. (On the home page it is
-where it is kept, and nowhere else.)
+The mark stays wherever it has room, a little plainer for being known, so
+that from nearly anywhere there is a way out into the night. (On the home
+page it is where it is kept, and nowhere else.)
 
 **Going through is a tumble.** The screen falls away, turning as it goes,
 down into the place the mark was, with the night coming up behind it; and the

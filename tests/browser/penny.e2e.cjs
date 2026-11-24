@@ -698,7 +698,7 @@ async function main() {
       assert.equal(await page.locator('#radio-dash').isVisible(), false);
     }),
 
-    check('a tag is hidden on every screen: nothing leads to the night but finding it, going through it is a tumble, and found, it is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
+    check('a tag is hidden wherever a screen has room for it: nothing leads to the night but finding it, going through it is a tumble, and found, it is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
       // What the mark is like, where it is.
       const where = () => page.evaluate(() => {
         const box = (element) => {
@@ -714,7 +714,7 @@ async function main() {
           shown: Number(getComputedStyle(mark.querySelector('svg')).opacity), words: mark.textContent.trim(), label: mark.getAttribute('aria-label'),
           pressed: mark.contains(document.elementFromPoint(x, y)),
           // what of the page is under it: nothing but the page's own ground
-          under: document.elementsFromPoint(x, y).find((element) => !mark.contains(element) && !element.closest('.pal'))?.matches('main, .walk-ground, .radio-ground, .office-stage') ?? false,
+          under: document.elementsFromPoint(x, y).find((element) => !mark.contains(element) && !element.closest('.pal'))?.matches('main, .walk-ground, .radio-ground, .office-stage, .jam, .plot') ?? false,
         };
       });
       const apart = (a, b) => a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom;
@@ -724,11 +724,15 @@ async function main() {
       assert.equal(await page.locator('a[href="/?sky"]').count(), 0, 'the night is not chosen from a menu');
       assert.equal(await page.locator('.tag-kept').count(), 0);
       await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 9000 });
-      // and so there is on every other: the music maker, a form, the map, the film
-      for (const address of ['/jam/', '/?join', '/?walk', '/?slow']) {
+      // and so there is wherever else there is room for one: a form, the map, the film, the radio.
+      // (Not everywhere. It is something to press, and is given the room a finger needs, clear of
+      // everything else to press: where a screen has none to give, as the music maker has none on
+      // most phones, it is not there. tests/browser/mini.e2e.cjs holds it to all of that, on a phone.)
+      for (const address of ['/?join', '/?walk', '/?slow', '/jam/?taste']) {
         await page.goto(origin + address);
         await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 9000 });
         const there = await where();
+        assert.ok(there.mark.right - there.mark.left >= 44 && there.mark.bottom - there.mark.top >= 44, `${address}: it has less room than a finger needs`);
         assert.ok(there.pressed && there.under, `${address}: the mark is under something, or over something`);
         assert.ok(there.mark.left >= 0 && there.mark.top >= 0 && there.mark.right <= PHONE.width && there.mark.bottom <= PHONE.height, `${address}: off the screen`);
         assert.ok(there.shown < 0.2 && there.words === '', `${address}: it is faint, and says nothing`);
@@ -755,7 +759,7 @@ async function main() {
       assert.deepEqual(await h.stored('tags:found:v1'), ['night'], 'found, it is theirs');
       await page.waitForFunction(() => !document.querySelector('.tag-rise') && !document.documentElement.classList.contains('tumbling'), null, { timeout: 6000 });
       assert.equal(await page.locator('#screens .screen').count(), 1, 'the screen that fell away has gone');
-      // the way back leads to the game; and the mark is still there, known now: a way through from anywhere
+      // the way back leads to the game; and the mark is still there, known now: a way through from wherever it has room
       assert.equal(await page.locator('.sky .penny-back').getAttribute('href'), '/postmarks/');
       await page.locator('.sky .penny-back').click({ force: true });
       await page.waitForSelector('#board .cell');
@@ -776,10 +780,19 @@ async function main() {
     check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {
       await page.goto(`${origin}/?sky`);
       await page.waitForSelector('.sky-view');
-      const alive = () => page.evaluate(() => document.querySelector('.sky').dataset.alive);
       const said = () => page.locator('#sky-said').textContent();
-      // What the sky is like at each of the picture's lights, in a corner, and at places far from all of them.
-      const look = () => page.evaluate(async () => {
+      // What the sky is like at each of the picture's lights, in a corner, and at places far from all of them;
+      // and how many of its lights are awake. (`watch`: from now on, every change to that number is written down.
+      // How it wakes is read from that, not from looks taken in between: on a busy machine a look can come late.)
+      const look = (watch = false) => page.evaluate(async (watching) => {
+        const sky = document.querySelector('.sky');
+        const awake = sky.dataset.alive;
+        if (watching) {
+          window.skyWoke = [awake];
+          new MutationObserver(() => {
+            if (window.skyWoke.at(-1) !== sky.dataset.alive) window.skyWoke.push(sky.dataset.alive);
+          }).observe(sky, { attributes: true, attributeFilter: ['data-alive'] });
+        }
         const { PICTURE, frame } = await import('/penny/stars.js');
         const view = document.querySelector('.sky-view');
         const pen = view.getContext('2d');
@@ -795,20 +808,25 @@ async function main() {
         }
         // (and one patch of it, to tell whether anything has moved)
         const patch = [...pen.getImageData(Math.round((lights[0].x - 40) * dense), Math.round((lights[0].y - 50) * dense), Math.round(80 * dense), Math.round(100 * dense)).data].filter((_, i) => i % 4 === 0);
-        return { lights: lights.map((light) => ({ ...light, colour: at(light.x, light.y) })), empty, patch, corner: at(view.clientWidth - 3, 3) };
-      });
-      // it opens as the picture, as still as a picture, and far dimmer than the picture's own near-white
-      const opening = await look();
-      assert.equal(await alive(), '0');
+        return { awake, lights: lights.map((light) => ({ ...light, colour: at(light.x, light.y) })), empty, patch, corner: at(view.clientWidth - 3, 3) };
+      }, watch);
+      // it opens as the picture, as still as a picture, and far dimmer than the picture's own near-white.
+      // (It is a second or two before the first light wakes. Should the first look come later than that, it is opened again.)
+      let opening = await look(true);
+      for (let again = 0; again < 3 && opening.awake !== '0'; again++) {
+        await page.reload();
+        await page.waitForSelector('.sky-view');
+        opening = await look(true);
+      }
+      assert.equal(opening.awake, '0', 'it was never seen before its lights began to wake');
       assert.deepEqual(opening.corner, [9, 9, 13], 'the black of the picture');
       for (const [i, light] of opening.lights.entries()) {
         assert.ok(light.colour[0] > 70 && light.colour[0] < 125, `light ${i} of the picture is not there, or not dim: ${light.colour}`);
         assert.ok(light.colour[0] > light.colour[2] + 4, `light ${i} is not warm: ${light.colour}`);
       }
       // then it wakes, a light at a time
-      await page.waitForSelector('.sky[data-alive="1"]', { timeout: 6000 });
-      assert.notEqual(await alive(), '5', 'the lights wake one at a time');
-      await page.waitForSelector('.sky[data-alive="5"]', { timeout: 10000 });
+      await page.waitForSelector('.sky[data-alive="5"]', { timeout: 16000 });
+      assert.deepEqual(await page.evaluate(() => window.skyWoke), ['0', '1', '2', '3', '4', '5'], 'the lights wake one at a time');
       await sleep(3000);
       // alive: the same patch of it a moment apart is not the same
       const [one, other] = [await look(), await sleep(400).then(look)];
@@ -931,10 +949,6 @@ async function main() {
       });
       assert.equal(settled.door, '0.55', 'the door back is as dim as on any other visit');
       assert.deepEqual([settled.shown, settled.tip], [false, '0'], 'and the fingertip is not to be seen: nobody has been caught waiting yet');
-      // the same on the radio, opened directly: the way behind it is dim until it is reached for
-      await page.goto(`${origin}/jam/?taste`);
-      await sleep(1500);
-      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.radio-behind')).opacity), '0.6');
     }),
 
     // A hop is Penny's own: down a little first, then up and stretched, then

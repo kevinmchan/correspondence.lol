@@ -1,24 +1,32 @@
 /* Tags (penny/tags.js): marks hidden in the app, to be found and kept; and the
    way through one, which is a tumble. */
 
-/* --- Hidden: somewhere on every screen ---------------------------------------------------
+/* --- Hidden: somewhere on a screen, where there is room -----------------------------------
    Printed as faintly as the map itself, in the page's own ink. It gives itself
    away only by a glint, now and then, to whoever has stopped. Once it has been
    found it is a little plainer: it is known to be there. */
 main:has(> .tag-hidden) { position: relative; }
+/* It is drawn small (--drawn: penny/tags.js), in the middle of a box that is
+   never smaller than a finger needs. And it carries the measure of a phone's
+   notch and its home bar, which the script reads to keep it out from under
+   them: the same measure stops it short of them when it is scrolled to. */
 .tag-hidden {
   position: absolute; padding: 0; border: 0; border-radius: 22%;
+  display: grid; place-items: center;
   background: none; color: var(--ink); cursor: default;
+  scroll-margin: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
   -webkit-tap-highlight-color: transparent;
 }
+.tag-hidden[hidden] { display: none; }
 .tag-hidden.on-dark { color: #dedede; }
-.tag-hidden svg { display: block; width: 100%; height: 100%; opacity: 0.12; }
+.tag-hidden svg { display: block; width: var(--drawn, 100%); height: var(--drawn, 100%); opacity: 0.12; }
 .tag-hidden.known svg { opacity: 0.2; }
-.tag-hidden.glint svg { animation: tag-glint 2s ease-in-out; }
+.tag-hidden.glint svg { animation: tag-hidden-glint 2s ease-in-out; }
 .tag-hidden.gone svg { opacity: 0; }
 .tag-hidden:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag-hidden:focus-visible svg { opacity: 0.6; }
-@keyframes tag-glint { 30% { opacity: 0.5; } 45% { opacity: 0.24; } 62% { opacity: 0.44; } }
+/* (its own name: the radio's tag has a glint too, in jam/taste.css) */
+@keyframes tag-hidden-glint { 30% { opacity: 0.5; } 45% { opacity: 0.24; } 62% { opacity: 0.44; } }
 /* (the screen the app opens on raises its contents into place: not this, which would be given away by it) */
 .screen.opening main > .tag-hidden { animation: none; }
 
@@ -43,17 +51,23 @@ main:has(> .tag-hidden) { position: relative; }
 @keyframes night-goes { to { opacity: 0; } }
 
 /* --- Kept: on the home page's map, across from the portal ----------------------------
-   A small square of night, with the picture in it, dim and a little warm, as the night itself is. */
+   A small square of night, with the picture in it, dim and a little warm, as the night itself
+   is. The square is as it was; what is pressed is the room round it, which is never less than
+   a finger needs (2.75rem is 44px: see tests/browser/mini.e2e.cjs). And on a phone with a
+   notch it comes down clear of it, level with the portal. */
 .tag-kept {
-  position: absolute; z-index: 1; display: block;
-  right: calc(0.875rem + 3px + var(--nth, 0) * 2.625rem); top: calc(var(--map-y, 0px) + 1.75rem + 3px);
-  width: calc(2.625rem - 6px); aspect-ratio: 1; border-radius: 22%;
-  background: #09090d; color: #eee0cc;
-  box-shadow: 0 0 0 2px var(--paper);
+  --square: calc(2.625rem - 6px);
+  position: absolute; z-index: 1; display: grid; place-items: center;
+  right: calc(0.875rem + 3px - (2.75rem - var(--square)) / 2 + var(--nth, 0) * 2.625rem); /* (each on a square of the map) */
+  top: calc(max(var(--map-y, 0px) + 1.75rem + 3px, env(safe-area-inset-top, 0px) + 0.25rem) - (2.75rem - var(--square)) / 2);
+  width: 2.75rem; height: 2.75rem; border-radius: 22%;
+  color: #eee0cc;
   -webkit-tap-highlight-color: transparent;
 }
-.tag-kept svg { display: block; width: 100%; height: 100%; opacity: 0.5; }
-.tag-kept:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.tag-kept::before { content: ""; border-radius: 22%; background: #09090d; box-shadow: 0 0 0 2px var(--paper); }
+.tag-kept::before, .tag-kept svg { grid-area: 1 / 1; display: block; width: var(--square); height: var(--square); }
+.tag-kept svg { position: relative; opacity: 0.5; }
+.tag-kept:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 @media (prefers-reduced-motion: no-preference) {
   .tag-kept svg { animation: tag-kept 5.4s ease-in-out infinite; }
   /* (the screen the app opens on raises its contents into place: not this, which is pinned to the map) */
