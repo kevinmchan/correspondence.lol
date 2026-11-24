@@ -1,60 +1,137 @@
-/* The radio (jam/taste.js): a dial with two stations on it and a lit display;
-   and, behind it, the lab notes of the experiment it is. */
+/* Penny's Radio (jam/taste.js): a small portable set standing on the map; and,
+   behind it, the lab notes of the experiment it is. */
 
-.taste { width: 100%; max-width: 30rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
-.taste-hint { margin: 0; font-family: system-ui, sans-serif; font-size: 0.9375rem; color: var(--muted); }
+/* --- The world ---------------------------------------------------------------------------
+   Never the white of a page. The radio stands on the map, seen from far above
+   as everywhere, at dusk: the same squares, faint, all round. */
+.screen-taste main.radio-world {
+  position: relative; padding: 0; overflow: clip;
+  background: radial-gradient(120% 80% at 50% 100%, #4a3f6b 0%, #2b3550 38%, #1a2330 100%);
+  touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.radio-world .map-far { background: rgb(246 241 231 / 0.09); --lit-x: 50%; --lit-y: 62%; }
+.radio-world .penny-back { background: rgb(246 241 231 / 0.14); color: #f6f1e7; z-index: 3; }
+.radio-world .radio-behind {
+  position: absolute; z-index: 3; top: max(0.75rem, env(safe-area-inset-top)); right: max(0.75rem, env(safe-area-inset-right));
+  width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  background: rgb(246 241 231 / 0.14); color: #f6f1e7; opacity: 0.6; cursor: pointer;
+}
+.radio-world .radio-behind:hover, .radio-world .radio-behind:focus-visible { opacity: 1; }
+.radio-world .radio-behind svg { width: 1.25rem; height: 1.25rem; }
+/* The radio keeps clear of the two buttons at the top and of Penny at the bottom, and is
+   never bigger than the room that leaves: all of it is always on the screen. */
+.radio-ground {
+  --top: max(4.2rem, calc(env(safe-area-inset-top) + 3.8rem));
+  --bottom: calc(var(--pal-w) * 0.62 + env(safe-area-inset-bottom, 0px) + 0.6rem);
+  --room: calc(100vh - var(--top) - var(--bottom));
+  position: absolute; inset: 0; padding: var(--top) 1rem var(--bottom);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
+}
+@supports (height: 1dvh) { .radio-ground { --room: calc(100dvh - var(--top) - var(--bottom)); } }
+.radio-world .taste-note { margin: 0; min-height: 1.2rem; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: #f6f1e7; opacity: 0.9; text-align: center; }
 
-/* --- The radio ------------------------------------------------------------------------------
-   A set with a dial along the top, a display under it that is lit by what is
-   playing, and a readout of the station tuned in. --edge is the colour of
-   that station: one is coral, the other teal. */
+/* --- The set ----------------------------------------------------------------------------------
+   Drawn flat, and given depth the way a drawing is: its right side and its
+   underside are there as a solid edge, it throws a shadow on the ground, and
+   it stands at a slight angle. Everything on it is sized from its own width
+   (the em below), so it is the same radio at any size. --edge is the colour
+   of the station tuned in: one is coral, the other teal. */
 .radio {
   --edge: #f08a76; --needle: 50%;
-  position: relative; width: min(100%, 22rem); box-sizing: border-box; padding: 0.9rem 0.9rem 0.8rem;
-  display: flex; flex-direction: column; gap: 0.7rem;
-  border-radius: 1.6rem; background: #2c3a47; color: #f6f1e7;
-  box-shadow: 0 0.36rem 0 #141c23, inset 0 0.14rem 0 rgb(255 255 255 / 0.12), inset 0 0 0 0.16rem #3b4d63;
-  touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer;
+  /* (in lengths that mean the same wherever they are used: this is also what its em is worked out from) */
+  --w: min(100vw - 2.6rem, 23rem, calc((var(--room) - 3rem) * 0.86));
+  position: relative; width: var(--w); font-size: calc(var(--w) / 23); flex: none;
+  margin-top: 2.4em; rotate: -1.5deg; color: #f6f1e7; cursor: pointer; outline: none;
 }
-.radio:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+.radio:focus-visible .body { box-shadow: 0.55em 0.6em 0 #7a2c1e, 0 0 0 0.2em #f8d95a; }
+/* its shadow on the map */
+.radio::after { content: ""; position: absolute; left: 4%; right: -4%; bottom: -1.5em; height: 2em; border-radius: 50%; background: rgb(0 0 0 / 0.32); filter: blur(0.5em); z-index: -1; }
+.radio .body {
+  position: relative; z-index: 1; padding: 0.8em 0.9em 0.9em; display: flex; flex-direction: column; gap: 0.6em;
+  border-radius: 1.5em; background: linear-gradient(#e2573f, #c8442e);
+  /* the solid edge: its side and underside, and a line of light along the top */
+  box-shadow: 0.55em 0.6em 0 #7a2c1e, inset 0 0.16em 0 rgb(255 255 255 / 0.28), inset 0 -0.2em 0 rgb(0 0 0 / 0.14);
+}
+/* the handle: a bar that arches over the set, behind it */
+.radio .handle { position: absolute; left: 16%; right: 16%; top: -2.2em; height: 3.6em; border: 0.5em solid #8a97a3; border-bottom: 0; border-radius: 2.2em 2.2em 0 0; box-shadow: 0.3em 0.3em 0 #3b4d63, inset 0 0.14em 0 rgb(255 255 255 / 0.35); }
+/* the aerial: pulled out, leaning away to the right */
+.radio .antenna { pointer-events: none; position: absolute; right: 24%; top: -1.2em; width: 0.26em; height: 5em; transform-origin: 50% 100%; rotate: 30deg; translate: 0 -3.7em; border-radius: 0.13em; background: linear-gradient(90deg, #dfe6ec, #8a97a3); }
+.radio .antenna i { position: absolute; left: 50%; top: -0.4em; width: 0.7em; height: 0.7em; margin-left: -0.35em; border-radius: 50%; background: #f6f1e7; box-shadow: 0.12em 0.12em 0 #8a97a3; }
+.radio .feet { position: absolute; left: 12%; right: 8%; bottom: -1em; height: 0.9em; z-index: 0; background: linear-gradient(90deg, #22303c 0 12%, transparent 12% 84%, #22303c 84% 100%); border-radius: 0 0 0.3em 0.3em; translate: 0.3em 0.3em; }
+
+.radio .top-row { display: flex; align-items: center; gap: 0.7em; }
+/* its name, on a plate */
+.radio .plate { padding: 0.18em 0.6em; border-radius: 0.35em; background: #f8d95a; color: #22303c; font-family: system-ui, sans-serif; font-size: 0.82em; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.16); }
+/* the speaker: rows of holes */
+.radio .grille { flex: 1; height: 1.5em; border-radius: 0.5em; background: radial-gradient(circle, #5c1d12 0 32%, transparent 36%) 0 0 / 0.62em 0.5em; opacity: 0.85; }
 
 /* the dial: a band with ticks, a mark where each of the two stations is, and the needle */
-.radio .band { position: relative; height: 2.1rem; border-radius: 0.6rem; background: #f6f1e7; box-shadow: inset 0 0.16rem 0 rgb(0 0 0 / 0.14); overflow: hidden; }
-.radio .band .ticks { position: absolute; inset: 0.3rem 0.5rem auto; height: 0.7rem; background: repeating-linear-gradient(90deg, #22303c 0 1.5px, transparent 1.5px 5%); opacity: 0.55; }
-.radio .band .ticks::after { content: ""; position: absolute; inset: 0 0 -0.35rem; background: repeating-linear-gradient(90deg, #22303c 0 2px, transparent 2px 25%); }
-.radio .band .mark { position: absolute; bottom: 0.22rem; width: 0.55rem; height: 0.55rem; margin-left: -0.275rem; border-radius: 50%; box-sizing: border-box; border: 2px solid #22303c; background: #f6f1e7; transition: background-color 300ms ease; }
+.radio .band { position: relative; height: 2em; border-radius: 0.5em; background: #f6f1e7; box-shadow: inset 0 0.16em 0 rgb(0 0 0 / 0.16); overflow: hidden; }
+.radio .band .ticks { position: absolute; inset: 0.28em 0.5em auto; height: 0.66em; background: repeating-linear-gradient(90deg, #22303c 0 0.09em, transparent 0.09em 5%); opacity: 0.55; }
+.radio .band .ticks::after { content: ""; position: absolute; inset: 0 0 -0.34em; background: repeating-linear-gradient(90deg, #22303c 0 0.13em, transparent 0.13em 25%); }
+.radio .band .mark { position: absolute; bottom: 0.2em; width: 0.56em; height: 0.56em; margin-left: -0.28em; border-radius: 50%; box-sizing: border-box; border: 0.13em solid #22303c; background: #f6f1e7; transition: background-color 300ms ease; }
 .radio .band .mark.front { border-color: #d96b54; }
 .radio .band .mark.back { border-color: #1f8a82; }
 .radio .band .mark.front.heard { background: #f08a76; } /* listened to */
 .radio .band .mark.back.heard { background: #2aa198; }
-.radio .band .needle { position: absolute; top: 0; bottom: 0; left: var(--needle); width: 0.22rem; margin-left: -0.11rem; border-radius: 0.11rem; background: #c8442e; box-shadow: 0 0 0.3rem rgb(200 68 46 / 0.7); transition: left 420ms cubic-bezier(0.3, 1.3, 0.5, 1); }
+.radio .band .needle { position: absolute; top: 0; bottom: 0; left: var(--needle); width: 0.22em; margin-left: -0.11em; border-radius: 0.11em; background: #22303c; box-shadow: 0 0 0.3em rgb(34 48 60 / 0.5); transition: left 420ms cubic-bezier(0.3, 1.3, 0.5, 1); }
 .radio.still .band .needle { transition: none; }
 
-/* the display (not ".screen": that is a whole page of the app): both stations' pictures are in it, and the one tuned in shows */
-.radio .display { position: relative; aspect-ratio: 8 / 6; border-radius: 0.9rem; background: #141c23; overflow: hidden; box-shadow: inset 0 0 0 0.14rem #0c1217, inset 0 0.5rem 1.2rem rgb(0 0 0 / 0.5); }
+/* the display (not ".screen": that is a whole page of the app): both stations'
+   pictures are in it, and the one tuned in shows */
+.radio .display { position: relative; aspect-ratio: 8 / 5.2; border-radius: 0.9em; background: #141c23; overflow: hidden; box-shadow: inset 0 0 0 0.16em #0c1217, inset 0 0.5em 1.2em rgb(0 0 0 / 0.5), 0 0.12em 0 rgb(255 255 255 / 0.2); }
 .radio .face { position: absolute; inset: 0; opacity: 0; transition: opacity 240ms ease; color: #f6f1e7; }
 .radio .face.tuned { opacity: 1; }
 .radio.still .face { transition: none; }
-.radio .pic { position: absolute; inset: 0.8rem 0.9rem 0.6rem; }
+.radio .pic { position: absolute; inset: 0.8em 0.9em 0.6em; }
 .radio .pic svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* static, between stations */
 .radio .static { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: repeating-linear-gradient(0deg, rgb(246 241 231 / 0.16) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgb(246 241 231 / 0.08) 0 2px, transparent 2px 5px); }
+/* the fingertip of light by which Penny shows what to do */
+.radio .tip { position: absolute; left: 50%; top: 50%; width: 2em; height: 2em; margin: -1em; border-radius: 50%; pointer-events: none; opacity: 0; background: rgb(246 241 231 / 0.3); border: 0.12em solid #f6f1e7; box-shadow: 0 0 0.6em rgb(246 241 231 / 0.8); box-sizing: border-box; }
 
 /* the readout: the station, what it is to you, and how well it has been heard */
-.radio .readout { display: flex; align-items: center; gap: 0.6rem; min-height: 2rem; font-family: system-ui, sans-serif; }
-.radio .freq { display: inline-flex; align-items: baseline; gap: 0.3rem; color: var(--edge); transition: color 240ms ease; }
-.radio .freq b { font-size: 1.7rem; font-weight: 800; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 0.6rem color-mix(in srgb, var(--edge) 60%, transparent); }
-.radio .freq small { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.09em; opacity: 0.8; }
-.radio .tag { flex: 1; min-width: 0; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.radio .readout { display: flex; align-items: center; gap: 0.6em; padding: 0.25em 0.6em; border-radius: 0.5em; background: #22303c; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.3); font-family: system-ui, sans-serif; }
+.radio .freq { display: inline-flex; align-items: baseline; gap: 0.3em; color: var(--edge); transition: color 240ms ease; }
+.radio .freq b { font-size: 1.55em; font-weight: 800; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 0.5em color-mix(in srgb, var(--edge) 60%, transparent); }
+.radio .freq small { font-size: 0.7em; font-weight: 800; letter-spacing: 0.09em; opacity: 0.8; }
+.radio .tag { flex: 1; min-width: 0; font-size: 0.7em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
 .radio .tag.kept { color: #f8d95a; opacity: 1; }
 /* three bars that fill as the station is listened to: at three it can be kept */
-.radio .signal { display: inline-flex; align-items: flex-end; gap: 0.16rem; height: 1.1rem; }
-.radio .signal i { width: 0.28rem; border-radius: 0.1rem; background: #f6f1e7; opacity: 0.22; transition: opacity 200ms ease, background-color 200ms ease; }
+.radio .signal { display: inline-flex; align-items: flex-end; gap: 0.16em; height: 1.1em; }
+.radio .signal i { width: 0.28em; border-radius: 0.1em; background: #f6f1e7; opacity: 0.22; transition: opacity 200ms ease, background-color 200ms ease; }
 .radio .signal i:nth-child(1) { height: 40%; }
 .radio .signal i:nth-child(2) { height: 70%; }
 .radio .signal i:nth-child(3) { height: 100%; }
 .radio .signal[data-bars="1"] i:nth-child(-n + 1), .radio .signal[data-bars="2"] i:nth-child(-n + 2) { opacity: 0.9; }
 .radio .signal[data-bars="3"] i { opacity: 1; background: #7cc46a; }
+
+/* what is pressed and turned: the tuning knob, play and pause, the presets, and Keep */
+.radio .controls { display: flex; align-items: center; gap: 0.6em; }
+.radio .controls button { font: inherit; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.radio .knob { flex: none; width: 3.3em; height: 3.3em; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 32%, #4a5d72, #22303c 62%); box-shadow: 0.22em 0.26em 0 #0f161d, inset 0 0 0 0.16em #141c23; transition: transform 70ms ease; }
+.radio .knob i { width: 100%; height: 100%; border-radius: 50%; rotate: calc((var(--turn, 0.5) - 0.5) * 270deg); transition: rotate 420ms cubic-bezier(0.3, 1.3, 0.5, 1); background: linear-gradient(#f6f1e7, #f6f1e7) 50% 12% / 0.22em 0.8em no-repeat; }
+.radio.still .knob i { transition: none; }
+.radio .knob:active { transform: translate(0.1em, 0.12em); }
+.radio .power { flex: none; width: 2.3em; height: 2.3em; border-radius: 50%; display: grid; place-items: center; background: #22303c; color: #f6f1e7; box-shadow: 0.16em 0.2em 0 #0f161d; }
+.radio .power svg { width: 1.1em; height: 1.1em; }
+.radio .power .pause { display: none; }
+.radio .power.playing .pause { display: block; }
+.radio .power.playing .go-on { display: none; }
+.radio .power:active, .radio .keep:active { translate: 0.1em 0.14em; }
+.radio .keep {
+  flex: none; height: 2.9em; padding: 0 1em !important; border-radius: 0.9em; background: #f8d95a; color: #22303c;
+  font-family: system-ui, sans-serif !important; font-size: 0.95em !important; font-weight: 800 !important; letter-spacing: 0.06em; text-transform: uppercase;
+  box-shadow: 0.2em 0.26em 0 #a8851c, inset 0 -0.2em 0 rgb(0 0 0 / 0.12);
+}
+.radio .keep:active { box-shadow: 0.08em 0.1em 0 #a8851c, inset 0 -0.2em 0 rgb(0 0 0 / 0.12); }
+/* presets: five small buttons, lit when a station kept five times running is saved to them */
+.radio .presets { flex: 1; min-width: 0; }
+.radio .presets ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.3em; }
+.radio .presets li { aspect-ratio: 1; border-radius: 0.4em; background: #a83a26; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.22); }
+.radio .presets a { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; background: #22303c; box-shadow: 0.12em 0.16em 0 #0f161d, inset 0 0 0 0.1em #f8d95a; }
+.radio .presets a:active { translate: 0.06em 0.1em; }
+.radio .presets a svg { width: 78%; height: 78%; }
 
 /* --- The display, lit by the loop as it plays (jam/taste.js) -------------------------------
    The bar that crosses with the beat is a bar of light. Four lamps hang over
@@ -71,6 +148,7 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .radio.nope { animation: taste-nope 360ms ease-in-out; }
+  .radio .body { transition: none; }
   .radio.retune .static { animation: radio-static 280ms steps(4, end); }
   .radio .face.won .pic { animation: taste-won 520ms cubic-bezier(0.3, 1.6, 0.5, 1); }
   /* at rest the notes twinkle, each in its own time */
@@ -95,17 +173,6 @@
 @keyframes taste-beat { 0% { box-shadow: inset 0 0 2.6rem color-mix(in srgb, var(--glow, #9ad3f7) 60%, transparent); } 100% { box-shadow: inset 0 0 2.6rem transparent; } }
 @keyframes taste-offbeat { 0% { box-shadow: inset 0 0 1.5rem color-mix(in srgb, var(--glow, #9ad3f7) 32%, transparent); } 100% { box-shadow: inset 0 0 1.5rem transparent; } }
 @keyframes taste-gleam { 0% { opacity: 1; transform: translateX(-140%) skewX(-12deg); } 100% { opacity: 1; transform: translateX(440%) skewX(-12deg); } }
-
-.taste-row { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6rem; }
-.taste-row button.quiet { height: 2.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; font-size: 0.9375rem; }
-.taste-row button.quiet svg { width: 1.2rem; height: 1.2rem; }
-.taste-row button.round { width: 2.9rem; padding: 0; }
-.taste-row button.go { height: 2.9rem; padding: 0 1rem; font-size: 1rem; }
-.taste-row.end { grid-template-columns: 1fr 1fr; }
-#taste-play .pause { display: none; }
-#taste-play.playing .pause { display: block; }
-#taste-play.playing .go-on { display: none; }
-.taste-note { margin: 0; min-height: 1.2rem; font-family: system-ui, sans-serif; font-size: 0.875rem; color: var(--muted); }
 
 /* --- The lab notes ------------------------------------------------------------------------- */
 .taste-lab {
@@ -132,24 +199,12 @@
 .taste-lab details p { margin: 0.5rem 0 0; }
 
 
-/* --- Presets: stations kept five times running, as buttons along the bottom of a radio ------ */
-.presets { width: 100%; display: flex; flex-direction: column; gap: 0.45rem; }
-.presets h2 { margin: 0; padding-left: 0.3rem; text-align: left; font-family: system-ui, sans-serif; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 62%, var(--paper)); }
-.presets ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.presets a {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.15rem; width: 3.9rem; padding: 0.35rem 0.3rem 0.3rem; box-sizing: border-box;
-  border-radius: 0.8rem; background: #2c3a47; color: #f6f1e7; text-decoration: none; font-family: system-ui, sans-serif;
-  box-shadow: 0 0.22rem 0 #141c23, inset 0 0.1rem 0 rgb(255 255 255 / 0.12); transition: transform 70ms ease, box-shadow 70ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.presets a:active { transform: translateY(0.16rem); box-shadow: 0 0.06rem 0 #141c23; }
-.presets a b { position: absolute; top: 0.2rem; left: 0.35rem; font-size: 0.625rem; font-weight: 800; color: #f8d95a; }
-.presets a svg { width: 2.6rem; height: 2rem; }
-.presets a span { font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; opacity: 0.85; }
-
 /* --- Behind the radio: the experiment, in a sheet over it ---------------------------------- */
 dialog.behind { width: min(100% - 1.5rem, 30rem); max-height: calc(100% - 2rem); padding: 0; border: 0; border-radius: 1.2rem; background: transparent; overflow: auto; }
 dialog.behind::backdrop { background: rgb(20 26 32 / 0.6); }
 dialog.behind .taste-lab { box-shadow: none; }
 dialog.behind .what { margin: 0; font-size: 0.875rem; color: var(--muted); }
 dialog.behind .go { height: 2.9rem; font-size: 1rem; }
+dialog.behind #taste-again { height: 2.7rem; font-size: 0.9375rem; }
+dialog.behind .taste-row { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }

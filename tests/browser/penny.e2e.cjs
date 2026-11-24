@@ -539,8 +539,20 @@ async function main() {
       await page.waitForURL(/\/jam\/\?taste/);
       await page.waitForSelector('.taste-card');
       await sleep(700); // the screen slides in
-      const box = await page.locator('.taste-card').boundingBox();
+      const box = await page.locator('.radio .display').boundingBox(); // (its knob and buttons are pressed, not swiped)
       const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+      // all of the set is on the screen, and nothing behind it is the white of a page
+      const set = await page.evaluate(() => {
+        const parts = [...document.querySelectorAll('.radio .body, .radio .antenna, .radio .handle, .radio .feet')].map((part) => part.getBoundingClientRect());
+        const ground = getComputedStyle(document.querySelector('.radio-world')).backgroundImage;
+        return { top: Math.min(...parts.map((r) => r.top)), bottom: Math.max(...parts.map((r) => r.bottom)), left: Math.min(...parts.map((r) => r.left)), right: Math.max(...parts.map((r) => r.right)), wide: innerWidth, high: innerHeight, ground, scrolls: document.scrollingElement.scrollHeight > innerHeight };
+      });
+      assert.ok(set.top >= 0 && set.left >= 0 && set.right <= set.wide && set.bottom <= set.high, `the radio is not all on the screen: ${JSON.stringify(set)}`);
+      assert.equal(set.scrolls, false, 'the page scrolls');
+      assert.match(set.ground, /gradient/, 'the radio stands in the world');
+      assert.equal(await page.locator('.radio .plate').textContent(), 'Penny’s Radio');
+      const mood = () => page.evaluate(() => document.querySelector('.pal')?.dataset.mood);
+      await page.waitForFunction(() => document.querySelector('.pal')?.dataset.mood === 'hopeful', null, { timeout: 6000 }); // Penny shows how: a swipe
       const swipe = async () => {
         await page.mouse.move(x + 60, y);
         await page.mouse.down();
@@ -559,6 +571,7 @@ async function main() {
       const was = await turned();
       await swipe();
       assert.equal(await turned(), !was, 'a swipe did not turn the card');
+      assert.equal(await mood(), 'thrilled', 'Penny is not delighted that it was done');
       // too soon: neither side has been listened to
       await sleep(300);
       await doubleTap();
@@ -578,6 +591,7 @@ async function main() {
         return up;
       };
       const first = await pickOne();
+      assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: Penny has shown all there is');
       let data = await kept();
       assert.equal(data.trials.length, 1);
       assert.equal(data.trials[0].pick, first, 'the side that was up is the one picked');

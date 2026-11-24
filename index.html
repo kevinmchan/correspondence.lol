@@ -146,6 +146,10 @@
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.8" cy="17.5" r="2.2"/><circle cx="16.8" cy="15.5" r="2.2"/></svg></span>
             <span class="words"><strong>Make music</strong></span>
           </a>
+          <a href="/jam/?taste" class="menu-button" style="--tile: #2aa198">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></span>
+            <span class="words"><strong>Penny’s Radio</strong></span>
+          </a>
         </nav>
         </div>
 
@@ -410,7 +414,7 @@
       <a href="/">← correspondence.lol</a>
       <!-- Keeping a beat, and passing one on. -->
       <div class="top-actions">
-        <button type="button" id="jam-lab" class="quiet round" aria-label="Radio" title="Radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></button>
+        <button type="button" id="jam-lab" class="quiet round" aria-label="Penny’s Radio" title="Penny’s Radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></button>
         <button type="button" id="jam-save" class="quiet round" aria-label="Save this beat" title="Save this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5h11v15.5l-5.5-4-5.5 4z"/></svg></button>
         <button type="button" id="jam-share" class="quiet round" aria-label="Share this beat" title="Share this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg></button>
       </div>
@@ -450,55 +454,54 @@
   </template>
 
   <template id="screen-taste">
-    <header class="topbar">
-      <a href="/jam/">← Loops</a>
-      <div class="top-actions">
-        <button type="button" id="taste-behind-open" class="quiet round" aria-label="Behind the radio" title="Behind the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></button>
-      </div>
-    </header>
-
-    <main>
-      <h1>Radio</h1>
-      <div class="taste">
-        <p id="taste-hint" class="taste-hint">Two stations. Swipe to tune between them, and double tap the one you’d keep listening to.</p>
-        <!-- The radio: a dial with two stations on it, a lit display, and what is tuned in. -->
+    <!-- Penny's Radio: a small portable set, standing on the map. Penny shows how it works (jam/taste.js). -->
+    <main class="radio-world">
+      <div class="map-far" aria-hidden="true"></div>
+      <a href="/jam/" class="penny-back" aria-label="Back to the music maker"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <button type="button" id="taste-behind-open" class="radio-behind" aria-label="Behind the radio" title="Behind the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></button>
+      <h1 class="sr-only">Penny’s Radio</h1>
+      <div class="radio-ground">
         <div id="taste-card" class="radio taste-card" tabindex="0" role="group">
-          <div class="band" aria-hidden="true">
-            <span class="ticks"></span>
-            <i class="mark front"></i>
-            <i class="mark back"></i>
-            <i class="needle"></i>
+          <span class="antenna" aria-hidden="true"><i></i></span>
+          <span class="handle" aria-hidden="true"></span>
+          <div class="body">
+            <div class="top-row">
+              <span class="plate">Penny’s Radio</span>
+              <span class="grille" aria-hidden="true"></span>
+            </div>
+            <div class="band" aria-hidden="true">
+              <span class="ticks"></span>
+              <i class="mark front"></i>
+              <i class="mark back"></i>
+              <i class="needle"></i>
+            </div>
+            <div class="display">
+              <div class="face front"><div class="pic"></div></div>
+              <div class="face back"><div class="pic"></div></div>
+              <span class="static" aria-hidden="true"></span>
+              <i class="tip" aria-hidden="true"></i>
+            </div>
+            <div class="readout">
+              <span class="freq"><b id="radio-freq"></b><small>FM</small></span>
+              <span id="radio-tag" class="tag"></span>
+              <span id="radio-signal" class="signal" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
+            <div class="controls">
+              <button type="button" id="taste-flip" class="knob" aria-label="Tune to the other station" title="Tune"><i></i></button>
+              <button type="button" id="taste-play" class="power" aria-label="Play" aria-pressed="false">
+                <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
+                <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
+              </button>
+              <!-- Stations kept five times running are saved here, as a radio's presets are. -->
+              <div id="lab-hall" class="presets" role="group" aria-label="Presets"><ul></ul></div>
+              <button type="button" id="taste-pick" class="keep">Keep</button>
+            </div>
           </div>
-          <div class="display">
-            <div class="face front"><div class="pic"></div></div>
-            <div class="face back"><div class="pic"></div></div>
-            <span class="static" aria-hidden="true"></span>
-          </div>
-          <div class="readout">
-            <span class="freq"><b id="radio-freq"></b><small>FM</small></span>
-            <span id="radio-tag" class="tag"></span>
-            <span id="radio-signal" class="signal" aria-hidden="true"><i></i><i></i><i></i></span>
-          </div>
-        </div>
-        <div class="taste-row">
-          <button type="button" id="taste-flip" class="quiet">
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h15l-3.5-3.5M20 15H5l3.5 3.5"/></svg>
-            <span>Tune</span>
-          </button>
-          <button type="button" id="taste-play" class="quiet round" aria-label="Play" aria-pressed="false">
-            <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
-            <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
-          </button>
-          <button type="button" id="taste-pick" class="go">Keep</button>
+          <span class="feet" aria-hidden="true"></span>
         </div>
         <p id="taste-note" class="taste-note" role="status"></p>
-        <!-- Stations kept five times running are saved here, as a radio's presets are. -->
-        <div id="lab-hall" class="presets" hidden>
-          <h2>Presets</h2>
-          <ul></ul>
-        </div>
-
-        <!-- The experiment this radio is: out of sight until asked for (the flask, top right). -->
+      </div>
+      <!-- The experiment this radio is: out of sight until asked for (the flask, top right). -->
         <dialog id="taste-behind" class="behind" aria-label="Behind the radio">
           <section class="taste-lab">
           <h2>Behind the radio</h2>
@@ -524,10 +527,10 @@
             <button type="button" id="taste-copy" class="quiet">Copy the data</button>
             <button type="button" id="taste-reset" class="quiet">Start over</button>
           </div>
+          <button type="button" id="taste-again" class="quiet">Have Penny show me again</button>
           <button type="button" id="taste-behind-close" class="go">Back to the radio</button>
           </section>
         </dialog>
-      </div>
     </main>
   </template>
 
