@@ -68,20 +68,64 @@
 .layer[aria-checked="true"] .name { color: var(--ink); }
 
 /* --- Play, tempo, start over ----------------------------------------------------------- */
-.jam-controls { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6rem; }
+.jam-controls { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0.6rem; }
 .jam-controls .side { display: flex; align-items: center; gap: 0.5rem; }
 .jam-controls .side:last-child { justify-content: flex-end; }
 .jam-controls button.quiet { height: 2.9rem; min-width: 2.9rem; padding: 0 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.9375rem; }
 .jam-controls button.quiet svg { width: 1.2rem; height: 1.2rem; }
-.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 3.4rem; }
-.jam-controls #jam-tempo::after { content: " bpm"; font-weight: 400; font-size: 0.75rem; color: var(--muted); }
-#jam-play {
-  width: 4.2rem; height: 4.2rem; padding: 0; border-radius: 50%; display: grid; place-items: center;
-  background: var(--accent); color: #fff; box-shadow: 0 0.26rem 0 color-mix(in srgb, var(--accent) 68%, #000);
+/* (the tempo is kept narrow, its unit under its number, so that the two sides weigh the same and the dice sit dead centre) */
+.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 2.9rem; padding: 0 0.35rem; flex-direction: column; gap: 0; line-height: 1.05; }
+.jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
+/* The dice are the big button, in the middle. Play and pause sit beside them. */
+#jam-dice {
+  /* A dark tile, like the app's own mark, inside a ring that never stops
+     turning, made of the colours of the four instruments it writes for. */
+  --tile: #22303c;
+  position: relative; width: 4.6rem; height: 4.6rem; padding: 0; border: 0; border-radius: 28%; display: grid; place-items: center;
+  background: var(--tile); color: #f6f1e7;
+  box-shadow: 0 0.26rem 0 #0c1217;
   transition: transform 70ms ease, box-shadow 70ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
-#jam-play:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
-#jam-play svg { width: 1.9rem; height: 1.9rem; }
+#jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 #0c1217; }
+@property --dice-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+#jam-dice::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.28rem; pointer-events: none;
+  /* the four instruments' own colours (jam.js hands them over), each running into the next */
+  background: conic-gradient(from var(--dice-turn), var(--c0, #f08a76), var(--c1, #f8d95a), var(--c2, #736dd0), var(--c3, #2aa198), var(--c0, #f08a76));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+/* When they are rolled, small tiles of those four colours fly out of it (jam.js makes them). */
+#jam-dice .spark {
+  position: absolute; left: 50%; top: 50%; width: 0.55rem; height: 0.55rem; margin: -0.275rem; border-radius: 26%;
+  background: var(--c); pointer-events: none; opacity: 0;
+  animation: dice-spark 620ms cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Never quite still: the ring turns, the tile breathes, and every few seconds the dice give a rattle. */
+  #jam-dice::before { animation: dice-ring 2.6s linear infinite; }
+  #jam-dice:not(:active) { animation: dice-breathe 1.5s ease-in-out infinite; }
+  #jam-dice svg { animation: dice-rattle 3.2s ease-in-out infinite; }
+  /* Rolled: the tile jumps, the dice tumble right over, and the ring whips round. */
+  #jam-dice.rolled { animation: dice-pop 520ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+  #jam-dice.rolled svg { animation: dice-tumble 560ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+  #jam-dice.rolled::before { animation-duration: 0.45s; }
+}
+@keyframes dice-ring { to { --dice-turn: 360deg; } }
+@keyframes dice-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.05; } }
+@keyframes dice-rattle { 0%, 78%, 100% { rotate: 0deg; } 82% { rotate: -14deg; } 86% { rotate: 12deg; } 90% { rotate: -8deg; } 94% { rotate: 5deg; } }
+@keyframes dice-pop { 0% { scale: 0.86; } 45% { scale: 1.16; } 100% { scale: 1; } }
+@keyframes dice-tumble { from { rotate: 0deg; scale: 0.7; } 60% { scale: 1.2; } to { rotate: 360deg; scale: 1; } }
+@keyframes dice-spark { 0% { opacity: 1; translate: 0 0; rotate: 0deg; scale: 1; } 100% { opacity: 0; translate: var(--dx) var(--dy); rotate: 200deg; scale: 0.5; } }
+#jam-dice:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+#jam-dice svg { width: 2.3rem; height: 2.3rem; }
+@media (prefers-reduced-motion: no-preference) {
+  #jam-dice:active svg { transform: rotate(40deg); transition: transform 90ms ease; }
+}
+.jam-controls #jam-play.quiet { padding: 0; }
+#jam-play svg { width: 1.3rem; height: 1.3rem; }
 #jam-play .pause { display: none; }
 #jam-play.playing .pause { display: block; }
 #jam-play.playing .go-on { display: none; }
