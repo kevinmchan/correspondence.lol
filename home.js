@@ -10,6 +10,7 @@ import { load, save } from '/shared/identity.js';
 import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
 import { notesHeard, playMail, remembered } from '/penny/mail.js';
+import { showKept } from '/penny/tags.js';
 
 // How Penny's asking has gone this visit. It is kept here, outside the screen,
 // because the screen is made afresh every time the home page is come back to:
@@ -331,6 +332,7 @@ export function mount(root, life) {
   let turn = 0; // which of its wants is being shown: so that one does not start while another is going on
 
   portal.classList.toggle('calm', hasWalked());
+  showKept(root); // tags that have been found in the game are kept on this map (penny/tags.js)
   // The page is the map from far up: line its squares up with the dots behind
   // the page, and note where the portal is, for the way through it (walk.css).
   const map = root.querySelector('.home-map');

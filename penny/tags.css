@@ -1,0 +1,42 @@
+/* Tags (penny/tags.js): marks hidden in the game, to be found and kept. */
+
+/* --- Hidden: one square of the map behind a game's board ------------------------------
+   Printed as faintly as the map itself, in the map's own ink, and on the same
+   layer as the map: whatever of the page lies over that square covers it. It
+   gives itself away only by a glint, now and then, to whoever has stopped. */
+.tag-hidden {
+  position: absolute; z-index: -1; padding: 0; border: 0; border-radius: 22%;
+  background: none; color: var(--ink); cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+.tag-hidden svg { display: block; width: 100%; height: 100%; opacity: 0.12; }
+.tag-hidden.glint svg { animation: tag-glint 2s ease-in-out; }
+.tag-hidden.found svg { opacity: 0; }
+.tag-hidden:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tag-hidden:focus-visible svg { opacity: 0.6; }
+@keyframes tag-glint { 0%, 100% { opacity: 0.12; } 30% { opacity: 0.5; } 45% { opacity: 0.22; } 62% { opacity: 0.44; } }
+
+/* --- Found: the square turns to night, and grows until the night is all there is --- */
+.tag-rise { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.tag-rise > i { position: absolute; inset: 0; background: #09090d; opacity: 0; }
+.tag-rise > div { position: absolute; background: #09090d; overflow: hidden; }
+.tag-rise svg { display: block; width: 100%; height: 100%; }
+
+/* --- Kept: on the home page's map, across from the portal ----------------------------
+   A small square of night, with the picture in it, dim, as the night itself is. */
+.tag-kept {
+  position: absolute; z-index: 1; display: block;
+  right: calc(0.875rem + 3px + var(--nth, 0) * 2.625rem); top: calc(var(--map-y, 0px) + 1.75rem + 3px);
+  width: calc(2.625rem - 6px); aspect-ratio: 1; border-radius: 22%;
+  background: #09090d; color: #dedede;
+  box-shadow: 0 0 0 2px var(--paper);
+  -webkit-tap-highlight-color: transparent;
+}
+.tag-kept svg { display: block; width: 100%; height: 100%; opacity: 0.5; }
+.tag-kept:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  .tag-kept svg { animation: tag-kept 5.4s ease-in-out infinite; }
+  /* (the screen the app opens on raises its contents into place: not this, which is pinned to the map) */
+  .screen.opening main > .tag-kept { animation: none; }
+}
+@keyframes tag-kept { 0%, 100% { opacity: 0.42; } 46% { opacity: 0.62; } 52% { opacity: 0.4; } 58% { opacity: 0.7; } 70% { opacity: 0.45; } }

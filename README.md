@@ -8,13 +8,13 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), and the night sky at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the game (`tags.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
-| `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night sky's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) |
+| `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
@@ -120,7 +120,7 @@ at the bottom edge of the window, in the viewer's own space, life size, and
 looks up at the map with you (`penny/pal.js`). It is one layer over the whole
 app, so screens slide past and Penny stays; a screen that wants Penny asks,
 and Penny goes back under the edge when no screen does. At present the home
-page, the map, the game itself, the music maker, its radio and the night sky ask. In the game Penny has no part in the
+page, the map, the game itself, the music maker and its radio ask. In the game Penny has no part in the
 play and gives nothing away: it is glad when a post is found, flinches at a
 miss, and feels how the game ends (a time trial it takes as play: see Game
 modes); and the board there, as on the walk, is a
@@ -346,8 +346,7 @@ one that is up is pressed in and lit.
   the tab. Games that are over, games you are waiting on someone else in, and
   phrases you wrote yourself are left out.
 - **Lobby**: everything else. Your account, your rooms, and the tiles for
-  opening or joining a room, playing solo, making music, Penny's Radio and
-  the night sky.
+  opening or joining a room, playing solo, making music and Penny's Radio.
 
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
@@ -505,91 +504,98 @@ fools it about as often as the 1 in 20 allows. What it can find is limited to
 what the fifteen numbers can say. Nothing about how challengers are made
 looks at who has been winning beyond the length of the present reign.
 
-## The night sky
+## Tags, and the night
 
-`/?sky` (`penny/sky.js`), "Night sky" on the home page's menu, is a picture
-that is played. The picture came first: five lights on black, three stars
-with four points falling in a line from the top left, each bigger than the
-last, and two small round ones, one either side of the line. The screen opens
-on that and nothing else. The places, sizes and colours are measured off the
+A tag is something hidden in the game, to be found and kept, as on a
+scavenger hunt (`penny/tags.js`). Nothing in the app says that there are any.
+Whoever notices one and touches it has found it: it is theirs from then on
+(on this device), it is not hidden from them again, and it is kept on the
+home page's map, in the corner across from the portal, from where it can be
+gone back to. There is one so far.
+
+**Where it hides.** On the map behind the board of a game, in one of the
+faint squares away from the board, and which square changes from game to
+game. It is printed there in the map's own ink and as faintly as the map
+itself: the picture described below, small. It is never up against the board,
+where a slip of the finger would be a move, nor where Penny stands, nor under
+anything else on the page, and it is not there at all while a time trial is
+being run. Nothing points at it, and Penny, who gives nothing away in the
+game, does not look at it. It glints, now and then, but only once nothing has
+been pressed for a few seconds: like everything else in Penny's world, it is
+found by whoever is not in a hurry. (It can also be reached with the Tab
+key.)
+
+**Found**, its square turns to night and grows until the night is all there
+is, the picture in it landing exactly where the night has it. The way back
+from the night leads to the game it was found in.
+
+### The night
+
+`/?sky` (`penny/sky.js`) is a picture, come to life. The picture came first:
+five lights on black, three stars with four points falling in a line from the
+top left, each bigger than the last, and two small round ones, one either
+side of the line. The places, the sizes and the black are measured off the
 picture, and so is the shape of a star (`penny/stars.js`): 1.4 times as tall
-as it is wide, with sides that curve in until its points are needles. In a
-square window the size of the picture, with Penny and the way back taken off,
-the screen at rest is the picture: laid one over the other, 98.6% of what is
-lit in either is lit in both.
+as it is wide, with sides that curve in until its points are needles.
 
-The lights come out one at a time, in the order they are read, left to right,
-each with its note. After that it is a sky, and there is not a word in it. As
-in scene two, what a hand leaves depends on one thing, how fast it is going;
-and the picture is the lesson in it, being two taps and three holds, each
-longer than the last.
+The screen opens on that picture, as still as a picture: in a square window
+the size of it, laid one over the other, 98% of what is lit in either is lit
+in both. Only it is far dimmer, at well under half the picture's brightness:
+something to look at in the dark for a long time. Then it wakes, a light at a
+time, in the order it is read, left to right, each with its note.
 
-| The hand | What it leaves |
-| --- | --- |
-| A tap | A point of light: short and bright, an octave up, and gone once it has sounded three times. |
-| Still | A star, growing for as long as the finger is held. The picture's small one takes a beat, its middle one a breath, and its big one, the biggest there is, five seconds. |
-| Slow | Small stars sown along the way, one to each row crossed; the slower, the bigger. |
-| Fast | A shooting star: thin, straight, and gone almost as it is made. |
+**Nothing is ever added to it.** No more stars, no sky round them, no colour,
+and nobody standing under it: Penny is not in this scene. It is the same five
+lights for as long as it is looked at. What is alive is how they are there.
 
-A light that is touched rings, a finger run across lights rings each in turn,
-and one of your own that is held grows. The arrow keys carry a point of light
-about the sky, and the space bar is a finger put down there.
+- **They wander.** Each strays a little from its place, the way a speck in
+  water does, and is pulled back the further it goes: about a hundredth of
+  the picture's side, on a path with no corners in it that never repeats.
+- **They are not solid.** A light is itself, faintly, and six fainter copies
+  of itself laid over it, each a little out of place. Where they lie on one
+  another they add up to its brightness; at its edges and along its points it
+  is soft, and never the same twice.
+- **They glow**, a little, and the glow breathes with them.
+- **They twinkle.** Their brightness comes and goes, the far ones' by a good
+  deal and the near one's hardly, as stars' does and a planet's does not. And
+  now and then one twinkles outright: its copies fall into place, it is sharp
+  and brighter for a moment (though never as bright as the picture), its
+  points draw out, and a few motes come off it, are knocked about, and are
+  lost. That is when it is heard.
 
-**How it is read.** These are the two columns of "How a place says it", as
-sound.
+A light that is touched twinkles. A touch anywhere else, and the nearest one
+answers, more quietly. A finger run across them sounds each as it is reached,
+and a finger held near them warms them: they stray further and twinkle
+oftener for as long as it is there. The keys 1 to 5 are the five lights, and
+the space bar is each of them in turn.
 
-- **Up and down is pitch.** The sky is ruled in rows, ten to the picture's
-  side, on the five notes the rest of the app keeps to, and higher up is
-  higher. That makes the picture's stars E, C, and E again an octave down,
-  with a G and a D from the dots between them.
+**How it is heard.** These are the two columns of "How a place says it", as
+sound (`penny/chimes.js`).
+
+- **Up and down is pitch**, on the five notes the rest of the app keeps to,
+  ten rows to the picture's side. That makes the stars E, C, and E again an
+  octave down, with a G and a D from the dots between them.
 - **Size is nearness.** What is near is loud and full, rings for seconds, has
   a low note under it and comes straight. What is far is quiet and dull, and
-  most of what arrives is echo.
-- **Every light keeps its own time.** One made by hand sounds when it is made
-  and comes round again, fainter each time, until it goes out: the bigger,
-  the slower round and the longer lived. A small star lasts about a minute,
-  the biggest several. None of their rounds divides into the sky's own, so
-  they drift against the picture and nothing repeats. What has gone out stays
-  where it was, a point with no sound, for the rest of the visit.
-- **The picture is read once to each turn of the sky**, which is 22 seconds,
-  and not always the same way: a dot may keep quiet, or say itself twice, or
-  the big star take its time.
+  most of what arrives is echo. A dot is short and bright, an octave up.
+- **The picture is read once to each turn of the night**, which is 22
+  seconds, and not always the same way: a dot may keep quiet, or say itself
+  twice, or the big star take its time. Between readings each light twinkles
+  in its own time, more softly.
 - **The night turns under it.** One chord is held very low for each turn: the
   game's four, C, A minor, F and G. The lights' notes never change. What is
   under them does, and that alone turns the same phrase from glad to sad and
-  back. None of the chords has a third of its own, so which it is, is left to
-  the lights; and low in the sky there is a colour for each.
+  back; none of the chords has a third of its own, so which it is, is left to
+  the lights.
 
-What a light sounds like can be seen, so nothing is lost with the sound off.
-It flares, its points draw out long and thin, a ring the colour of its note
-spreads from it (one of the game's colours for each of the five notes), and
-it flares again, fainter, with each echo.
-
-**Whoever stays sees more.** The faint stars were always there. They cannot
-be seen until eyes have got used to the dark, and that takes a minute and a
-half of nothing being rushed: the brightest first, then the rest, then the
-band of them that crosses the whole sky. A rush of taps or scratches puts
-them out again for a few seconds. Once they are all out the faintest of them
-can just be heard, and now and then one falls.
-
-**Penny looks up with you**, from the bottom left, which the picture leaves
-empty. It holds its breath on tiptoe while a star is grown, and is glad of
-each in proportion to it: a nod for a small one, a jump for the biggest. It
-starts at a shooting star, winces at a rush, shuts its eyes to listen when
-the sky has been left alone a while, and left alone long enough it sleeps.
-Dot, once found, hops for a dot. Whoever is caught waiting is shown, as in
-the film: Penny looks out, and a fingertip of light holds still in an empty
-part of the sky until a star has grown under it. That one fades; it was only
-to show. Until the first touch there is no sound, and Penny's seal beats
-slowly, as in scene one; the first touch wakes the sky, and the picture is
-read again from the start, aloud.
-
-All of it is synthesised (`penny/chimes.js`) from sine waves and one burst of
-generated air for the room, and written so that it can be rendered without a
-speaker, which is how its levels were set. The sky does not go on without
-you: with the page out of sight it stops, and picks up where it was. With
-reduced motion the lights are all there from the start, and they brighten
-when they sound without moving. Nothing made is kept when the screen is left.
+All of it is synthesised from sine waves and one burst of generated air for
+the room, and written so that it can be rendered without a speaker, which is
+how its levels were set. Until the first touch there is no sound; the first
+touch wakes it, and the picture is read again from the start, aloud. The way
+back is dim, and gone when the picture has been left alone a moment. The
+night does not go on without you: with the page out of sight it stops, and
+picks up where it was. With reduced motion nothing moves: the lights are
+where the picture has them, and their brightness comes and goes slowly.
 
 ## Game modes
 

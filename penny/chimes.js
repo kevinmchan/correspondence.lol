@@ -1,6 +1,6 @@
-// What the night sky sounds like (penny/sky.js is the screen, penny/stars.js
-// its rules). Made out of nothing but sine waves and air, as everything in
-// the app is: there are no audio files.
+// What the night sounds like (penny/sky.js is the screen, penny/stars.js its
+// rules). Made out of nothing but sine waves and air, as everything in the
+// app is: there are no audio files.
 //
 // It takes the sound engine it is to play on and where to send what it makes,
 // and asks for nothing else, so it can be rendered without a page or a
@@ -15,9 +15,8 @@
 //   note under it, and comes straight. What is far is quiet and dull, and
 //   most of what reaches you is echo and air.
 //
-// Under them the night holds one chord very low, for one turn of the sky, and
-// then the next. And for whoever has stayed long enough to see them, the
-// faint stars can just be heard.
+// Under them the night holds one chord very low, for one turn, and then the
+// next.
 
 import { ECHO, STEP } from './stars.js';
 
@@ -47,16 +46,6 @@ function airOf(ctx) {
   airs.set(ctx, buffer);
   return buffer;
 }
-const hisses = new WeakMap();
-function hissOf(ctx) {
-  if (hisses.has(ctx)) return hisses.get(ctx);
-  const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-  hisses.set(ctx, buffer);
-  return buffer;
-}
-
 // Very high partials are let through less: a bright note should glint, not sting.
 const tame = (freq) => 1 / (1 + (freq / 3000) ** 2);
 
@@ -145,8 +134,8 @@ export function createChimes(ctx, out) {
   return {
     ctx,
 
-    // A star, struck. near: 0 (as far as a star gets) to 1. level: how much
-    // of itself it still has. pan: -1 left to 1 right.
+    // A star, struck. near: 0 (as far as a star gets) to 1. level: how hard.
+    // pan: -1 left to 1 right.
     star(when, { freq, near = 0.5, level = 1, pan = 0 }) {
       if (ended) return;
       const loud = 0.15 * level * (0.6 + 0.4 * near);
@@ -169,101 +158,6 @@ export function createChimes(ctx, out) {
       struck(head, when, freq, 0.11 * level * tame(freq * 0.6), 0.003, 0.55);
       struck(head, when, freq * 2, 0.03 * level * tame(freq * 2), 0.002, 0.2);
       struck(head, when, freq * 3.01, 0.016 * level * tame(freq * 3.01), 0.002, 0.07);
-    },
-
-    // A star being grown under a finger: one soft held note that fills out as
-    // the star does. grow(size) as it gets bigger; end() when the finger lifts.
-    gather({ freq, pan = 0 }) {
-      if (ended) return { grow() {}, end() {} };
-      const now = ctx.currentTime;
-      const { head } = way(pan, { straight: 0.8, echoed: 0.08, aired: 0.5, veil: 2600 });
-      const amp = ctx.createGain();
-      amp.gain.value = 0;
-      amp.connect(head);
-      const waver = ctx.createOscillator(); // it trembles a little, as a held breath does
-      waver.frequency.value = 4.3;
-      const depth = ctx.createGain();
-      depth.gain.value = 0;
-      waver.connect(depth).connect(amp.gain);
-      const low = ctx.createGain(); // the low note that a big star has under it
-      low.gain.value = 0;
-      const parts = [waver];
-      for (const [times, share, into] of [[1, 1, amp], [2, 0.16, amp], [0.5, 1, low]]) {
-        const osc = ctx.createOscillator();
-        osc.frequency.value = freq * times;
-        const part = ctx.createGain();
-        part.gain.value = share;
-        osc.connect(part).connect(into);
-        parts.push(osc);
-      }
-      low.connect(amp);
-      for (const part of parts) part.start(now);
-      let over = false;
-      return {
-        grow(size) {
-          if (over) return;
-          const at = ctx.currentTime;
-          amp.gain.setTargetAtTime(0.012 + 0.045 * size, at, 0.14);
-          depth.gain.setTargetAtTime(0.003 + 0.01 * size, at, 0.14);
-          low.gain.setTargetAtTime(Math.max(0, size - 0.3) * 0.7, at, 0.2);
-        },
-        end() {
-          if (over) return;
-          over = true;
-          const at = ctx.currentTime;
-          amp.gain.cancelScheduledValues(at);
-          amp.gain.setTargetAtTime(0, at, 0.05);
-          depth.gain.cancelScheduledValues(at);
-          depth.gain.setTargetAtTime(0, at, 0.03);
-          for (const part of parts) part.stop(at + 0.5);
-        },
-      };
-    },
-
-    // A shooting star: thin, quick, and going somewhere. from and to are
-    // where it starts and ends, left to right; falling says whether it goes
-    // down the sky or up it; seconds, how long it takes.
-    streak(when, { from = 0, to = 0, falling = true, seconds = 0.45 }) {
-      if (ended) return;
-      const { head, side } = way(from, { straight: 0.5, echoed: 0.5, aired: 0.9 });
-      if (side) {
-        side.pan.setValueAtTime(Math.max(-0.85, Math.min(0.85, from)), when);
-        side.pan.linearRampToValueAtTime(Math.max(-0.85, Math.min(0.85, to)), when + seconds);
-      }
-      const [first, last] = falling ? [3136, 1568] : [1568, 3136];
-      const amp = ctx.createGain();
-      amp.gain.setValueAtTime(0, when);
-      amp.gain.linearRampToValueAtTime(1, when + 0.02);
-      amp.gain.setTargetAtTime(0, when + 0.02, seconds / 3.2);
-      amp.connect(head);
-      const whistle = ctx.createOscillator();
-      whistle.frequency.setValueAtTime(first, when);
-      whistle.frequency.exponentialRampToValueAtTime(last, when + seconds);
-      const thin = ctx.createGain();
-      thin.gain.value = 0.04;
-      whistle.connect(thin).connect(amp);
-      const hiss = ctx.createBufferSource();
-      hiss.buffer = hissOf(ctx);
-      hiss.loop = true;
-      const through = ctx.createBiquadFilter();
-      through.type = 'bandpass';
-      through.Q.value = 1.6;
-      through.frequency.setValueAtTime(first * 2, when);
-      through.frequency.exponentialRampToValueAtTime(last, when + seconds);
-      const rush = ctx.createGain();
-      rush.gain.value = 0.09;
-      hiss.connect(through).connect(rush).connect(amp);
-      for (const source of [whistle, hiss]) {
-        source.start(when);
-        source.stop(when + seconds * 2.4);
-      }
-    },
-
-    // One of the faint far ones, heard: almost nothing, and nearly all of it air.
-    glint(when, { freq, pan = 0, level = 1 }) {
-      if (ended) return;
-      const { head } = way(pan, { straight: 0.2, echoed: 0.3, aired: 1 });
-      struck(head, when, freq, 0.014 * level * tame(freq * 0.5), 0.004, 1.1);
     },
 
     // The night's chord: notes as [pitch, share], coming in slowly, held for

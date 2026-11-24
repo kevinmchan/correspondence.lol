@@ -626,125 +626,176 @@ async function main() {
       assert.match(await page.locator('#lab-verdict').textContent(), /8 to go/);
     }),
 
-    check('the night sky: it opens on the picture, a light at a time; a tap is a dot, a finger held still a star, a flick a shooting star; and what is made fades', {}, async (page, h) => {
+    check('a tag is hidden in the game: nothing leads to the night but finding it, and found, it turns to night and is kept', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'home:tab:v1': 'lobby' } }, async (page, h) => {
+      // nothing on the home page leads to it, and nothing is kept there yet
+      await page.goto(origin);
+      await page.waitForSelector('#menu');
+      assert.equal(await page.locator('a[href="/?sky"]').count(), 0, 'the night is not chosen from a menu');
+      assert.equal(await page.locator('.tag-kept').count(), 0);
+      // in a game, one square of the map behind the board is not like the rest
+      await page.goto(`${origin}/postmarks/`);
+      await page.waitForSelector('#board .cell');
+      await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 8000 });
+      const where = () => page.evaluate(() => {
+        const box = (element) => {
+          const b = element.getBoundingClientRect();
+          return { left: Math.round(b.left), top: Math.round(b.top), right: Math.round(b.right), bottom: Math.round(b.bottom) };
+        };
+        const mark = document.querySelector('.tag-hidden');
+        const penny = document.querySelector('.pal-penny');
+        return {
+          mark: box(mark), board: box(document.querySelector('#board')), penny: penny ? box(penny) : null,
+          shown: Number(getComputedStyle(mark.querySelector('svg')).opacity), words: mark.textContent.trim(),
+          over: mark.contains(document.elementFromPoint((mark.getBoundingClientRect().left + mark.getBoundingClientRect().right) / 2, (mark.getBoundingClientRect().top + mark.getBoundingClientRect().bottom) / 2)),
+        };
+      });
+      const apart = (a, b) => a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom;
+      const first = await where();
+      assert.ok(apart(first.mark, first.board), 'the tag is on the board, where a touch is a move');
+      assert.ok(first.mark.left >= 0 && first.mark.top >= 0 && first.mark.right <= PHONE.width && first.mark.bottom <= PHONE.height, 'the tag is off the screen');
+      assert.ok(!first.penny || apart(first.mark, { ...first.penny, top: PHONE.height - (first.penny.bottom - first.penny.top) }), 'the tag is where Penny stands');
+      assert.ok(first.over, 'something of the page is over the tag');
+      assert.ok(first.shown < 0.2 && first.words === '', `it is faint, and says nothing: ${first.shown}`);
+      // it stays in its square
+      await sleep(2300);
+      assert.deepEqual((await where()).mark, first.mark, 'the tag hopped about');
+      // and it glints for whoever has stopped: nothing has been pressed for a few seconds now
+      await page.waitForSelector('.tag-hidden.glint', { timeout: 14000 });
+      // found: its square turns to night and grows until the night is all there is
+      await page.mouse.click((first.mark.left + first.mark.right) / 2, (first.mark.top + first.mark.bottom) / 2);
+      await page.waitForSelector('.tag-rise', { timeout: 2000 });
+      await page.waitForURL((url) => url.pathname + url.search === '/?sky', { timeout: 5000 });
+      await page.waitForSelector('.sky-view');
+      assert.deepEqual(await h.stored('tags:found:v1'), ['night'], 'found, it is theirs');
+      await page.waitForFunction(() => !document.querySelector('.tag-rise'), null, { timeout: 6000 });
+      // the way back leads to the game, where it is not hidden a second time
+      assert.equal(await page.locator('.sky .penny-back').getAttribute('href'), '/postmarks/');
+      await page.locator('.sky .penny-back').click({ force: true });
+      await page.waitForSelector('#board .cell');
+      await sleep(2500);
+      assert.equal(await page.locator('.tag-hidden').count(), 0, 'what has been found is not hidden again');
+      // it is kept on the home page's map, and that leads back to it; still on no menu
+      await page.goto(origin);
+      await page.waitForSelector('.tag-kept');
+      assert.equal(await page.locator('#menu a[href="/?sky"]').count(), 0);
+      await sleep(3200); // (the splash, and the page settling)
+      await page.locator('.tag-kept').click({ force: true });
+      await page.waitForURL((url) => url.pathname + url.search === '/?sky', { timeout: 6000 });
+      await page.waitForSelector('.sky-view');
+      assert.equal(await page.locator('.sky .penny-back').getAttribute('href'), '/', 'and from there the way back leads home');
+    }),
+
+    check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {
       await page.goto(`${origin}/?sky`);
       await page.waitForSelector('.sky-view');
-      const sky = () => page.evaluate(() => ({ ...document.querySelector('.sky').dataset }));
+      const alive = () => page.evaluate(() => document.querySelector('.sky').dataset.alive);
       const said = () => page.locator('#sky-said').textContent();
-      const made = async () => Number((await sky()).made);
-      // where the picture's lights are in this window, and what colour the sky is there and in a corner
-      const picture = () => page.evaluate(async () => {
+      // What the sky is like at each of the picture's lights, in a corner, and at places far from all of them.
+      const look = () => page.evaluate(async () => {
         const { PICTURE, frame } = await import('/penny/stars.js');
         const view = document.querySelector('.sky-view');
         const pen = view.getContext('2d');
         const dense = view.width / view.clientWidth;
         const place = frame(view.clientWidth, view.clientHeight);
         const at = (x, y) => [...pen.getImageData(Math.round(x * dense), Math.round(y * dense), 1, 1).data].slice(0, 3);
-        return {
-          lights: PICTURE.map((light) => ({ x: place.x + light.x * place.side, y: place.y + light.y * place.side, colour: at(place.x + light.x * place.side, place.y + light.y * place.side) })),
-          corner: at(view.clientWidth - 3, 3),
-        };
+        const lights = PICTURE.map((light) => ({ x: place.x + light.x * place.side, y: place.y + light.y * place.side, reach: (light.kind === 'star' ? light.b : light.r) * place.side }));
+        const empty = [];
+        for (let y = 12; y < view.clientHeight; y += 44) {
+          for (let x = 12; x < view.clientWidth; x += 44) {
+            if (lights.every((light) => Math.hypot(x - light.x, y - light.y) > light.reach * 1.9 + 70)) empty.push(at(x, y));
+          }
+        }
+        // (and one patch of it, to tell whether anything has moved)
+        const patch = [...pen.getImageData(Math.round((lights[0].x - 40) * dense), Math.round((lights[0].y - 50) * dense), Math.round(80 * dense), Math.round(100 * dense)).data].filter((_, i) => i % 4 === 0);
+        return { lights: lights.map((light) => ({ ...light, colour: at(light.x, light.y) })), empty, patch, corner: at(view.clientWidth - 3, 3) };
       });
-      assert.equal((await sky()).lit, '0', 'it opens on black');
-      assert.deepEqual((await picture()).corner, [9, 9, 13], 'the black of the picture');
-      await page.waitForSelector('.sky[data-lit="1"]', { timeout: 5000 });
-      assert.notEqual((await sky()).lit, '5', 'the lights come out one at a time');
-      await page.waitForSelector('.sky[data-lit="5"]', { timeout: 10000 });
-      await sleep(1200); // the last of them has come all the way out
-      const seen = await picture();
-      for (const [i, light] of seen.lights.entries()) assert.ok(light.colour.every((part) => part >= 200), `light ${i} of the picture is not where the picture has it: ${light.colour}`);
-      assert.deepEqual(seen.corner, [9, 9, 13]);
-      assert.deepEqual(await h.words('.screen-sky'), [], 'not a word on the screen');
-      assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top of a phone is the sky');
-      // Penny is there, in the corner the picture leaves empty, alone
-      const penny = await h.pal();
-      assert.notEqual(penny.height, 'gone');
-      assert.ok(penny.x < 0.3 && penny.alone, 'Penny is not at the bottom left, or is not alone');
-      // caught waiting: shown. A fingertip of light holds still, a star grows under it, and Penny holds its breath
-      await page.waitForSelector('.sky-tip.on', { timeout: 16000 });
-      await h.until('holding', 4000);
-      assert.equal(await made(), 0, 'what is shown is not one of yours');
-      // a tap on empty sky: a dot. (The first touch: the showing stops.)
-      await page.mouse.click(60, 200);
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'A point of light.');
-      assert.equal(await made(), 1);
-      await page.waitForSelector('.sky-tip:not(.on)');
-      // a finger held still: a star, and Penny holds its breath for as long
-      await page.mouse.move(70, 620);
-      await page.mouse.down();
-      await h.until('holding', 2000);
-      assert.equal(await made(), 1, 'not counted until the finger lifts');
-      await sleep(1300);
-      await page.mouse.up();
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'A star.');
-      assert.equal(await made(), 2);
-      await h.until('warm', 2000);
-      // one of the picture's, touched, rings: nothing is made by it
-      await page.mouse.click(seen.lights[4].x, seen.lights[4].y);
-      await sleep(200);
-      assert.equal(await made(), 2);
-      // a dot is gone once it has sounded three times; the star is still there
-      await page.waitForSelector('.sky[data-made="1"]', { timeout: 22000 });
-      // a flick: a shooting star, which leaves nothing
-      await page.mouse.move(60, 90);
-      await page.mouse.down();
-      for (let i = 1; i <= 8; i++) {
-        await page.mouse.move(60 + i * 20, 90 + i * 9);
-        await sleep(8);
+      // it opens as the picture, as still as a picture, and far dimmer than the picture's own near-white
+      const opening = await look();
+      assert.equal(await alive(), '0');
+      assert.deepEqual(opening.corner, [9, 9, 13], 'the black of the picture');
+      for (const [i, light] of opening.lights.entries()) assert.ok(light.colour[0] > 70 && light.colour[0] < 125, `light ${i} of the picture is not there, or not dim: ${light.colour}`);
+      // then it wakes, a light at a time
+      await page.waitForSelector('.sky[data-alive="1"]', { timeout: 6000 });
+      assert.notEqual(await alive(), '5', 'the lights wake one at a time');
+      await page.waitForSelector('.sky[data-alive="5"]', { timeout: 10000 });
+      await sleep(3000);
+      // alive: the same patch of it a moment apart is not the same
+      const [one, other] = [await look(), await sleep(400).then(look)];
+      assert.notDeepEqual(one.patch, other.patch, 'nothing in it is moving');
+      // nothing is added to it: away from its five lights it is the picture's black, and stays so
+      for (const seen of [one, other]) {
+        assert.ok(seen.empty.length > 20, `${seen.empty.length} places looked at`);
+        for (const colour of seen.empty) assert.ok(colour[0] <= 14 && colour[2] <= 18, `something in the sky that is not in the picture: ${colour}`);
       }
-      await page.mouse.up();
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'A shooting star.');
-      assert.equal(await made(), 1);
-      // slowly, down the sky: stars are sown along the way
-      await page.mouse.move(300, 560);
+      // nobody stands under it, and there is not a word
+      assert.equal((await h.pal()).height, 'gone', 'Penny is in the night');
+      assert.deepEqual(await h.words('.screen-sky'), []);
+      assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top of a phone is the night');
+      // a light that is touched twinkles: for a moment it is brighter
+      const before = (await look()).lights[2].colour[0];
+      await page.mouse.click(one.lights[2].x, one.lights[2].y);
+      await sleep(70);
+      const after = (await look()).lights[2].colour[0];
+      assert.ok(after > before + 20, `the middle star, touched, did not twinkle: ${before} then ${after}`);
+      assert.ok(after < 222, 'and even then it is dimmer than the picture');
+      assert.equal(await said(), 'The middle star.');
+      // a touch anywhere else, and the nearest answers
+      await page.mouse.click(30, 800);
+      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The lower dot.', null, { timeout: 2000 });
+      // a finger run across them, and each twinkles as it is reached
+      await page.mouse.move(one.lights[0].x - 60, one.lights[0].y);
       await page.mouse.down();
-      for (let i = 1; i <= 40; i++) {
-        await page.mouse.move(300 + i, 560 + i * 5);
-        await sleep(40);
-      }
+      await page.mouse.move(one.lights[0].x, one.lights[0].y, { steps: 6 });
+      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The small star.', null, { timeout: 2000 });
       await page.mouse.up();
-      assert.ok((await made()) >= 3, `a slow hand sowed nothing: ${await made()}`);
-      // a rush puts Penny off, and passes
-      for (let i = 0; i < 8; i++) {
-        await page.mouse.click(30 + i * 40, 300 - (i % 2) * 24);
-        await sleep(70);
-      }
-      await page.waitForSelector('.sky[data-pace="fast"]', { timeout: 2000 });
-      await h.until('unsure', 2000);
-      await page.waitForSelector('.sky[data-pace="slow"]', { timeout: 8000 });
-      // and the way back
-      await page.locator('.sky .penny-back').click();
+      // the way back keeps out of the picture when it is left alone, and comes back for a touch
+      await page.waitForSelector('.sky.idle', { timeout: 6000 });
+      await sleep(900); // (it fades)
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.sky .penny-back')).opacity), '0');
+      await page.mouse.click(30, 800);
+      await page.waitForSelector('.sky:not(.idle)');
+      await page.locator('.sky .penny-back').click({ force: true });
       await page.waitForSelector('.home-map');
       await sleep(600);
       assert.notEqual(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top is the page\'s again');
     }),
 
-    check('the night sky, with reduced motion and by keyboard: every light is there from the start, and the space bar is a finger', { reducedMotion: 'reduce', viewport: { width: 1024, height: 768 }, storage: { 'penny:dot:v1': true } }, async (page, h) => {
+    check('the night, with reduced motion and by keyboard: nothing moves, and the keys 1 to 5 are its five lights', { reducedMotion: 'reduce', viewport: { width: 1024, height: 768 } }, async (page) => {
       await page.goto(`${origin}/?sky`);
-      await page.waitForSelector('.sky[data-lit="5"]', { timeout: 2000 });
-      assert.equal((await h.pal()).alone, false, 'Dot, once found, is beside Penny here too');
-      const made = () => page.evaluate(() => Number(document.querySelector('.sky').dataset.made));
-      // a tap of the space bar: a dot, where the point of light is
-      await page.keyboard.press('ArrowDown');
-      await page.keyboard.press('ArrowLeft');
+      await page.waitForSelector('.sky[data-alive="5"]', { timeout: 2000 });
+      // every light is where the picture has it, and stays there: just outside each, the sky stays black
+      const outside = () => page.evaluate(async () => {
+        const { PICTURE, frame } = await import('/penny/stars.js');
+        const view = document.querySelector('.sky-view');
+        const pen = view.getContext('2d');
+        const dense = view.width / view.clientWidth;
+        const place = frame(view.clientWidth, view.clientHeight);
+        const at = (x, y) => pen.getImageData(Math.round(x * dense), Math.round(y * dense), 1, 1).data[0];
+        return PICTURE.map((light) => {
+          const [x, y] = [place.x + light.x * place.side, place.y + light.y * place.side];
+          const [w, h] = light.kind === 'star' ? [light.a * place.side, light.b * place.side] : [light.r * place.side, light.r * place.side];
+          // its middle; and four places beside its points, where a light that had wandered would show
+          return { middle: at(x, y), beside: [at(x + w * 0.5, y - h * 0.5), at(x - w * 0.5, y + h * 0.5), at(x + 3, y - h - 4), at(x + w + 4, y + 3)] };
+        });
+      });
+      await sleep(1500);
+      for (const seen of [await outside(), await sleep(900).then(outside)]) {
+        for (const [i, light] of seen.entries()) {
+          assert.ok(light.middle > 60 && light.middle < 222, `light ${i}: ${light.middle}`);
+          if (i % 2 === 0) assert.ok(light.beside.every((value) => value <= 40), `star ${i} has moved: ${light.beside}`);
+        }
+      }
+      // the keys 1 to 5 are the five lights, as they are read
+      const names = ['The small star.', 'The lower dot.', 'The middle star.', 'The upper dot.', 'The big star.'];
+      for (const [i, name] of names.entries()) {
+        await page.keyboard.press(String(i + 1));
+        await page.waitForFunction((want) => document.querySelector('#sky-said').textContent === want, name, { timeout: 2000 });
+      }
+      // the space bar is each of them in turn, and the arrows go back and forth along them
       await page.keyboard.press(' ');
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'A point of light.');
-      assert.equal(await made(), 1);
-      // held: a star, somewhere else
-      for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
-      await page.keyboard.down(' ');
-      await h.until('holding', 2000);
-      await sleep(900);
-      await page.keyboard.up(' ');
-      await page.waitForFunction(() => /star\.$/.test(document.querySelector('#sky-said').textContent));
-      assert.equal(await made(), 2);
-      // held until it is as big as they come: it is finished without the key being let go
-      for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowRight');
-      await page.keyboard.down(' ');
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'A big star.', null, { timeout: 8000 });
-      await h.until('thrilled', 2000);
-      await page.keyboard.up(' ');
-      assert.equal(await made(), 3);
+      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The small star.');
+      await page.keyboard.press('ArrowLeft');
+      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The big star.');
       // the way back answers to the keyboard as a link does
       await page.locator('.sky .penny-back').focus();
       await page.keyboard.press('Enter');

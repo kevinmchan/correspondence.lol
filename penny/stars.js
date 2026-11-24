@@ -1,33 +1,26 @@
-// The night sky's rules. No page here and no sound, only data and arithmetic,
-// so the tests can run it. The screen is penny/sky.js and what it sounds like
-// is penny/chimes.js.
+// The night's rules. No page here and no sound, only data and arithmetic, so
+// the tests can run it. The screen is penny/sky.js and what it sounds like is
+// penny/chimes.js.
 //
-// The sky began as a picture: five lights on black. Three are stars with four
-// points, in a line that falls from the top left, each bigger than the last;
-// two are small and round, one either side of the line. Everything below is
-// read off that picture, and everything a hand adds to the sky keeps to it.
+// The night is a picture come to life: five lights on black. Three are stars
+// with four points, in a line that falls from the top left, each bigger than
+// the last; two are small and round, one either side of the line. Everything
+// below is read off that picture, and nothing is added to it. What makes it a
+// living thing and not a picture is in how the five are drawn, never in
+// anything drawn beside them.
 //
-// The picture is read the way the rest of Penny's world is ("How a place says
-// it", in the README). What is quick is short and bright: a tap leaves one of
-// the round ones. What is slow is long, low and has come a long way: a finger
-// held still grows a star, for as long as it is held. So the picture is also
-// a lesson in what a hand can do: two taps, and three holds, each longer than
-// the one before.
-//
-//   Where a light is, up and down, is its pitch: higher is higher. The sky is
-//   ruled in rows, ten to the picture's side, on the five notes the rest of
-//   the app keeps to. That makes the picture's three stars E, C and E again
-//   an octave down: the same notes whatever is under them, bright over C and
-//   sad over A minor. Nothing here settles which.
+//   Where a light is, up and down, is its pitch: higher is higher, on the five
+//   notes the rest of the app keeps to. That makes the three stars E, C and E
+//   again an octave down, the same notes whatever is under them: bright over
+//   C and sad over A minor. Nothing here settles which.
 //
 //   How big a light is, is how near. What is near is loud, full and long, and
-//   comes straight; what is far is quiet, dull and mostly echo.
+//   keeps almost still, as a planet does. What is far is quiet, dull and
+//   mostly echo, and it is the far ones that twinkle most, as stars do.
 //
-//   Every light a hand makes keeps its own time. It sounds when it is made,
-//   and comes back, fainter each time, until it goes out. The bigger, the
-//   slower it comes round and the longer it lasts; a dot is gone after three.
-//   The five of the picture are read together instead, left to right, once
-//   to each turn of the sky, and they do not fade.
+//   None of them keeps still. Each wanders a little from its place the way a
+//   speck in water does, pulled back the further it strays, so that it is
+//   always near where the picture has it and never quite there.
 
 // --- The picture -------------------------------------------------------------------
 export const SKY = '#09090d'; // both measured off it
@@ -67,62 +60,30 @@ export function outline(steps = 40) {
   ];
 }
 
-// --- Sizes ---------------------------------------------------------------------------
-// A size runs from 0, the smallest star a hand can make, to 1, the biggest:
-// the picture's own big one. The picture's small and middle stars are sizes
-// 0.17 and 0.5.
-export const SMALLEST = 28 / SIDE;
-export const BIGGEST = 136 / SIDE;
-export const SPECK = 10 / SIDE; // the radius of a dot
-export const halfWidth = (size) => SMALLEST + (BIGGEST - SMALLEST) * size;
-export const sizeOf = (a) => (a - SMALLEST) / (BIGGEST - SMALLEST);
-// How near a light is, 0 to 1. A dot is as far off as anything gets.
-export const nearness = (light) => (light.kind === 'dot' ? 0 : Math.max(0, Math.min(1, light.size)));
+// How near a light is, 0 to 1, from its size: the big star is as near as
+// anything gets, the middle one half way, and a dot is as far off as can be.
+const FARTHEST = 28 / SIDE; // a star this small would be as far as a dot
+const NEAREST = 136 / SIDE;
+export const nearness = (light) => (light.kind === 'dot' ? 0 : Math.max(0, Math.min(1, (light.a - FARTHEST) / (NEAREST - FARTHEST))));
 
 // --- Pitch ------------------------------------------------------------------------
-export const ROWS = 10; // to the picture's side; the sky goes on above and below it
+export const ROWS = 10; // to the picture's side
 const FIVE = [0, 2, 4, 7, 9]; // C D E G A, in semitones from C
 const NAMES = ['C', 'D', 'E', 'G', 'A'];
 const MIDDLE_C = 261.63;
-const [LOWEST, HIGHEST] = [-6, 15]; // steps of the five from middle C: A2 up to C7
 export const rowOf = (y) => Math.floor(y * ROWS);
 // The top row of the picture is A5, and each row down is the next of the five down.
-const stepOf = (row) => Math.max(LOWEST, Math.min(HIGHEST, 9 - row));
+const stepOf = (row) => 9 - Math.max(0, Math.min(ROWS - 1, row));
 const octaveOf = (step) => Math.floor(step / 5);
-export const noteOf = (row) => stepOf(row) - octaveOf(stepOf(row)) * 5; // which of the five: 0 is C
-export const pitchOf = (row) => MIDDLE_C * 2 ** ((FIVE[noteOf(row)] + 12 * octaveOf(stepOf(row))) / 12);
-export const nameOf = (row) => `${NAMES[noteOf(row)]}${4 + octaveOf(stepOf(row))}`;
+export const pitchOf = (row) => MIDDLE_C * 2 ** ((FIVE[stepOf(row) - octaveOf(stepOf(row)) * 5] + 12 * octaveOf(stepOf(row))) / 12);
+export const nameOf = (row) => `${NAMES[stepOf(row) - octaveOf(stepOf(row)) * 5]}${4 + octaveOf(stepOf(row))}`;
 // What a light sounds at. A dot is short and bright: an octave over its row.
-export const soundOf = (light) => pitchOf(light.row) * (light.kind === 'dot' ? 2 : 1);
-
-// --- The hand ----------------------------------------------------------------------
-// One thing decides what a hand leaves: how fast it is going.
-export const TAP_MS = 280; // let go within this, and it was a tap: a dot
-export const FULL_MS = 5200; // held this long, a star is as big as they come
-const EASING_MS = 2200; // it grows quickly at first, and more slowly the bigger it gets
-const eased = (ms) => 1 - Math.exp(-(ms - TAP_MS) / EASING_MS);
-// The size of a star that has been held for `ms`. Nothing, for a tap.
-export function grown(ms) {
-  if (ms < TAP_MS) return null;
-  return Math.min(1, eased(ms) / eased(FULL_MS));
-}
-// How long a star of this size takes to grow: grown() the other way round.
-export const heldFor = (size) => TAP_MS - EASING_MS * Math.log(1 - Math.min(1, size) * eased(FULL_MS));
-
-export const FAST = 0.9; // pixels a millisecond: at this and over nothing stays (as in scene two: penny/slow.js)
-export const slowness = (speed) => Math.max(0, Math.min(1, 1 - speed / FAST)); // 1: hardly moving. 0: a rush
-// A finger moving slowly sows small stars as it goes: the slower, the bigger.
-// One moving fast sows nothing.
-export function sown(slow) {
-  if (slow < 0.18) return null;
-  return slow * slow * 0.4;
-}
+export const soundOf = (light) => pitchOf(rowOf(light.y)) * (light.kind === 'dot' ? 2 : 1);
 
 // --- Time ---------------------------------------------------------------------------
-// Everything keeps to one slow grid, so that lights made at any moment still
-// fall in with one another, and the echo falls in with them.
+// Everything keeps to one slow grid, and the echo falls in with it.
 export const STEP = 0.4; // seconds
-export const TURN = 56; // steps to one turn of the sky
+export const TURN = 56; // steps to one turn of the night
 export const ECHO = 2; // steps behind
 // When, in a turn, each light of the picture sounds: as far apart in time as
 // they are from left to right.
@@ -140,41 +101,84 @@ export function reading(chance) {
   return notes;
 }
 
-// How many steps a light a hand has made takes to come round again. All odd,
-// and a turn of the sky is even, so nothing made by hand ever locks to the
-// picture: it drifts against it.
-export function period(light) {
-  if (light.kind === 'dot') return light.row % 2 === 0 ? 11 : 13;
-  return 15 + Math.round(nearness(light) * 13) * 2;
-}
-// How much of its level a light keeps each time it comes round.
-export const keeps = (light) => (light.kind === 'dot' ? 0.45 : 0.74 + 0.2 * nearness(light) ** 0.6);
-export const OUT = 0.14; // under this it has gone out
-// How many times it sounds, the first included, before it goes out.
-export const soundings = (light) => Math.ceil(Math.log(OUT) / Math.log(keeps(light)));
-
 // The night under it: the game's four chords, one to a turn, held very low.
 // The lights' notes never change; what is under them does, and that is all
 // that turns the same phrase from glad to sad and back. `under` is the notes
-// held, [pitch, share]; `air` the colour low in the sky while they are.
-// Each is a root, the same again higher, and one note more, and none of them
-// has its third: whether a chord is glad or sad is left to the lights. They
-// are held as triangle waves, whose first overtone is a twelfth up, and for
-// every note here that overtone is one of the five the lights are on.
+// held, [pitch, share]. Each is a root, the same again higher, and one note
+// more, and none of them has its third: whether a chord is glad or sad is
+// left to the lights. They are held as triangle waves, whose first overtone is
+// a twelfth up, and for every note here that overtone is one of the five the
+// lights are on.
 export const NIGHT = [
-  { name: 'C', under: [[130.81, 1], [196.0, 0.8], [261.63, 0.55]], air: [34, 40, 82] },
-  { name: 'A minor', under: [[110.0, 1], [220.0, 0.8], [261.63, 0.5]], air: [16, 44, 70] },
-  { name: 'F', under: [[87.31, 0.8], [174.61, 1], [261.63, 0.5]], air: [54, 32, 86] },
-  { name: 'G', under: [[98.0, 0.8], [196.0, 1], [293.66, 0.55]], air: [74, 38, 64] },
+  { name: 'C', under: [[130.81, 1], [196.0, 0.8], [261.63, 0.55]] },
+  { name: 'A minor', under: [[110.0, 1], [220.0, 0.8], [261.63, 0.5]] },
+  { name: 'F', under: [[87.31, 0.8], [174.61, 1], [261.63, 0.5]] },
+  { name: 'G', under: [[98.0, 0.8], [196.0, 1], [293.66, 0.55]] },
 ];
+
+// --- How it is alive -----------------------------------------------------------------
+// The picture's lights are a pale grey, nearly white. The night's are far
+// dimmer: something to look at in the dark for a long time. A light is drawn
+// as itself, faintly, and as a handful of fainter copies of itself laid over
+// it, each a little out of place. Where they all lie on one another they add
+// up to its brightness at rest; where they do not, at its edges and along its
+// points, it is soft and never still. When it twinkles the copies fall into
+// place for a moment, and it is sharp, and brighter.
+export const REST = 0.4; // how bright a light is at rest, where 1 would be the picture's own
+export const GLINT = 0.62; // and at the top of a twinkle
+export const GHOSTS = 6; // how many copies
+export const CORE = 0.19; // how much of its brightness at rest is the light itself; the rest is its copies
+
+function bell(chance) { // a number that is near nought more often than not
+  return Math.sqrt(-2 * Math.log(1 - chance())) * Math.cos(2 * Math.PI * chance());
+}
+// A step of a wandering that is pulled back the further it goes: what a
+// speck in water does, on a spring. `at` is [how far it has got from its
+// place, how fast it is going]; `seconds` how long has passed; `spread` how
+// far it is found from its place on the whole; `pace` how many times a second
+// it would swing to and fro if nothing jostled it. It is jostled all the
+// time, at random, and what comes of that is a path with no corners in it
+// that never repeats. `chance` gives numbers from 0 to 1. However long or
+// short the steps it is taken in, it is found as far from its place on the
+// whole.
+const DAMPED = 0.7; // how soon a swing dies down: this much, and it barely overshoots
+export function sway([at, speed], seconds, { spread, pace }, chance = Math.random) {
+  const pull = 2 * Math.PI * pace;
+  const jostle = spread * Math.sqrt(4 * DAMPED * pull ** 3);
+  // (in small steps, or a long gap between frames would throw it)
+  for (let left = seconds; left > 1e-9; left -= 1 / 120) {
+    const step = Math.min(left, 1 / 120);
+    speed += (-2 * DAMPED * pull * speed - pull * pull * at) * step + jostle * Math.sqrt(step) * bell(chance);
+    at += speed * step;
+  }
+  return [at, speed];
+}
+// A step of a wandering that nothing pulls back and nothing smooths: a mote
+// set loose, knocked about. `loose` is how far it gets, on the whole, in one
+// second.
+export const roam = (at, seconds, loose, chance = Math.random) => at + loose * Math.sqrt(seconds) * bell(chance);
+
+// How a light wanders from its place, in units of the picture's side: the
+// far ones further than the near, and all of them further when stirred.
+// `heat` is how stirred it is, 0 to 1: a finger near it warms it.
+export const drift = (light, heat = 0) => ({ spread: (0.004 + 0.005 * (1 - nearness(light))) * (1 + 1.4 * heat), pace: 0.09 });
+// And how its copies wander from it: more quickly, the far ones more, and
+// never by so much that a small light is lost among its own copies.
+export const shimmer = (light, heat = 0) => ({
+  spread: Math.min(0.0016 + 0.0026 * (1 - nearness(light)), 0.2 * (light.kind === 'dot' ? light.r : light.a)) * (1 + 1.2 * heat),
+  pace: 0.8,
+});
+// How much its brightness comes and goes, as a share of itself, and how quickly.
+export const flicker = (light) => ({ spread: 0.07 + 0.2 * (1 - nearness(light)), pace: 1.2 });
+// How many seconds, on the whole, between one of its twinkles and the next,
+// left to itself: the far ones oftener. Warmed, far sooner.
+export const often = (light, heat = 0) => (24 + 22 * nearness(light)) / (1 + 6 * heat);
 
 // --- Where the picture goes in a window -------------------------------------
 // As a square: all of it where the window is wider than it is tall, and on a
 // tall phone a little wider than the window, since the picture has room to
-// spare at its sides. Its bottom left corner is empty: that is where Penny
-// stands.
+// spare at its sides.
 export function frame(width, height) {
   const side = Math.min(width * 1.2, height);
   return { side, x: (width - side) / 2, y: (height - side) * 0.42 };
 }
-export const PENNY_AT = 0.24; // how far across the window Penny stands
