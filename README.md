@@ -649,6 +649,19 @@ fools it about as often as the 1 in 20 allows. What it can find is limited to
 what the fifteen numbers can say. Nothing about how challengers are made
 looks at who has been winning beyond the length of the present reign.
 
+## Seasons
+
+Some features are to come for a season and go again, as seasons do in games.
+The first planned is **the two worlds**: now and then a room flickers between
+its playful self and a serious, adult, live-action one, a story split between
+animation and live action, comedy and drama. It is switched on by a wordless
+toggle, off by default, on one screen. It is not in the app yet: prototypes of
+it were made (a film splice; a seam that splits the room in two) and wait for
+their season. When it comes it keeps the rules they were built to: never more
+than three flashes a second, nothing of it for anyone who asks for reduced
+motion, and nothing moving under a finger. Outside its season the app is
+soothing (CLAUDE.md, "Look and words").
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:
