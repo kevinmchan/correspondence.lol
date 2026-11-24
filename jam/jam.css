@@ -78,14 +78,16 @@
 .jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
 /* The dice are the big button, in the middle. Play and pause sit beside them. */
 #jam-dice {
-  --gold: #f8d95a; /* the game's own yellow: red is for the things that start and send */
-  width: 4.6rem; height: 4.6rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
-  background: radial-gradient(circle at 35% 28%, #fff3b8 0 12%, var(--gold) 46%, #eebf3a 100%); color: #22303c;
-  box-shadow: 0 0.26rem 0 #b98a1c, 0 0 0.9rem rgb(248 217 90 / 0.45);
+  /* A tile like the app's other tiles: flat, in the game's own yellow, with a
+     lip. No shine and no glow. (Red is for the things that start and send.) */
+  --tile: #f8d95a;
+  width: 4.6rem; height: 4.6rem; padding: 0; border: 0; border-radius: 28%; display: grid; place-items: center;
+  background: var(--tile); color: #22303c;
+  box-shadow: 0 0.26rem 0 color-mix(in srgb, var(--tile) 62%, #000), inset 0 -0.24rem 0 rgb(0 0 0 / 0.1);
   transition: transform 70ms ease, box-shadow 70ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-#jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 #b98a1c, 0 0 0.5rem rgb(248 217 90 / 0.4); }
+#jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--tile) 62%, #000), inset 0 -0.24rem 0 rgb(0 0 0 / 0.1); }
 #jam-dice:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 #jam-dice svg { width: 2.3rem; height: 2.3rem; }
 @media (prefers-reduced-motion: no-preference) {
