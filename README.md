@@ -417,8 +417,13 @@ picks, and can that be shown to be more than chance?
 **Giving labels.** One card with a loop on each side, A on the front and B on
 the back. A swipe across the card turns it over, and the side that is up is
 the one playing. A double tap picks the side that is up. The loop picked
-stays, wearing a crown, and a new challenger takes the other side: half the
-time something new, half the time the reigning loop changed a little. Two
+stays, wearing a crown, and a new challenger takes the other side: something
+new, or the reigning loop changed a little, and the longer a loop has reigned
+the likelier the second, since a favourite is best tested by its near
+relations. A loop that wins five times running retires undefeated to a hall
+of fame under the card (a tap on one opens it in the music maker) and two
+new loops start again, so that no early favourite sits there for ever
+winning picks that teach the model nothing. Two
 things are there for the experiment's sake: a pick does not count until both
 sides have been heard for a second and a half each (a light on each side
 shows it), and a coin decides which side is up when a new pair arrives. The
@@ -462,10 +467,10 @@ the phantom, and what the model thinks you go for, in words. The picks are
 kept on the device and can be copied out as JSON.
 
 In simulation (`tests/taste.test.js`) a marked taste is found in about 160
-picks, a mild one in about 400, and someone with no taste and a strong habit
+picks, a mild one in 200 to 400, and someone with no taste and a strong habit
 fools it about as often as the 1 in 20 allows. What it can find is limited to
-what the fifteen numbers can say, and by the winner staying: a loop that keeps
-winning makes for many easy picks that teach little.
+what the fifteen numbers can say. Nothing about how challengers are made
+looks at who has been winning beyond the length of the present reign.
 
 ## Game modes
 

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { decode, encode } from '../jam/beat.js';
 import { mutate, randomBeat } from '../jam/make.js';
-import { FEATURES, NEEDED, WARMUP, begin, choose, features, fit, chance, pairVector, standing } from '../jam/taste-model.js';
+import { FEATURES, NEEDED, REIGN, WARMUP, begin, choose, features, fit, chance, pairVector, standing } from '../jam/taste-model.js';
 
 // A random number generator that can be run again: the same seed, the same run.
 function seeded(seed) {
@@ -120,4 +120,31 @@ test('nothing is bet before the model has had picks to learn from, and the stake
   assert.equal(1.3 ** 12 >= NEEDED && 1.3 ** 11 < NEEDED, true);
   assert.equal(standing(many.slice(1)).significant, false);
   assert.equal(standing([...many, ...Array.from({ length: 30 }, () => lost)]).significant, true, 'once reached, it has been reached');
+});
+
+test('a loop that keeps winning retires after five, and two new loops start again', () => {
+  const random = seeded(21);
+  const state = begin(random);
+  choose(state, 'front', random); // it wins its first, and reigns
+  const champion = encode(state.current.front);
+  assert.equal(state.current.reigning, 'front');
+  for (let i = 2; i < REIGN; i++) {
+    choose(state, 'front', random);
+    assert.equal(encode(state.current.front), champion, 'the reigning loop stays where it is');
+    assert.equal(state.streak, i);
+  }
+  choose(state, 'front', random); // the fifth
+  assert.equal(state.trials.length, REIGN);
+  assert.equal(state.trials[REIGN - 1].retired, true);
+  assert.deepEqual(state.retired.map(encode), [champion]);
+  assert.equal(state.current.reigning, null, 'nobody reigns');
+  assert.notEqual(encode(state.current.front), champion);
+  assert.notEqual(encode(state.current.back), champion);
+  assert.equal(state.streak, 0);
+  // a challenger that wins starts a reign of its own from one
+  choose(state, 'back', random);
+  choose(state, 'front', random);
+  assert.equal(state.streak, 1);
+  assert.equal(state.current.reigning, 'front');
+  assert.equal(state.retired.length, 1);
 });

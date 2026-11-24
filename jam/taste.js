@@ -11,6 +11,11 @@
 // sound, and the lab notes underneath, which say where the experiment stands
 // after every pick.
 //
+// A loop that wins five times running retires undefeated, to a hall of fame
+// under the card, and two new loops start again: no early favourite sits
+// there for ever. And the longer a loop has reigned, the likelier its next
+// challenger is a near relation of it, which is the harder contest.
+//
 // Two things are done for the sake of the experiment and not of the game. A
 // pick does not count until both sides have been listened to. And which side
 // is up when a new pair arrives is decided by a coin, so that "the one I heard
@@ -20,7 +25,7 @@ import { load, save } from '/shared/identity.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode } from './beat.js';
 import { LAYERS, ROWS, STEPS, TEMPOS, createLoop } from './engine.js';
-import { NEEDED, WARMUP, begin, choose, fit, leanings, pairVector, standing } from './taste-model.js';
+import { NEEDED, REIGN, WARMUP, begin, choose, fit, leanings, pairVector, standing } from './taste-model.js';
 
 const KEY = 'jam:taste:v1';
 const LISTEN_MS = 1500; // how long a side has to have been heard before a pick counts
@@ -43,6 +48,7 @@ function restore() {
   const rows = trials.map((trial) => [pairVector(trial.front, trial.back, trial.reigning, trial.first), trial.pick === 'front' ? 1 : 0]);
   return {
     trials, current, streak: Number(kept.streak) || 0,
+    retired: (Array.isArray(kept.retired) ? kept.retired : []).map(decode).filter(Boolean),
     weights: rows.length ? fit(rows, { rounds: 10 }) : null,
     habits: rows.length ? fit(rows, { music: false, rounds: 10 }) : null,
   };
@@ -54,7 +60,7 @@ export function mount(root, life) {
   const el = {
     card: $('taste-card'), hint: $('taste-hint'), note: $('taste-note'), flip: $('taste-flip'), pick: $('taste-pick'), play: $('taste-play'),
     picks: $('lab-picks'), called: $('lab-called'), habits: $('lab-habits'), coin: $('lab-coin'), stake: $('lab-stake'), meter: $('lab-meter'),
-    verdict: $('lab-verdict'), likes: $('lab-likes'), copy: $('taste-copy'), reset: $('taste-reset'),
+    verdict: $('lab-verdict'), likes: $('lab-likes'), hall: $('lab-hall'), copy: $('taste-copy'), reset: $('taste-reset'),
   };
   const faces = Object.fromEntries(SIDES.map((side) => [side, root.querySelector(`.face.${side}`)]));
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -65,7 +71,7 @@ export function mount(root, life) {
   let heardMs = { front: 0, back: 0 };
   let flips = 0;
   let shownAt = performance.now();
-  const keep = () => save(KEY, { v: 1, streak: state.streak, trials: state.trials.map(packPair), current: packPair(state.current) });
+  const keep = () => save(KEY, { v: 1, streak: state.streak, retired: state.retired.map(encode), trials: state.trials.map(packPair), current: packPair(state.current) });
   keep();
 
   // --- Sound: whichever side is up, round and round -------------------------------------
@@ -151,7 +157,7 @@ export function mount(root, life) {
       face.querySelector('.tempo').textContent = `${TEMPOS[state.current[side].tempo]} bpm`;
       const reigns = state.current.reigning === side;
       face.querySelector('.crown').hidden = !reigns;
-      face.querySelector('.crown b').textContent = reigns && state.streak > 1 ? `×${state.streak}` : '';
+      face.querySelector('.crown b').textContent = reigns ? `${state.streak} of ${REIGN}` : ''; // (at five it retires)
       face.querySelector('.new').hidden = reigns || state.current.reigning === null;
     }
     el.card.classList.toggle('turned', up === 'back');
@@ -203,6 +209,7 @@ export function mount(root, life) {
     face.classList.remove('won');
     void face.offsetWidth;
     face.classList.add('won');
+    if (state.trials[state.trials.length - 1].retired) say(`${LETTER[picked]} has won ${REIGN} in a row and retires undefeated. Two new loops.`);
     show();
     notes();
   }
@@ -270,6 +277,7 @@ export function mount(root, life) {
   life.onEnd(() => cancelAnimationFrame(frame));
 
   // --- The lab notes --------------------------------------------------------------------------
+  const small = (beat) => `<svg viewBox="0 0 ${STEPS * 4} ${ROWS * 4}" aria-hidden="true">${beat.notes.map((tiles, index) => tiles.map((tile) => `<rect x="${Math.floor(tile / ROWS) * 4 + 0.5}" y="${(tile % ROWS) * 4 + 0.5}" width="3" height="3" rx="0.8" fill="${LAYERS[index].colour}"/>`).join('')).join('')}</svg>`;
   const percent = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '–');
   const times = (value) => `×${value >= 10 ? value.toFixed(0) : value.toFixed(2)}`;
   function notes() {
@@ -290,6 +298,18 @@ export function mount(root, life) {
     } else {
       el.verdict.textContent = `Not yet. So far p = ${now.p.toFixed(2)}; it is significant when the stake reaches ×${NEEDED} (p = 0.05).`;
     }
+    // the loops that retired undefeated: each a small picture that opens it in the music maker
+    el.hall.hidden = state.retired.length === 0;
+    el.hall.querySelector('ul').replaceChildren(...state.retired.map((beat, index) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `/jam/?b=${encode(beat)}`;
+      a.setAttribute('aria-label', `Champion ${index + 1}: open it in the music maker`);
+      a.title = 'Open in the music maker';
+      a.innerHTML = small(beat);
+      li.append(a);
+      return li;
+    }).reverse());
     const likes = leanings(state.weights);
     el.likes.textContent = now.picks < WARMUP || likes.length === 0 ? '' : `So far it thinks you go for ${likes.map((one) => one.words).join(', ')}.`;
   }
