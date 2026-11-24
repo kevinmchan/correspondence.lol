@@ -8,8 +8,8 @@
 // Penny is after (penny/mail.js). The way on is always up the map.
 //
 // Nothing here is told, and no gesture is shown to be copied: no ring, no
-// arrow, no rhythm in a hum. You play, on five places each
-// with one more rule than the last, and Penny is beside you while you do.
+// arrow, no rhythm in a hum. You play, on five places, all by the game's own
+// rules, each there to show one thing, and Penny is beside you while you do.
 // Penny does not know where the posts are. All Penny can give you is how it
 // feels about the square your finger is on, and that comes from its head and
 // its ear and nothing else (penny/places.js):
@@ -653,39 +653,40 @@ export function mount(root, life) {
       say('Penny is amazed');
     }
 
-    // What the post takes away. Rules met before go quickly; the one this
-    // place is here for goes slowly, square by square, and is lit as it goes,
-    // so that it is seen as a shape. Its eyes follow it.
+    // What the post takes away: everything the game's rules say it does. The
+    // rule this place is there to show goes first and slowly, square by
+    // square, lit as it goes, so that it is seen as a shape, and Penny's eyes
+    // follow it. The rest follows quickly.
     const { n, regions, rules } = place;
-    const newest = place.marks ? null : rules.at(-1);
+    const shown = place.shows ?? null;
     const delays = [];
     let at = 240;
-    for (const rule of rules.filter((r) => r !== newest)) {
-      for (const other of ruledOut(rule, cell, n, regions)) {
-        if (cells[other] !== 'empty') continue;
-        cells[other] = 'cross';
-        paint(other, 'fx-cross', at);
-        delays.push(at);
-        at += place.marks ? 45 : 25;
-      }
-    }
-    if (newest) {
-      at += 260;
+    if (shown) {
       const first = at;
-      for (const other of ruledOut(newest, cell, n, regions)) {
+      for (const other of ruledOut(shown, cell, n, regions)) {
         if (cells[other] === 'letter') continue;
         const fresh = cells[other] === 'empty';
         if (fresh) cells[other] = 'cross';
         paint(other, fresh ? 'fx-cross' : null, at, true);
         life.setTimeout(() => { if (busy) pal.look(tile(other)); }, at);
         delays.push(at);
-        at += 130;
+        at += 150;
       }
       life.setTimeout(() => {
         pal.mood('curious');
         if (!wondered) pal.sing(WONDER, 0.5, { breath: 0 });
         wondered = true;
       }, first);
+      at += 220;
+    }
+    for (const rule of rules.filter((r) => r !== shown)) {
+      for (const other of ruledOut(rule, cell, n, regions)) {
+        if (cells[other] !== 'empty') continue;
+        cells[other] = 'cross';
+        paint(other, 'fx-cross', at);
+        delays.push(at);
+        at += shown ? 30 : 45;
+      }
     }
     // a cross of yours on a square the post has now ruled out is the post's cross from here on
     const ruled = read(place, found, [...misses]);

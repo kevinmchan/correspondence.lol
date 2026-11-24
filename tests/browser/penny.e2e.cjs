@@ -162,10 +162,10 @@ async function main() {
       assert.equal(await page.locator('#walk-trail').isHidden(), true, 'nothing of the sound heard yet');
       await h.through();
 
-      // place 2. What Penny knows is stamped on the map without anyone touching it: the one square of its colour
+      // place 2. Nothing is known to begin with: the first post has to be found by ear
       const known = () => page.evaluate(() => [...document.querySelectorAll('#walk-board .cell.known')].map((cell) => Number(cell.dataset.cell)));
-      await page.waitForFunction(() => document.querySelector('#walk-board .cell.known'), null, { timeout: 6000 });
-      assert.deepEqual(await known(), [14], 'the seal is on the only square of its colour, and nowhere else');
+      await sleep(2500);
+      assert.deepEqual(await known(), [], 'no seal before anything has been found');
       // a quick tap crosses a square and takes the cross off; holding a finger down only asks
       await h.tap(10);
       await sleep(600);
@@ -189,6 +189,11 @@ async function main() {
       await h.open(5);
       assert.equal((await h.board())[5], 'x', 'a guess that finds nothing leaves a cross');
       await h.open(1);
+      // all the rules of the game are in play: the post has crossed out its colour, its row and column, and what touches it
+      assert.equal(await h.board(), 'xLxxxxx..x...x..');
+      // and what that leaves with nowhere else to be, Penny knows without listening: its seal lands there, untouched
+      await page.waitForFunction(() => document.querySelector('#walk-board .cell.known'), null, { timeout: 6000 });
+      assert.deepEqual(await known(), [7], 'the seal is on the one square left in that row');
       await h.tap(0);
       await h.says('shakes its head');
       for (const cell of [7, 8, 14]) await h.open(cell);
@@ -294,10 +299,10 @@ async function main() {
     check('keyboard only: a place can be finished and left', { storage: { 'penny:place:v1': 1 } }, async (page, h) => {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
-      await page.locator('#walk-board .cell').nth(13).focus();
-      await page.keyboard.press('ArrowRight'); // onto 14, the only square of its colour
-      await h.says('sure');
-      for (const cell of [14, 1, 7, 8]) {
+      await page.locator('#walk-board .cell').nth(0).focus();
+      await page.keyboard.press('ArrowRight'); // onto 1, where a post can be heard
+      await h.says('right here');
+      for (const cell of [1, 7, 8, 14]) {
         await page.locator('#walk-board .cell').nth(cell).focus();
         await page.keyboard.press('Enter');
         await sleep(300);
