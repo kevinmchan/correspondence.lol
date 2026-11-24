@@ -5,6 +5,7 @@ import { gameUrl, myName, myToken, recentRooms, roomUrl } from '/shared/identity
 import { feedOf, wordsFor } from '/shared/feed.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
+import { roof, roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
 import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
@@ -164,6 +165,7 @@ export function mount(root, life) {
       li.append(a);
       return li;
     }));
+    lightRooms();
     feed.empty.hidden = items.length > 0;
     feed.note.textContent = recentRooms().length === 0 ? 'Open or join a room in the lobby to play with friends.'
       : loaded ? 'Nothing is waiting on you. Start a game in one of your rooms.' : 'Looking in your rooms…';
@@ -249,21 +251,34 @@ export function mount(root, life) {
     button.disabled = false;
   });
 
+  // A building with something waiting on you in it has its light on. (The
+  // feed is what says so, in words; this is the same thing seen from outside.)
+  function lightRooms() {
+    const waiting = new Set(items.map((item) => item.room?.id));
+    for (const lot of rooms.querySelectorAll('.lot-link')) lot.classList.toggle('lit', waiting.has(lot.dataset.room));
+  }
+
   function showRooms() {
     const recent = recentRooms();
     rooms.hidden = recent.length === 0;
+    // Each is a building on the map, seen from above: its roof, in the colour
+    // it keeps, with its name on a plate at its door (room/room.css).
     rooms.querySelector('ul').replaceChildren(...recent.map((room) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
+      const look = roomLook(room.id);
+      a.className = `lot-link r${look.colour}`;
+      a.dataset.room = room.id;
       a.href = roomUrl(room.id);
       const name = document.createElement('strong');
       name.textContent = room.name;
       const when = document.createElement('span');
       when.textContent = `Last opened ${new Date(room.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
-      a.append(name, when);
+      a.append(roof({ kind: look.kind }), name, when);
       li.append(a);
       return li;
     }));
+    lightRooms();
   }
   showMe();
   if (!noProfile()) showRooms();

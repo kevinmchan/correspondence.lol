@@ -11,15 +11,8 @@
 }
 .radio-world .map-far { background: rgb(246 241 231 / 0.09); --lit-x: 50%; --lit-y: 62%; }
 .radio-world .penny-back { background: rgb(246 241 231 / 0.14); color: #f6f1e7; z-index: 3; }
-.radio-world .radio-behind {
-  position: absolute; z-index: 3; top: max(0.75rem, env(safe-area-inset-top)); right: max(0.75rem, env(safe-area-inset-right));
-  width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
-  background: rgb(246 241 231 / 0.14); color: #f6f1e7; opacity: 0.6; cursor: pointer;
-}
-.radio-world .radio-behind:hover, .radio-world .radio-behind:focus-visible { opacity: 1; }
-.radio-world .radio-behind svg { width: 1.25rem; height: 1.25rem; }
-/* The radio keeps clear of the two buttons at the top and of Penny at the bottom, and is
-   never bigger than the room that leaves: all of it is always on the screen. */
+/* The radio keeps clear of the button at the top and of whoever is standing at the bottom,
+   and is never bigger than the room that leaves: all of it is always on the screen. */
 .radio-ground {
   --top: max(4.2rem, calc(env(safe-area-inset-top) + 3.8rem));
   --bottom: calc(var(--pal-w) * 0.62 + env(safe-area-inset-bottom, 0px) + 0.6rem);
@@ -28,6 +21,10 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
 }
 @supports (height: 1dvh) { .radio-ground { --room: calc(100dvh - var(--top) - var(--bottom)); } }
+.radio-lines { position: relative; z-index: 3; min-height: 1.9rem; display: grid; justify-items: center; align-content: start; gap: 0.2rem; }
+/* While the one who shows how is on stage the words are its own: the app's line is kept for screen readers alone. */
+.radio-world[data-story="lesson"] .taste-note { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.radio-world .taste-note:empty { display: none; }
 .radio-world .taste-note { margin: 0; min-height: 1.2rem; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: #f6f1e7; opacity: 0.9; text-align: center; }
 
 /* --- The set ----------------------------------------------------------------------------------
@@ -38,10 +35,11 @@
    of the station tuned in: one is coral, the other teal. */
 .radio {
   --edge: #f08a76; --needle: 50%;
-  /* (in lengths that mean the same wherever they are used: this is also what its em is worked out from) */
-  --w: min(100vw - 2.6rem, 23rem, calc((var(--room) - 3rem) * 0.86));
+  /* (in lengths that mean the same wherever they are used: this is also what its em is worked out from.
+     --k is how wide the set is for its height; the 1.8rem is the room the tag on its side needs.) */
+  --w: min(100vw - 4.4rem, 23rem, calc((var(--room) - 6rem) * var(--k, 0.82)));
   position: relative; width: var(--w); font-size: calc(var(--w) / 23); flex: none;
-  margin-top: 2.4em; rotate: -1.5deg; color: #f6f1e7; cursor: pointer; outline: none;
+  margin-top: 2.4em; margin-right: 1.8rem; margin-bottom: 1.3em; /* (its feet and its shadow are below its box) */ rotate: -1.5deg; color: #f6f1e7; cursor: pointer; outline: none;
 }
 .radio:focus-visible .body { box-shadow: 0.55em 0.6em 0 #7a2c1e, 0 0 0 0.2em #f8d95a; }
 /* its shadow on the map */
@@ -61,7 +59,7 @@
 
 .radio .top-row { display: flex; align-items: center; gap: 0.7em; }
 /* its name, on a plate */
-.radio .plate { padding: 0.18em 0.6em; border-radius: 0.35em; background: #f8d95a; color: #22303c; font-family: system-ui, sans-serif; font-size: 0.82em; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.16); }
+.radio .plate { padding: 0.18em 0.6em; border-radius: 0.35em; background: #f8d95a; color: #22303c; font-family: system-ui, sans-serif; font-size: max(0.82em, 11px); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.16); }
 /* the speaker: rows of holes */
 .radio .grille { flex: 1; height: 1.5em; border-radius: 0.5em; background: radial-gradient(circle, #5c1d12 0 32%, transparent 36%) 0 0 / 0.62em 0.5em; opacity: 0.85; }
 
@@ -87,14 +85,24 @@
 .radio .pic svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* static, between stations */
 .radio .static { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: repeating-linear-gradient(0deg, rgb(246 241 231 / 0.16) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgb(246 241 231 / 0.08) 0 2px, transparent 2px 5px); }
-/* the fingertip of light by which Penny shows what to do */
-.radio .tip { position: absolute; left: 50%; top: 50%; width: 2em; height: 2em; margin: -1em; border-radius: 50%; pointer-events: none; opacity: 0; background: rgb(246 241 231 / 0.3); border: 0.12em solid #f6f1e7; box-shadow: 0 0 0.6em rgb(246 241 231 / 0.8); box-sizing: border-box; }
+
+/* The pointer of the one who shows how: three cold chevrons that streak across in a straight line; and its mark for
+   two taps, four corners that flash on and off. Hard edges and no glow, where Penny's fingertip is round and warm. */
+.radio .cue { position: absolute; left: 50%; top: 50%; width: 5.2em; height: 2.2em; margin: -1.1em -2.6em; pointer-events: none; opacity: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 22' fill='none' stroke='%23dfeeff' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M14 3L5 11l9 8M30 3l-9 8 9 8M46 3l-9 8 9 8'/%3E%3C/svg%3E") center / contain no-repeat; }
+.radio .reticle { position: absolute; left: 50%; top: 50%; width: 3em; height: 3em; margin: -1.5em; pointer-events: none; opacity: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30' fill='none' stroke='%23dfeeff' stroke-width='2.6' stroke-linecap='square'%3E%3Cpath d='M2 9V2h7M21 2h7v7M28 21v7h-7M9 28H2v-7'/%3E%3C/svg%3E") center / contain no-repeat; }
+.radio .cue.on, .radio .reticle.on { opacity: 0.95; }
+@media (prefers-reduced-motion: no-preference) {
+  .radio .cue.on { animation: cue-streak 460ms linear 2; }
+  .radio .reticle.on { animation: reticle-twice 480ms steps(1, end); }
+}
+@keyframes cue-streak { 0% { translate: 4em 0; opacity: 0; } 15% { opacity: 0.95; } 85% { opacity: 0.95; } 100% { translate: -4em 0; opacity: 0; } }
+@keyframes reticle-twice { 0% { opacity: 0.95; } 25% { opacity: 0; } 50% { opacity: 0.95; } 75%, 100% { opacity: 0; } }
 
 /* the readout: the station, what it is to you, and how well it has been heard */
 .radio .readout { display: flex; align-items: center; gap: 0.6em; padding: 0.25em 0.6em; border-radius: 0.5em; background: #22303c; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.3); font-family: system-ui, sans-serif; }
 .radio .freq { display: inline-flex; align-items: baseline; gap: 0.3em; color: var(--edge); transition: color 240ms ease; }
 .radio .freq b { font-size: 1.55em; font-weight: 800; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 0.5em color-mix(in srgb, var(--edge) 60%, transparent); }
-.radio .freq small { font-size: 0.7em; font-weight: 800; letter-spacing: 0.09em; opacity: 0.8; }
+.radio .freq small { font-size: max(0.7em, 11px); font-weight: 800; letter-spacing: 0.09em; opacity: 0.8; }
 .radio .tag { flex: 1; min-width: 0; font-size: 0.7em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
 .radio .tag.kept { color: #f8d95a; opacity: 1; }
 /* three bars that fill as the station is listened to: at three it can be kept */
@@ -109,29 +117,59 @@
 /* what is pressed and turned: the tuning knob, play and pause, the presets, and Keep */
 .radio .controls { display: flex; align-items: center; gap: 0.6em; }
 .radio .controls button { font: inherit; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.radio .knob { flex: none; width: 3.3em; height: 3.3em; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 32%, #4a5d72, #22303c 62%); box-shadow: 0.22em 0.26em 0 #0f161d, inset 0 0 0 0.16em #141c23; transition: transform 70ms ease; }
+.radio .knob { flex: none; width: max(3.3em, 44px); height: max(3.3em, 44px); border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 32%, #4a5d72, #22303c 62%); box-shadow: 0.22em 0.26em 0 #0f161d, inset 0 0 0 0.16em #141c23; transition: transform 70ms ease; }
 .radio .knob i { width: 100%; height: 100%; border-radius: 50%; rotate: calc((var(--turn, 0.5) - 0.5) * 270deg); transition: rotate 420ms cubic-bezier(0.3, 1.3, 0.5, 1); background: linear-gradient(#f6f1e7, #f6f1e7) 50% 12% / 0.22em 0.8em no-repeat; }
 .radio.still .knob i { transition: none; }
 .radio .knob:active { transform: translate(0.1em, 0.12em); }
-.radio .power { flex: none; width: 2.3em; height: 2.3em; border-radius: 50%; display: grid; place-items: center; background: #22303c; color: #f6f1e7; box-shadow: 0.16em 0.2em 0 #0f161d; }
+/* (never smaller than a finger needs, however small the set is drawn) */
+.radio .power { flex: none; width: max(2.3em, 44px); height: max(2.3em, 44px); border-radius: 50%; display: grid; place-items: center; background: #22303c; color: #f6f1e7; box-shadow: 0.16em 0.2em 0 #0f161d; }
 .radio .power svg { width: 1.1em; height: 1.1em; }
 .radio .power .pause { display: none; }
 .radio .power.playing .pause { display: block; }
 .radio .power.playing .go-on { display: none; }
 .radio .power:active, .radio .keep:active { translate: 0.1em 0.14em; }
 .radio .keep {
-  flex: none; height: 2.9em; padding: 0 1em !important; border-radius: 0.9em; background: #f8d95a; color: #22303c;
+  flex: none; height: 2.9em; min-height: 44px; padding: 0 1em !important; border-radius: 0.9em; background: #f8d95a; color: #22303c;
   font-family: system-ui, sans-serif !important; font-size: 0.95em !important; font-weight: 800 !important; letter-spacing: 0.06em; text-transform: uppercase;
   box-shadow: 0.2em 0.26em 0 #a8851c, inset 0 -0.2em 0 rgb(0 0 0 / 0.12);
 }
 .radio .keep:active { box-shadow: 0.08em 0.1em 0 #a8851c, inset 0 -0.2em 0 rgb(0 0 0 / 0.12); }
-/* presets: five small buttons, lit when a station kept five times running is saved to them */
-.radio .presets { flex: 1; min-width: 0; }
-.radio .presets ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.3em; }
-.radio .presets li { aspect-ratio: 1; border-radius: 0.4em; background: #a83a26; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.22); }
-.radio .presets a { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; background: #22303c; box-shadow: 0.12em 0.16em 0 #0f161d, inset 0 0 0 0.1em #f8d95a; }
-.radio .presets a:active { translate: 0.06em 0.1em; }
-.radio .presets a svg { width: 78%; height: 78%; }
+/* presets: five lamps, one lit for each station kept five times running. Pressed, they are shown in a sheet */
+.radio .presets { flex: 1; min-width: 0; height: max(2.3em, 44px); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; justify-items: center; padding: 0 0.5em !important; border-radius: 0.6em; background: #a83a26; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.22); }
+.radio .presets i { width: min(0.9em, 70%); aspect-ratio: 1; border-radius: 50%; background: #5c1d12; box-shadow: inset 0 0.08em 0 rgb(0 0 0 / 0.3); }
+.radio .presets i.lit { background: #f8d95a; box-shadow: 0 0 0.45em rgb(248 217 90 / 0.9); }
+.radio .presets:active { translate: 0.06em 0.1em; }
+
+/* a taller display where there is the height for it: installed on a phone, not inside Safari's bars */
+@media (min-height: 780px) and (max-width: 520px) {
+  .radio { --k: 0.7; }
+  .radio .display { aspect-ratio: 8 / 7; }
+}
+
+/* --- The lab's tag ---------------------------------------------------------------------------
+   Riveted to the side of the set, not to its face: a small cold plate with a
+   blue band and a flask on it, in the livery of the one who shows how. It is
+   in plain sight from the start and it is the way behind the radio. What is
+   pressed is a square big enough for a finger; what is seen is the plate. */
+.radio .lab-tag { position: absolute; z-index: 2; right: -1.95em; top: 7em; width: max(3.2em, 2.75rem); height: max(3.2em, 2.75rem); padding: 0; border: 0; background: none; display: grid; justify-items: end; align-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.radio .lab-plate {
+  position: relative; width: 1.7em; height: 2.3em; box-sizing: border-box; display: grid; place-items: end center; padding-bottom: 0.22em;
+  border: 0.13em solid #22303c; border-radius: 0.16em; background: linear-gradient(#4a78b8 0 0.5em, #eef3f8 0.5em); color: #22303c;
+  box-shadow: 0.14em 0.16em 0 #3b4d63; transform-origin: 18% 6%; rotate: 5deg;
+}
+.radio .lab-plate::before { content: ""; position: absolute; left: 0.12em; top: 0.1em; width: 0.26em; height: 0.26em; border-radius: 50%; background: #22303c; } /* its rivet */
+.radio .lab-plate svg { width: 1.15em; height: 1.15em; }
+.radio .lab-tag:focus-visible .lab-plate { outline: 0.2em solid #f8d95a; outline-offset: 0.1em; }
+/* seen by Penny: a warm ring spreads from it. Noted by the lab: one cold glint crosses it. */
+.radio .lab-tag.shown .lab-plate { outline: 0.16em solid #f6a070; outline-offset: 0.14em; }
+.radio .lab-tag.glint .lab-plate { background: linear-gradient(#9ad3f7 0 0.5em, #ffffff 0.5em); }
+@media (prefers-reduced-motion: no-preference) {
+  .radio .lab-tag.shown .lab-plate { animation: tag-ring 700ms ease-out; }
+  .radio .lab-tag.glint .lab-plate { animation: tag-glint 520ms linear; }
+  .radio .lab-tag:active .lab-plate { rotate: 9deg; }
+}
+@keyframes tag-ring { 0% { outline-color: #f6a070; outline-offset: 0; } 100% { outline-color: transparent; outline-offset: 1.2em; } }
+@keyframes tag-glint { 0%, 100% { filter: none; } 40% { filter: brightness(1.5); } }
 
 /* --- The display, lit by the loop as it plays (jam/taste.js) -------------------------------
    The bar that crosses with the beat is a bar of light. Four lamps hang over
@@ -205,6 +243,72 @@ dialog.behind::backdrop { background: rgb(20 26 32 / 0.6); }
 dialog.behind .taste-lab { box-shadow: none; }
 dialog.behind .what { margin: 0; font-size: 0.875rem; color: var(--muted); }
 dialog.behind .go { height: 2.9rem; font-size: 1rem; }
-dialog.behind #taste-again { height: 2.7rem; font-size: 0.9375rem; }
+dialog.behind #taste-again { height: 2.75rem; font-size: 0.9375rem; }
 dialog.behind .taste-row { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }
+
+/* --- The one who shows how --------------------------------------------------------------------
+   An express letter stood on end: tall, narrow, sharp-cornered, leaning the way
+   it is going, cold paper striped at the edge as the mail that left Penny
+   behind was (penny/office.css). It stands in the radio's world, at the bottom
+   right, and not in Penny's layer. It never breathes or blinks, and everything
+   it does is a straight line, over almost as it starts. */
+.dash[hidden], .dot-told[hidden] { display: none; }
+.dash { position: absolute; z-index: 2; right: max(0.9rem, env(safe-area-inset-right)); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--pal-w) * 0.03); width: calc(var(--pal-w) * 0.34); pointer-events: none; }
+.dash svg { display: block; width: 100%; overflow: visible; }
+.dash .d-body { transform-box: fill-box; transform-origin: 50% 100%; rotate: 7deg; }
+.dash .d-shade { fill: rgb(0 0 0 / 0.3); }
+.dash .d-leg { fill: none; stroke: #22303c; stroke-width: 2.4; stroke-linecap: square; }
+.dash .d-paper { fill: #eef3f8; stroke: #22303c; stroke-width: 2.6; }
+.dash .d-stripe { fill: none; stroke: #c8442e; stroke-width: 2.2; stroke-dasharray: 3 5; }
+.dash .d-stripe.blue { stroke: #4a78b8; stroke-dashoffset: 4; }
+.dash .d-brow { fill: none; stroke: #4a78b8; stroke-width: 2.4; stroke-linecap: square; }
+.dash .d-eyes { fill: #22303c; translate: var(--look-x, 0) var(--look-y, 0); } /* (they do not ease: they are on one thing and then on another) */
+.dash .d-mouth { fill: none; stroke: #22303c; stroke-width: 1.8; stroke-linecap: square; }
+.dash .d-window { fill: #9ad3f7; stroke: #22303c; stroke-width: 1.4; }
+.dash .d-tick { fill: none; stroke: #22303c; stroke-width: 2.2; stroke-linecap: square; opacity: 0; }
+.dash.ticked .d-tick { opacity: 1; }
+.dash .d-code { fill: none; stroke: #22303c; stroke-width: 1.3; }
+@media (prefers-reduced-motion: no-preference) {
+  .dash.arriving { animation: dash-arrive 200ms linear both; }
+  .dash.leaving { animation: dash-leave 280ms cubic-bezier(0.6, 0, 1, 1) both; }
+  .dash.ticked .d-body { animation: dash-tick 110ms linear; }
+  .dash.refusing .d-body { animation: dash-no 180ms steps(4, end); }
+}
+.dash.leaving { opacity: 0; }
+@keyframes dash-arrive { 0% { translate: 9rem 0; } 88% { translate: -0.14rem 0; } 100% { translate: 0 0; } }
+@keyframes dash-leave { 0% { translate: 0 0; opacity: 1; } 100% { translate: 0 -110vh; opacity: 1; } }
+@keyframes dash-tick { 0%, 100% { rotate: 7deg; } 50% { rotate: 13deg; } }
+@keyframes dash-no { 0%, 100% { translate: 0 0; } 25% { translate: -3px 0; } 50% { translate: 3px 0; } 75% { translate: -3px 0; } }
+
+/* What it says comes out as tape: a straight strip, capitals, one order at a time and never a reason. */
+.dash-says { margin: 0; padding: 0.22rem 0.65rem; border-radius: 0.12rem; background: #eef3f8; color: #22303c; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; box-shadow: 0.14rem 0.16rem 0 #4a78b8, inset 0 0 0 0.09rem #22303c; }
+.dash-says:empty { display: none; }
+@media (prefers-reduced-motion: no-preference) { .dash-says.fed { animation: dash-tape 200ms steps(6, end); } }
+@keyframes dash-tape { 0% { clip-path: inset(0 0 0 100%); } 100% { clip-path: inset(0); } }
+
+/* --- What Dot says ----------------------------------------------------------------------------
+   Round and plain, as Dot is: against the tape, the difference is seen before a word is read. */
+.dot-says { position: absolute; z-index: 4; left: 0; top: 0; margin: 0; max-width: 11.5rem; box-sizing: border-box; padding: 0.55rem 0.75rem; pointer-events: none; border: 0.16rem solid #22303c; border-radius: 1.1rem; background: #f6f1e7; color: #22303c; font-family: system-ui, sans-serif; font-size: 1rem; line-height: 1.25; font-weight: 800; text-align: left; box-shadow: 0.16rem 0.2rem 0 #2aa198; }
+.dot-says:empty { display: none; }
+.dot-says::after { content: ""; position: absolute; right: -0.62rem; bottom: 0.7rem; width: 0.9rem; height: 0.9rem; background: #f6f1e7; border-right: 0.16rem solid #22303c; border-bottom: 0.16rem solid #22303c; rotate: -45deg; border-bottom-right-radius: 0.2rem; }
+.dot-says span { opacity: 0; }
+.dot-says span.said { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .dot-says { animation: dot-says-in 170ms ease-out; transform-origin: 100% 80%; }
+  .dot-says span { transition: opacity 120ms ease; }
+}
+@keyframes dot-says-in { 0% { scale: 0.85; opacity: 0; } 100% { scale: 1; opacity: 1; } }
+/* Penny's fingertip of light, thrown at the tag: round and warm (the villain's pointer is neither) */
+.radio-ray { position: absolute; z-index: 5; left: 0; top: 0; width: 1.6rem; height: 1.6rem; margin: -0.8rem; border-radius: 50%; box-sizing: border-box; pointer-events: none; opacity: 0; background: rgb(246 160 112 / 0.4); border: 0.12rem solid #f6a070; box-shadow: 0 0 0.7rem rgb(246 160 112 / 0.9); }
+
+/* Behind the radio, Dot's line goes with you; and the presets have a sheet of their own. */
+dialog.behind .dot-told { margin: 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.0625rem; font-weight: 800; color: var(--ink); }
+dialog.behind .dot-told svg { flex: none; width: 2.2rem; height: 2.2rem; }
+dialog.behind .preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+dialog.behind .preset-list:empty { display: none; }
+dialog.behind .preset-list a { display: flex; align-items: center; gap: 0.75rem; min-height: 3.2rem; padding: 0.3rem 0.6rem 0.3rem 0.3rem; border-radius: 0.9rem; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); text-decoration: none; }
+dialog.behind .preset-list .pic { flex: none; width: 3.4rem; height: 2.7rem; padding: 0.25rem; box-sizing: border-box; border-radius: 0.6rem; background: #22303c; display: grid; place-items: center; }
+dialog.behind .preset-list .pic svg { width: 100%; height: 100%; }
+dialog.behind .preset-list b { font-size: 1.0625rem; font-variant-numeric: tabular-nums; }
+dialog.behind .preset-list small { display: block; font-size: 0.8125rem; color: var(--muted); }

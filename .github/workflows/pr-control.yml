@@ -1,0 +1,48 @@
+# The control on pull requests: nothing goes into main without new test screens
+# and passing runs, or an exception. What it holds a pull request to, and what
+# an exception is, are written at the top of tests/pr-control.cjs.
+#
+# It runs again when the description or the labels change, because that is
+# where an exception is asked for and given. It also runs on every push to a
+# branch that is not main, so that what it will say of a pull request is known
+# before there is one (there, with no description to read, there can be no
+# exception: it says what is met and what is not).
+name: PR control
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-control-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  control:
+    name: New test screens and passing runs
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the base is needed too: its test screens are counted against this one's
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The app has nothing to install. The suites drive a browser, and that is all this is.
+      - name: Install the browser the suites drive
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: New test screens and passing runs, or an exception
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          REQUIRE_BROWSER: '1'
+        run: node tests/pr-control.cjs --base "origin/${{ github.base_ref || 'main' }}"
