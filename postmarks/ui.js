@@ -16,6 +16,7 @@ import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound
 import { avatar, openProfile } from '/shared/profile.js';
 import { watchPresence } from '/shared/push.js';
 import { claim as callPal } from '/penny/pal.js';
+import { hide as hideTag } from '/penny/tags.js';
 import { ASK, GASP, LONGING, OOPS, SAG, THIS_WAY, TRILL, WONDER, YES, hasDot } from '/penny/penny.js';
 
 // A game's screen. mount() puts it to work in `root`, a fresh copy of its
@@ -105,8 +106,19 @@ export function mount(root, life) {
     map.style.setProperty('--lit-x', `${box.left - frame.left + box.width / 2}px`);
     map.style.setProperty('--lit-y', `${box.top - frame.top + box.height / 2}px`);
     map.hidden = false;
+    hidden.place();
   }
   life.on(window, 'resize', layMap);
+  // One of the map's faint squares, away from the board, is not like the rest:
+  // a tag, hidden, for whoever notices it (penny/tags.js). Which square changes
+  // from game to game. It is not there while a race is being run.
+  const hidden = hideTag(life, {
+    main: map.parentElement,
+    map,
+    board: () => root.querySelector('#board'),
+    seed: () => String(online ? online.id : game?.seed),
+    allowed: () => Boolean(game) && !el.play.hidden && !(online?.mode === 'trial' && game.status === 'playing'),
+  });
   const el = {
     back: $('back'), profile: $('profile'), loading: $('loading'),
     play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),

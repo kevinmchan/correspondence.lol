@@ -8,13 +8,13 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
-| `tests/` | Tests for the game rules, the puzzle generator and Penny's places (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
+| `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
 | `.github/workflows/` | What GitHub runs on every pull request: the control (`pr-control.yml`) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Install metadata, offline caching, app icons |
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
@@ -107,6 +107,14 @@ climb in pitch. Sounds are synthesised in the browser, so there are no audio
 files; they start after the first tap, as browsers require, and a button at the
 top of the game turns them off. Animations are skipped for people who ask their
 device for reduced motion.
+
+At the end of a game that was won, what was kept hops, one after another: the
+hearts of a game won alone, the faces of everyone in one won together.
+
+To the browser all the app's stylesheets are one sheet, so every animation
+has a name of its own: a second animation of the same name anywhere takes the
+place of the first everywhere, and nothing says so. `npm test` checks that no
+two share a name, and that every animation asked for is one there is.
 
 The envelopes on the board are called posts, so that "letters" only ever means
 the letters of a phrase. A double tap on a square guesses a post there.
@@ -224,7 +232,7 @@ at the bottom edge of the window, in the viewer's own space, life size, and
 looks up at the map with you (`penny/pal.js`). It is one layer over the whole
 app, so screens slide past and Penny stays; a screen that wants Penny asks,
 and Penny goes back under the edge when no screen does. At present the home
-page, the map, the game itself and the music maker ask. In the game Penny has no part in the
+page, the map, the game itself, the music maker and its radio ask. In the game Penny has no part in the
 play and gives nothing away: it is glad when a post is found, flinches at a
 miss, and feels how the game ends (a time trial it takes as play: see Game
 modes); and the board there, as on the walk, is a
@@ -405,8 +413,8 @@ after any turn in which the screen was tapped. Only the first screen does it.
 
 The scene is silent until the first touch, with Penny's seal beating slowly
 as the sign that there is something to hear. (An older scene of
-Penny's story lived at `/?penny`; that address now opens scene one, and its
-styles in `penny/story.css` are still used by the office.)
+Penny's story lived at `/?penny`; that address now opens scene one, and what
+the film still uses of its styles is in `penny/story.css`.)
 
 ### Scene two: what slow hands make
 
@@ -797,6 +805,131 @@ than three flashes a second, nothing of it for anyone who asks for reduced
 motion, and nothing moving under a finger. Outside its season the app is
 soothing (CLAUDE.md, "Look and words").
 
+## Tags, and the night
+
+A tag is something hidden in the app, to be found and kept, as on a scavenger
+hunt (`penny/tags.js`). Nothing in the app says that there are any. Whoever
+notices one and touches it has found it: it is theirs from then on (on this
+device), and it is kept on the home page's map, in the corner across from the
+portal. There is one so far.
+
+**Where it hides.** On a screen, somewhere in what is empty of it, and
+somewhere else each visit: a small mark, the picture described below, printed
+in the page's own ink and as faintly as the map itself. On the map behind the
+board of a game it is in one of the map's own faint squares, and which square
+changes from game to game. It is never up against the board, where a slip of
+the finger would be a move, nor where Penny is standing, nor on or beside
+anything else on the page, nor on the places already walked that lie below
+the one Penny is at; if the page changes under it, it moves; and it is
+not there at all while a time trial is being run. Nothing points at it, and
+Penny, who gives nothing away, neither looks at it nor makes way for it. It
+glints, now and then, but only once nothing has been pressed for a few
+seconds: like everything else in Penny's world, it is found by whoever is not
+in a hurry. (It can also be reached with the Tab key: it is the last thing
+on every page.)
+
+**It is small, and it is still something to press.** So it is held to what
+everything to press on a phone is held to (`CLAUDE.md`,
+`tests/browser/mini.e2e.cjs`). However small it is drawn, the room it has for
+a finger is never under 44 by 44. Its box never overlaps the box of anything
+else there is to press, and is put a little way off from all of them. And it
+is never under a phone's notch or its home bar. What follows from that is
+that it is only where there is room for it. In a room, which is a building
+that fills the page, that is on the map outside the door, beside the path, at
+the bottom of the page. In the music maker, on a phone, there is seldom room
+for it (only on the taller screen the app has when it is installed, and only
+until a beat has been saved), and where there is none it is not there:
+between two buttons is no place for something that is found by a slip of the
+finger. Everywhere else it has been tried, on every phone the app is held
+to, there is a place for it.
+
+**It is a way through**, and it goes on being one after it has been found.
+The mark stays wherever it has room, a little plainer for being known, so
+that from nearly anywhere there is a way out into the night. (On the home
+page it is where it is kept, and nowhere else.)
+
+**Going through is a tumble.** The screen falls away, turning as it goes,
+down into the place the mark was, with the night coming up behind it; and the
+picture comes up out of that place, turning a whole turn the other way and
+growing, until it is upright exactly where the night has it. The way back
+from the night leads to wherever it was gone from, and tumbles the other way:
+the screen comes turning up out of the dark, and rights itself. With reduced
+motion there is no tumble, only the one screen and then the other.
+
+### The night
+
+`/?sky` (`penny/sky.js`) is a picture, come to life. The picture came first:
+five lights on black, three stars with four points falling in a line from the
+top left, each bigger than the last, and two small round ones, one either
+side of the line. The places, the sizes and the black are measured off the
+picture, and so is the shape of a star (`penny/stars.js`): 1.4 times as tall
+as it is wide, with sides that curve in until its points are needles.
+
+The screen opens on that picture, as still as a picture: in a square window
+the size of it, laid one over the other, 98% of what is lit in either is lit
+in both. Only it is far dimmer, at well under half the picture's brightness:
+something to look at in the dark for a long time. And it is slightly warm:
+the black is the picture's own, and against it the lights are the colour of a
+lamp seen a long way off, not of a screen, with a glow a little warmer than
+they are. Then it wakes, a light at a time, in the order it is read, left to
+right, each with its note.
+
+**Nothing is ever added to it.** No more stars, no sky round them, no colour,
+and nobody standing under it: Penny is not in this scene. It is the same five
+lights for as long as it is looked at. What is alive is how they are there.
+
+- **They wander.** Each strays a little from its place, the way a speck in
+  water does, and is pulled back the further it goes: about a hundredth of
+  the picture's side, on a path with no corners in it that never repeats.
+- **They are afloat.** The whole picture drifts a little as well, more slowly,
+  as whoever is looking at it does; and what is near goes by faster than what
+  is far, which is what makes it deep.
+- **They are not solid.** A light is itself, faintly, and six fainter copies
+  of itself laid over it, each a little out of place. Where they lie on one
+  another they add up to its brightness; at its edges and along its points it
+  is soft, and never the same twice.
+- **They glow**, a little, and the glow breathes with them.
+- **They twinkle.** Their brightness comes and goes, the far ones' by a good
+  deal and the near one's hardly, as stars' does and a planet's does not. And
+  now and then one twinkles outright: its copies fall into place, it is sharp
+  and brighter for a moment (though never as bright as the picture), its
+  points draw out, and a few motes come off it, are knocked about, and are
+  lost. That is when it is heard.
+
+A light that is touched twinkles. A touch anywhere else, and the nearest one
+answers, more quietly. A finger run across them sounds each as it is reached,
+and a finger held near them warms them: they stray further, twinkle oftener
+and turn towards the colour of an ember for as long as it is there. The keys 1 to 5 are the five lights, and
+the space bar is each of them in turn.
+
+**How it is heard.** These are the two columns of "How a place says it", as
+sound (`penny/chimes.js`).
+
+- **Up and down is pitch**, on the five notes the rest of the app keeps to,
+  ten rows to the picture's side. That makes the stars E, C, and E again an
+  octave down, with a G and a D from the dots between them.
+- **Size is nearness.** What is near is loud and full, rings for seconds, has
+  a low note under it and comes straight. What is far is quiet and dull, and
+  most of what arrives is echo. A dot is short and bright, an octave up.
+- **The picture is read once to each turn of the night**, which is 22
+  seconds, and not always the same way: a dot may keep quiet, or say itself
+  twice, or the big star take its time. Between readings each light twinkles
+  in its own time, more softly.
+- **The night turns under it.** One chord is held very low for each turn: the
+  game's four, C, A minor, F and G. The lights' notes never change. What is
+  under them does, and that alone turns the same phrase from glad to sad and
+  back; none of the chords has a third of its own, so which it is, is left to
+  the lights.
+
+All of it is synthesised from sine waves and one burst of generated air for
+the room, and written so that it can be rendered without a speaker, which is
+how its levels were set. Until the first touch there is no sound; the first
+touch wakes it, and the picture is read again from the start, aloud. The way
+back is dim, and gone when the picture has been left alone a moment. The
+night does not go on without you: with the page out of sight it stops, and
+picks up where it was. With reduced motion nothing moves: the lights are
+where the picture has them, and their brightness comes and goes slowly.
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:
@@ -921,7 +1054,9 @@ offline fallback. When `sw.js` itself changes, open pages reload once to pick up
 the new version. The app's version is set in `version.js`: bump it with every
 release. It names the offline cache and is shown at the bottom of the home
 page. When adding a file the app needs offline, also add it to `PRECACHE` in
-`sw.js`.
+`sw.js`: `npm test` fails if anything the page loads is missing from that
+list, or if anything on the list is not there to be fetched (with one file
+missing, nothing at all is kept).
 
 ## Deploy (GitHub Pages)
 

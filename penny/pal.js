@@ -170,8 +170,10 @@ function build() {
   return layer;
 }
 
-// What of the page can be pressed: it keeps out of its way.
-const PRESSABLE = 'a[href], button:not([disabled]), input, textarea, select, summary, label';
+// What of the page can be pressed: it keeps out of its way. (Not a hidden
+// tag, penny/tags.js, which is nothing it knows about: where it stands over
+// one, it is simply in front of it.)
+const PRESSABLE = 'a[href], button:not([disabled]):not(.tag-hidden), input, textarea, select, summary, label';
 // The thing of the page's under a point of the window, if it can be pressed.
 const beneath = (x, y) => document.elementsFromPoint(x, y).find((element) => !element.closest('.pal'))?.closest(PRESSABLE) ?? null;
 // Would it, standing where it is with `share` of its drawing above the edge,

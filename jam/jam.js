@@ -54,7 +54,6 @@ const empty = () => LAYERS.map(() => []);
 
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
-  const { setInterval } = life;
   const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), save: $('jam-save'), share: $('jam-share'), note: $('jam-note'), saved: $('jam-saved') };
   document.title = 'Loops · correspondence.lol';
 
@@ -161,6 +160,7 @@ export function mount(root, life) {
     el.save.disabled = !any;
     el.share.disabled = !any;
     el.tempo.textContent = `${TEMPOS[tempo]}`;
+    el.tempo.setAttribute('aria-label', `Tempo, ${TEMPOS[tempo]} bpm`); // (what is written on it, and what it is: both said)
     el.play.setAttribute('aria-pressed', String(playing));
     el.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
     el.play.classList.toggle('playing', playing);

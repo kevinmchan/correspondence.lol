@@ -58,7 +58,7 @@ import { audio, noise, play as sfx, tone } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode } from './beat.js';
-import { LAYERS, ROWS, STEPS, TEMPOS, createLoop } from './engine.js';
+import { LAYERS, ROWS, STEPS, createLoop } from './engine.js';
 import { arrange } from './form.js';
 import { claim as callPal } from '/penny/pal.js';
 import { ASK, G4, GASP, PLEASE, RELIEF, SIGH, THIS_WAY, WONDER, hasDot } from '/penny/penny.js';
@@ -326,7 +326,6 @@ export function mount(root, life) {
 
   // --- The story ---------------------------------------------------------------------------
   const world = root.querySelector('.radio-world');
-  const display = root.querySelector('.radio .display');
   const labTag = $('taste-behind-open');
   const label = root.querySelector('.gallery-label'); // the gallery's, on the plinth
   const [dashEl, sign, orders, bubble, ray, aloud] = [$('radio-dash'), $('dash-sign'), $('dash-says'), $('dot-says'), $('radio-ray'), $('radio-story')];

@@ -6,7 +6,7 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { copyable } from '/shared/handoff.js';
-import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, roomUrl, setMyName } from '/shared/identity.js';
+import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
 import { miniBoard, roof, roomClass } from '/shared/place.js';
 

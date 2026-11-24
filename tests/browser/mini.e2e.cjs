@@ -118,6 +118,7 @@ async function states() {
   while (!standing(found.trials).significant && found.trials.length < 600) choose(found, like(found.current.front) >= like(found.current.back) ? 'front' : 'back', random);
   assert.equal(standing(found.trials).significant, true, 'a marked taste was not found in 600 picks');
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
+  const NIGHT = { 'tags:found:v1': ['night'] }; // somebody who has found the night
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
     { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
@@ -170,6 +171,32 @@ async function states() {
     // (the presets have no words: the set's lamps, and each station saved as its picture and its place on the dial)
     { name: 'Penny’s Radio, its presets', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': kept }, ready: '.radio .presets i.lit', then: (page) => page.locator('#taste-presets-open').click(), settle: 'dialog#taste-presets[open] .preset-list a', whole: ['#taste-presets-close'] },
     { name: 'Penny’s Radio, its presets, none yet', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', then: (page) => page.locator('#taste-presets-open').click(), settle: 'dialog#taste-presets[open]', whole: ['#taste-presets-close'] },
+    // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
+    { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
+    { name: 'the night, left alone until the way back has gone', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky.idle', wait: 9000, whole: ['.penny-back'] },
+    // ...what is kept of it on the home page once it has been found, across the map from the portal...
+    { name: 'home, somebody new, with the night kept', screen: 'home', at: '/', storage: { ...NIGHT }, ready: '.tag-kept' },
+    { name: 'home, the lobby, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', ...NIGHT }, ready: '.tag-kept' },
+    { name: 'home, the feed, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, server: rooms(GAMES), ready: '.tag-kept', settle: '.feed-item' },
+    // ...and the mark it is found by, hidden somewhere on other screens and somewhere else each time: small, and still something to press.
+    // It is not put down until a screen has settled, so these wait for it. (Found already, it is there all the same, a little plainer.)
+    // It is only where there is room for it: in a room that is on the map outside the door, at the bottom of the page; and in the
+    // music maker, on a phone, there is none, so it has no test screen there.
+    ...[
+      { where: 'on the home page', screen: 'home', at: '/' },
+      { where: 'on the home page, in the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } },
+      { where: 'where a room is opened', screen: 'open', at: '/?open', storage: ACCOUNT },
+      { where: 'where a room is joined', screen: 'join', at: '/?join', storage: ACCOUNT },
+      { where: 'outside the door of a room', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li', then: (page) => page.evaluate(() => window.scrollTo(0, document.scrollingElement.scrollHeight)) },
+      { where: 'on the map behind the smallest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) } },
+      { where: 'on the map behind the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) },
+        small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
+      { where: 'on the walk', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 3 } },
+      { where: 'in the film, scene one', screen: 'office', at: '/?office' },
+      { where: 'in the film, scene two', screen: 'slow', at: '/?slow' },
+      { where: 'on Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: told },
+      { where: 'on Penny’s Radio, found already', screen: 'taste', at: '/jam/?taste', storage: { ...told, ...NIGHT } },
+    ].map(({ where, ready, ...state }) => ({ name: `the hidden mark, ${where}`, ...state, ...(ready ? { ready, settle: '.tag-hidden:not([hidden])' } : { ready: '.tag-hidden:not([hidden])' }) })),
   ];
 }
 
