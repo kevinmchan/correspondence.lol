@@ -333,6 +333,51 @@ opens in the corner and leads on to the walk. It opens for slowness and never
 for speed, and it does not hurry anybody through. What was drawn is not kept
 when the scene is left.
 
+## The home page
+
+With an account, the home page has two tabs, drawn as two chunky tiles: the
+one that is up is pressed in and lit.
+
+- **Feed**: what is waiting on you, across your rooms. A game played together
+  in which it is your move (with whoever moved last, and how far along it is),
+  and invitations: time trials and pass phrases that somebody has started and
+  you have not finished. Moves come first, then what you have begun, then
+  what is new. Each is a tile that opens the game. The number waiting sits on
+  the tab. Games that are over, games you are waiting on someone else in, and
+  phrases you wrote yourself are left out.
+- **Lobby**: everything else. Your account, your rooms, and the tiles for
+  opening or joining a room, playing solo and making music.
+
+Someone with rooms starts on the feed; after that the tab last up is
+remembered. The feed is worked out in the browser (`shared/feed.js`) from what
+each room already tells its own page, so the server has nothing new: it asks
+the dozen rooms most recently opened, on arriving, every half minute, and on
+coming back to the app. What it last found is kept, to show at once next time.
+Without an account there are no tabs, only the two ways to get one.
+
+## Loops, the music maker
+
+`/jam/` (`jam/jam.js`) is a board of tiles, eight steps across and seven rows
+high, with four instruments that loop together. It is built on the same
+things as the game's background music (`postmarks/sound.js`), so that what
+is made there sounds like it belongs with it:
+
+- **The harmony moves.** The board is played four times over, once for each of
+  the game's four chords (C, A minor, F, G), and a row is a place in the chord
+  being played, not a fixed note: the bottom row is its root. Eight steps
+  tapped once come back four ways. Four lights over the board show which chord
+  is playing.
+- **A chord is held under it**, quietly, swelling in and out with each bar.
+- **There is room round it.** Bells and keys have an echo a step and a half
+  behind them, in time with the tempo. Bass and drums are kept dry.
+- **It is played, not triggered.** Beats are struck harder than what falls
+  between them, no two notes quite alike, and the off-steps come a little late.
+- **The dice write a tune the way the game does**: likelier on the beats,
+  moving by small steps, leaving rests; the bass keeps mostly to the root.
+
+What it still does not have, next to the game's music: more than eight steps,
+notes of different lengths, and any way to choose the chords.
+
 ## Game modes
 
 A Postmarks game in a room is one of three kinds, chosen when it is started:

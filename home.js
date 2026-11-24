@@ -1,7 +1,8 @@
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
 import { play as sfx } from '/postmarks/sound.js';
-import { myName, recentRooms, roomUrl } from '/shared/identity.js';
+import { gameUrl, myName, myToken, recentRooms, roomUrl } from '/shared/identity.js';
+import { feedOf, wordsFor } from '/shared/feed.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
@@ -61,6 +62,7 @@ export function mount(root, life) {
     welcome.note.hidden = !profile.signed_out;
     me.card.hidden = none;
     menu.hidden = none;
+    showTabs();
     if (none) {
       rooms.hidden = true;
       return;
@@ -79,8 +81,121 @@ export function mount(root, life) {
       /* offline: what was remembered stays on screen */
     }
     showMe();
-    if (!noProfile()) showRooms();
+    if (!noProfile()) {
+      showRooms();
+      loadFeed();
+    }
   }
+
+  // --- The two tabs: the feed, and everything else ------------------------------------
+  // The feed is what is waiting on you in your rooms: games played together
+  // in which it is your move, and time trials and pass phrases you have been
+  // asked to (shared/feed.js). The lobby is the rest of the page. Which was
+  // up last is remembered; someone with rooms starts on the feed.
+  const TAB_KEY = 'home:tab:v1';
+  const FEED_KEY = 'home:feed:v1'; // the feed as it last was, to show at once
+  const tabs = { bar: $('tabs'), feed: $('tab-feed'), lobby: $('tab-lobby'), feedPanel: $('panel-feed'), lobbyPanel: $('panel-lobby'), count: $('feed-count') };
+  const feed = { list: $('feed'), empty: $('feed-empty'), note: $('feed-empty-note') };
+  const MODE_TILES = { move: '#f08a76', running: '#7cc46a', invite: '#9ad3f7' };
+  const modeIcon = (mode) => document.getElementById('screen-room').content.querySelector(`.mode[data-mode="${mode}"] svg`)?.cloneNode(true) ?? document.createElement('span');
+  let tab = null;
+  let items = Array.isArray(load(FEED_KEY)) ? load(FEED_KEY) : [];
+  let loaded = false; // the server has answered at least once this visit
+
+  function showTabs() {
+    const none = noProfile();
+    tabs.bar.hidden = none;
+    if (none) {
+      tabs.feedPanel.hidden = true;
+      tabs.lobbyPanel.hidden = false; // the way in is on it
+      return;
+    }
+    tab ??= ['feed', 'lobby'].includes(load(TAB_KEY)) ? load(TAB_KEY) : recentRooms().length ? 'feed' : 'lobby';
+    for (const name of ['feed', 'lobby']) {
+      tabs[name].setAttribute('aria-selected', String(tab === name));
+      tabs[name].tabIndex = tab === name ? 0 : -1;
+      tabs[`${name}Panel`].hidden = tab !== name;
+    }
+    showFeed();
+  }
+  function pick(name, { focus = false } = {}) {
+    tab = name;
+    save(TAB_KEY, name);
+    showTabs();
+    if (focus) tabs[name].focus();
+    if (name === 'feed') loadFeed();
+  }
+  tabs.feed.addEventListener('click', () => pick('feed'));
+  tabs.lobby.addEventListener('click', () => pick('lobby'));
+  tabs.bar.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') pick(tab === 'feed' ? 'lobby' : 'feed', { focus: true });
+  });
+
+  function showFeed() {
+    tabs.count.hidden = items.length === 0;
+    tabs.count.textContent = items.length > 9 ? '9+' : String(items.length);
+    tabs.feed.setAttribute('aria-label', items.length ? `Feed, ${items.length} waiting` : 'Feed');
+    feed.list.replaceChildren(...items.map((item) => {
+      const words = wordsFor(item);
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.className = 'feed-item';
+      a.href = gameUrl('postmarks', item.id);
+      a.dataset.kind = item.kind;
+      a.style.setProperty('--tile', MODE_TILES[item.kind]);
+      const tile = document.createElement('span');
+      tile.className = 'tile';
+      tile.setAttribute('aria-hidden', 'true');
+      tile.append(item.who ? avatar(item.who) : modeIcon(item.mode));
+      const text = document.createElement('span');
+      text.className = 'words';
+      const tag = document.createElement('em');
+      tag.textContent = words.tag;
+      const title = document.createElement('strong');
+      title.textContent = words.title;
+      const detail = document.createElement('span');
+      detail.textContent = `${item.room.name} · ${words.detail}`;
+      text.append(tag, title, detail);
+      const playTile = document.createElement('span');
+      playTile.className = 'play';
+      playTile.setAttribute('aria-hidden', 'true');
+      playTile.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>';
+      a.append(tile, text, playTile);
+      li.append(a);
+      return li;
+    }));
+    feed.empty.hidden = items.length > 0;
+    feed.note.textContent = recentRooms().length === 0 ? 'Open or join a room in the lobby to play with friends.'
+      : loaded ? 'Nothing is waiting on you. Start a game in one of your rooms.' : 'Looking in your rooms…';
+  }
+
+  // Ask each room what is in it. (The most recent dozen: the rest are a tap away in the lobby.)
+  let fetchingFeed = false;
+  async function loadFeed() {
+    if (fetchingFeed || noProfile() || document.hidden) return;
+    const recent = recentRooms().slice(0, 12);
+    if (recent.length === 0) {
+      items = [];
+      loaded = true;
+      showFeed();
+      return;
+    }
+    fetchingFeed = true;
+    // (no chat is wanted, so it asks for none: only messages after one that does not exist)
+    const answers = await Promise.all(recent.map((room) => rpc('room_get', { p_room: room.id, p_token: myToken(), p_after: 9007199254740991 }).catch(() => undefined)));
+    fetchingFeed = false;
+    if (life.over) return;
+    if (answers.every((answer) => answer === undefined)) { // offline: what was remembered stays
+      showFeed();
+      return;
+    }
+    items = feedOf(answers);
+    loaded = true;
+    save(FEED_KEY, items);
+    showFeed();
+  }
+  life.setInterval(loadFeed, 30000);
+  life.on(document, 'visibilitychange', loadFeed);
 
   me.edit.addEventListener('click', () => {
     openProfile({ person: { name: myName(), ...look() }, onSave: async (person) => { await saveProfile(person); showMe(); } });
@@ -103,6 +218,7 @@ export function mount(root, life) {
       else {
         showMe();
         showRooms();
+        loadFeed();
       }
     } catch (failure) {
       welcome.error.textContent = failure.message;
@@ -151,6 +267,7 @@ export function mount(root, life) {
   }
   showMe();
   if (!noProfile()) showRooms();
+  // (the feed is asked for by refresh(), below, once the list of rooms is the server's own)
 
   // --- Arriving from the Home Screen icon ---------------------------------------
   async function bringAcross(code) {
