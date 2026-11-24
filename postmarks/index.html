@@ -457,7 +457,7 @@
     <main>
       <h1>Taste test</h1>
       <div class="taste">
-        <p id="taste-hint" class="taste-hint">Two loops, one on each side of the card. Swipe to turn it over. Double tap the one you prefer.</p>
+        <p id="taste-hint" class="taste-hint">Two loops, one on each side of the card. Swipe to turn it over. Double tap the one you prefer. Five wins in a row and a loop retires.</p>
         <div id="taste-card" class="taste-card" tabindex="0" role="group">
           <div class="flip">
             <div class="face front">
@@ -503,6 +503,10 @@
             <div><dt>Beat the phantom</dt><dd id="lab-coin"></dd></div>
           </dl>
           <p id="lab-likes" class="likes"></p>
+          <div id="lab-hall" class="hall" hidden>
+            <h3>Hall of fame</h3>
+            <ul></ul>
+          </div>
           <details>
             <summary>How this works</summary>
             <p>Every pick is a label. A model learns from them what you go for: how fast, how busy each instrument is, how high the tune sits, and a dozen things more. From the tenth pick on it says in advance which loop you will pick.</p>
