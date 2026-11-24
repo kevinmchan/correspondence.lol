@@ -27,6 +27,9 @@
 // dust shows in the lamplight, and there is a sound to hear. `pace` is the
 // one dial for all of it: how fast the room is going.
 //
+// Going fast is not the trouble; having to is. On the last screen Penny
+// dashes again, to race you to the lit square, and the room stays slow.
+//
 // Nobody is told so in words. Whoever is caught waiting on the first screen
 // is shown, between turns of its loop: Penny looks out at them, then down at
 // the floor, where a fingertip of light appears and slides up the room, with
@@ -34,7 +37,7 @@
 
 import { audio, isMuted } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, createVoice } from './penny.js';
+import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, TRILL, createVoice } from './penny.js';
 import { playMail, remembered } from './mail.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -382,7 +385,8 @@ export function mount(root, life) {
     },
 
     // And then it turns from the map, and looks at you. One step towards you;
-    // one square of the map lights. From then on it is only asking.
+    // one square of the map lights. From then on it asks, and, in between,
+    // plays: it races you to the square.
     {
       enter() {
         pace(1); // the hand of the clock is only a second hand now
@@ -411,9 +415,24 @@ export function mount(root, life) {
         look(0.3, -1.6); // the square,
         await s.wait(1100);
         look(0, 0); // and you
-        if (n === 2) stand(100, 1.4, 2200); // nearer still
-        act(n % 2 ? 'wiggle' : 'hop');
-        await s.after(voice.sing(n % 2 ? PLEASE : THIS_WAY, 0.6));
+        if (n % 2 === 0) {
+          // A race, then: there, and back. It is the same dash that got it
+          // nowhere before, and now it is a game: the clock does not so much
+          // as look up, and Penny is laughing.
+          act('wiggle'); // ready?
+          await s.wait(1300);
+          stand(88, 1.1, 360);
+          await s.rest(360);
+          act('hop');
+          look(0, 0); // beat you
+          await s.after(voice.sing(TRILL, 0.6));
+          await s.wait(1500);
+          stand(100, 1.4, 2000); // and back, in its own time, nearer than before
+          await s.wait(4200);
+          return;
+        }
+        act('wiggle');
+        await s.after(voice.sing(n % 4 === 1 ? PLEASE : THIS_WAY, 0.6));
         await s.wait(4200);
       },
     },
