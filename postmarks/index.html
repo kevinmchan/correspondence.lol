@@ -454,11 +454,10 @@
   </template>
 
   <template id="screen-taste">
-    <!-- Penny's Radio: a small portable set, standing on the map. Penny shows how it works (jam/taste.js). -->
+    <!-- Penny's Radio: a small portable set, standing on the map. Who shows how it works, and what Penny and Dot make of it, is in jam/taste.js. -->
     <main class="radio-world">
       <div class="map-far" aria-hidden="true"></div>
       <a href="/jam/" class="penny-back" aria-label="Back to the music maker"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
-      <button type="button" id="taste-behind-open" class="radio-behind" aria-label="Behind the radio" title="Behind the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></button>
       <h1 class="sr-only">Penny’s Radio</h1>
       <div class="radio-ground">
         <div id="taste-card" class="radio taste-card" tabindex="0" role="group">
@@ -479,7 +478,8 @@
               <div class="face front"><div class="pic"></div></div>
               <div class="face back"><div class="pic"></div></div>
               <span class="static" aria-hidden="true"></span>
-              <i class="tip" aria-hidden="true"></i>
+              <i class="cue" aria-hidden="true"></i>
+              <i class="reticle" aria-hidden="true"></i>
             </div>
             <div class="readout">
               <span class="freq"><b id="radio-freq"></b><small>FM</small></span>
@@ -492,18 +492,46 @@
                 <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
                 <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
               </button>
-              <!-- Stations kept five times running are saved here, as a radio's presets are. -->
-              <div id="lab-hall" class="presets" role="group" aria-label="Presets"><ul></ul></div>
+              <!-- Stations kept five times running are saved as presets: five lamps on the set, and a press shows them. -->
+              <button type="button" id="taste-presets-open" class="presets" aria-label="Presets"><i></i><i></i><i></i><i></i><i></i></button>
               <button type="button" id="taste-pick" class="keep">Keep</button>
             </div>
           </div>
           <span class="feet" aria-hidden="true"></span>
+          <!-- A lab's tag, riveted to the side of the set. It is in plain sight from the start, and is the way behind the radio. -->
+          <button type="button" id="taste-behind-open" class="lab-tag" aria-label="Behind the radio" title="Behind the radio"><span class="lab-plate" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></span></button>
         </div>
-        <p id="taste-note" class="taste-note" role="status"></p>
+        <div class="radio-lines">
+          <p id="dash-says" class="dash-says" role="status"></p>
+          <p id="taste-note" class="taste-note" role="status"></p>
+        </div>
       </div>
+      <!-- The one who shows how, and never why: an express letter, standing by the set until the first station is kept. -->
+      <div id="radio-dash" class="dash" aria-hidden="true" hidden>
+        <svg viewBox="0 0 52 100">
+          <ellipse class="d-shade" cx="27" cy="97" rx="15" ry="2.6"/>
+          <g class="d-body">
+            <path class="d-leg" d="M19 80v15h-5M33 80v15h5"/>
+            <rect class="d-paper" x="8" y="5" width="36" height="76" rx="1.2"/>
+            <rect class="d-stripe" x="11.6" y="8.6" width="28.8" height="68.8"/>
+            <rect class="d-stripe blue" x="11.6" y="8.6" width="28.8" height="68.8"/>
+            <path class="d-brow" d="M15 19.5l10-3.2"/>
+            <g class="d-eyes"><rect x="15.3" y="24" width="6.4" height="2.3"/><rect x="29.3" y="24" width="6.4" height="2.3"/></g>
+            <path class="d-mouth" d="M17 35h15l3-2.2"/>
+            <rect class="d-window" x="15" y="44" width="22" height="10" rx="0.8"/>
+            <path class="d-tick" d="M21 49l3.2 3 6.5-6"/>
+            <path class="d-code" d="M16 62v10M19.5 62v10M22 62v10M26.5 62v10M29 62v10M33.5 62v10M36 62v10"/>
+          </g>
+        </svg>
+      </div>
+      <!-- What Dot says, when Dot says it: an empty line until then. -->
+      <p id="dot-says" class="dot-says" role="status"></p>
+      <i id="radio-ray" class="radio-ray" aria-hidden="true"></i>
+      <p id="radio-story" class="sr-only" role="status"></p>
       <!-- The experiment this radio is: out of sight until asked for (the flask, top right). -->
         <dialog id="taste-behind" class="behind" aria-label="Behind the radio">
           <section class="taste-lab">
+          <p id="dot-told" class="dot-told" hidden><svg viewBox="13 40 40 40" aria-hidden="true"><rect x="17" y="43" width="32" height="34" rx="3" fill="#2aa198"/><rect x="19.5" y="45.5" width="27" height="29" rx="1.5" fill="none" stroke="#f6f1e7" stroke-width="1.2" stroke-dasharray="0.1 2.6" stroke-linecap="round"/><circle cx="28" cy="58" r="1.9" fill="#22303c"/><circle cx="38" cy="58" r="1.9" fill="#22303c"/><path d="M30 63.5q3 2.6 6 0" fill="none" stroke="#22303c" stroke-width="1.6" stroke-linecap="round"/></svg><span>“You’re part of an experiment.”</span></p>
           <h2>Behind the radio</h2>
           <p class="what">This radio is an experiment. Every station you keep is a label, and a model is learning from them what you like, to see whether it can call your next choice. Nothing here changes how the radio plays.</p>
           <div id="lab-meter" class="meter" role="img" aria-label="How far the evidence has got"><i></i></div>
@@ -527,8 +555,16 @@
             <button type="button" id="taste-copy" class="quiet">Copy the data</button>
             <button type="button" id="taste-reset" class="quiet">Start over</button>
           </div>
-          <button type="button" id="taste-again" class="quiet">Have Penny show me again</button>
+          <button type="button" id="taste-again" class="quiet">Show me how again</button>
           <button type="button" id="taste-behind-close" class="go">Back to the radio</button>
+          </section>
+        </dialog>
+        <dialog id="taste-presets" class="behind" aria-label="Presets">
+          <section class="taste-lab">
+            <h2>Presets</h2>
+            <p id="presets-none" class="what">A station you keep five times running is saved here.</p>
+            <ul id="lab-hall" class="preset-list"></ul>
+            <button type="button" id="taste-presets-close" class="go">Back to the radio</button>
           </section>
         </dialog>
     </main>

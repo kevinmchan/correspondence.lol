@@ -61,6 +61,7 @@ const rooms = (games) => (name, args) => (name === 'room_get' ? roomSays(args.p_
 //   screen: which screen of the app it is (the name of its template in index.html, without "screen-").
 //   at: its address.  storage: what is on the device.  server: what the server says.
 //   ready: what is there when it has come up.  then(page): what has to be done to get it into the state.
+//   settle: what is there once it is in the state (wait: how long that may take, when it is a story being told).
 //   whole: the things that must be entirely on the screen without scrolling (and the screen must not scroll).
 //   small: things to press that may be under 44 by 44, as [pattern, why, least]. The pattern is matched against how the
 //     thing is described; `least` is how small it may be, each way, and no smaller.
@@ -72,6 +73,16 @@ async function states() {
   const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const beats = ['Morning', 'A beat with rather a long name to it', 'Three'].map((name, i) => ({ name, code: encode(randomBeat(random)), at: 1795000000000 + i }));
   const played = { 'postmarks:howto-solo:v1': true };
+  // the radio: what of the set must be wholly on the screen; somebody who has heard its story out; somebody who has found Dot
+  const SET = ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.radio .lab-plate', '.penny-back', '#taste-behind-open'];
+  const told = { 'radio:taught:v1': true, 'radio:story:v1': 'told' };
+  const withDot = { 'penny:dot:v1': true, 'penny:walked:v1': true };
+  // ...and a radio on which a station has been kept five times running, twice over: two presets (packed as jam/taste.js keeps it)
+  const { begin, choose } = await import('../../jam/taste-model.js');
+  const radio = begin(random);
+  for (let i = 0; i < 12; i++) choose(radio, radio.current.reigning ?? 'front', random);
+  const pack = (pair) => ({ ...pair, front: encode(pair.front), back: encode(pair.back), phantom: encode(pair.phantom) });
+  const kept = { v: 1, streak: radio.streak, retired: radio.retired.map(encode), trials: radio.trials.map(pack), current: pack(radio.current) };
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
@@ -91,8 +102,15 @@ async function states() {
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
     { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li', small: [PADS] },
-    { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', whole: ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.penny-back', '#taste-behind-open'] },
-    { name: 'Penny’s Radio, behind it', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true }, ready: '.radio .dot', then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog.behind[open]' },
+    // Penny's Radio. Its story is told once; these are its stills. (told: nobody comes to show how, and nothing opens by itself.)
+    { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', whole: SET },
+    { name: 'Penny’s Radio, being shown how', screen: 'taste', at: '/jam/?taste', ready: '#radio-dash:not([hidden])', settle: '#dash-says span', whole: [...SET, '#radio-dash', '#dash-says'] },
+    // (a finger held down on the map keeps the sheet from opening over Dot's line, as it would for anybody)
+    { name: 'Penny’s Radio, Dot says it', screen: 'taste', at: '/jam/?taste', storage: { ...withDot, 'radio:taught:v1': true, 'radio:story:v1': 'seen' }, ready: '.radio .dot',
+      then: async (page) => { await page.waitForFunction(() => document.querySelector('.radio-world').dataset.story === 'telling', null, { timeout: 25000 }); await page.mouse.move(24, 120); await page.mouse.down(); },
+      settle: '#dot-says span.said:last-child', wait: 25000, whole: [...SET, '#dot-says'] },
+    { name: 'Penny’s Radio, behind it', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open]' },
+    { name: 'Penny’s Radio, its presets', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': kept }, ready: '.radio .presets i.lit', then: (page) => page.locator('#taste-presets-open').click(), settle: 'dialog#taste-presets[open] .preset-list a' },
   ];
 }
 
@@ -104,7 +122,7 @@ async function look(browser, origin, phoneName, state) {
     await page.goto(origin + state.at);
     await page.waitForSelector(state.ready, { timeout: 15000 });
     if (state.then) await state.then(page);
-    if (state.settle) await page.waitForSelector(state.settle, { timeout: 8000 });
+    if (state.settle) await page.waitForSelector(state.settle, { timeout: state.wait ?? 8000, state: 'attached' });
     await sleep(900); // whatever slides or rises into place has
     const seen = await measure(page, { insets: phone.insets });
     if (!String(seen.screen).split(' ').includes(`screen-${state.screen}`)) wrong.push(`the screen that came up is "${seen.screen}", not screen-${state.screen}`);

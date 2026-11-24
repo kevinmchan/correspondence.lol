@@ -116,7 +116,9 @@ the letters of a phrase. A double tap on a square guesses a post there.
 Penny is a letter. Penny cannot speak, read or write, so nothing Penny is part
 of uses words (the lines for screen readers aside). What Penny has is a voice,
 a closed-mouth hum that comes from its seal (`penny/penny.js`), and feelings,
-which show.
+which show. Others can speak. Dot, once found, can say what Penny means, as it
+does at the radio: it translates Penny, it does not read. And the one who shows
+how the radio works uses words, but only for how.
 
 **Penny feels things hard.** Its highs are very high and its lows go all the
 way down, and both pass quickly. That intensity is what the adventure looks
@@ -483,7 +485,8 @@ choices, and can that be shown to be more than chance?
 
 **The set.** A small portable radio standing on the map: a handle, an aerial,
 a plate with its name, a dial, a display, a readout, and along the bottom a
-tuning knob, play and pause, five presets and Keep. It is drawn flat and
+tuning knob, play and pause, five preset lamps and Keep, and a tag hanging
+from its right side with a flask on it. It is drawn flat and
 given depth the way a drawing is: a solid edge down its right side and along
 its underside, a shadow on the ground, a slight lean. All of it is always on
 the screen, at any size (everything on it is sized from its own width), and
@@ -499,10 +502,10 @@ Keep, keeps the station that is tuned in. It stays on the dial, marked "Kept 2
 of 5", and a new station comes in beside it: something new, or the kept one
 changed a little, more often the first: mostly near relations of a favourite
 is the sharper test of it, and the same thing over and over to listen to. A
-station
-kept five times running is saved to a preset (a press on one opens it in the
-music maker), and two new stations take the dial, so that no early favourite
-sits there for ever.
+station kept five times running is saved to a preset and lights a lamp, and
+two new stations take the dial, so that no early favourite sits there for
+ever. A press on the lamps opens a sheet of the presets, the latest first; a
+press on one opens it in the music maker.
 
 **A station is a piece, not a loop.** A loop is one bar of eight steps, and
 played round and round as it stands it is pleasant for a quarter of a minute
@@ -530,19 +533,41 @@ again; where it stood when a station was kept is written down with the pick.
 The music maker does not do this: there, what is on the board is what is
 heard.
 
-**Penny shows how.** Nothing is said. As on the walk, one thing is shown at a
-time, and the next waits until that has been done. That a swipe tunes: Penny
-comes up, looks at the radio and back at you, and a fingertip of light slides
-across the display, again every few seconds until you do it. That a station
-has to be listened to: Penny shuts its eyes and listens with you while the
-signal fills, nods when it has, and shows the swipe again for the other. That
-two taps keep one: the fingertip taps twice. Whatever is done is Penny's
-delight. After the first station is kept it is taught (on this device; the
-sheet behind the radio can ask for it again), and Penny only keeps time, one
-small hop at the top of each bar, the same whatever is playing: it gives no
-opinion of a station. It nods when one is kept, jumps for a preset, and
-shakes its head at a station kept before both have been heard. It hums once,
-before the radio is on, and not after.
+**Somebody shows how, and never why.** The first time the radio is on,
+somebody else comes to stand by it: an express letter, a red and blue stripe
+round its edge, all hurry, the kind of post Penny was left behind by. It uses
+words, and spends them only on how: an order on a strip of tape beside it,
+"Swipe.", "Play.", "Listen.", "The other one.", "Tap twice to keep one.", given
+again every few seconds until it has been done, and "Not yet." to a station
+kept before both have been heard. It never says why, and it does not cheer:
+when a thing is done it ticks. Penny watches it from under the edge, unsure,
+and shuts its eyes and listens when you listen. When a station has been kept
+it ticks a last time, looks at you, and is gone up the side of the radio. Its
+name, Dash, is in the code only. (On a screen reader the orders name the
+buttons too: "Swipe, or press Tune.")
+
+**Penny notices the tag.** The tag on the side of the set is in plain sight
+from the start, and can be pressed at any time. When the one who showed how
+has gone, Penny sees it. It goes and stands under it, looks at you, throws a
+fingertip of light at it and hums a question; the first time round it asks
+again, harder, jumping for it. Then it tries to say what it is, and cannot:
+the note sticks, and it sinks. Penny cannot speak, read or write.
+
+**Dot says it.** If Dot has been found, Penny turns to Dot. The radio goes
+quiet; Penny looks the way the express letter went, at the tag, and back at
+Dot, and pleads; Dot nods, and says it for Penny, in a bubble, a few words at
+a time on three falling bells: "You're part of an experiment." Then the sheet
+behind the radio opens by itself, once, and not while a finger is on the
+screen. Without Dot nothing is said and nothing opens by itself: Penny waits
+under the tag, asks once more, and goes back. Whenever the tag is pressed,
+that is what Penny wanted, and it is thrilled.
+
+After that Penny only keeps time, one small hop at the top of each bar, the
+same whatever is playing: it gives no opinion of a station. It nods when one
+is kept, jumps for a preset, and shakes its head at a station kept before
+both have been heard. It hums for the tag, and otherwise only before the
+radio is on. All of this happens once on a device; "Show me how again", in the
+sheet behind the radio, plays it all again.
 
 Two things are there for the experiment's sake: a station cannot be kept
 until both have been heard for a second and a half each (three bars of signal
@@ -559,9 +584,10 @@ top of every bar a gleam runs across it. At rest the notes twinkle. Both
 stations are lit by the same rules. With reduced motion only the bar moves.
 
 **Behind the radio.** Nothing on the face of the radio says it is an
-experiment. The flask at the top opens a sheet over it with the lab notes:
-where the test stands, the numbers, how it works, the data to copy out, and
-starting over.
+experiment but the tag on its side. The tag opens a sheet over it with the
+lab notes: where the test stands, the numbers, how it works, the data to copy
+out, showing how again, and starting over. Once Dot has said it, Dot's line
+is at the top of the sheet.
 
 **The model** (`jam/taste-model.js`). A loop is turned into fifteen numbers:
 tempo, how busy each instrument is, kick, snare and hats, how much falls off
