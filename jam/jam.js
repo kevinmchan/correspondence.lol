@@ -24,6 +24,13 @@
 // whole beat written into it (jam/beat.js): whoever opens it finds it on their
 // own board, ready to play and to change, and nothing of theirs is lost by it.
 //
+// Penny dances to it. It stands at the bottom edge of the window, as it does
+// everywhere (penny/pal.js), and while the loop plays every move it makes is on
+// the beat and comes from what is being played: a hop on a kick, a wiggle on a
+// snare or a clap, a nod for a note on the beat, a jump when the chords come
+// round to the start, and a step to one side and back with each bar. Dot, if
+// Dot has been found, hops to the bells. It does not hum: the music is yours.
+//
 // The sound comes from the app's one sound engine (postmarks/sound.js), on its
 // clock, so the loop keeps exact time however busy the screen is.
 
@@ -32,6 +39,8 @@ import { load, myToken, save } from '/shared/identity.js';
 import { rpc } from '/shared/api.js';
 import { ask } from '/shared/ask.js';
 import { decode, encode, isEmpty } from './beat.js';
+import { claim as callPal } from '/penny/pal.js';
+import { hasDot } from '/penny/penny.js';
 
 const STEPS = 8;
 const ROWS = 7;
@@ -136,6 +145,30 @@ export function mount(root, life) {
   const keep = () => save(SAVE_KEY, { v: 1, tempo, notes: sets.map((set) => [...set]) });
   let layer = 0;
   let playing = false;
+
+  // --- Penny, who dances -----------------------------------------------------------------
+  const pal = callPal(life, { x: 0.74, height: 'low', mood: 'calm', dot: hasDot() });
+  life.setTimeout(() => { if (!playing) pal.settle('peek'); }, 600);
+  const DRUMS = LAYERS.findIndex((kind) => kind.name === 'Drums');
+  const BELLS = LAYERS.findIndex((kind) => kind.name === 'Bells');
+  const has = (index, step, row) => sets[index].has(keyOf(step, row));
+  const anyAt = (index, step) => Array.from({ length: ROWS }, (_, row) => row).some((row) => has(index, step, row));
+  // One step of the loop being heard: what Penny does about it.
+  function dance(step, chord) {
+    if (step < 0) return;
+    const kick = has(DRUMS, step, 6) || has(DRUMS, step, 5);
+    const snare = has(DRUMS, step, 4) || has(DRUMS, step, 3);
+    if (step === 0) {
+      pal.goTo(0.74 + (chord % 2 ? -0.07 : 0.07)); // a step to one side with each bar, and back with the next
+      if (chord === 0) pal.gesture('jump'); // the chords have come round
+    }
+    if (step === 0 && chord === 0) { /* the jump is the move */ }
+    else if (kick) pal.gesture('hop');
+    else if (snare) pal.gesture('wiggle');
+    else if (step % 4 === 0) pal.gesture('hop'); // the beat itself, when no drum marks it
+    else if (step % 2 === 0 && LAYERS.some((kind, index) => index !== DRUMS && anyAt(index, step))) pal.gesture('nod');
+    if (anyAt(BELLS, step)) pal.gesture('hop', 'dot');
+  }
 
   // --- The chords: four small lights over the board, one lit at a time ------------------
   const chordLights = document.createElement('div');
@@ -303,6 +336,7 @@ export function mount(root, life) {
       chordLights.setAttribute('aria-label', lit < 0 ? 'Four chords, played in turn' : `Chord ${lit + 1} of ${CHORDS.length}: ${CHORDS[lit].name}`);
     }
     if (step !== shown) {
+      dance(step, heard);
       for (const pad of pads) {
         const here = Number(pad.dataset.step) === step;
         pad.classList.toggle('now', here);
@@ -327,6 +361,9 @@ export function mount(root, life) {
       bar = 0;
       heard = 0;
       queue.length = 0;
+      pal.rise().mood('dancing').look(null);
+    } else {
+      pal.mood('calm').goTo(0.74).settle('peek'); // the music has stopped: so has it
     }
     render();
   }
