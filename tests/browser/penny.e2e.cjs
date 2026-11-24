@@ -122,8 +122,43 @@ async function main() {
       document.querySelectorAll(sel).forEach(walk);
       return seen;
     }, selector);
-    return { pal, feeling, board, centre, tap, open, idle, until, says, portalOpen, through, stored, words };
+    // what can be read in the radio's reading, in order (not what is there for screen readers only)
+    const reading = () => page.locator('#taste-behind .taste-lab').evaluate((sheet) => [...sheet.querySelectorAll('p, blockquote, figcaption, dd, dt, h2, h3, summary, span, li')]
+      .filter((one) => one.getClientRects().length && !one.closest('.sr-only') && [...one.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
+      .map((one) => one.textContent.replace(/\s+/g, ' ').trim()));
+    return { pal, feeling, board, centre, tap, open, idle, until, says, portalOpen, through, stored, words, reading };
   };
+
+  // The question Penny's Radio asks, and what its reading is held to (README, "The question Penny's Radio asks"): it is
+  // met before the numbers and how it works; nothing right after it reads as a reply to it (a yes, a no, a "not yet", a
+  // "significant"); and nothing after it answers it.
+  const QUESTION = 'Is a radio that learns one person’s taste a defence of that taste, or one more step in the averaging?';
+  function leftOpen(read) {
+    const asked = read.indexOf(QUESTION);
+    assert.ok(asked > 0, 'the reading asks the question');
+    assert.ok(asked < read.indexOf('Picks') && asked < read.findIndex((one) => /^How it works$/i.test(one)), `the question comes after the numbers or how it works: ${JSON.stringify(read)}`);
+    assert.doesNotMatch(read[asked + 1] ?? '', /^(yes|no|not|significant)\b/i, `the first words after the question read as its answer: ${read[asked + 1]}`);
+    assert.doesNotMatch(read.slice(asked + 1).join(' '), /defen[cs]e|averag|narrow|homogen|answer/i, 'something after the question answers it');
+  }
+  // Radios under way, packed as jam/taste.js keeps them: twelve stations kept, two of them presets; and somebody with a
+  // marked taste (always the faster, with drums and a low tune), kept until the test is significant.
+  const { encode } = await import('../../jam/beat.js');
+  const { FEATURES, begin, choose, features, standing } = await import('../../jam/taste-model.js');
+  const pack = (pair) => ({ ...pair, front: encode(pair.front), back: encode(pair.back), phantom: encode(pair.phantom) });
+  const packed = (radio) => ({ v: 1, streak: radio.streak, retired: radio.retired.map(encode), trials: radio.trials.map(pack), current: pack(radio.current) });
+  const radios = (() => {
+    let seed = 7;
+    const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const twelve = begin(random);
+    for (let i = 0; i < 12; i++) choose(twelve, twelve.current.reigning ?? 'front', random);
+    const taste = [];
+    for (const [name, much] of [['tempo', 4], ['drums', 3], ['bellsHigh', -4], ['space', -3]]) taste[FEATURES.findIndex((one) => one.key === name)] = much;
+    const like = (beat) => features(beat).reduce((sum, value, i) => sum + value * (taste[i] ?? 0), 0);
+    const found = begin(random);
+    while (!standing(found.trials).significant && found.trials.length < 600) choose(found, like(found.current.front) >= like(found.current.back) ? 'front' : 'back', random);
+    assert.equal(standing(found.trials).significant, true, 'a marked taste was not found in 600 picks');
+    return { underWay: packed(twelve), significant: packed(found) };
+  })();
 
   const results = await Promise.all([
     check('the film is asked for, never forced: the app opens on the home page, and scene one has a door back', {}, async (page) => {
@@ -570,7 +605,7 @@ async function main() {
       assert.deepEqual(server, [], 'a beat deleted here is deleted from the account');
     }),
 
-    check('the radio: somebody shows how and never why; then Penny notices the tag on its side, cannot say what it is, and the tag opens the experiment', {}, async (page, h) => {
+    check('the radio: a work in a gallery; somebody shows how and never why; then Penny notices the tag on its side, cannot say what it is, and the tag opens the reading', {}, async (page, h) => {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('#jam-lab');
       await page.locator('#jam-lab').click();
@@ -590,15 +625,52 @@ async function main() {
       assert.match(set.ground, /gradient/, 'the radio stands in the world');
       assert.equal(await page.locator('.radio .plate').textContent(), 'Penny’s Radio');
       assert.equal(await page.locator('#taste-behind-open').isVisible(), true, 'the tag is on the side of the set from the start');
-      const tape = () => page.evaluate(() => document.querySelector('#dash-says span[aria-hidden]')?.textContent ?? ''); // what it says now: no waiting for words that are gone
-      const says = (words) => page.waitForFunction((want) => document.querySelector('#dash-says span[aria-hidden]')?.textContent === want, words, { timeout: 8000 });
+      assert.equal(await page.locator('#taste-behind-open').getAttribute('title'), null, 'the tag says nothing, even under a pointer');
+      // a screen reader is told what pressing the tag does, and nothing of what it will find there
+      const tagName = await page.locator('#taste-behind-open').getAttribute('aria-label');
+      assert.match(tagName, /^Read about/);
+      assert.doesNotMatch(tagName, /experiment|model|test|lab/i, 'the tag gives the reveal away before it is pressed');
+      // it is a work in a gallery: on a plinth, with the gallery's label, which comes after the set and is its caption, and gives nothing away
+      const label = await page.evaluate(() => {
+        const [set, card, plinth, caption] = [document.querySelector('.radio .body'), document.querySelector('#taste-card'), document.querySelector('.plinth'), document.querySelector('.radio-ground > figcaption')];
+        const words = caption.querySelector('.gallery-label');
+        const [a, b] = [set.getBoundingClientRect(), words.getBoundingClientRect()];
+        const order = [...document.querySelectorAll('.radio-ground *')].filter((el) => getComputedStyle(el).order !== '0' || /reverse/.test(getComputedStyle(el).flexDirection));
+        return { caption: caption === plinth, after: Boolean(card.compareDocumentPosition(caption) & Node.DOCUMENT_POSITION_FOLLOWING), figure: caption.parentElement.tagName, reordered: order.length, text: words.textContent.replace(/\s+/g, ' ').trim(), under: b.top > a.bottom, inside: b.bottom <= innerHeight };
+      });
+      assert.ok(label.caption && label.after && label.figure === 'FIGURE' && label.reordered === 0, `the label is not the set's caption, after it: ${JSON.stringify(label)}`);
+      assert.ok(label.under && label.inside, `the label is not on the plinth under the set: ${JSON.stringify(label)}`);
+      assert.match(label.text, /^Penny’s Radio Steel, enamel Two stations, one listener Anonymous loan$/);
+      assert.doesNotMatch(label.text, /experiment|model|test/i, 'the label everyone reads first gives the experiment away');
+      // the plinth is as wide as the set, by the one rule they share, not a copy of it
+      const wide = await page.evaluate(() => {
+        const rules = [...document.styleSheets].flatMap((sheet) => { try { return [...sheet.cssRules]; } catch { return []; } });
+        const rule = (selector) => rules.find((one) => one.selectorText === selector)?.style;
+        return { set: parseFloat(getComputedStyle(document.querySelector('.radio')).width), plinth: parseFloat(getComputedStyle(document.querySelector('.plinth')).width), setRule: rule('.radio')?.getPropertyValue('--w').trim(), plinthRule: rule('.plinth')?.getPropertyValue('width').trim() };
+      });
+      assert.ok(Math.abs(wide.set - wide.plinth) < 0.5, `the plinth is not as wide as the set: ${JSON.stringify(wide)}`);
+      assert.ok(wide.setRule === 'var(--work-w)' && wide.plinthRule === 'var(--work-w)', `the set and its plinth do not share one width: ${JSON.stringify(wide)}`);
+      // the light follows the story and not the learning: what it is now is what it is after a station is kept
+      const light = () => page.evaluate(() => [...document.querySelectorAll('.gallery-light')].map((one) => getComputedStyle(one).backgroundImage).join(' | '));
+      const lightBefore = await light();
+      const tape = () => page.evaluate(() => document.querySelector('#dash-sign [data-order]')?.dataset.order ?? ''); // what it orders now: no waiting for signs that are gone
+      const says = (order) => page.waitForFunction((want) => document.querySelector('#dash-sign [data-order]')?.dataset.order === want, order, { timeout: 8000 });
       const story = () => page.evaluate(() => JSON.parse(localStorage.getItem('radio:story:v1')));
       const stage = (name, timeout = 15000) => page.waitForFunction((want) => document.querySelector('.radio-world').dataset.story === want, name, { timeout });
-      // somebody else shows how: it stands by the set and gives an order, and Penny only watches
+      // somebody else shows how: it stands by the set and hangs an order over the label, and Penny only watches
       await page.waitForSelector('#radio-dash:not([hidden])', { timeout: 6000 });
-      await says('Swipe.');
+      await says('swipe');
       assert.equal((await h.pal()).mood, 'unsure', 'Penny is watching the one who shows how');
-      assert.match(await page.locator('#dash-says .sr-only').textContent(), /press Tune/, 'the order is given in a way a screen reader can follow');
+      assert.match(await page.locator('#dash-says').textContent(), /press Tune/, 'the order is given in a way a screen reader can follow');
+      assert.equal(await page.locator('#dash-sign').evaluate((sign) => sign.textContent.trim()), '', 'its orders are signs, not words');
+      assert.equal(await page.locator('#dash-sign svg').count(), 1);
+      await sleep(300); // (it has dropped into place)
+      const hung = await page.evaluate(() => {
+        const [sign, words] = [document.querySelector('#dash-sign').getBoundingClientRect(), document.querySelector('.gallery-label').getBoundingClientRect()];
+        return { covers: sign.left <= words.left && sign.right >= words.right && sign.top <= words.top && sign.bottom >= words.bottom, hidden: document.querySelector('#dash-sign').getAttribute('aria-hidden') };
+      });
+      assert.ok(hung.covers, 'its sign hangs over the gallery’s label');
+      assert.equal(hung.hidden, 'true', 'the sign is a picture: a screen reader has the order in words');
       const swipe = async () => {
         await page.mouse.move(x + 60, y);
         await page.mouse.down();
@@ -617,12 +689,12 @@ async function main() {
       const was = await turned();
       await swipe();
       assert.equal(await turned(), !was, 'a swipe did not tune to the other station');
-      await says('Listen.');
+      await says('listen');
       // too soon: neither station has been listened to. The refusal is that one's, and has no reason in it
       await doubleTap();
       await sleep(250);
       assert.equal((await kept()).trials.length, 0, 'a station was kept before both had been heard');
-      assert.equal(await tape(), 'Not yet.');
+      assert.equal(await tape(), 'not-yet');
       assert.match(await page.locator('#taste-note').textContent(), /Tune to|Stay on/, 'a screen reader is still told what to do');
       assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
       assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
@@ -637,7 +709,7 @@ async function main() {
         return up;
       };
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
-      if ((await page.locator('.taste-card .face.heard').count()) < 2) await says('The other one.');
+      if ((await page.locator('.taste-card .face.heard').count()) < 2) await says('other');
       const first = await pickOne();
       assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: that is all there was to show');
       let data = await kept();
@@ -647,9 +719,11 @@ async function main() {
       assert.notEqual(data.current[first === 'front' ? 'back' : 'front'], data.trials[0][first === 'front' ? 'back' : 'front'], 'and a new one comes in beside it');
       assert.equal(data.current.reigning, first);
       assert.match(data.current.phantom, /^[A-Za-z0-9_-]{39}$/, 'a phantom was made beside the challenger');
-      // the one who showed how is gone, without a word of why; and Penny has noticed the tag
+      // the one who showed how is gone, without a word of why, and its sign with it: the label is read again; and Penny has noticed the tag
       await page.waitForSelector('#radio-dash', { state: 'hidden', timeout: 5000 });
       assert.equal(await tape(), '');
+      assert.equal(await page.locator('#dash-sign').isVisible(), false, 'the sign is taken off the label');
+      assert.equal(await page.locator('#dash-says').textContent(), '');
       await page.waitForFunction(() => localStorage.getItem('radio:story:v1') === '"seen"', null, { timeout: 5000 });
       // it goes and stands under it, tries to say what it is, and cannot: there is no Dot to say it
       await page.waitForFunction(() => Number(document.querySelector('.pal').style.getPropertyValue('--x')) > 0.6, null, { timeout: 10000 });
@@ -664,7 +738,21 @@ async function main() {
       assert.equal(await story(), 'found');
       assert.equal(await page.locator('#dot-told').isVisible(), false, 'Dot’s line with no Dot to say it');
       assert.equal(await page.locator('#lab-picks').textContent(), '1');
-      assert.match(await page.locator('#lab-verdict').textContent(), /9 to go/);
+      assert.equal(await page.locator('#lab-verdict').textContent(), 'From the tenth choice on, the model calls each one before it is made.', 'it counts down');
+      // the reading: the gallery's entry, opened at its top with its title focused
+      assert.equal(await page.evaluate(() => document.activeElement?.id), 'reading-title', 'the reading opens at its title');
+      assert.equal(await page.locator('#reading-title').getAttribute('tabindex'), '-1');
+      assert.equal(await page.locator('#taste-behind .taste-lab').evaluate((sheet) => sheet.scrollTop), 0);
+      assert.match(await page.locator('#taste-behind .what').textContent(), /this radio is also an experiment\./);
+      // it asks the question before the numbers and how it works, so that it is met before them; nothing right after it
+      // reads as its answer; and nothing after it answers it
+      leftOpen(await h.reading());
+      // and the way back to the radio does not scroll with it: at the end of the reading it is where it was, in reach
+      const foot = async () => page.locator('#taste-behind-close').evaluate((button) => { const box = button.getBoundingClientRect(); return { top: Math.round(box.top), bottom: box.bottom, inside: box.bottom <= innerHeight && box.top >= 0, foot: Boolean(button.closest('footer')) && !button.closest('.taste-lab') }; });
+      const atTop = await foot();
+      await page.locator('#taste-behind .taste-lab').evaluate((sheet) => { sheet.scrollTop = sheet.scrollHeight; });
+      const atEnd = await foot();
+      assert.ok(atTop.foot && atTop.inside && atEnd.top === atTop.top, `the way back scrolls with the reading: ${JSON.stringify([atTop, atEnd])}`);
       await page.locator('#taste-behind-close').click();
       assert.equal(await page.locator('#lab-picks').isVisible(), false);
       // the station that was kept says so when it is tuned in
@@ -680,26 +768,31 @@ async function main() {
       await page.waitForSelector('#taste-behind[open]');
       assert.equal((await kept()).trials.length, 1, 'Enter on the tag kept a station');
       await page.locator('#taste-behind-close').click();
-      // the presets have a sheet of their own
+      // the presets have a sheet of their own, without words: the set's lamps, and what they are for said to a screen reader
       await page.locator('#taste-presets-open').click();
       await page.waitForSelector('#taste-presets[open]');
       assert.equal(await page.locator('#presets-none').isVisible(), true);
+      assert.deepEqual(await h.words('#taste-presets'), [], 'the presets’ sheet has words on it');
+      assert.equal(await page.locator('#taste-presets .preset-lamps i').count(), 5);
+      assert.equal(await page.locator('#taste-presets-close').getAttribute('aria-label'), 'Back to the radio');
       await page.locator('#taste-presets-close').click();
       // and by the buttons
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 12000 }).catch(async () => { await page.locator('#taste-flip').click(); });
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 12000 });
       await page.locator('#taste-pick').click();
       await page.waitForFunction(() => document.querySelector('#lab-picks').textContent === '2');
+      assert.equal(await light(), lightBefore, 'the light changes with what is kept'); // (only how cold or warm it is follows the story)
+      assert.equal(await page.evaluate(() => document.querySelector('.radio-world').getAttribute('style')), null, 'something on the room follows the experiment');
       // it is all still there after a reload, and nobody comes to show how a second time
       await page.reload();
       await page.waitForSelector('.taste-card');
       assert.equal(await page.locator('#lab-picks').textContent(), '2');
-      assert.match(await page.locator('#lab-verdict').textContent(), /8 to go/);
+      assert.equal(await page.locator('#lab-verdict').textContent(), 'From the tenth choice on, the model calls each one before it is made.');
       await sleep(2500);
       assert.equal(await page.locator('#radio-dash').isVisible(), false);
     }),
 
-    check('the radio, with Dot: Penny tells Dot, Dot says what Penny means, and the experiment opens by itself, once', { storage: { 'penny:dot:v1': true, 'penny:walked:v1': true, 'radio:taught:v1': true, 'radio:story:v1': 'seen' } }, async (page, h) => {
+    check('the radio, with Dot: Penny tells Dot, Dot says what Penny means as the audio guide would, and the reading opens by itself, once', { storage: { 'penny:dot:v1': true, 'penny:walked:v1': true, 'radio:taught:v1': true, 'radio:story:v1': 'seen' } }, async (page, h) => {
       await page.goto(`${origin}/jam/?taste`);
       await page.waitForSelector('.taste-card');
       assert.equal((await h.pal()).alone, false, 'Dot is with Penny');
@@ -719,6 +812,8 @@ async function main() {
       await page.waitForSelector('#taste-behind[open]', { timeout: 8000 });
       assert.equal(await page.locator('#dot-told').isVisible(), true);
       assert.match(await page.locator('#dot-told').textContent(), /You’re part of an experiment\./);
+      assert.match(await page.locator('#dot-told figcaption').textContent(), /^Audio guide ?Dot, for Penny/, 'Dot’s line is in the reading as the audio guide’s stop');
+      assert.equal(await page.evaluate(() => document.activeElement?.id), 'reading-title', 'the reading opens at its title, opened by itself too');
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('radio:story:v1'))), 'told');
       await page.locator('#taste-behind-close').click();
       // they go back to where they stand
@@ -730,6 +825,115 @@ async function main() {
       assert.equal(await page.locator('#dot-says').textContent(), '');
       assert.equal(await page.locator('#taste-behind').evaluate((sheet) => sheet.open), false);
       assert.equal(await page.locator('#radio-dash').isVisible(), false);
+    }),
+
+    check('the radio, interrupted: the tag pressed before the attendant has come brings it afterwards, and pressed as it goes does not leave it standing', {}, async (page, h) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.taste-card');
+      // the tag, pressed before the one who shows how has come (it comes 0.9 s after the radio is on)
+      const early = await page.evaluate(() => {
+        const away = document.querySelector('#radio-dash').hidden;
+        document.querySelector('#taste-behind-open').click();
+        return away;
+      });
+      assert.equal(early, true, 'the attendant had come before the tag could be pressed: this case was not tried');
+      await page.waitForSelector('#taste-behind[open]');
+      await sleep(1500);
+      await page.locator('#taste-behind-close').click();
+      // the reading closed, it comes after all, and the lesson goes on: the light is cold while it is here
+      await page.waitForSelector('#radio-dash:not([hidden])', { timeout: 5000 });
+      await page.waitForFunction(() => document.querySelector('#dash-sign [data-order]')?.dataset.order === 'swipe', null, { timeout: 5000 });
+      assert.match(await page.locator('#dash-says').textContent(), /press Tune/);
+      assert.equal(await page.evaluate(() => document.querySelector('.radio-world').dataset.story), 'lesson');
+      // both stations heard, by the buttons; the first one kept, and the tag pressed at once, before it has gone
+      await page.locator('#taste-play').click();
+      await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
+      if ((await page.locator('.taste-card .face.heard').count()) < 2) await page.locator('#taste-flip').click();
+      await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
+      const shown = await page.evaluate(async () => {
+        document.querySelector('#taste-pick').click();
+        await new Promise((done) => setTimeout(done, 150));
+        const there = !document.querySelector('#radio-dash').hidden;
+        document.querySelector('#taste-behind-open').click();
+        return there;
+      });
+      assert.equal(shown, true, 'the attendant had gone before the tag could be pressed: this case was not tried');
+      await page.waitForSelector('#taste-behind[open]');
+      assert.equal((await h.stored('jam:taste:v1')).trials.length, 1);
+      await sleep(500);
+      await page.locator('#taste-behind-close').click();
+      // it has gone all the same, and taken its sign and its orders with it; the label can be read again, and the light warms
+      await page.waitForSelector('#radio-dash', { state: 'hidden', timeout: 5000 });
+      assert.equal(await page.locator('#dash-sign').evaluate((sign) => sign.childElementCount), 0, 'its sign is left over the label');
+      assert.equal(await page.locator('#dash-says').textContent(), '', 'a screen reader is still given its order');
+      await page.waitForFunction(() => document.querySelector('.radio-world').dataset.story === 'done', null, { timeout: 8000 });
+      await sleep(3000);
+      assert.equal(await page.locator('#radio-dash').isVisible(), false);
+    }),
+
+    check('the radio, under way: the reading says where the test stands the same way however it stands; the data is copied; starting over asks first; a preset opens in the music maker', { storage: { 'radio:taught:v1': true, 'radio:story:v1': 'told', 'jam:taste:v1': radios.underWay }, permissions: ['clipboard-read', 'clipboard-write'] }, async (page, h) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .presets i.lit');
+      // the presets: each station saved, as its picture and its place on the dial, the latest first, and nothing else to read
+      await page.locator('#taste-presets-open').click();
+      await page.waitForSelector('#taste-presets[open] .preset-list a');
+      const kept = await h.stored('jam:taste:v1');
+      assert.equal(kept.retired.length, 2);
+      assert.deepEqual(await page.locator('#lab-hall a').evaluateAll((links) => links.map((a) => a.getAttribute('href'))), kept.retired.map((code) => `/jam/?b=${code}`).reverse(), 'each preset opens its own station in the music maker, the latest first');
+      assert.equal(await page.locator('#taste-presets .preset-lamps i.lit').count(), 2);
+      const seen = await h.words('#taste-presets');
+      assert.ok(seen.length > 0 && seen.every((text) => /^(\d{2,3}\.\d|FM)$/.test(text)), `the presets’ sheet has words on it: ${JSON.stringify(seen)}`);
+      await page.locator('#taste-presets-close').click();
+      // the reading, twelve picks in: what is measured, and if it is significant, never a yes or a "not yet", nor a count
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      assert.equal(await page.locator('#lab-picks').textContent(), '12');
+      assert.match(await page.locator('#lab-verdict').textContent(), /^So far p = \d\.\d\d\. The test is significant if the stake reaches ×20 \(p = 0\.05\)\.$/);
+      leftOpen(await h.reading());
+      const look = () => page.locator('#lab-verdict').evaluate((verdict) => { const style = getComputedStyle(verdict); return { style: style.fontStyle, weight: style.fontWeight, colour: style.color, size: style.fontSize, classes: verdict.className }; });
+      const notYet = await look();
+      // the data, copied out: said on the button, and back after a while
+      await page.locator('#taste-copy').click();
+      await page.waitForFunction(() => document.querySelector('#taste-copy').textContent === 'Copied', null, { timeout: 3000 });
+      const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()));
+      assert.equal(copied.trials.length, 12);
+      assert.equal(copied.standing.picks, 12);
+      await page.waitForFunction(() => document.querySelector('#taste-copy').textContent === 'Copy the data', null, { timeout: 4000 });
+      // starting over asks first: no keeps everything, yes throws away the picks and the presets
+      await page.locator('#taste-reset').click();
+      await page.waitForSelector('dialog.ask[open]');
+      assert.match(await page.locator('dialog.ask').textContent(), /12 choices/);
+      await page.locator('dialog.ask button.quiet').click();
+      await page.waitForSelector('dialog.ask', { state: 'detached' });
+      assert.equal(await page.locator('#lab-picks').textContent(), '12');
+      assert.equal((await h.stored('jam:taste:v1')).trials.length, 12, 'a no threw the picks away');
+      await page.locator('#taste-reset').click();
+      await page.locator('dialog.ask button.yes').click();
+      await page.waitForFunction(() => document.querySelector('#lab-picks').textContent === '0');
+      const fresh = await h.stored('jam:taste:v1');
+      assert.deepEqual([fresh.trials.length, fresh.retired.length], [0, 0]);
+      assert.equal(await page.locator('.radio .presets i.lit').count(), 0);
+      assert.equal(await page.locator('#lab-verdict').textContent(), 'From the tenth choice on, the model calls each one before it is made.');
+      await page.locator('#taste-behind-close').click();
+      // somebody with a marked taste, kept until the test is significant: the verdict is in the same voice as before, and
+      // still not the first thing after the question
+      await page.evaluate((data) => localStorage.setItem('jam:taste:v1', JSON.stringify(data)), radios.significant);
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      assert.match(await page.locator('#lab-verdict').textContent(), /^Significant at choice \d+: p = 0\.0\d\d\. The music itself predicts the choices\.$/);
+      assert.equal(await page.locator('#lab-meter').evaluate((meter) => meter.style.getPropertyValue('--full')), '1.000');
+      leftOpen(await h.reading());
+      assert.deepEqual(await look(), notYet, 'the verdict is given more weight once it is significant');
+      await page.locator('#taste-behind-close').click();
+      // and a preset, pressed, opens its station in the music maker
+      await page.locator('#taste-presets-open').click();
+      await page.waitForSelector('#taste-presets[open] .preset-list a');
+      const href = await page.locator('#lab-hall a').first().getAttribute('href');
+      await page.locator('#lab-hall a').first().click();
+      await page.waitForURL((url) => `${url.pathname}${url.search}` === href);
+      await page.waitForSelector('.jam-board .pad');
     }),
 
     check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {

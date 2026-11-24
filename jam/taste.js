@@ -1,32 +1,41 @@
-// Penny's Radio (/jam/?taste). To whoever is using it, it is a small portable
-// radio standing on the map: two stations on the dial, a swipe to tune from
-// one to the other, a double tap to keep the one you would go on listening
-// to. The station kept stays on the dial and a new one comes in beside it. A
-// station kept five times running is saved to one of the presets on the set,
-// and two new stations take the dial.
+// Penny's Radio (/jam/?taste). It is a work in a gallery that keeps music: a
+// small portable radio on a pale plinth under a light, with the gallery's
+// label on the plinth (index.html, jam/taste.css). To whoever is using it, it
+// is a radio: two stations on the dial, a swipe to tune from one to the other,
+// a double tap to keep the one you would go on listening to. The station kept
+// stays on the dial and a new one comes in beside it. A station kept five
+// times running is saved to one of the presets on the set, and two new
+// stations take the dial. It is played without words; the words are in the
+// reading, the gallery's entry for it, which the tag on its side opens.
 //
 // THE STORY. Somebody else shows how: an express letter (Dash, in the code
-// and nowhere on the screen), the hurry of the sorting office with a face. It
-// stands by the set and pays out orders on a strip of tape, one at a time:
-// "Swipe." "Listen." "The other one." "Tap twice to keep one." It says how,
-// and never why. It is not unkind and it does not hurry anybody: it waits,
-// perfectly still, and says the same thing again. When the first station has
-// been kept it ticks, and is gone up the side of the set.
+// and nowhere on the screen), the hurry of the sorting office with a face, in
+// an attendant's cap. It stands by the plinth and hangs a sign over the
+// gallery's label, its how over the gallery's what: one order at a time, the
+// kind of sign that needs no words: swipe, play, listen, the other one, tap
+// twice. It says how, and never why. It is not unkind and it does not hurry
+// anybody: it waits, perfectly still, and shows the same sign again. When the
+// first station has been kept it ticks, and is gone up the side of the set,
+// and its sign with it. While it is there the gallery's light is cold; after,
+// it warms. (The light follows the story and nothing else: it is the same
+// however many stations are kept, and whatever the experiment makes of them.)
 //
 // On that side hangs a tag with a flask on it. It has been in plain sight all
-// along. Penny, who watched the lesson from under the edge, notices it, and
-// tries to get you to notice: goes and stands under it, throws its fingertip
-// of light at it, jumps for it. Then it tries to say what it is, and cannot:
-// Penny has no words. So it tells Dot, in hums. Dot is a stamp, and knows
-// words: it turns to you and says what Penny means, "You're part of an
-// experiment.", and the sheet behind the radio opens.
+// along, and it is not the gallery's: the label does not mention it. Penny,
+// who watched the lesson from under the edge, looks at the label, which it
+// cannot read, and then sees the tag, which is a picture. It tries to get you
+// to notice: goes and stands under it, throws its fingertip of light at it,
+// jumps for it. Then it tries to say what it is, and cannot: Penny has no
+// words. So it tells Dot, in hums. Dot is a stamp, and knows words: it turns
+// to you and says what Penny means, "You're part of an experiment.", as the
+// audio guide would, and the reading opens.
 //
 // Without Dot (who is met on the walk, a quarter of the way through) there is
 // nobody to say it: Penny tries, cannot, and rests. The tag can be pressed at
-// any time by anybody, and that opens the sheet too; the telling waits for a
+// any time by anybody, and that opens the reading too; the telling waits for a
 // visit when Dot is there. How far the story has got is kept on the device
 // (radio:story:v1): not yet seen; 'seen' (Penny has noticed the tag); 'found'
-// (the sheet was opened from the tag, with no Dot to say it); 'told'.
+// (the reading was opened from the tag, with no Dot to say it); 'told'.
 //
 // Afterwards Penny only keeps time: one small hop at the top of each bar, the
 // same whatever is playing, so that it gives no opinion of a station. Nothing
@@ -35,7 +44,10 @@
 // Behind it, out of sight until the tag on its side is pressed, it is an
 // experiment in whether what you like in a loop can be predicted. Every
 // station kept is a label; what is measured about a loop, the model, and the
-// test of whether the model can really tell are in jam/taste-model.js.
+// test of whether the model can really tell are in jam/taste-model.js. The
+// reading asks the question the piece asks before it shows any of that, and
+// leaves it open (README, "The question Penny's Radio asks"): nothing on this
+// screen answers it.
 //
 // Two things are done for the sake of the experiment and not of the radio. A
 // station cannot be kept until both have been listened to. And which of the
@@ -68,6 +80,16 @@ function dialOf(beat) {
   return LOW + (hash % 206) / 10;
 }
 const otherSide = (side) => (side === 'front' ? 'back' : 'front');
+// The signs the one who shows how hangs over the label: drawn, never written, square-ended, in the one weight.
+const SIGN = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square">${inner}</svg>`;
+const SIGNS = {
+  swipe: SIGN('<circle cx="18.5" cy="12" r="2.6" fill="currentColor" stroke="none"/><path d="M14.6 12H4.6M8.6 8l-4 4 4 4"/>'), // a fingertip drawn across
+  other: SIGN('<circle cx="5.5" cy="12" r="2.6" fill="currentColor" stroke="none"/><path d="M9.4 12h10M15.4 8l4 4-4 4"/>'), // and back the other way
+  play: SIGN('<path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/>'), // the play button's own sign
+  listen: SIGN('<path d="M7 10a5 5 0 0 1 10 0c0 2.7-2.6 3.6-3 5.6-.4 2-1.8 3.4-3.7 3.4-1.4 0-2.5-.8-3-1.9"/><path d="M10 10.2a2 2 0 0 1 4 0c0 1.3-1.2 1.6-1.7 2.6"/>'), // an ear
+  keep: SIGN('<circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="5.6" stroke-width="1.8"/><circle cx="12" cy="12" r="9.2" stroke-width="1.8"/>'), // a fingertip, and two rings: twice
+  'not-yet': SIGN('<path d="M6.5 3.5h11M6.5 20.5h11M8 3.5v2c0 3 4 4.4 4 6.5s-4 3.5-4 6.5v2M16 3.5v2c0 3-4 4.4-4 6.5s4 3.5 4 6.5v2"/><path d="M9.6 19.6h4.8L12 17.2z" fill="currentColor" stroke="none"/>'), // an hourglass
+};
 
 // What is kept: the picks, with the loops as their codes, and the pair now up.
 const packPair = (pair) => ({ ...pair, front: encode(pair.front), back: encode(pair.back), phantom: encode(pair.phantom) });
@@ -95,8 +117,9 @@ export function mount(root, life) {
   document.title = 'Penny’s Radio · correspondence.lol';
   const el = {
     card: $('taste-card'), note: $('taste-note'), flip: $('taste-flip'), pick: $('taste-pick'), play: $('taste-play'),
-    freq: $('radio-freq'), tag: $('radio-tag'), signal: $('radio-signal'), behind: $('taste-behind'),
+    freq: $('radio-freq'), tag: $('radio-tag'), signal: $('radio-signal'), behind: $('taste-behind'), reading: root.querySelector('#taste-behind .taste-lab'),
     presetsOpen: $('taste-presets-open'), presets: $('taste-presets'), presetsNone: $('presets-none'), dotTold: $('dot-told'),
+    lamps: [...root.querySelectorAll('#taste-presets .preset-lamps i')],
     picks: $('lab-picks'), called: $('lab-called'), habits: $('lab-habits'), coin: $('lab-coin'), stake: $('lab-stake'), meter: $('lab-meter'),
     verdict: $('lab-verdict'), likes: $('lab-likes'), hall: $('lab-hall'), copy: $('taste-copy'), reset: $('taste-reset'),
   };
@@ -305,7 +328,8 @@ export function mount(root, life) {
   const world = root.querySelector('.radio-world');
   const display = root.querySelector('.radio .display');
   const labTag = $('taste-behind-open');
-  const [dashEl, tape, bubble, ray, aloud] = [$('radio-dash'), $('dash-says'), $('dot-says'), $('radio-ray'), $('radio-story')];
+  const label = root.querySelector('.gallery-label'); // the gallery's, on the plinth
+  const [dashEl, sign, orders, bubble, ray, aloud] = [$('radio-dash'), $('dash-sign'), $('dash-says'), $('dot-says'), $('radio-ray'), $('radio-story')];
   const [cue, reticle] = [root.querySelector('.radio .cue'), root.querySelector('.radio .reticle')];
   const withDot = hasDot(); // Dot is met on the walk: without it there is nobody to say what Penny means
   const HOME = 0.2; // where Penny stands when nothing is going on
@@ -369,58 +393,65 @@ export function mount(root, life) {
       dashEl.style.setProperty('--look-x', `${x}px`);
       dashEl.style.setProperty('--look-y', `${y}px`);
     },
-    // An order, on the tape. `spoken` is the same for somebody who cannot make
-    // the gesture it names (a screen reader takes swipes and double taps for itself).
-    say(words, spoken = words, quiet = false) {
-      if (dash.said === words) return;
-      dash.said = words;
-      tape.replaceChildren();
-      if (!words) return;
-      const [seen, heard] = [document.createElement('span'), document.createElement('span')];
-      seen.textContent = words;
-      seen.setAttribute('aria-hidden', 'true');
-      heard.className = 'sr-only';
-      heard.textContent = spoken;
-      tape.append(seen, heard);
-      once(tape, 'fed', 260);
+    // An order, on the sign over the label: one of SIGNS, drawn. `spoken` is the
+    // same in words, for a screen reader (#dash-says), and for somebody who
+    // cannot make the gesture it names (a screen reader takes swipes and double
+    // taps for itself). An empty order takes the sign down.
+    say(order, spoken = '', quiet = false) {
+      if (dash.said === order) return;
+      dash.said = order;
+      sign.classList.remove('taken');
+      sign.replaceChildren();
+      orders.textContent = spoken;
+      if (!order) return;
+      const seen = document.createElement('span');
+      seen.innerHTML = SIGNS[order];
+      seen.dataset.order = order;
+      sign.append(seen);
+      once(sign, 'fed', 200);
       if (!quiet) dash.sound('order');
     },
     tick() {
       once(dashEl, 'ticked', 460);
       dash.sound('tick');
     },
+    // It goes up the side of the set, and takes its sign off the label as it goes.
     leave() {
-      dash.say('');
       dash.on = false;
       dashEl.classList.add('leaving');
+      sign.classList.add('taken');
       dash.sound('leave');
-      life.setTimeout(() => { if (!dash.on) dashEl.hidden = true; }, still ? 0 : 320);
+      life.setTimeout(() => {
+        if (dash.on) return;
+        dashEl.hidden = true;
+        dash.say('');
+      }, still ? 0 : 300);
     },
   };
   // its pointer: chevrons across the display for a swipe, four corners twice for two taps
   const point = (kind) => once(kind === 'swipe' ? cue : reticle, 'on', still ? 900 : kind === 'swipe' ? 940 : 500);
 
   // The lesson: one thing at a time ('tune', 'listen', 'keep'), and the next
-  // waits until that has been done. What is to be done now is on the tape for
+  // waits until that has been done. What is to be done now is on the sign for
   // as long as it stands, and is pointed at again every few seconds, the same
   // each time: it does not count down and it does not get louder.
-  const lesson = { step: null, timer: 0 };
+  const lesson = { step: null, timer: 0, called: -1 }; // called: the scene in which that one was last sent for
   function order() {
     clearTimeout(lesson.timer);
     if (life.over || lesson.step === null || !dash.on) return;
     const bothHeard = SIDES.every((side) => heardMs[side] >= LISTEN_MS);
     const listening = lesson.step === 'listen' && started && heardMs[up] < LISTEN_MS;
     if (lesson.step === 'tune') {
-      dash.say('Swipe.', 'Swipe, or press Tune.');
+      dash.say('swipe', 'Swipe, or press Tune.');
     } else if (lesson.step === 'listen' && !started) {
-      dash.say('Play.', 'Press Play.');
+      dash.say('play', 'Press Play.');
     } else if (listening) {
-      dash.say('Listen.', 'Listen.', true); // (nothing is sounded over a station that is being listened to)
+      dash.say('listen', 'Listen.', true); // (nothing is sounded over a station that is being listened to)
     } else if (lesson.step === 'listen') {
       if (bothHeard) lesson.step = 'keep';
-      else dash.say('The other one.', 'The other one: swipe, or press Tune.');
+      else dash.say('other', 'The other one: swipe, or press Tune.');
     }
-    if (lesson.step === 'keep') dash.say('Tap twice to keep one.', 'Tap twice, or press Keep, to keep one.'); // (it names no station)
+    if (lesson.step === 'keep') dash.say('keep', 'Tap twice, or press Keep, to keep one.'); // (it names no station)
     const pointing = lesson.step === 'tune' || (lesson.step === 'listen' && started && !listening) ? 'swipe' : lesson.step === 'keep' ? 'taps' : null;
     dash.look(pointing ? 'display' : listening ? 'meter' : lesson.step === 'listen' ? 'play' : 'you');
     if (pointing) {
@@ -433,16 +464,22 @@ export function mount(root, life) {
     pal.look(dashEl, 'dot');
     lesson.timer = life.setTimeout(order, listening || (lesson.step === 'listen' && !started) ? 1600 : 3800);
   }
+  // It comes to stand by the set, a while from now, and gives its order. (A scene like any other: if it is cut
+  // before it has come, the reading's closing sends for it again, while there is still something to show.)
+  function sendFor(after) {
+    lesson.called = scene;
+    run([
+      [after, () => { dash.arrive(); say$('An express letter in an attendant’s cap has come to stand by the radio, and hangs a sign over its label. Penny watches it from under the edge.'); }],
+      [260, () => { pal.height('peek').mood('unsure').look(dashEl); pal.look(dashEl, 'dot'); }],
+      [540, order],
+    ]);
+  }
   function teach() {
     cut();
     story.running = false;
     lesson.step = 'tune';
     world.dataset.story = 'lesson';
-    run([
-      [900, () => { dash.arrive(); say$('An express letter has come to stand by the radio. Penny watches it from under the edge.'); }],
-      [260, () => { pal.height('peek').mood('unsure').look(dashEl); pal.look(dashEl, 'dot'); }],
-      [540, order],
-    ]);
+    sendFor(900);
   }
 
   // -- the tag, and what Penny does about it
@@ -474,14 +511,15 @@ export function mount(root, life) {
     [walk(HOME) + 100, () => { pal.settle('peek'); story.running = false; world.dataset.story = 'done'; }],
   ];
 
-  // It notices.
+  // It notices. First the label, which is words, and Penny cannot read; then the tag, which is a picture.
   function notice() {
     cut();
     story.running = true;
     world.dataset.story = 'noticed';
     if (told() === null) save(STORY_KEY, 'seen');
     run([
-      [0, () => { glint(); say$('On the side of the radio hangs a tag with a flask on it. Penny has seen it.'); }],
+      [0, () => { pal.mood('unsure').look(label); pal.look(label, 'dot'); say$('Penny looks at the label on the plinth, and cannot read it.'); }],
+      [1100, () => { glint(); say$('On the side of the radio hangs a tag with a flask on it. Penny has seen it.'); }],
       [400, () => { pal.rise().mood('curious').look(labTag); pal.sing(GASP, 0.45); pal.look(labTag, 'dot'); }],
       [1000, () => pal.look(null)], // did you see?
       [500, () => pal.look(labTag)],
@@ -578,7 +616,9 @@ export function mount(root, life) {
   // Beside Dot, on the side away from Penny, never off the screen, and never
   // under Dot: Penny and Dot are in a layer above the page, so anything of
   // the page's that they overlap is hidden. It is as wide as the room there is.
-  // (Its size is read as it is laid out, not as it is drawn: it is drawn growing.)
+  // And not over the gallery's label: it goes below it, over the floor, as far
+  // as there is the room. (Its size is read as it is laid out, not as it is
+  // drawn: it is drawn growing.)
   function placeBubble() {
     const base = world.getBoundingClientRect();
     const dot = pal.dot.getBoundingClientRect();
@@ -586,11 +626,14 @@ export function mount(root, life) {
     bubble.style.maxWidth = `${Math.max(112, Math.round(room))}px`;
     const [wide, high] = [bubble.offsetWidth, bubble.offsetHeight];
     const left = Math.max(12, dot.left - base.left - 16 - wide);
-    const top = Math.max(12, Math.min(dot.top - base.top + dot.height * 0.3 - high, base.height - high - 12));
+    let top = Math.max(12, Math.min(dot.top - base.top + dot.height * 0.3 - high, base.height - high - 12));
+    const words = label.getBoundingClientRect();
+    const [above, below] = [words.top - base.top - 6, words.bottom - base.top + 6];
+    if (top < below && top + high > above) top = Math.max(12, Math.min(below, base.height - high - 8));
     bubble.style.translate = `${Math.round(left)}px ${Math.round(top)}px`;
   }
   life.on(window, 'resize', () => { if (bubble.childElementCount) placeBubble(); });
-  // The sheet opens by itself, this once: but never under a finger, nor into a tab nobody is looking at.
+  // The reading opens by itself, this once: but never under a finger, nor into a tab nobody is looking at.
   let fingers = 0;
   let touched = 0;
   life.on(window, 'pointerdown', () => { fingers += 1; touched = performance.now(); }, true);
@@ -614,10 +657,13 @@ export function mount(root, life) {
     bubble.replaceChildren();
     openSheet();
   }
+  // The reading opens at its top, with its title focused (autofocus), whatever was read of it last time.
   function openSheet() {
     notes();
-    el.dotTold.hidden = !(withDot && told() === 'told'); // Dot's line goes with you into the sheet
-    if (!el.behind.open) el.behind.showModal();
+    el.dotTold.hidden = !(withDot && told() === 'told'); // Dot's line goes with you into the reading: the audio guide's stop
+    if (el.behind.open) return;
+    el.reading.scrollTop = 0;
+    el.behind.showModal();
   }
   // The tag is pressed: you saw it. Whatever Penny was in the middle of, that is what it wanted.
   labTag.addEventListener('click', () => {
@@ -636,8 +682,12 @@ export function mount(root, life) {
   });
   el.behind.addEventListener('close', () => {
     hush(false);
-    if (lesson.step !== null) return; // that one is still showing how: it goes on
-    if (story.running || world.dataset.story === 'said') run([[300, () => pal.mood('glad').look(null)], [500, () => {}], ...goHome()]);
+    if (lesson.step !== null) { // that one is still showing how: it goes on (and if the tag kept it from coming, it comes now)
+      if (!dash.on && lesson.called !== scene) sendFor(600);
+      return;
+    }
+    // (and if the tag cut short what was to come after the first station was kept, Penny goes back all the same)
+    if (story.running || world.dataset.story === 'said' || world.dataset.story === 'taken') run([[300, () => pal.mood('glad').look(null)], [500, () => {}], ...goHome()]);
   });
 
   // What the radio tells the story has happened: a swipe ('tune'), a station
@@ -661,18 +711,22 @@ export function mount(root, life) {
         clearTimeout(lesson.timer);
         lesson.timer = life.setTimeout(order, 500);
       } else if (what === 'keep') {
-        // The first station kept. It ticks, and is gone; nobody cheers.
+        // The first station kept. It ticks, and is gone; nobody cheers. Its going is not a beat of a scene: whatever
+        // cuts the scene (the tag, pressed at once), it still goes, and takes its sign with it. (Unless it has been
+        // asked to show how again in the meantime: then it is still wanted.)
         clearTimeout(lesson.timer);
         lesson.step = null;
         save(TAUGHT_KEY, true);
         cut();
         world.dataset.story = 'taken';
-        say$('It ticks, and is gone, up the side of the radio.');
+        say$('It ticks, and is gone, up the side of the radio, with its sign.');
         pal.look(null).gesture('nod');
+        const done = () => dash.on && lesson.step === null;
+        if (dash.on) dash.tick();
+        life.setTimeout(() => { if (done()) dash.look('you'); }, 450);
+        life.setTimeout(() => { if (done()) dash.leave(); }, 800);
         run([
-          [0, () => { if (dash.on) dash.tick(); dash.say(''); }],
-          [450, () => dash.look('you')],
-          [350, () => { if (dash.on) dash.leave(); pal.mood('surprised').look(upThere()); pal.look(upThere(), 'dot'); }],
+          [800, () => { pal.mood('surprised').look(upThere()); pal.look(upThere(), 'dot'); }],
           [500, () => {
             if (told() === null) notice();
             else if (told() === 'found' && withDot) again$();
@@ -687,7 +741,7 @@ export function mount(root, life) {
       // it is glad of a station kept, the same every time, and gladder of a preset
       pal.rise().mood(saved ? 'thrilled' : 'glad').look(null).gesture(saved ? 'jump' : 'nod');
       if (saved) pal.hearts(3);
-      glint(); // and the lab notes it, the same whichever it is
+      glint(); // and the tag glints: it is in the reading now, the same whichever it is
       clearTimeout(lesson.timer);
       lesson.timer = life.setTimeout(() => { if (!story.running) pal.mood('calm').look(null).settle('peek'); }, 1500);
     }
@@ -696,7 +750,7 @@ export function mount(root, life) {
   story.refused = () => {
     if (lesson.step !== null && dash.on) { // the refusal is that one's, while it is here: and it gives no reason either
       dash.said = '';
-      dash.say('Not yet.');
+      dash.say('not-yet', 'Not yet.');
       once(dashEl, 'refusing', 220);
       clearTimeout(lesson.timer);
       lesson.timer = life.setTimeout(() => { dash.said = ''; order(); }, 900);
@@ -719,7 +773,9 @@ export function mount(root, life) {
     dash.on = false;
     dashEl.hidden = true;
     dash.said = '';
-    tape.replaceChildren();
+    sign.classList.remove('taken');
+    sign.replaceChildren();
+    orders.textContent = '';
     pal.lean(0).goTo(HOME);
     story.opens = true;
     teach();
@@ -811,10 +867,12 @@ export function mount(root, life) {
   frame = requestAnimationFrame(draw);
   life.onEnd(() => cancelAnimationFrame(frame));
 
-  // --- The lab notes --------------------------------------------------------------------------
+  // --- The reading, and the presets ---------------------------------------------------------------
   const small = (beat) => `<svg viewBox="0 0 ${STEPS * 4} ${ROWS * 4}" aria-hidden="true">${beat.notes.map((tiles, index) => tiles.map((tile) => `<rect x="${Math.floor(tile / ROWS) * 4 + 0.5}" y="${(tile % ROWS) * 4 + 0.5}" width="3" height="3" rx="0.8" fill="${LAYERS[index].colour}"/>`).join('')).join('')}</svg>`;
   const percent = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '–');
   const times = (value) => `×${value >= 10 ? value.toFixed(0) : value.toFixed(2)}`;
+  const OUT = '<svg class="out" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg>';
+  // (Nothing outside the reading follows how the experiment stands: not the light, not the room, not Penny.)
   function notes() {
     const now = standing(state.trials);
     el.picks.textContent = String(now.picks);
@@ -823,26 +881,30 @@ export function mount(root, life) {
     el.coin.textContent = now.bets ? `${now.won} of ${now.bets} (${percent(now.won, now.bets)})` : '–';
     el.stake.textContent = `${times(now.stake)} of ×${NEEDED}`;
     el.meter.style.setProperty('--full', Math.max(0, Math.min(1, Math.log(Math.max(now.peak, 1)) / Math.log(NEEDED))).toFixed(3));
+    el.meter.setAttribute('aria-label', `The furthest the stake has got: ${times(Math.max(now.peak, 1))}, of the ×${NEEDED} that is significant`);
+    // Its caption says what is measured, and never answers anything: no "yes", no "not yet", nothing that waits for a
+    // result as if it must come, and nothing that counts down. Set the same however it stands: no state is given more
+    // weight than another (README, "The question Penny's Radio asks").
     el.meter.classList.toggle('done', now.significant);
-    el.verdict.classList.toggle('yes', now.significant);
     if (now.picks < WARMUP) {
-      const left = WARMUP - now.picks;
-      el.verdict.textContent = `The model starts calling your choices after ${WARMUP}. ${left} to go.`;
+      el.verdict.textContent = 'From the tenth choice on, the model calls each one before it is made.'; // (WARMUP, in words, as "How it works" has it)
     } else if (now.significant) {
-      el.verdict.textContent = `Significant. The music itself predicts your choices: p = ${now.p.toFixed(3)}, reached at choice ${now.reachedAt}.`;
+      el.verdict.textContent = `Significant at choice ${now.reachedAt}: p = ${now.p.toFixed(3)}. The music itself predicts the choices.`;
     } else {
-      el.verdict.textContent = `Not yet. So far p = ${now.p.toFixed(2)}; it is significant when the stake reaches ×${NEEDED} (p = 0.05).`;
+      el.verdict.textContent = `So far p = ${now.p.toFixed(2)}. The test is significant if the stake reaches ×${NEEDED} (p = 0.05).`;
     }
-    // the presets: a lamp on the set for each (five at most), and all of them in their sheet, the latest first
+    // the presets: a lamp on the set for each (five at most), the same lamps at the head of their sheet, and all of
+    // them in it, the latest first: each as its picture and its place on the dial. What it is and where it goes is
+    // for a screen reader; to the eye, an arrow is the way out.
     const kept = state.retired.length;
-    [...el.presetsOpen.children].forEach((lamp, index) => lamp.classList.toggle('lit', index < Math.min(SLOTS, kept)));
+    for (const lamps of [[...el.presetsOpen.children], el.lamps]) lamps.forEach((lamp, index) => lamp.classList.toggle('lit', index < Math.min(SLOTS, kept)));
     el.presetsOpen.setAttribute('aria-label', kept ? `Presets: ${kept} saved` : 'Presets: none yet');
     el.presetsNone.hidden = kept > 0;
     el.hall.replaceChildren(...state.retired.map((beat, index) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = `/jam/?b=${encode(beat)}`;
-      a.innerHTML = `<span class="pic">${small(beat)}</span><span><b>${dialOf(beat).toFixed(1)} FM</b><small>Preset ${index + 1}. Open it in the music maker</small></span>`;
+      a.innerHTML = `<span class="pic">${small(beat)}</span><span class="where"><b>${dialOf(beat).toFixed(1)}<small> FM</small></b><span class="sr-only">, preset ${index + 1}. Open it in the music maker.</span></span>${OUT}`;
       li.append(a);
       return li;
     }).reverse());
@@ -850,11 +912,16 @@ export function mount(root, life) {
     el.likes.textContent = now.picks < WARMUP || likes.length === 0 ? '' : `So far it thinks you go for ${likes.map((one) => one.words).join(', ')}.`;
   }
 
+  const copyWords = el.copy.textContent;
+  let copyTimer = 0;
   el.copy.addEventListener('click', async () => {
     const data = JSON.stringify({ made: new Date().toISOString(), standing: standing(state.trials), weights: state.weights, trials: state.trials.map(packPair) });
     try {
       await navigator.clipboard.writeText(data);
       say(`Copied ${state.trials.length} picks.`);
+      el.copy.textContent = 'Copied'; // (said on the button, in the reading: the line under the radio is for a screen reader)
+      clearTimeout(copyTimer);
+      copyTimer = life.setTimeout(() => { el.copy.textContent = copyWords; }, 2000);
     } catch {
       prompt('Copy the data', data);
     }
@@ -872,8 +939,7 @@ export function mount(root, life) {
     notes();
   });
 
-  // The experiment, behind the radio: a sheet that opens over it.
-  // (it is opened from the tag on the side of the set: see the story, above)
+  // The presets' sheet, and the reading's. (The reading is opened from the tag on the side of the set: see the story, above.)
   el.presetsOpen.addEventListener('click', () => {
     notes();
     el.presets.showModal();
