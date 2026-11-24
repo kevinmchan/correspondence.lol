@@ -658,6 +658,30 @@ fools it about as often as the 1 in 20 allows. What it can find is limited to
 what the fifteen numbers can say. Nothing about how challengers are made
 looks at who has been winning beyond the length of the present reign.
 
+**Decided before any picks were looked at (24 November 2026).** A study of
+the test by simulation alone found it valid, including for someone who
+watches the stake and chases it, and found three changes worth making. The
+owner agreed to them before anyone's real picks had been looked at, and they
+go in with the meter on the radio's face:
+
+- **Eight phantoms, and the bet as their likelihood ratio.** Each challenger
+  is drawn nine times in the same way and eight are never heard; the stake is
+  multiplied by 0.1 + 0.9 × 9r / (r + f1 + … + f8), r and the f's being the
+  chances of the actual pick with the real challenger and with each phantom.
+  In simulation this reaches ×20 about two fifths sooner (a marked taste in
+  about 51 picks rather than 87, a mild one in about 87 rather than 148), with
+  no more than 1 in 20 for no taste.
+- **The stake carries on through "Start over".** Without this, someone with no
+  taste who starts over whenever the stake sags reaches ×20 about one time in
+  five; with it, under one in twenty.
+- **The model's fitting takes halving steps.** It could fall into a two-step
+  cycle in its first thirty picks and never learn; the fix is to the model,
+  not the bet, and is valid with any bet.
+
+The rule is not to be tuned again on anyone's real picks. Many devices, or
+many strategies, each reaching ×20 now and then, are many tests: what is found
+by exploring is to be confirmed afresh on one device, from the start.
+
 ## Seasons
 
 Some features are to come for a season and go again, as seasons do in games.
