@@ -16,15 +16,24 @@
 // Every row is a note of a five-note scale built on the chord, so whatever is
 // tapped still fits.
 //
+// A beat can be kept, and passed on. Saved beats are a list on this device,
+// each with a name that can be changed. Sharing one hands over a link with the
+// whole beat written into it (jam/beat.js): whoever opens it finds it on their
+// own board, ready to play and to change, and nothing of theirs is lost by it.
+//
 // The sound comes from the app's one sound engine (postmarks/sound.js), on its
 // clock, so the loop keeps exact time however busy the screen is.
 
 import { audio, holdMusic, noise, tone } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
+import { ask } from '/shared/ask.js';
+import { decode, encode, isEmpty } from './beat.js';
 
 const STEPS = 8;
 const ROWS = 7;
-const SAVE_KEY = 'jam:v1';
+const SAVE_KEY = 'jam:v1'; // the beat on the board
+const SAVED_KEY = 'jam:saved:v1'; // the beats kept: [{ name, code, at, auto }]
+const MOST = 30;
 const TEMPOS = [84, 100, 120, 140]; // beats a minute; a step is half a beat
 
 // The chords, as the game's music has them, and the five-note scale that
@@ -107,7 +116,7 @@ const keyOf = (step, row) => step * ROWS + row;
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
   const { setInterval } = life;
-  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint') };
+  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), save: $('jam-save'), share: $('jam-share'), note: $('jam-note'), saved: $('jam-saved') };
   document.title = 'Loops · correspondence.lol';
 
   // --- What has been made: for each layer, the tiles that hold a note -----------
@@ -186,6 +195,8 @@ export function mount(root, life) {
     const any = sets.some((set) => set.size > 0);
     el.hint.hidden = any;
     el.clear.disabled = sets[layer].size === 0;
+    el.save.disabled = !any;
+    el.share.disabled = !any;
     el.tempo.textContent = `${TEMPOS[tempo]}`;
     el.play.setAttribute('aria-pressed', String(playing));
     el.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
@@ -429,6 +440,147 @@ export function mount(root, life) {
     render();
     if (!playing) setPlaying(true);
   });
+
+  // --- Keeping a beat, and passing one on ------------------------------------------------
+  const now = () => ({ tempo, notes: sets.map((set) => [...set]) });
+  const kept$ = () => (Array.isArray(load(SAVED_KEY)) ? load(SAVED_KEY).filter((beat) => beat && decode(beat.code)) : []);
+  let noteTimer = 0;
+  function say(text) {
+    el.note.textContent = text;
+    clearTimeout(noteTimer);
+    noteTimer = life.setTimeout(() => { el.note.textContent = ''; }, 4000);
+  }
+  // Put a beat on the board. What was there is not lost: if it was not
+  // already among the saved beats, it is put by as "Unsaved beat" (one of
+  // those at a time: the next takes its place).
+  function adopt(beat) {
+    const was = now();
+    const list = kept$();
+    if (!isEmpty(was) && encode(was) !== encode(beat) && !list.some((one) => one.code === encode(was))) {
+      save(SAVED_KEY, [{ name: 'Unsaved beat', code: encode(was), at: Date.now(), auto: true }, ...list.filter((one) => !one.auto)].slice(0, MOST));
+    }
+    tempo = beat.tempo;
+    beat.notes.forEach((tiles, index) => {
+      sets[index].clear();
+      for (const tile of tiles) sets[index].add(tile);
+    });
+    const live = audio();
+    if (echo && live) echo.delayTime.setTargetAtTime(stepLength() * 1.5, live.ctx.currentTime, 0.05);
+    keep();
+    render();
+    showSaved();
+  }
+  // A small picture of a beat: the board, with each note a dot of its instrument's colour.
+  function picture(beat) {
+    const dots = [];
+    beat.notes.forEach((tiles, index) => {
+      for (const tile of tiles) dots.push(`<rect x="${Math.floor(tile / ROWS) * 4 + 0.5}" y="${(tile % ROWS) * 4 + 0.5}" width="3" height="3" rx="0.8" fill="${LAYERS[index].colour}"/>`);
+    });
+    return `<svg viewBox="0 0 ${STEPS * 4} ${ROWS * 4}" aria-hidden="true">${dots.join('')}</svg>`;
+  }
+  const linkTo = (code) => `${location.origin}/jam/?b=${code}`;
+  async function share(code, name) {
+    const url = linkTo(code);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: name ? `${name}: a beat` : 'A beat', text: 'Listen to this beat I made on correspondence.lol', url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      say('Link copied. Anyone who opens it gets this beat.');
+    } catch (error) {
+      if (error?.name !== 'AbortError') prompt('Copy this link to share the beat', url);
+    }
+  }
+  function showSaved() {
+    const list = kept$();
+    el.saved.hidden = list.length === 0;
+    const here = encode(now());
+    el.saved.querySelector('ul').replaceChildren(...list.map((one) => {
+      const li = document.createElement('li');
+      li.classList.toggle('here', one.code === here);
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'open';
+      open.setAttribute('aria-label', `Play ${one.name}`);
+      open.innerHTML = picture(decode(one.code));
+      open.addEventListener('click', () => {
+        adopt(decode(one.code));
+        if (!playing) setPlaying(true);
+      });
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = one.name;
+      name.maxLength = 30;
+      name.autocomplete = 'off';
+      name.enterKeyHint = 'done';
+      name.setAttribute('aria-label', 'Name of this beat');
+      name.addEventListener('change', () => {
+        const to = name.value.trim() || one.name;
+        name.value = to;
+        save(SAVED_KEY, kept$().map((each) => (each.code === one.code ? { ...each, name: to, auto: false } : each)));
+      });
+      name.addEventListener('keydown', (event) => { if (event.key === 'Enter') name.blur(); });
+      const send = document.createElement('button');
+      send.type = 'button';
+      send.className = 'quiet';
+      send.setAttribute('aria-label', `Share ${one.name}`);
+      send.innerHTML = el.share.querySelector('svg').outerHTML;
+      send.addEventListener('click', () => share(one.code, kept$().find((each) => each.code === one.code)?.name));
+      const bin = document.createElement('button');
+      bin.type = 'button';
+      bin.className = 'quiet';
+      bin.setAttribute('aria-label', `Delete ${one.name}`);
+      bin.innerHTML = el.clear.querySelector('svg').outerHTML;
+      bin.addEventListener('click', async () => {
+        const current = kept$().find((each) => each.code === one.code)?.name ?? one.name;
+        if (!(await ask(`Delete “${current}”?`, { detail: 'It will be gone from this device. A link you have shared will still work.', yes: 'Delete', danger: true }))) return;
+        save(SAVED_KEY, kept$().filter((each) => each.code !== one.code));
+        showSaved();
+      });
+      li.append(open, name, send, bin);
+      return li;
+    }));
+  }
+  el.save.addEventListener('click', () => {
+    const beat = now();
+    if (isEmpty(beat)) return;
+    const code = encode(beat);
+    const list = kept$();
+    const already = list.find((one) => one.code === code);
+    if (already && !already.auto) {
+      say(`Already saved as “${already.name}”.`);
+      return;
+    }
+    const taken = new Set(list.map((one) => one.name));
+    let n = 1;
+    while (taken.has(`Beat ${n}`)) n += 1;
+    save(SAVED_KEY, [{ name: `Beat ${n}`, code, at: Date.now() }, ...list.filter((one) => one.code !== code)].slice(0, MOST));
+    say(`Saved as “Beat ${n}”. Tap its name to change it.`);
+    showSaved();
+  });
+  el.share.addEventListener('click', () => {
+    if (!isEmpty(now())) share(encode(now()));
+  });
+  // (which of the saved beats is on the board is marked: kept up to date as the board changes)
+  el.board.addEventListener('pointerup', () => life.setTimeout(showSaved, 0));
+  for (const control of [el.dice, el.clear, el.tempo]) control.addEventListener('click', () => life.setTimeout(showSaved, 0));
+
+  // Arriving by a link with a beat in it: it goes on the board, and the
+  // address goes back to plain /jam/ so that a reload does not bring it back
+  // over whatever has been made of it since.
+  const given = new URLSearchParams(location.search).get('b');
+  if (given !== null) {
+    const beat = decode(given);
+    history.replaceState(null, '', '/jam/');
+    if (beat && !isEmpty(beat)) {
+      adopt(beat);
+      say('A beat that was shared with you. Press play, and make it yours.');
+    } else {
+      say('That link did not have a beat in it.');
+    }
+  }
+  showSaved();
 
   // The app's background music stands aside while this screen is up.
   holdMusic(true);

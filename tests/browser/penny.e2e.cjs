@@ -445,6 +445,49 @@ async function main() {
       assert.equal(await page.locator('.install-banner').count(), 0, 'the banner goes once installed');
     }),
 
+    check('the music maker: a beat can be saved, renamed and shared, and a shared one opens on the board without losing what was there', { permissions: ['clipboard-read', 'clipboard-write'] }, async (page) => {
+      const stored = (key) => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), key);
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      assert.equal(await page.locator('#jam-save').isDisabled(), true, 'nothing to save yet');
+      for (const pad of [0, 9, 18, 27]) await page.locator('.jam-board .pad').nth(pad).click();
+      await page.locator('#jam-save').click();
+      await page.waitForSelector('.jam-saved li');
+      assert.equal(await page.locator('.jam-saved input').inputValue(), 'Beat 1');
+      assert.equal(await page.locator('.jam-saved li.here').count(), 1, 'the saved beat is the one on the board');
+      await page.locator('#jam-save').click();
+      assert.equal(await page.locator('.jam-saved li').count(), 1, 'the same beat saved twice');
+      await page.locator('.jam-saved input').fill('Morning');
+      await page.locator('.jam-saved input').press('Enter');
+      assert.equal((await stored('jam:saved:v1'))[0].name, 'Morning');
+      // shared: here that is a link on the clipboard, with the whole beat in it
+      await page.evaluate(() => { delete Navigator.prototype.share; });
+      await page.locator('#jam-share').click();
+      await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
+      const link = await page.evaluate(() => navigator.clipboard.readText());
+      assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{39}$/);
+      // something else is made, not saved; then the link is opened
+      await page.locator('.jam-board .pad').nth(40).click();
+      const unsaved = (await stored('jam:v1')).notes[0].length;
+      assert.equal(unsaved, 5);
+      await page.goto(link);
+      await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('shared with you'));
+      assert.equal(new URL(page.url()).search, '', 'the address goes back to plain');
+      assert.equal(await page.locator('.jam-board .pad.on').count(), 4, 'the shared beat is on the board');
+      assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat', 'Morning'], 'what was on the board was put by');
+      // and back to it
+      await page.locator('.jam-saved .open').first().click();
+      assert.equal(await page.locator('.jam-board .pad.on').count(), 5);
+      await page.goto(`${origin}/jam/?b=nonsense`);
+      await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('did not have a beat'));
+      assert.equal(await page.locator('.jam-board .pad.on').count(), 5, 'a bad link changed the board');
+      // deleted
+      await page.locator('.jam-saved li').nth(1).locator('button[aria-label^="Delete"]').click();
+      await page.locator('dialog.ask button.yes').click();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-saved li').length === 1);
+      assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat']);
+    }),
+
     check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
       const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
       const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });

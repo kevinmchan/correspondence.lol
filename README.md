@@ -375,6 +375,18 @@ is made there sounds like it belongs with it:
 - **The dice write a tune the way the game does**: likelier on the beats,
   moving by small steps, leaving rests; the bass keeps mostly to the root.
 
+**Saving and sharing a beat.** Save keeps the beat on the board in a list on
+the device, under a name that can be changed by tapping it; each saved beat
+shows as a small picture of its board, and a tap on that puts it back on the
+board. Share hands over a link (through the phone's share sheet, or copied
+where there is none) with the whole beat written into it: 39 characters after
+`/jam/?b=` (`jam/beat.js`), so nothing is kept on a server and a link never
+stops working. Whoever opens it finds the beat on their own board, to play
+and to change. Putting a beat on the board, from the list or from a link,
+never loses what was there: if that was not already saved, it is put by as
+"Unsaved beat" (one at a time). Saved beats do not follow an account to
+another device; a link does.
+
 What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, and any way to choose the chords.
 

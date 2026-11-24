@@ -55,6 +55,7 @@ const PRECACHE = [
   '/postmarks/sound.js',
   '/jam/',
   '/jam/jam.js',
+  '/jam/beat.js',
   '/jam/jam.css',
   '/postmarks/ui.js',
 ];
