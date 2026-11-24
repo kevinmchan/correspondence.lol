@@ -173,9 +173,10 @@ seal, stamped on a square that nobody touched, the moment a rule leaves a
 colour, row or column with one square. The second place opens with it: one
 square is the only one of its colour, the seal lands on it before anything is
 pressed, and opening that post settles the rest of the place one square at a
-time. In the third and fourth nothing is known to begin with, so the first
-post has to be found by ear; then its crosses spread, and a seal lands on a
-square nobody has touched. Each time that happens it is a rule, seen. In the later places the seal holds back a while, to leave the working
+time. The third and fourth begin the same way, with one square alone in its
+colour, so there is never any wondering where to start; what follows from
+opening it is the rule that place is there to show. Each time a post's crosses
+spread and a seal lands on a square nobody has touched, that is a rule, seen. In the later places the seal holds back a while, to leave the working
 out to you.
 
 While Penny listens to what was inside a post, the map goes dim, so that for

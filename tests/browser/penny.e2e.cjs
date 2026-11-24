@@ -202,8 +202,9 @@ async function main() {
       assert.equal(await h.stored('penny:sound:v1'), 1, 'the first piece of the sound');
       await h.through();
 
-      // place 3: two posts by ear; then the rules leave two squares with nowhere else to be, and the seal lands on both
-      assert.deepEqual(await known(), [], 'nothing is known here to begin with');
+      // place 3: it begins with the one square that is alone in its colour; as posts are opened the seal lands on what the rules leave
+      await page.waitForFunction(() => document.querySelector('#walk-board .cell.known'), null, { timeout: 6000 });
+      assert.deepEqual(await known(), [13], 'where to begin');
       for (const cell of [2, 4]) await h.open(cell);
       await page.waitForFunction(() => document.querySelectorAll('#walk-board .cell.known').length === 2, null, { timeout: 8000 });
       assert.deepEqual(await known(), [11, 13]);
