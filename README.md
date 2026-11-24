@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and Penny's story at `/?penny` (`story.js`) |
+| `penny/` | Penny: its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), and scene one of the film at `/?office` (`office.js`) |
 | `room/` | A room: members, invitation link, games list, chat |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`) |
@@ -133,7 +133,7 @@ two things, and shows them by coming up and standing under them.
 
 A tap on Penny while it is asking for the app to be installed is a yes to
 that. Any other tap goes through the portal with it, until the first places
-have been walked, and after that opens Penny's story.
+have been walked, and after that plays the film again from scene one.
 
 ### Walking the map
 
@@ -237,17 +237,14 @@ The places can be walked again afterwards, from the same portal, now quieter.
 Dot is beside Penny from the start then, and is not found a second time: that
 last post is somebody's ordinary mail. Nothing already heard is lost.
 
-### Penny's story
+### Seeing the film again
 
-Once the first places have been walked, a tap on Penny (when it is not asking
-for the app to be installed) opens its story
-(`/?penny`, `penny/story.js`), where the only sound is Penny's voice. Penny is
-alone in the rain, feels something warm inside that it cannot read, calls out
-and hears nothing; morning comes, and a post box with it, and Penny hums into
-the post. After that it waits, and the story does not go on by itself: it
-waits for a touch. Then an answer comes, a light from a long way off. Whose it
-is the story does not say; it is why Penny is searching. Dot is not in this
-story: Dot is met later. The app's music stands aside while the screen is up.
+Once the first places have been walked, a tap on Penny on the home page plays
+the film again from scene one (`/?office`, `penny/office.js`). The scene
+begins by itself, in silence until the first touch, with Penny's seal beating
+slowly as the sign that there is something to hear. (An older scene of
+Penny's story lived at `/?penny`; that address now opens scene one, and its
+styles in `penny/story.css` are still used by the office.)
 
 ## Game modes
 

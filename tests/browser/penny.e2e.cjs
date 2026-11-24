@@ -292,13 +292,13 @@ async function main() {
       await page.waitForURL(/\/postmarks\//);
     }),
 
-    check('after the walk: a tap on Penny at rest opens its story, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {
+    check('after the walk: a tap on Penny at rest plays the film from its first scene, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {
       await page.goto(origin);
       await h.until('pleading', 12000); // once, soon after arriving
       await h.until('calm', 15000);
       await sleep(600);
       await page.locator('.pal-penny .paper').click({ force: true });
-      await page.waitForURL(/\?penny/, { timeout: 5000 });
+      await page.waitForURL(/\?office/, { timeout: 5000 });
       await sleep(800);
       await page.locator('.penny-back').click();
       await page.waitForURL((url) => url.search === '');
@@ -381,7 +381,7 @@ async function main() {
     }),
 
     check('Penny is only where a screen has asked for it', { storage: ACCOUNT }, async (page, h) => {
-      for (const address of ['/jam/', '/?open', '/?join', '/?penny']) {
+      for (const address of ['/jam/', '/?open', '/?join', '/?office']) {
         await page.goto(origin + address);
         await sleep(1200);
         assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, address, 'the address is still the one asked for');

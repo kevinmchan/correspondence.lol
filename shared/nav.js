@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: scene one of the film, where the app opens (/?office), home (/, and /?home), opening and joining a room (/?open, /?join), the map walked with Penny and its story (/?walk, /?penny), a room
+// The screens: scene one of the film, where the app opens (/?office), home (/, and /?home), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), a room
 // (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -21,8 +21,7 @@ const asks = (url, word) => isHome(url.pathname) && url.searchParams.has(word);
 const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
-  { name: 'penny', depth: 1, match: (path, url) => asks(url, 'penny'), load: () => import('/penny/story.js') },
-  { name: 'office', depth: 1, match: (path, url) => asks(url, 'office'), load: () => import('/penny/office.js') },
+  { name: 'office', depth: 1, match: (path, url) => asks(url, 'office') || asks(url, 'penny'), load: () => import('/penny/office.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },

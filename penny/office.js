@@ -76,16 +76,15 @@ export function mount(root, life) {
     life.setTimeout(() => circle.remove(), 1600);
   }
 
-  // Sound needs a first touch; until there has been one the room simply waits.
-  let touched = 0;
-  main.addEventListener('pointerdown', () => { touched ||= performance.now(); });
-  const ready = () => new Promise((begin) => {
-    const check = () => {
-      if (isMuted() || audio() || (touched && performance.now() - touched > 700)) begin();
-      else life.setTimeout(check, 120);
-    };
-    check();
-  });
+  // Sound needs a first touch, and a film does not wait to be asked: the
+  // scene begins by itself, in silence if it must, and the sound joins it from
+  // the first touch on. Until then Penny's seal beats slowly: the one sign
+  // that there is something to hear.
+  const quiet = () => main.classList.toggle('silent', !isMuted() && !audio());
+  quiet();
+  main.addEventListener('pointerdown', () => life.setTimeout(quiet, 150));
+  life.setInterval(quiet, 1000);
+  const ready = () => wait(1500);
 
   async function scene() {
     penny.classList.add('low');
