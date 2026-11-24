@@ -22,6 +22,9 @@ are made.
   warm in the dark theme; generous space; soft shapes; slow, eased motion or
   none. Nothing is urgent unless it is truly yours to do, and even that is said
   gently. Soothing must not cost clarity: a person still sees what needs them.
+  The story may turn from soothing to wrestling with the dark (README,
+  "Penny"); that is the writing's choice, made on purpose in a scene, never a
+  screen that happens to be harsh.
 - No text descriptions, as a rule. Everything on a screen says what it is by
   its form (an icon, a shape, a mark, a state of the drawing, a behaviour), and
   labels are kept to the fewest. Labels, placeholders, hints and the words on

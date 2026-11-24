@@ -155,6 +155,15 @@ somebody there is waiting on you. It is also why the radio's question matters:
 whether something that learns what you like lights a part of you up, or
 evens it out.
 
+**The look is part of the writing: soothing turns to wrestling with the
+dark.** The app begins soothing, and is meant to (CLAUDE.md, "Look and
+words"). But the calm is a place the story starts from, not where it stays:
+soothing turns, in time, to wrestling with the dark, and the change is
+written, as a scene is, never an accident of style. It is in the dark that
+the theme above matters most: what has gone dark in us is what others can
+help light. The two worlds (Seasons) are one way the turn may be seen; when
+and how it comes are not decided.
+
 **What the world is afraid of: losing music.** Taste is being averaged, more
 and more efficiently: what one person likes is worked out, set beside what
 everyone likes, and evened out, a little faster each time. The world Penny
