@@ -238,9 +238,21 @@ last post is somebody's ordinary mail. Nothing already heard is lost.
 ### Seeing the film again
 
 Once the first places have been walked, a tap on Penny on the home page plays
-the film again from scene one (`/?office`, `penny/office.js`). The scene
-begins by itself, in silence until the first touch, with Penny's seal beating
-slowly as the sign that there is something to hear. (An older scene of
+the film again from scene one (`/?office`, `penny/office.js`).
+
+The story is gone through by swiping up. The scene is a handful of screens,
+and none of them moves on by itself: a swipe up turns to the next (the up
+arrow and a wheel do the same), and a swipe up from the last, where one square
+of the map is lit, goes through to the walk. A swipe made while a screen is
+still playing is kept until it has finished. Nobody is told any of this in
+words. Whoever is caught waiting on the first screen is shown by Penny: it
+looks out at them, then down at the floor, and a fingertip of light slides up
+the room from there with Penny's eyes on it, the room giving a little as it
+does under a real finger. It shows it again every few seconds, and at once
+after a tap, until the first swipe. Only the first screen does this.
+
+The scene is silent until the first touch, with Penny's seal beating slowly
+as the sign that there is something to hear. (An older scene of
 Penny's story lived at `/?penny`; that address now opens scene one, and its
 styles in `penny/story.css` are still used by the office.)
 

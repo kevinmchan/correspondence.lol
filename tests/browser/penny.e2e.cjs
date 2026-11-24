@@ -132,6 +132,39 @@ async function main() {
       await page.waitForSelector('.home-map');
     }),
 
+    check('scene one is gone through by swiping up, and Penny shows how to whoever waits on its first screen', {}, async (page) => {
+      await page.goto(`${origin}/?office`);
+      await page.waitForSelector('.office[data-screen="0"]');
+      const rested = (screen) => page.waitForSelector(`.office[data-screen="${screen}"]:not(.playing)`, { timeout: 30000 });
+      const swipe = async (fromY, toY, x = 195) => {
+        await page.mouse.move(x, fromY);
+        await page.mouse.down();
+        await page.mouse.move(x, toY, { steps: 6 });
+        await page.mouse.up();
+      };
+      await sleep(2500);
+      assert.equal(await page.locator('.office').getAttribute('data-screen'), '0', 'the scene moved on by itself');
+      await page.waitForSelector('.o-touch', { state: 'attached', timeout: 8000 }); // caught waiting: shown
+      await swipe(300, 600); // down: not the way
+      await swipe(600, 590); // a tap
+      await sleep(300);
+      assert.equal(await page.locator('.office').getAttribute('data-screen'), '0', 'something other than a swipe up moved it on');
+      await swipe(600, 300);
+      await page.waitForSelector('.o-leaving.lit');
+      assert.equal(await page.locator('.o-touch').count(), 0, 'still being shown how after doing it');
+      await rested(1);
+      await sleep(9500);
+      assert.equal(await page.locator('.o-touch').count(), 0, 'shown how on a screen that is not the first');
+      await swipe(600, 300);
+      await swipe(600, 300); // while that one plays: kept
+      await rested(3);
+      await page.keyboard.press('ArrowUp');
+      await page.waitForSelector('.o-first.lit', { timeout: 30000 });
+      await rested(4);
+      await swipe(600, 300);
+      await page.waitForURL(/\?walk/, { timeout: 5000 });
+    }),
+
     check('home, first visit: Penny alone, not a word, and the way through the portal', {}, async (page, { pal, words }) => {
       await page.goto(`${origin}/?home`);
       await sleep(2700);
