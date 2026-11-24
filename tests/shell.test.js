@@ -15,3 +15,11 @@ test('the page has a template for each screen', () => {
   const shell = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   for (const name of ['home', 'open', 'join', 'office', 'slow', 'walk', 'room', 'game', 'jam']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
 });
+
+// The version names the offline cache and is shown on the home page. A release
+// once went out with this file empty: the page showed nothing, and the cache
+// was named after nothing.
+test('the app has a version', () => {
+  const script = readFileSync(new URL('../version.js', import.meta.url), 'utf8');
+  assert.match(script, /^self\.APP_VERSION = 'v\d+\.\d+\.\d+';$/m);
+});

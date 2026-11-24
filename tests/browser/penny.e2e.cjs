@@ -126,6 +126,7 @@ async function main() {
       await page.goto(origin);
       await page.waitForSelector('.home-map');
       assert.equal(new URL(page.url()).search, '', 'someone new: the home page');
+      assert.match(await page.locator('#version').textContent(), /^v\d+\.\d+\.\d+$/, 'the version at the bottom of the home page');
       await page.goto(`${origin}/?office`);
       await page.waitForSelector('.office-stage');
       await page.locator('.office-door').click({ force: true });
