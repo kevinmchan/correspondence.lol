@@ -88,6 +88,23 @@
   -webkit-tap-highlight-color: transparent;
 }
 #jam-dice:active { transform: translateY(0.2rem); box-shadow: 0 0.05rem 0 color-mix(in srgb, var(--tile) 62%, #000), inset 0 -0.24rem 0 rgb(0 0 0 / 0.1); }
+/* Its border shimmers: one glint of light going round the edge of the tile,
+   slowly, and a second fainter one opposite. Only the edge: the face stays flat. */
+@property --dice-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+#jam-dice { position: relative; }
+#jam-dice::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 0.2rem; pointer-events: none;
+  background: conic-gradient(from var(--dice-turn),
+    #d9a92a 0deg, #d9a92a 40deg, #fffdf0 78deg, #d9a92a 116deg,
+    #d9a92a 220deg, #fbeeb0 258deg, #d9a92a 296deg, #d9a92a 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+@media (prefers-reduced-motion: no-preference) {
+  #jam-dice::before { animation: dice-shimmer 3.6s linear infinite; }
+}
+@keyframes dice-shimmer { to { --dice-turn: 360deg; } }
 #jam-dice:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 #jam-dice svg { width: 2.3rem; height: 2.3rem; }
 @media (prefers-reduced-motion: no-preference) {
