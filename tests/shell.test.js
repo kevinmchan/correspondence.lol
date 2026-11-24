@@ -49,8 +49,8 @@ test('no two animations have the same name', () => {
 // And an animation asked for by a name that nothing has is no animation at
 // all: nothing says so either. Nor is there an animation that nothing asks
 // for: one left over is either dead, or the rule that was to ask for it is
-// broken. (What is not a name: a time, a count, one of the words below, or
-// anything in brackets.)
+// broken. (What is not a name: a time, a count, one of the words below,
+// anything in brackets, or !important.)
 const NOT_NAMES = new Set('ease ease-in ease-out ease-in-out linear step-start step-end infinite normal reverse alternate alternate-reverse none forwards backwards both running paused inherit initial unset revert'.split(' '));
 test('every animation asked for is one there is, and every one there is is asked for', () => {
   const named = animations();
@@ -58,7 +58,7 @@ test('every animation asked for is one there is, and every one there is is asked
   const asked = new Map();
   for (const { file, css } of sheets()) {
     for (const [, value] of css.matchAll(/[;{\s]animation(?:-name)?\s*:\s*([^;}]+)/g)) {
-      let plain = value;
+      let plain = value.replace(/!\s*important/g, ' '); // a priority, never a name
       while (/\([^()]*\)/.test(plain)) plain = plain.replace(/[\w-]*\([^()]*\)/g, ' '); // var(…), calc(…), cubic-bezier(…)
       for (const word of plain.split(/[\s,]+/)) {
         if (word && !NOT_NAMES.has(word) && !/^[-+]?[\d.]+(m?s)?$/.test(word)) asked.set(word, file);
