@@ -532,6 +532,75 @@ async function main() {
       assert.deepEqual(server, [], 'a beat deleted here is deleted from the account');
     }),
 
+    check('the taste test: a swipe turns the card, a double tap picks once both sides have been heard, and every pick is kept with what the model said', {}, async (page) => {
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('#jam-lab');
+      await page.locator('#jam-lab').click();
+      await page.waitForURL(/\/jam\/\?taste/);
+      await page.waitForSelector('.taste-card');
+      await sleep(700); // the screen slides in
+      const box = await page.locator('.taste-card').boundingBox();
+      const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+      const swipe = async () => {
+        await page.mouse.move(x + 60, y);
+        await page.mouse.down();
+        await page.mouse.move(x - 60, y, { steps: 4 });
+        await page.mouse.up();
+      };
+      const doubleTap = async () => {
+        await page.mouse.click(x, y);
+        await sleep(90);
+        await page.mouse.click(x, y);
+      };
+      const turned = () => page.evaluate(() => document.querySelector('.taste-card').classList.contains('turned'));
+      const kept = () => page.evaluate(() => JSON.parse(localStorage.getItem('jam:taste:v1')));
+      assert.equal((await kept()).trials.length, 0);
+      // a swipe turns it over, and back
+      const was = await turned();
+      await swipe();
+      assert.equal(await turned(), !was, 'a swipe did not turn the card');
+      // too soon: neither side has been listened to
+      await sleep(300);
+      await doubleTap();
+      await sleep(200);
+      assert.equal((await kept()).trials.length, 0, 'a pick counted before both sides had been heard');
+      assert.match(await page.locator('#taste-note').textContent(), /Listen to/);
+      // listened to both: now it counts
+      const pickOne = async () => {
+        await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
+        if ((await page.locator('.taste-card .face.heard').count()) < 2) await swipe();
+        await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
+        const up = (await turned()) ? 'back' : 'front';
+        await doubleTap();
+        await sleep(250);
+        return up;
+      };
+      const first = await pickOne();
+      let data = await kept();
+      assert.equal(data.trials.length, 1);
+      assert.equal(data.trials[0].pick, first, 'the side that was up is the one picked');
+      assert.equal(data.current[first], data.trials[0][first], 'the loop that was picked stays where it is');
+      assert.notEqual(data.current[first === 'front' ? 'back' : 'front'], data.trials[0][first === 'front' ? 'back' : 'front'], 'and a new challenger takes the other side');
+      assert.equal(data.current.reigning, first);
+      assert.match(data.current.phantom, /^[A-Za-z0-9_-]{39}$/, 'a phantom was made beside the challenger');
+      assert.equal(await page.locator('#lab-picks').textContent(), '1');
+      assert.equal(await page.locator('.taste-card .crown:not([hidden])').count(), 1, 'the reigning loop wears the crown');
+      // by keyboard, and by the buttons
+      await page.locator('.taste-card').focus();
+      const before = await turned();
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await turned(), !before);
+      await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 12000 }).catch(async () => { await page.locator('#taste-flip').click(); });
+      await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 12000 });
+      await page.locator('#taste-pick').click();
+      await page.waitForFunction(() => document.querySelector('#lab-picks').textContent === '2');
+      // it is all still there after a reload
+      await page.reload();
+      await page.waitForSelector('.taste-card');
+      assert.equal(await page.locator('#lab-picks').textContent(), '2');
+      assert.match(await page.locator('#lab-verdict').textContent(), /8 to go/);
+    }),
+
     check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {
       const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
       const game = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });

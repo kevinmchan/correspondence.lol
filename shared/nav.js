@@ -1,7 +1,7 @@
 // The app's one page, and the moves between its screens.
 //
 // The screens: scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), a room
-// (/room/?id=…), a game (/postmarks/…) and the music maker (/jam/). Each is a template in the page and a module with a
+// (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its taste test (/jam/?taste). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
 // screens can be on stage together for a moment: the one being left slides
@@ -26,6 +26,7 @@ const SCREENS = [
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },
   { name: 'game', depth: 2, match: (path) => path.startsWith('/postmarks'), load: () => import('/postmarks/ui.js') },
+  { name: 'taste', depth: 2, match: (path, url) => path.startsWith('/jam') && url.searchParams.has('taste'), load: () => import('/jam/taste.js') },
   { name: 'jam', depth: 1, match: (path) => path.startsWith('/jam'), load: () => import('/jam/jam.js') },
 ];
 const screenFor = (url) => SCREENS.find((screen) => screen.match(url.pathname, url)) ?? SCREENS.find((screen) => screen.name === 'home');
