@@ -31,7 +31,10 @@ export function mount(root, life) {
   const leaving = stage.querySelector('.o-leaving');
   const first = stage.querySelector('.o-first');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const wait = (ms) => new Promise((done) => life.setTimeout(done, ms));
+  // The rests between the beats of the scene are written at their full length
+  // and played at a little over half of it: the scene was slow.
+  const PACE = 0.55;
+  const wait = (ms) => new Promise((done) => life.setTimeout(done, ms * PACE));
   let pennyX = 46;
 
   const voice = createVoice(life, {
@@ -103,7 +106,7 @@ export function mount(root, life) {
         { transform: 'translate(0, 0) scale(1)' },
         { transform: 'translate(-20px, -26px) scale(1)', offset: 0.35 },
         { transform: `translate(${to.x - 177}px, ${to.y - 96}px) scale(0.3)` },
-      ], { duration: 2600, easing: 'ease-in-out', fill: 'forwards' }).finished.catch(() => {});
+      ], { duration: 1700, easing: 'ease-in-out', fill: 'forwards' }).finished.catch(() => {});
     }
     leaving.classList.add('gone');
     flash(tile(3, 1), 'took');

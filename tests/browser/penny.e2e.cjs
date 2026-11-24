@@ -122,22 +122,14 @@ async function main() {
   };
 
   const results = await Promise.all([
-    check('opening the app starts the film, or takes it up where it was left', {}, async (page, h) => {
-      const at = () => new URL(page.url()).search;
+    check('the film is asked for, never forced: the app opens on the home page, and scene one has a door back', {}, async (page) => {
       await page.goto(origin);
+      await page.waitForSelector('.home-map');
+      assert.equal(new URL(page.url()).search, '', 'someone new: the home page');
+      await page.goto(`${origin}/?office`);
       await page.waitForSelector('.office-stage');
-      assert.equal(at(), '?office', 'someone new: scene one');
-      await page.locator('.office-door').click({ force: true }); // the door out of the film
+      await page.locator('.office-door').click({ force: true });
       await page.waitForSelector('.home-map');
-      assert.equal(at(), '', 'the door leads to the home page');
-      await page.evaluate(() => localStorage.setItem('penny:place:v1', '2'));
-      await page.goto(origin);
-      await page.waitForSelector('.walk');
-      assert.equal(at(), '?walk', 'part of the way along: the walk');
-      await page.evaluate(() => localStorage.setItem('penny:walked:v1', 'true'));
-      await page.goto(origin);
-      await page.waitForSelector('.home-map');
-      assert.equal(at(), '', 'the film so far seen through: the home page');
     }),
 
     check('home, first visit: Penny alone, not a word, and the way through the portal', {}, async (page, { pal, words }) => {

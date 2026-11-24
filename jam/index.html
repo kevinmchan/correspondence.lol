@@ -39,11 +39,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    // Nor does it play before the film, which is what the bare address opens
-    // on until the film so far has been seen through (shared/nav.js).
-    var film = false;
-    try { film = !location.search && !location.hash && localStorage.getItem('penny:walked:v1') !== 'true'; } catch (e) {}
-    if (film || (location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
