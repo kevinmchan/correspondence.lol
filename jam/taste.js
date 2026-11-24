@@ -74,14 +74,75 @@ export function mount(root, life) {
   const loop = createLoop(life, () => (started ? { tempo: state.current[up].tempo, sets: sets[up] } : null));
 
   // --- The card ------------------------------------------------------------------------------
-  // Each side is a picture of its loop: the board, with a dot for every note
-  // in its instrument's colour, and a bar that crosses it as it plays.
+  // Each side is a picture of its loop, and the picture is lit by the loop as
+  // it plays. The board, with a dot for every note in its instrument's colour.
+  // Over it hang four lamps, one for each instrument, and each throws its
+  // beam when its instrument sounds. A note that sounds jumps and flares, and a
+  // ring spreads from it. A bar of light crosses with the beat, the edge of
+  // the card glows in the colour of what has just sounded, and at the top of
+  // every bar a gleam runs across the whole card.
+  const [WIDE, HIGH] = [STEPS * 10, ROWS * 10];
   function picture(beat) {
+    const beams = LAYERS.map((kind, index) => {
+      const x = WIDE * ((index + 0.5) / LAYERS.length);
+      return `<path class="beam" data-layer="${index}" d="M${x - 2} -6 L${x + 2} -6 L${x + 17} ${HIGH + 4} L${x - 17} ${HIGH + 4} Z" fill="${kind.colour}" opacity="0"/>`
+        + `<circle class="lamp" data-layer="${index}" cx="${x}" cy="-5" r="2.2" fill="${kind.colour}" opacity="${beat.notes[index].length ? 0.55 : 0.15}"/>`;
+    });
     const dots = [];
     beat.notes.forEach((tiles, index) => {
-      for (const tile of tiles) dots.push(`<rect x="${Math.floor(tile / ROWS) * 10 + 1.5}" y="${(tile % ROWS) * 10 + 1.5}" width="7" height="7" rx="2" fill="${LAYERS[index].colour}"/>`);
+      for (const tile of tiles) {
+        const [step, row] = [Math.floor(tile / ROWS), tile % ROWS];
+        dots.push(`<rect class="dot" data-step="${step}" data-layer="${index}" x="${step * 10 + 1.5}" y="${row * 10 + 1.5}" width="7" height="7" rx="2" fill="currentColor" style="color:${LAYERS[index].colour}"/>`);
+      }
     });
-    return `<svg viewBox="0 0 ${STEPS * 10} ${ROWS * 10}" aria-hidden="true"><rect class="now" x="0" y="0" width="10" height="${ROWS * 10}" rx="3" opacity="0"/>${dots.join('')}</svg>`;
+    return `<svg viewBox="0 -8 ${WIDE} ${HIGH + 8}" aria-hidden="true"><g class="beams">${beams.join('')}</g><rect class="now" x="0" y="0" width="10" height="${HIGH}" rx="3" opacity="0"/>${dots.join('')}<g class="rings"></g></svg>`;
+  }
+  // One step of the side that is up has just sounded: light it.
+  let bars = 0;
+  function light(side, step) {
+    const face = faces[side];
+    const hit = [...face.querySelectorAll(`.dot[data-step="${step}"]`)];
+    if (step === 0) bars += 1;
+    if (still) return;
+    const rings = face.querySelector('.rings');
+    const sounding = new Set();
+    for (const dot of hit) {
+      sounding.add(Number(dot.dataset.layer));
+      dot.classList.remove('hit');
+      void dot.getBoundingClientRect();
+      dot.classList.add('hit');
+      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ring.setAttribute('cx', Number(dot.getAttribute('x')) + 3.5);
+      ring.setAttribute('cy', Number(dot.getAttribute('y')) + 3.5);
+      ring.setAttribute('r', 4);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', dot.style.color);
+      ring.setAttribute('stroke-width', 1.1);
+      rings.append(ring);
+      ring.animate([{ r: 4, opacity: 0.9 }, { r: 15, opacity: 0 }], { duration: 560, easing: 'ease-out', fill: 'forwards' });
+      life.setTimeout(() => ring.remove(), 600);
+    }
+    // each instrument that sounded throws its beam, swinging a little one way or the other
+    for (const index of sounding) {
+      const lean = (bars + index) % 2 ? 5 : -5;
+      face.querySelector(`.beam[data-layer="${index}"]`)?.animate(
+        [{ opacity: step % 4 === 0 ? 0.3 : 0.2, transform: `rotate(${lean}deg)` }, { opacity: 0, transform: `rotate(${-lean}deg)` }],
+        { duration: 620, easing: 'ease-out' },
+      );
+      face.querySelector(`.lamp[data-layer="${index}"]`)?.animate([{ r: 3.6, opacity: 1 }, { r: 2.2, opacity: 0.55 }], { duration: 420, easing: 'ease-out' });
+    }
+    // the edge of the card takes the colour of what sounded, harder on the beat
+    if (hit.length) {
+      face.style.setProperty('--glow', hit[0].style.color);
+      face.classList.remove('beat', 'offbeat');
+      void face.offsetWidth;
+      face.classList.add(step % 4 === 0 ? 'beat' : 'offbeat');
+    }
+    if (step === 0) { // the top of the bar: a gleam across the whole card
+      face.classList.remove('gleam');
+      void face.offsetWidth;
+      face.classList.add('gleam');
+    }
   }
   function show() {
     for (const side of SIDES) {
@@ -183,9 +244,14 @@ export function mount(root, life) {
   // Every frame: the bar across the side that is playing, and the listening counted.
   let frame = 0;
   let last = performance.now();
+  let lit = -1;
   function draw() {
     const now = performance.now();
     const { step } = loop.heard();
+    if (step !== lit) {
+      lit = step;
+      if (step >= 0) light(up, step);
+    }
     if (step >= 0) {
       const before = heardMs[up];
       heardMs[up] += Math.min(250, now - last); // (a long gap between frames is the screen having been away, not listening)
@@ -194,7 +260,7 @@ export function mount(root, life) {
     for (const side of SIDES) {
       const bar = faces[side].querySelector('.now');
       if (!bar) continue;
-      bar.setAttribute('opacity', side === up && step >= 0 ? 0.22 : 0);
+      bar.setAttribute('opacity', side === up && step >= 0 ? 0.3 : 0);
       if (side === up && step >= 0) bar.setAttribute('x', step * 10);
     }
     last = now;

@@ -446,6 +446,15 @@ a stake reaches ×20 less than one time in twenty against a fair coin, however
 long one plays and however often one looks, so ×20 is significance at the 5%
 level with no number of picks fixed beforehand.
 
+**The picture is lit by the loop.** Each side shows its loop as the board,
+a dot for every note. Four lamps hang over it, one for each instrument, and
+each throws a beam when its instrument sounds. A note that sounds jumps and
+flares, and a ring spreads from it; a bar of light crosses with the beat; the
+edge of the card glows in the colour of what has just sounded, harder on the
+beat; and at the top of every bar a gleam runs across the card. At rest the
+notes twinkle. Both sides are lit by the same rules, so the lights favour
+neither. With reduced motion only the bar of light moves.
+
 The lab notes under the card show where it stands after every pick: the
 stake and a bar filling towards ×20, how often the model called the pick
 right, how often habit alone would have, how often the real challenger beat
