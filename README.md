@@ -143,6 +143,18 @@ is left behind for losing, whoever comes last is as welcome as whoever comes
 first, and help is allowed: a hint may be asked for in the middle of a race,
 and Penny thinks that a fine idea.
 
+**What the writing keeps coming back to: others can light up parts of us,
+above all the parts we have lost touch with.** Penny cannot say what it means;
+Dot can, and when Dot says it, something Penny had no way to reach is out in
+the light. A part of oneself can go dark for a long time (Penny, posted long
+ago and never delivered, has more of those than most) and come back lit
+because someone else noticed it, named it, or only stood beside it. The story
+shows this rather than saying it, and mostly in light: Penny's seal glows, a
+fingertip of light passes from one to another, a room's window is lit when
+somebody there is waiting on you. It is also why the radio's question matters:
+whether something that learns what you like lights a part of you up, or
+evens it out.
+
 **What the world is afraid of: losing music.** Taste is being averaged, more
 and more efficiently: what one person likes is worked out, set beside what
 everyone likes, and evened out, a little faster each time. The world Penny
