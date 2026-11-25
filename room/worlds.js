@@ -283,7 +283,12 @@ export function twoWorlds(root, life, portal) {
   }
   // Whether something the page did changed what it looks like. (Every few seconds the room's poll puts back what is
   // already there: the same people, the same games. Copying the whole page again for that is all cost and no change.)
+  // (Nor is the night's hidden mark (penny/tags.js), put down and moved on its own clock once the page has settled
+  // and again after a scroll: it is no part of the room. Where it lies, and its glint, are put on its twin in the copy
+  // as they change (mirror, below); anything else of it the copy can do without for the length of a crossing.)
+  const night = (node) => node?.nodeType === 1 && Boolean(node.closest('.tag-hidden'));
   const real = (change) => {
+    if (night(change.target) || [...change.addedNodes, ...change.removedNodes].some(night)) return false;
     if (change.type === 'attributes') {
       return !(change.attributeName === 'data-paint' && own().includes(change.target)) && change.target.getAttribute(change.attributeName) !== change.oldValue;
     }
@@ -291,8 +296,8 @@ export function twoWorlds(root, life, portal) {
     const [gone, come] = [change.removedNodes, change.addedNodes];
     return gone.length !== come.length || [...come].some((node, i) => !node.isEqualNode(gone[i]));
   };
-  // The night's hidden mark (penny/tags.js) is put down, and glints, on its own clock: what changes on it is put on its
-  // twin in the copy as it changes, rather than the whole page being copied again for it.
+  // The night's hidden mark is put down, and glints, on its own clock: what changes on it is put on its twin in the
+  // copy as it changes, rather than the whole page being copied again for it.
   const mirror = (change) => {
     if (change.type !== 'attributes' || !change.target.closest?.('.tag-hidden')) return false;
     const twin = twinOf(change.target);

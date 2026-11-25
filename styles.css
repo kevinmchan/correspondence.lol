@@ -920,8 +920,12 @@ section.card.me:active { transform: translateY(0.18rem); box-shadow: 0 0.04rem 0
 .install-banner ~ main { min-height: 0; }
 /* The screen being left is lifted out of the layout, so that only the new one
    decides how tall the page is. (Otherwise a tall screen on its way out holds
-   the page open, and the new screen's contents jump when it finally goes.) */
-.screen.leaving { position: absolute; top: 0; left: 0; right: 0; grid-area: auto; pointer-events: none; animation: leave-forth 340ms cubic-bezier(0.4, 0, 0.6, 1) both; }
+   the page open, and the new screen's contents jump when it finally goes.)
+   It is lifted out before the new one is on the page at all ("going":
+   shared/nav.js), and not a moment after: a screen that measures itself as it
+   arrives was otherwise as tall as the one it was come to from. */
+.screen.going, .screen.leaving { position: absolute; top: 0; left: 0; right: 0; grid-area: auto; pointer-events: none; }
+.screen.leaving { animation: leave-forth 340ms cubic-bezier(0.4, 0, 0.6, 1) both; }
 .screen.leaving.back { animation-name: leave-back; }
 .screen.entering { animation: enter-forth 360ms cubic-bezier(0.15, 0.85, 0.3, 1) both; }
 .screen.entering.back { animation-name: enter-back; }

@@ -67,6 +67,23 @@ export function outline(steps = 40) {
   ];
 }
 
+// A star as it is drawn: its outline, and the two needles its points thin
+// away to. (In the picture the points never quite thin away to nothing: each
+// can be seen to its tip.) About the star's own middle, in units of the
+// picture's side, as the path data that a canvas and an SVG both take: the
+// night draws its stars with it (penny/sky.js) and so does the way through
+// to the night (penny/tags.js), which have to be the same shape to the pixel.
+// `side` is how big the picture is on the screen, in pixels: a needle is
+// never thinner than can be seen there.
+export const NEEDLE = 0.0006; // how thick the very tip of a point is, as a share of the picture's side
+export function starPath(light, side) {
+  const thin = Math.max(NEEDLE, 0.4 / side);
+  const edge = outline().map(([x, y], i) => `${i ? 'L' : 'M'}${x * light.a} ${y * light.b}`).join('');
+  // (each needle is gone round the same way as the outline, so that where they overlap they add and do not cancel)
+  const bar = (x, y, wide, high) => `M${x} ${y}h${wide}v${high}h${-wide}Z`;
+  return `${edge}Z${bar(-thin / 2, -light.b, thin, light.b * 2)}${bar(-light.a, -thin / 2, light.a * 2, thin)}`;
+}
+
 // How near a light is, 0 to 1, from its size: the big star is as near as
 // anything gets, the middle one half way, and a dot is as far off as can be.
 const FARTHEST = 28 / SIDE; // a star this small would be as far as a dot
@@ -161,11 +178,6 @@ export function sway([at, speed], seconds, { spread, pace }, chance = Math.rando
   }
   return [at, speed];
 }
-// A step of a wandering that nothing pulls back and nothing smooths: a mote
-// set loose, knocked about. `loose` is how far it gets, on the whole, in one
-// second.
-export const roam = (at, seconds, loose, chance = Math.random) => at + loose * Math.sqrt(seconds) * bell(chance);
-
 // The whole picture is afloat, as whoever is looking at it drifts: more
 // slowly than any light wanders by itself, and by no more. What is near goes
 // by faster than what is far, which is what makes it deep.
@@ -189,8 +201,13 @@ export const often = (light, heat = 0) => (24 + 22 * nearness(light)) / (1 + 6 *
 // --- Where the picture goes in a window -------------------------------------
 // As a square: all of it where the window is wider than it is tall, and on a
 // tall phone a little wider than the window, since the picture has room to
-// spare at its sides.
+// spare at its sides. It is put on whole pixels and is a whole number of them
+// across. The way through to the night lays a picture over the night's own
+// (penny/tags.js), and the two are only the same to the pixel if neither is
+// left to be nudged onto the screen's pixels in its own way: at half a pixel
+// each was nudged differently, and the stars moved over by one as the one
+// picture gave way to the other.
 export function frame(width, height) {
-  const side = Math.min(width * 1.2, height);
-  return { side, x: (width - side) / 2, y: (height - side) * 0.42 };
+  const side = Math.round(Math.min(width * 1.2, height));
+  return { side, x: Math.round((width - side) / 2), y: Math.round((height - side) * 0.42) };
 }

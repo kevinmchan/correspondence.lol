@@ -120,6 +120,16 @@ async function states() {
   assert.equal(standing(found.trials).significant, true, 'a marked taste was not found in 600 picks');
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   const NIGHT = { 'tags:found:v1': ['night'] }; // somebody who has found the night
+  // The night, once the way through to it is over: the only screen there is, with nothing left over it; and its picture drawn for the size it is shown at.
+  const arrived = async (page) => {
+    await page.waitForFunction(() => document.querySelector('.screen-sky') && document.querySelectorAll('#screens .screen').length === 1 && !document.querySelector('.tag-rise'), null, { timeout: 8000 });
+    const drawn = await page.evaluate(() => {
+      const view = document.querySelector('.sky-view');
+      const sharp = Math.min(window.devicePixelRatio || 1, 2);
+      return { shown: [view.clientWidth, view.clientHeight].join(' by '), drawnFor: [view.width / sharp, view.height / sharp].join(' by '), window: [window.innerWidth, window.innerHeight].join(' by ') };
+    });
+    if (drawn.shown !== drawn.window || drawn.drawnFor !== drawn.shown) throw new Error(`the night is shown ${drawn.shown} in a window ${drawn.window}, and its picture is drawn for ${drawn.drawnFor}`);
+  };
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
     { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
@@ -236,6 +246,12 @@ async function states() {
     { name: 'home, somebody new, with the night kept', screen: 'home', at: '/', storage: { ...NIGHT }, ready: '.tag-kept' },
     { name: 'home, the lobby, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', ...NIGHT }, ready: '.tag-kept' },
     { name: 'home, the feed, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, server: rooms(GAMES), ready: '.tag-kept', settle: '.feed-item' },
+    // ...the night as it is when it has been come to, by the tumble, from a page longer than the screen: the size of the screen, with
+    // its picture drawn for that size (it was once drawn for the length of the page it was come to from, and squashed to fit)...
+    { name: 'the night, come to through the mark from a long page', screen: 'sky', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '.tag-hidden:not([hidden])',
+      then: async (page) => { await page.locator('.tag-hidden').click(); await arrived(page); }, settle: '.sky[data-alive]', whole: ['.penny-back'] },
+    { name: 'the night, come to from what is kept on a long home page', screen: 'sky', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', ...NIGHT }, ready: '.tag-kept',
+      then: async (page) => { await page.locator('.tag-kept').click(); await arrived(page); }, settle: '.sky[data-alive]', whole: ['.penny-back'] },
     // ...and the mark it is found by, hidden somewhere on other screens and somewhere else each time: small, and still something to press.
     // It is not put down until a screen has settled, so these wait for it. (Found already, it is there all the same, a little plainer.)
     // It is only where there is room for it: in a room that is on the map outside the door, at the bottom of the page; and in the

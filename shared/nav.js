@@ -71,6 +71,11 @@ async function show(url, { announce }) {
   if (leaving) {
     leaving.root.style.marginTop = `${-window.scrollY}px`;
     leaving.root.inert = true;
+    // And it is out of the layout from here on (styles.css), before the new
+    // screen is put on the page at all: a screen that measures itself as it
+    // arrives has to find itself the size it is going to be, not held open
+    // to the length of a longer one on its way out.
+    leaving.root.classList.add('going');
   }
   stage.append(root);
   window.scrollTo(0, 0);
