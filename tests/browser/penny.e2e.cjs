@@ -2461,6 +2461,46 @@ async function main() {
     // hearts of a game won alone, the faces of one won together. (Neither ever
     // did. The rule for it could match nothing, and counted on a number the
     // hearts were never given.)
+    // Energy, playing alone (shared/energy.js): every post found is kept at once and fills the bar, a spark flying
+    // from the post to the end of the bar; no number is shown, and what is held is said to screen readers; finishing the board adds as much again; the same board played again adds
+    // nothing for what it has already earned.
+    check('energy: each post found fills the bar, and finishing the board fills the rest; no number on the screen', { storage: { 'postmarks:howto:v1': true, 'correspondence:energy:v1': { earned: 10, spent: 0, boards: [] } } }, async (page) => {
+      const { newGame } = await import('../../postmarks/game.js');
+      const game = newGame({ size: 5, seed: 4, players: ['You'] });
+      await page.goto(`${origin}/`);
+      await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
+      await page.goto(`${origin}/postmarks/`);
+      await page.waitForSelector('#energy:not([hidden])');
+      await page.evaluate(() => document.querySelector('dialog[open]')?.close());
+      const reads = () => page.evaluate(() => ({
+        count: Number(document.querySelector('#energy').getAttribute('aria-label').replace(/\D/g, '')),
+        fill: Number(document.querySelector('#energy .bar i').style.getPropertyValue('--fill')),
+        kept: JSON.parse(localStorage.getItem('correspondence:energy:v1')).earned,
+        sparks: document.querySelectorAll('.energy-spark').length,
+      }));
+      assert.deepEqual(await reads(), { count: 10, fill: 0, kept: 10, sparks: 0 }, 'what was earned before, and nothing yet on this board');
+      assert.equal(await page.locator('#turn').isVisible(), false, 'the bar is where the words of the turn were');
+      assert.equal((await page.locator('#energy').innerText()).trim(), '', 'and nothing on it is written');
+      const open = (row) => page.locator(`#board .cell[data-cell="${row * game.size + game.solution[row]}"]`).dblclick();
+      await open(0);
+      await page.waitForFunction(() => document.querySelector('.energy-spark'), null, { timeout: 2000 });
+      assert.equal((await reads()).kept, 11, 'kept at once, before the spark has landed');
+      await page.waitForFunction(() => document.querySelector('#energy').getAttribute('aria-label') === 'Energy 11' && !document.querySelector('.energy-spark'), null, { timeout: 4000 });
+      assert.equal((await reads()).fill, 0.1, 'one post of five: a tenth of all the board can earn');
+      for (let row = 1; row < game.size; row++) { await open(row); await sleep(300); }
+      await page.waitForFunction(() => document.querySelector('#energy').getAttribute('aria-label') === 'Energy 20', null, { timeout: 12000 });
+      assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'five posts, and five more for finishing');
+      await page.waitForSelector('dialog.finale[open]', { timeout: 6000 });
+      // the same board again: nothing more
+      await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
+      await page.reload();
+      await page.waitForSelector('#energy:not([hidden])');
+      await page.evaluate(() => document.querySelector('dialog[open]')?.close());
+      assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'the board shows all it has earned');
+      await open(0);
+      await sleep(1500);
+      assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'a post found again earns nothing');
+    }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('#jam-play');

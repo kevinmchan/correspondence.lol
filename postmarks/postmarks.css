@@ -26,6 +26,57 @@
 
 #hearts { color: var(--accent); letter-spacing: 0.1em; }
 
+/* Energy, playing alone (ui.js, tallyEnergy): a bar with a current running
+   through it (a slow travelling shimmer, and a spark flickering at the end it
+   has reached). No mark beside it and no number: the bar is it. */
+.energy { display: flex; align-items: center; gap: 0.6rem; align-self: center; font-family: system-ui, sans-serif; }
+.energy[hidden] { display: none; }
+.energy .bar {
+  position: relative; width: 7.5rem; height: 0.75rem; border-radius: 1rem;
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+  box-shadow: inset 0 0.08rem 0.15rem rgb(0 0 0 / 0.08);
+}
+.energy .bar i {
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit;
+  width: calc(var(--fill, 0) * 100%);
+  background:
+    linear-gradient(100deg, transparent 0 35%, rgb(255 255 255 / 0.75) 45%, transparent 55% 100%) 0 0 / 3rem 100% repeat-x,
+    linear-gradient(90deg, #f8d95a, #f3b33c);
+  box-shadow: 0 0 0.45rem rgb(248 205 80 / 0.55);
+  transition: width 650ms cubic-bezier(0.3, 1.25, 0.5, 1);
+}
+.energy.empty .bar i { box-shadow: none; }
+/* the spark at the end the current has reached */
+.energy .bar i::after {
+  content: ""; position: absolute; right: -0.45rem; top: 50%; width: 0.9rem; height: 0.9rem; translate: 0 -50%;
+  background: #fff6c4;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  filter: drop-shadow(0 0 0.2rem #f8d95a);
+  opacity: 0.9;
+}
+.energy.empty .bar i::after { display: none; }
+/* a spark, from a post found to the bar; and the sparkles it throws off as it lands */
+.energy-spark, .energy-glint {
+  position: fixed; z-index: 30; pointer-events: none;
+  background: #fbe27a;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 0.3rem #f8d95a);
+}
+.energy-spark { width: 1.4rem; height: 1.4rem; }
+.energy-glint { width: 0.6rem; height: 0.6rem; background: #fff3b0; }
+@media (prefers-reduced-motion: no-preference) {
+  .energy .bar i { animation: energy-current 2.6s linear infinite; }
+  .energy .bar i::after { animation: energy-flicker 1.9s steps(1) infinite; }
+  .energy.gain .bar i { animation: energy-current 2.6s linear infinite, energy-take 650ms ease-out; }
+  .energy.gain .bar i::after { animation: energy-flare 650ms ease-out; }
+  .energy.full .bar i { animation: energy-current 1.3s linear infinite, energy-full 1.4s ease-out; }
+}
+@keyframes energy-current { to { background-position: 3rem 0, 0 0; } }
+@keyframes energy-flicker { 0% { opacity: 0.9; scale: 1; } 23% { opacity: 0.55; scale: 0.8; } 31% { opacity: 1; scale: 1.15; } 47% { opacity: 0.75; scale: 0.95; } 71% { opacity: 1; scale: 1.05; } 86% { opacity: 0.6; scale: 0.85; } }
+@keyframes energy-take { 0% { filter: none; } 30% { filter: brightness(1.3) drop-shadow(0 0 0.4rem #f8d95a); } 100% { filter: none; } }
+@keyframes energy-flare { 0% { scale: 1; } 30% { scale: 2.1; opacity: 1; } 100% { scale: 1; } }
+@keyframes energy-full { 0%, 100% { filter: none; } 30% { filter: brightness(1.3) drop-shadow(0 0 0.5rem #f8d95a); } }
+
 .roster { justify-content: flex-start; }
 .roster li.now { color: var(--ink); border-color: var(--accent); }
 

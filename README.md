@@ -237,8 +237,21 @@ hints.** Dot is a friend met on the way, not the one being looked for.
 
 **The solo campaign runs on energy, earned by work (the owner, 25 November
 2026).** Penny earns energy by completing work, and the work is how Penny meets
-new characters. What the work is, what the energy is spent on and how it is
-shown are not decided yet. It is held to two things unless the owner says
+new characters. What the energy is spent on is not decided yet. How it is
+earned and shown has begun (the owner, 25 November 2026): in a game played
+alone, every post found is energy at once, and finishing the board entirely
+earns as much again (`shared/energy.js`). Where the words of the turn were, a
+bar for the board (how much of all it can earn has been earned), with a
+current running through it and a spark flickering at the end it has reached;
+no mark beside it and no number (the owner, 25 November 2026: "no electric
+icon, just an animated, electrified bar"; and then no count). What is held in
+all is said only to screen readers. A post found sends a spark from itself to
+the end of the bar, which throws off sparkles as it lands, and the bar takes
+it in; a
+board finished sends a shower from every post on it, and the sheet at the end
+waits until it has landed. A bigger board earns more; a faster one no more;
+hints are free; a board played again earns only for what it has not earned
+before. It is held to two things unless the owner says
 otherwise: it is earned by care and never bought, waited out or nagged for
 (an energy that pressures people to come back or to pay is the opposite of
 this story); and the people met at work are the "others" of the theme above,

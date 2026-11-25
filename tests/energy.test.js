@@ -1,70 +1,92 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LARGEST, SMALLEST, finished, fresh, held, read, spend, worth } from '../shared/energy.js';
+import { LARGEST, POST, SMALLEST, earnedOn, finish, fresh, held, most, played, read, spend } from '../shared/energy.js';
 import { MAX_SIZE, MIN_SIZE } from '../postmarks/game.js';
 
-const won = (size, seed) => ({ size, seed, status: 'won' });
+const at = (size, seed, found, status = 'playing') => ({ size, seed, found, status });
 
-test('a harder board earns more: every size Postmarks makes, each worth more than the one below', () => {
-  assert.equal(SMALLEST, MIN_SIZE);
-  assert.equal(LARGEST, MAX_SIZE);
-  for (let size = MIN_SIZE; size <= MAX_SIZE; size++) assert.equal(worth(size), size - MIN_SIZE + 1);
-  assert.equal(worth(MIN_SIZE - 1), 0);
-  assert.equal(worth(MAX_SIZE + 1), 0);
-  assert.equal(worth(6.5), 0);
+test('every post found earns at once, whether or not the board is finished', () => {
+  let state = fresh();
+  for (let found = 1; found <= 4; found++) {
+    const now = played(state, at(7, 1, found));
+    assert.deepEqual([now.gained, now.posts, now.won], [POST, 1, false], `post ${found}`);
+    state = now.state;
+  }
+  assert.equal(held(state), 4 * POST);
+  const lost = played(state, at(7, 1, 4, 'lost'));
+  assert.equal(lost.gained, 0, 'running out of hearts takes nothing back, and earns nothing more');
+  assert.equal(held(lost.state), 4 * POST);
 });
 
-test('a game won earns; a game lost, or still being played, earns nothing', () => {
-  assert.equal(finished(fresh(), won(7, 1)).gained, 3);
-  assert.equal(finished(fresh(), { size: 7, seed: 1, status: 'lost' }).gained, 0);
-  assert.equal(finished(fresh(), { size: 7, seed: 1, status: 'playing' }).gained, 0);
-  assert.equal(finished(fresh(), null).gained, 0);
+test('finishing a board entirely earns more on top: its posts’ worth again', () => {
+  const state = played(fresh(), at(7, 1, 6)).state;
+  const won = played(state, at(7, 1, 7, 'won'));
+  assert.deepEqual([won.posts, won.won], [1, true]);
+  assert.equal(won.gained, POST + finish(7));
+  assert.equal(held(won.state), most(7));
+  assert.equal(finish(7), 7 * POST);
+});
+
+test('a harder board earns more: every size Postmarks makes, all of it and its finish', () => {
+  assert.equal(SMALLEST, MIN_SIZE);
+  assert.equal(LARGEST, MAX_SIZE);
+  for (let size = MIN_SIZE + 1; size <= MAX_SIZE; size++) {
+    assert.ok(most(size) > most(size - 1));
+    assert.ok(finish(size) > finish(size - 1));
+  }
+  for (const odd of [MIN_SIZE - 1, MAX_SIZE + 1, 6.5]) {
+    assert.equal(most(odd), 0);
+    assert.equal(played(fresh(), at(odd, 1, 3, 'won')).gained, 0);
+  }
 });
 
 test('faster earns no more, and a hint costs nothing: the rules are not told the time or the hints at all', () => {
-  const quick = finished(fresh(), { ...won(8, 2), ms: 1000, hints: 0 });
-  const slow = finished(fresh(), { ...won(8, 2), ms: 9000000, hints: 40 });
+  const quick = played(fresh(), { ...at(8, 2, 8, 'won'), ms: 1000, hints: 0 });
+  const slow = played(fresh(), { ...at(8, 2, 8, 'won'), ms: 9000000, hints: 40 });
   assert.equal(quick.gained, slow.gained);
   assert.deepEqual(quick.state, slow.state);
-  // and nothing in the file reads a clock or a count of hints
   const source = readFileSync(new URL('../shared/energy.js', import.meta.url), 'utf8').replace(/^\s*\/\/.*$/gm, '');
   assert.doesNotMatch(source, /Date|performance|\bms\b|elapsed|hint|setTimeout|setInterval/);
 });
 
-test('a board earns once: solved again, it is play for its own sake', () => {
-  const once = finished(fresh(), won(9, 77));
-  assert.equal(once.gained, 5);
-  const again = finished(once.state, won(9, 77));
-  assert.equal(again.gained, 0);
-  assert.equal(again.state, once.state);
-  assert.equal(finished(once.state, won(9, 78)).gained, 5, 'another board of the same size');
-  assert.equal(finished(once.state, won(8, 77)).gained, 4, 'the same seed at another size is another board');
+test('a board earns once: played again, only posts it has not earned for, and its finish once', () => {
+  const lost = played(fresh(), at(9, 77, 5, 'lost')).state;
+  const again = played(lost, at(9, 77, 3));
+  assert.equal(again.gained, 0, 'the same posts found again');
+  assert.equal(again.state, lost);
+  const further = played(lost, at(9, 77, 6));
+  assert.equal(further.gained, POST, 'one further than before');
+  const won = played(further.state, at(9, 77, 9, 'won')).state;
+  assert.equal(held(won), most(9));
+  assert.equal(played(won, at(9, 77, 9, 'won')).gained, 0, 'won again');
+  assert.deepEqual(earnedOn(won, at(9, 77, 0)), { posts: 9, won: true, energy: most(9) });
+  assert.equal(played(won, at(9, 78, 1)).gained, POST, 'another board of the same size');
+  assert.equal(played(won, at(8, 77, 1)).gained, POST, 'the same seed at another size is another board');
 });
 
 test('it accumulates without limit and never fades', () => {
   let state = fresh();
-  for (let seed = 0; seed < 1000; seed++) state = finished(state, won(9, seed)).state;
-  assert.equal(held(state), 5000);
+  for (let seed = 0; seed < 1000; seed++) state = played(state, at(9, seed, 9, 'won')).state;
+  assert.equal(held(state), 1000 * most(9));
   assert.ok(state.boards.length <= 400, 'only so many boards are remembered');
-  assert.equal(held(read(JSON.parse(JSON.stringify(state)))), 5000, 'and it is all there after being saved');
+  assert.equal(held(read(JSON.parse(JSON.stringify(state)))), 1000 * most(9), 'and it is all there after being saved');
 });
 
 test('spending is all of a price or none of it', () => {
-  const state = finished(fresh(), won(9, 1)).state;
-  assert.deepEqual(spend(state, 6), { state, paid: false });
-  assert.equal(spend(state, 0).paid, false);
-  assert.equal(spend(state, -3).paid, false);
-  assert.equal(spend(state, 1.5).paid, false);
+  const state = played(fresh(), at(5, 1, 5, 'won')).state;
+  assert.deepEqual(spend(state, most(5) + 1), { state, paid: false });
+  for (const bad of [0, -3, 1.5]) assert.equal(spend(state, bad).paid, false);
   const after = spend(state, 3);
   assert.equal(after.paid, true);
-  assert.equal(held(after.state), 2);
-  assert.equal(after.state.earned, 5, 'what was earned stays on record');
+  assert.equal(held(after.state), most(5) - 3);
+  assert.equal(after.state.earned, most(5), 'what was earned stays on record');
 });
 
 test('what was saved is made safe: anything broken is a fresh start, never a debt', () => {
   for (const bad of [null, 'x', {}, { earned: -1, spent: 0, boards: [] }, { earned: 2, spent: 3, boards: [] }, { earned: 1.5, spent: 0, boards: [] }, { earned: 1, spent: 0, boards: 'no' }]) {
     assert.deepEqual(read(bad), fresh());
   }
-  assert.deepEqual(read({ earned: 4, spent: 1, boards: ['5:1', 7, '6:2'] }), { earned: 4, spent: 1, boards: ['5:1', '6:2'] });
+  const kept = { b: '6:2', p: 3, w: false };
+  assert.deepEqual(read({ earned: 4, spent: 1, boards: ['5:1', kept, { b: 7, p: 1, w: true }, { b: '5:2', p: -1, w: false }] }), { earned: 4, spent: 1, boards: [kept] });
 });

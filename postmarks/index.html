@@ -419,6 +419,8 @@
       <div id="play" class="stack" hidden>
         <div class="hud">
           <p id="turn" class="turn"></p>
+          <!-- Energy, playing alone: a bar with a current running through it; each post found fills it, and finishing the board fills the rest (shared/energy.js). No number: what is held in all is said only to screen readers. -->
+          <p id="energy" class="energy" role="img" hidden><span class="bar" aria-hidden="true"><i></i></span></p>
           <p class="tallies">
             <span id="hearts"></span>
             <span id="found"></span>
