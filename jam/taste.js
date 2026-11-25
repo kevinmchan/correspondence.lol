@@ -49,6 +49,13 @@
 // leaves it open (README, "The question Penny's Radio asks"): nothing on this
 // screen answers it.
 //
+// One thing of the experiment's is on the face of the set, without a word: a
+// panel meter set into the speaker, whose needle is the stake of that test, on
+// a log scale up to the ×20 that is significance, with a lamp beside it that
+// lights there. It moves after a station is kept and at no other time, and
+// nothing on the set shows what the model expects of the pair that is up (see
+// "The meter", below). Penny takes no notice of it.
+//
 // Two things are done for the sake of the experiment and not of the radio. A
 // station cannot be kept until both have been listened to. And which of the
 // two is tuned in when a new pair arrives is decided by a coin, so that "the
@@ -62,7 +69,7 @@ import { LAYERS, ROWS, STEPS, createLoop } from './engine.js';
 import { arrange } from './form.js';
 import { claim as callPal } from '/penny/pal.js';
 import { ASK, G4, GASP, PLEASE, RELIEF, SIGH, THIS_WAY, WONDER, hasDot } from '/penny/penny.js';
-import { NEEDED, REIGN, WARMUP, begin, choose, fit, leanings, pairVector, standing } from './taste-model.js';
+import { NEEDED, REIGN, TOP, WARMUP, begin, choose, fit, leanings, meter, pairVector, standing, startOver } from './taste-model.js';
 
 const KEY = 'jam:taste:v1';
 const TAUGHT_KEY = 'radio:taught:v1'; // it has been shown how, on this device
@@ -91,14 +98,16 @@ const SIGNS = {
   'not-yet': SIGN('<path d="M6.5 3.5h11M6.5 20.5h11M8 3.5v2c0 3 4 4.4 4 6.5s-4 3.5-4 6.5v2M16 3.5v2c0 3-4 4.4-4 6.5s4 3.5 4 6.5v2"/><path d="M9.6 19.6h4.8L12 17.2z" fill="currentColor" stroke="none"/>'), // an hourglass
 };
 
-// What is kept: the picks, with the loops as their codes, and the pair now up.
+// What is kept: the picks, with the loops as their codes, and the pair now up; the stake carried over from
+// before the experiment was last started over (1 if it never was), and each time it was (for the record).
+// Picks kept before there were eight phantoms, or a meter, have none of the fields that came with them, and
+// are read as they are: each keeps the rule it was made under (standing(), in jam/taste-model.js).
 const packPair = (pair) => ({ ...pair, front: encode(pair.front), back: encode(pair.back), phantom: encode(pair.phantom) });
 function unpackPair(pair) {
   const [front, back, phantom] = [decode(pair?.front), decode(pair?.back), decode(pair?.phantom)];
   return front && back && phantom ? { ...pair, front, back, phantom } : null;
 }
-function restore() {
-  const kept = load(KEY);
+function restore(kept) {
   if (!kept || kept.v !== 1 || !Array.isArray(kept.trials)) return null;
   const trials = kept.trials.map(unpackPair);
   const current = unpackPair(kept.current);
@@ -109,7 +118,33 @@ function restore() {
     retired: (Array.isArray(kept.retired) ? kept.retired : []).map(decode).filter(Boolean),
     weights: rows.length ? fit(rows, { rounds: 10 }) : null,
     habits: rows.length ? fit(rows, { music: false, rounds: 10 }) : null,
+    carried: Number.isFinite(kept.carried) && kept.carried > 0 ? kept.carried : 1,
+    restarts: Array.isArray(kept.restarts) ? kept.restarts : [],
+    looked: Array.isArray(kept.looked) ? kept.looked : [],
   };
+}
+// The save as it is now, and what the radio makes of it. A save that is there and cannot be read (spoilt, or
+// written by a radio that does not exist yet) is never written over: it is put aside under a key of its own,
+// and a new experiment begins with the stake carried on from it as far as it can be worked out (the picks'
+// records alone give it: standing() needs nothing of the loops), and that it was lost is written down as a
+// start over, so that it is never invisible in the data. Nothing there (a first visit, or a browser that has
+// cleared it) is a new experiment.
+function fromSave() {
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch { /* no storage: as if nothing were there */ }
+  if (raw === null) return { state: begin(), gen: null };
+  const kept = load(KEY);
+  const state = restore(kept);
+  if (state) return { state, gen: kept.gen ?? null };
+  const at = Date.now();
+  try { localStorage.setItem(`${KEY}:lost:${at}`, raw); } catch { /* as much as can be kept */ }
+  const records = Array.isArray(kept?.trials) ? kept.trials.filter((trial) => trial && typeof trial === 'object') : [];
+  const was = Number.isFinite(kept?.carried) && kept.carried > 0 ? kept.carried : 1;
+  let now = { stake: was, peak: was };
+  try { now = standing(records, was, Array.isArray(kept?.restarts) ? kept.restarts : []); } catch { /* the stake it was started from, then */ }
+  const carried = Number.isFinite(now.stake) && now.stake > 0 ? now.stake : was;
+  const restarts = [...(Array.isArray(kept?.restarts) ? kept.restarts : []), { after: records.length, carried, peak: Number.isFinite(now.peak) ? now.peak : carried, reachedAt: now.reachedAt ?? null, lost: true, at, version: self.APP_VERSION ?? null }];
+  return { state: begin(Math.random, { carried, restarts, looked: Array.isArray(kept?.looked) ? kept.looked : [] }), gen: kept?.gen ?? null };
 }
 
 export function mount(root, life) {
@@ -121,19 +156,66 @@ export function mount(root, life) {
     presetsOpen: $('taste-presets-open'), presets: $('taste-presets'), presetsNone: $('presets-none'), dotTold: $('dot-told'),
     lamps: [...root.querySelectorAll('#taste-presets .preset-lamps i')],
     picks: $('lab-picks'), called: $('lab-called'), habits: $('lab-habits'), coin: $('lab-coin'), stake: $('lab-stake'), meter: $('lab-meter'),
+    carried: $('lab-carried'), carriedRow: $('lab-carried-row'),
     verdict: $('lab-verdict'), likes: $('lab-likes'), hall: $('lab-hall'), copy: $('taste-copy'), reset: $('taste-reset'),
   };
   const faces = Object.fromEntries(SIDES.map((side) => [side, root.querySelector(`.face.${side}`)]));
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let state = restore() ?? begin();
+  const found = fromSave();
+  let state = found.state;
   let up = state.current.first; // the side that is showing, and playing
   let started = false; // sound needs a first touch
   let heardMs = { front: 0, back: 0 };
   let flips = 0;
   let shownAt = performance.now();
-  const keep = () => save(KEY, { v: 1, streak: state.streak, retired: state.retired.map(encode), trials: state.trials.map(packPair), current: packPair(state.current) });
+  // The save is written whole, from what this window holds. With the radio open in two windows (two tabs), the
+  // one that saved last would win: a station kept in one, and the other side of the same pair kept in the
+  // other, would undo the first, and the meter could be played that way with no taste at all (and picks would
+  // go missing from the record without anybody meaning it). So each save is marked (gen), and a window writes
+  // only over the save it last read or wrote itself: if another has written since, this one's pair is out of
+  // date, its pick is refused, and it takes up the save as it now is. (It takes it up as soon as it hears of
+  // it, too: the 'storage' event, below.)
+  let gen = found.gen; // the mark of the save this window last read or wrote
+  const markOf = () => load(KEY)?.gen ?? null;
+  const fresh = () => {
+    try { if (localStorage.getItem(KEY) === null) return true; } catch { return true; } // (nothing there to write over)
+    return markOf() === gen;
+  };
+  function keep() {
+    if (!fresh()) return false;
+    gen = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 10)}`;
+    save(KEY, { v: 1, gen, streak: state.streak, retired: state.retired.map(encode), trials: state.trials.map(packPair), current: packPair(state.current), carried: state.carried, restarts: state.restarts, looked: state.looked });
+    return true;
+  }
   keep();
+  // Take up the save as another window has left it, if it is not what this one holds: its picks, its pair (with
+  // nothing heard of it yet here), and the meter where they put it.
+  function takeUp() {
+    if (fresh()) return;
+    const now = fromSave();
+    gen = now.gen;
+    const pairOf = (one) => `${encode(one.current.front)} ${encode(one.current.back)}`;
+    const same = now.state.trials.length === state.trials.length && pairOf(now.state) === pairOf(state) && now.state.carried === state.carried && now.state.restarts.length === state.restarts.length;
+    state = now.state;
+    if (same) return; // (only a record beside the picks has changed: the pair up, and what has been heard of it, stand)
+    up = state.current.first;
+    sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
+    heardMs = { front: 0, back: 0 };
+    flips = 0;
+    shownAt = performance.now();
+    show();
+    notes();
+    drawMeter({ cold: true });
+  }
+  life.on(window, 'storage', (event) => { if (event.key === KEY || event.key === null) takeUp(); });
+  life.on(window, 'pageshow', (event) => { if (event.persisted) takeUp(); }); // (back from the browser's cache, which hears nothing)
+  // Written down beside the picks, each time the model is looked at: the reading opened, the data copied out.
+  function looked(what) {
+    takeUp();
+    state.looked = [...(state.looked ?? []), { what, after: state.trials.length, at: Date.now(), version: self.APP_VERSION ?? null }];
+    keep();
+  }
 
   // --- Sound: whichever side is up, round and round -------------------------------------
   const setsOf = (beat) => beat.notes.map((tiles) => new Set(tiles));
@@ -272,6 +354,11 @@ export function mount(root, life) {
     noteTimer = life.setTimeout(() => { el.note.textContent = ''; }, 3500);
   }
   const start = () => { started = true; };
+  const refuse = () => { // the card shakes, gently
+    el.card.classList.remove('nope');
+    void el.card.offsetWidth;
+    el.card.classList.add('nope');
+  };
   function turn() {
     start();
     up = otherSide(up);
@@ -293,20 +380,36 @@ export function mount(root, life) {
       tune();
       return;
     }
+    if (!fresh()) { // the radio has been played in another window since this one last saved: its pair is not the one up
+      refuse();
+      takeUp();
+      return;
+    }
     const unheard = SIDES.find((side) => heardMs[side] < LISTEN_MS);
     if (unheard) {
       say(unheard === up ? 'Stay on this one a moment longer.' : `Tune to ${name(unheard)} first.`);
       story.refused();
       if (unheard !== up) turn(); // and here it is
-      el.card.classList.remove('nope');
-      void el.card.offsetWidth;
-      el.card.classList.add('nope');
+      refuse();
       return;
     }
     const picked = up;
     const keptName = name(picked);
-    // (bar: where in the long form the radio was when this was kept, for whoever studies the data)
-    choose(state, picked, Math.random, { at: Date.now(), ms: Math.round(performance.now() - shownAt), flips, heardFront: Math.round(heardMs.front), heardBack: Math.round(heardMs.back), bar: barNow });
+    // Written down with the pick, for whoever studies the data. bar: where in the long form the radio was.
+    // metered: whether the meter's needle was showing the stake (the model on record, past its warm-up, so
+    // that this pick is bet on) and the meter was on the screen, in sight, as it was made; so that picks
+    // made with the evidence in sight can be told from those made without (picks kept before there was a
+    // meter have no such field). heard: how long each side was listened to; decideMs: from the pair coming
+    // up to the pick; both in milliseconds, and both counted on this visit (a reload starts them again).
+    // version: the app's. (ms, heardFront and heardBack are the same numbers, under the names they were
+    // first kept by.)
+    const decideMs = Math.round(performance.now() - shownAt);
+    const heard = { front: Math.round(heardMs.front), back: Math.round(heardMs.back) };
+    const metered = !meter(state.trials, state.carried, state.restarts).warming && meterInSight();
+    choose(state, picked, Math.random, {
+      at: Date.now(), ms: decideMs, flips, heardFront: heard.front, heardBack: heard.back, bar: barNow,
+      metered, heard, decideMs, version: self.APP_VERSION ?? null,
+    });
     keep();
     sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
     heardMs = { front: 0, back: 0 };
@@ -322,6 +425,7 @@ export function mount(root, life) {
     story.did('keep', saved);
     show();
     notes();
+    drawMeter({ picked: true }); // (the one place it moves: a station has been kept)
   }
 
   // --- The story ---------------------------------------------------------------------------
@@ -663,6 +767,7 @@ export function mount(root, life) {
     if (el.behind.open) return;
     el.reading.scrollTop = 0;
     el.behind.showModal();
+    looked('reading');
   }
   // The tag is pressed: you saw it. Whatever Penny was in the middle of, that is what it wanted.
   labTag.addEventListener('click', () => {
@@ -788,6 +893,144 @@ export function mount(root, life) {
     run([[0, () => pal.mood('hopeful').goTo(under)], [walk(under) + 150, () => { pal.rise().look(labTag); }], [500, tell]]);
   }
 
+  // --- The meter ------------------------------------------------------------------------------
+  // A panel meter set into the end of the speaker, beside the name plate: the stake of the test in
+  // jam/taste-model.js, as a needle. That stake is a fair bet if the music makes no difference to the
+  // picks, so its reaching ×20 is significance at 5%, however long the radio is played and however often
+  // the meter is looked at. The scale is a log scale, even in multiples: ×1 at the left stop, ×20 at a heavy
+  // mark, and a warm wash past it, fading out towards the right stop (about ×31). Below ×1 the needle rests on
+  // the left stop, and dims the further the stake has sunk (to about half, at ×1/20). A sliver of brass in the
+  // needle's shape stays at the most it has been (it is dragged up by the needle, as on a meter that keeps its
+  // peak, and never comes down); a pilot lamp beside it lights when the stake has reached ×20, and stays lit. Until
+  // the model is on record (WARMUP picks) the face is unlit and ten pips along an arc light one for each pick. After "Start over" the
+  // stake carries on: the needle stays where it was, the pointer comes back to it (the most it has been
+  // since), and the face warms up again with the model; but the lamp, once lit, stays lit, whatever stake is
+  // carried: the carried stakes are one test, and ×20 reached at any point of it is significance (the owner,
+  // 25 November 2026). The lamp
+  // and the wash past ×20 are a warm, neutral honey: never the green of "good" nor the red of "bad", since
+  // the meter shows how far the test has got and takes no side in what that means.
+  //
+  // It moves only when a station has been kept, and never before: everything it shows is worked out from
+  // picks already made (meter(), in jam/taste-model.js). The model has a call on the pair that is up, and
+  // whoever could see it could follow it, and then the meter would measure the following and not the taste.
+  // So nothing on the radio says what the model expects, and nothing on the meter is so much as written to
+  // between a pair coming up and a station being kept: not tuning, not listening, not a station refused,
+  // not a sheet opened, not a reload. (It is drawn only through the helpers below, which leave alone what
+  // is already so.) The one moment it marks, gently, is the lamp coming on, and only a pick does that.
+  const SWING = { from: -40, stop: 36 }; // degrees from upright: ×1 (the left stop) and TOP (the right stop)
+  SWING.mark = SWING.from + (SWING.stop - SWING.from) / TOP; // ×20
+  const [PX, PY, R] = [46.5, 55, 44]; // the pivot (well below the face, under the lip) and the radius of the scale
+  const swing = (position) => SWING.from + (SWING.mark - SWING.from) * position; // a place on the scale (meter(): 0 is ×1, 1 is ×20) as an angle
+  const at = (value) => swing(Math.log(value) / Math.log(NEEDED));
+  const polar = (deg, r) => `${(PX + r * Math.sin((deg * Math.PI) / 180)).toFixed(2)} ${(PY - r * Math.cos((deg * Math.PI) / 180)).toFixed(2)}`;
+  // Drawn once, in the order it is seen: the face, the wash past ×20, the scale and its mark, the pointer at
+  // the peak and the needle, the pips over them; the glass, and the lip and the bezel over the needle's foot; and the
+  // lamp, on the speaker beside it. (In units of a picture 112 wide and 34 high: the bezel is the first 93.)
+  function meterFace() {
+    const tick = (value, from, to) => `M${polar(at(value), from)}L${polar(at(value), to)}`;
+    const arc = (r, a, b) => `M${polar(a, r)}A${r} ${r} 0 0 1 ${polar(b, r)}`;
+    // the pips: along an arc of their own, inside the scale and clear of the stops, so that they are the meter's
+    // (not a row of lamps, like the presets'), and over the needle, which never hides one
+    const dots = Array.from({ length: WARMUP }, (_, i) => `<circle class="g-pip" cx="${polar(-31 + (62 * i) / (WARMUP - 1), 35).split(' ').join('" cy="')}" r="1.55"/>`);
+    // past ×20, a wash of honey on the face behind the scale, warmest at the mark and fading out towards the stop:
+    // where it got to, not a red line of too much
+    const [inner, outer] = [R - 6.5, R + 5.5];
+    const wash = `M${polar(SWING.mark, inner)}L${polar(SWING.mark, outer)}A${outer} ${outer} 0 0 1 ${polar(SWING.stop, outer)}L${polar(SWING.stop, inner)}A${inner} ${inner} 0 0 0 ${polar(SWING.mark, inner)}Z`;
+    const [x1, x2] = [polar(SWING.mark, R).split(' ')[0], polar(SWING.stop, R).split(' ')[0]];
+    const frame = 'M0.5 4.9Q0.5 0.5 4.9 0.5H88.1Q92.5 0.5 92.5 4.9V29.1Q92.5 33.5 88.1 33.5H4.9Q0.5 33.5 0.5 29.1Z'
+      + 'M2.7 5Q2.7 2.7 5 2.7H88Q90.3 2.7 90.3 5V26.8H2.7Z';
+    const [base, tip] = [1.5, 0.5]; // half the needle's width, at its foot and at its tip
+    return '<svg viewBox="0 0 112 34" aria-hidden="true">'
+      + `<linearGradient id="radio-meter-zone" gradientUnits="userSpaceOnUse" x1="${x1}" y1="0" x2="${x2}" y2="0"><stop class="g-zone-from" offset="0"/><stop class="g-zone-to" offset="1"/></linearGradient>`
+      + '<rect class="g-face" x="2" y="2" width="89" height="26"/>'
+      + `<path class="g-zone" d="${wash}"/>`
+      + `<path class="g-scale" d="${arc(R, SWING.from - 2, SWING.stop)}${[3, 4, 6, 7, 8, 9, 15].map((v) => tick(v, R, R + 2.4)).join('')}${[1, 2, 5, 10].map((v) => tick(v, R, R + 4)).join('')}"/>`
+      + `<path class="g-mark" d="${tick(NEEDED, R - 1.6, R + 5)}"/>`
+      + '<clipPath id="radio-meter-face"><rect x="2.7" y="2.7" width="87.6" height="24.1"/></clipPath>' // (nothing of the needle shows outside the face)
+      + '<g clip-path="url(#radio-meter-face)">'
+      // the pointer at the peak: a sliver of the needle's own shape, in brass, crossing the scale where the needle
+      // has been furthest (under the needle, which hides it while they are together)
+      + `<path class="g-peak" d="M${PX - 0.42} ${PY - R + 6}L${PX - 0.3} ${PY - R - 3.2}Q${PX} ${PY - R - 3.9} ${PX + 0.3} ${PY - R - 3.2}L${PX + 0.42} ${PY - R + 6}Z"/>`
+      + `<path class="g-needle" d="M${PX - base} ${PY}L${PX - tip} ${PY - R - 3.2}Q${PX} ${PY - R - 3.9} ${PX + tip} ${PY - R - 3.2}L${PX + base} ${PY}Z"/>`
+      + '</g>'
+      + dots.join('')
+      + '<path class="g-glass" d="M3 3H60Q40 7 28 15Q18 23 3 26.5Z"/>'
+      + `<path class="g-bezel" fill-rule="evenodd" d="${frame}"/>`
+      + '<circle class="g-halo" cx="101.6" cy="17" r="7.4"/><circle class="g-ring" cx="101.6" cy="17" r="5.1"/><circle class="g-lamp" cx="101.6" cy="17" r="3.7"/><circle class="g-shine" cx="100.5" cy="15.7" r="1.05"/>'
+      + '</svg>';
+  }
+  const gauge = $('radio-meter');
+  gauge.innerHTML = meterFace();
+  const pips = [...gauge.querySelectorAll('.g-pip')];
+  // Write only what has changed: so that nothing on the meter is written at all between picks, nor when it is
+  // drawn again to what it already shows.
+  const attr = (name, value) => { if (gauge.getAttribute(name) !== value) gauge.setAttribute(name, value); };
+  const prop = (name, value) => { if (gauge.style.getPropertyValue(name) !== value) gauge.style.setProperty(name, value); };
+  const mark = (node, name, on) => { if (node.classList.contains(name) !== on) node.classList.toggle(name, on); };
+  const roughly = (value) => `×${value < 1 ? value.toFixed(2) : value < 10 ? value.toFixed(1) : Math.round(value)}`;
+  let litShown = null; // whether the lamp was lit when the meter was last drawn: so that the moment it comes on is marked
+  let lighting = 0;
+  // Draw the meter from the picks made. `picked`: a station has just been kept, and the needle swings to
+  // where it now stands; `cold`: on arriving, or on starting over, it is put there, with no swing.
+  function drawMeter({ picked = false, cold = false } = {}) {
+    const m = meter(state.trials, state.carried, state.restarts);
+    if (cold) { // (and whatever was still swinging or glowing from the last pick stops, where it was going)
+      mark(gauge, 'live', false);
+      for (const one of gauge.getAnimations({ subtree: true })) one.cancel();
+    }
+    mark(gauge, 'warming', m.warming);
+    mark(gauge, 'risen', !m.warming && m.peak > 1);
+    mark(gauge, 'lit', m.reached);
+    prop('--swing', `${swing(m.now).toFixed(2)}deg`);
+    prop('--peak', `${swing(m.high).toFixed(2)}deg`);
+    prop('--sunk', (1 - 0.45 * m.under).toFixed(3));
+    pips.forEach((pip, i) => mark(pip, 'on', i < m.picks));
+    // for a screen reader: the stake (as a meter's value, between its ends, roughly), and in words exactly
+    attr('aria-valuenow', String(Math.round(Math.min(NEEDED, Math.max(0, m.stake)) * 100) / 100));
+    // (significant for the whole history: reached in this experiment, or in one before it was started over)
+    const since = m.reachedAt > 0 ? `significant since pick ${m.reachedAt}`
+      : m.since?.pick ? `significant since pick ${m.since.pick}, before it was started over` : 'significant since before it was started over';
+    attr('aria-valuetext', m.warming
+      ? `Warming up: ${m.picks} of ${WARMUP} picks before it counts${state.carried !== 1 ? `; the stake carried over at ${roughly(m.stake)}` : ''}${m.reached ? `; ${since}` : ''}`
+      : `Evidence ${roughly(m.stake)} of ×${NEEDED}${m.stake < 1 ? ', below where it started' : ''}${m.peak > m.stake * 1.005 ? `; at most ${roughly(m.peak)}` : ''}${m.reached ? `; ${since}` : ''}`);
+    if (picked && m.reached && litShown === false) {
+      // The one moment it marks: a station kept has taken it to ×20. As the needle gets there the lamp
+      // warms up and a soft glow spreads from it, once, with one low bell; the same for whoever it is and
+      // whatever was kept. (Penny gives no opinion of a station, and takes no notice of this either.)
+      clearTimeout(lighting);
+      mark(gauge, 'lighting', true);
+      lighting = life.setTimeout(() => mark(gauge, 'lighting', false), 3400);
+      if (audio()) tone({ at: 0.9, freq: 523.25, dur: 2.2, type: 'sine', gain: 0.045, attack: 0.18 });
+      say$(`The lamp on the meter has come on: the evidence has reached ×${NEEDED}.`);
+    } else if (!picked) {
+      clearTimeout(lighting); // (and only a pick sets it off: not arriving, not starting over)
+      mark(gauge, 'lighting', false);
+    }
+    litShown = m.reached;
+    if (cold) { // (worked out where it is, all of it, with nothing to swing or glow from; from now on it swings)
+      void gauge.getBoundingClientRect();
+      mark(gauge, 'live', true);
+    }
+  }
+  // Whether the meter is in sight as a station is kept: on the screen, at least half of it, and not under a
+  // sheet, in a window that is not hidden. (What the record's `metered` says, with the warm-up.)
+  // (Seen, too: not faded out, it or anything it is in, and not under anything: what is at its middle is it.)
+  function meterInSight() {
+    if (document.hidden || document.querySelector('dialog[open]')) return false;
+    const box = gauge.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1 || getComputedStyle(gauge).visibility === 'hidden') return false;
+    const across = Math.min(box.right, innerWidth) - Math.max(box.left, 0);
+    const down = Math.min(box.bottom, innerHeight) - Math.max(box.top, 0);
+    if (!(across > 0 && down > 0 && across * down >= 0.5 * box.width * box.height)) return false;
+    let seen = 1;
+    for (let node = gauge; node instanceof Element; node = node.parentElement) seen *= Number(getComputedStyle(node).opacity);
+    if (!(seen > 0.1)) return false;
+    // (its middle is on the face, under the needle's sweep: what is there is the meter, if nothing is over it)
+    const middle = document.elementFromPoint(box.left + box.width * (46.5 / 112), box.top + box.height * (18 / 34));
+    return Boolean(middle && gauge.contains(middle));
+  }
+  drawMeter({ cold: true });
+
   // Where the story is taken up, on arriving.
   if (told() === null) teach(); // not seen yet: all of it, from the one who shows how (even to somebody who knows how)
   else if (told() === 'seen') life.setTimeout(() => { if (!life.over && lesson.step === null) { story.running = true; attempt(false); } }, 1500);
@@ -871,24 +1114,29 @@ export function mount(root, life) {
   const percent = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '–');
   const times = (value) => `×${value >= 10 ? value.toFixed(0) : value.toFixed(2)}`;
   const OUT = '<svg class="out" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg>';
-  // (Nothing outside the reading follows how the experiment stands: not the light, not the room, not Penny.)
+  // (Nothing outside the reading follows how the experiment stands, but the meter on the set, which is the
+  // experiment's own: not the light, not the room, not Penny.)
   function notes() {
-    const now = standing(state.trials);
+    const now = standing(state.trials, state.carried, state.restarts);
     el.picks.textContent = String(now.picks);
     el.called.textContent = now.called ? `${now.right} of ${now.called} (${percent(now.right, now.called)})` : '–';
     el.habits.textContent = now.called ? `${now.habitsRight} of ${now.called} (${percent(now.habitsRight, now.called)})` : '–';
     el.coin.textContent = now.bets ? `${now.won} of ${now.bets} (${percent(now.won, now.bets)})` : '–';
     el.stake.textContent = `${times(now.stake)} of ×${NEEDED}`;
-    el.meter.style.setProperty('--full', Math.max(0, Math.min(1, Math.log(Math.max(now.peak, 1)) / Math.log(NEEDED))).toFixed(3));
-    el.meter.setAttribute('aria-label', `The furthest the stake has got: ${times(Math.max(now.peak, 1))}, of the ×${NEEDED} that is significant`);
+    el.carried.textContent = times(state.carried); // (what it started from, when it was last started over)
+    el.carriedRow.hidden = state.restarts.length === 0;
+    // (as far as the stake has ever got, in the whole history: the test is one, however often it was started over)
+    el.meter.style.setProperty('--full', Math.max(0, Math.min(1, Math.log(Math.max(now.best, 1)) / Math.log(NEEDED))).toFixed(3));
+    el.meter.setAttribute('aria-label', `The furthest the stake has got: ${times(Math.max(now.best, 1))}, of the ×${NEEDED} that is significant`);
     // Its caption says what is measured, and never answers anything: no "yes", no "not yet", nothing that waits for a
     // result as if it must come, and nothing that counts down. Set the same however it stands: no state is given more
     // weight than another (README, "The question Penny's Radio asks").
     el.meter.classList.toggle('done', now.significant);
-    if (now.picks < WARMUP) {
+    if (now.significant) { // (it may have got there before the experiment was started over: once reached, it stays so)
+      const where = now.reachedAt ? `at choice ${now.reachedAt}` : now.reached?.pick ? `at choice ${now.reached.pick}, before it was started over` : 'before it was started over';
+      el.verdict.textContent = `Significant ${where}: p = ${now.p.toFixed(3)}. The music itself predicts the choices.`;
+    } else if (now.picks < WARMUP) {
       el.verdict.textContent = 'From the tenth choice on, the model calls each one before it is made.'; // (WARMUP, in words, as "How it works" has it)
-    } else if (now.significant) {
-      el.verdict.textContent = `Significant at choice ${now.reachedAt}: p = ${now.p.toFixed(3)}. The music itself predicts the choices.`;
     } else {
       el.verdict.textContent = `So far p = ${now.p.toFixed(2)}. The test is significant if the stake reaches ×${NEEDED} (p = 0.05).`;
     }
@@ -913,8 +1161,15 @@ export function mount(root, life) {
 
   const copyWords = el.copy.textContent;
   let copyTimer = 0;
+  // The data: every pick of this experiment, with all it was written down with; the stake it started from,
+  // carried over, and each time it was started over; where it stands, the model as it is, and the version.
+  // Never the pair that is up, nor what the model says of it: that is not anybody's to see before the pick.
   el.copy.addEventListener('click', async () => {
-    const data = JSON.stringify({ made: new Date().toISOString(), standing: standing(state.trials), weights: state.weights, trials: state.trials.map(packPair) });
+    looked('copy');
+    const data = JSON.stringify({
+      made: new Date().toISOString(), version: self.APP_VERSION ?? null, standing: standing(state.trials, state.carried, state.restarts), weights: state.weights,
+      carried: state.carried, restarts: state.restarts, looked: state.looked, trials: state.trials.map(packPair),
+    });
     try {
       await navigator.clipboard.writeText(data);
       say(`Copied ${state.trials.length} picks.`);
@@ -925,9 +1180,18 @@ export function mount(root, life) {
       prompt('Copy the data', data);
     }
   });
+  // Starting over: the picks, the model and the presets go, and the stake carries on from where it stands
+  // (startOver(), in jam/taste-model.js), so that starting over never wipes out a loss; that it was started
+  // over is written down. The meter is put where it now is, warming up again, with no swing and no moment.
   el.reset.addEventListener('click', async () => {
     if (!(await ask('Start the experiment over?', { detail: `Your ${state.trials.length} choices and your presets will be thrown away.`, yes: 'Start over', danger: true }))) return;
-    state = begin();
+    if (!fresh()) { // (played in another window meanwhile: what was asked about is not what is there now)
+      takeUp();
+      return;
+    }
+    // (the pair thrown away is written down with it: which side was tuned in, and how long each had been heard)
+    const voided = { up, heard: { front: Math.round(heardMs.front), back: Math.round(heardMs.back) } };
+    state = startOver(state, Math.random, { at: Date.now(), version: self.APP_VERSION ?? null, voided });
     up = state.current.first;
     sets = { front: setsOf(state.current.front), back: setsOf(state.current.back) };
     heardMs = { front: 0, back: 0 };
@@ -936,6 +1200,7 @@ export function mount(root, life) {
     keep();
     show();
     notes();
+    drawMeter({ cold: true });
   });
 
   // The presets' sheet, and the reading's. (The reading is opened from the tag on the side of the set: see the story, above.)

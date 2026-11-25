@@ -176,8 +176,78 @@
 .radio .top-row { display: flex; align-items: center; gap: 0.7em; }
 /* its name, on a plate */
 .radio .plate { padding: 0.18em 0.6em; border-radius: 0.35em; background: #f8d95a; color: #22303c; font-family: system-ui, sans-serif; font-size: max(0.82em, 11px); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.16); }
-/* the speaker: rows of holes */
-.radio .grille { flex: 1; height: 1.5em; border-radius: 0.5em; background: radial-gradient(circle, #5c1d12 0 32%, transparent 36%) 0 0 / 0.62em 0.5em; opacity: 0.85; }
+/* the speaker: rows of holes; and set into its end, the meter (below) */
+.radio .speaker { position: relative; flex: 1; min-width: 0; height: 1.5em; display: flex; justify-content: flex-end; align-items: center; }
+/* (the holes end under the bezel, so that the lamp beside it sits on plain enamel, not on top of them) */
+.radio .grille { position: absolute; inset: 0 calc(2.6em * 19 / 34) 0 0; border-radius: 0.5em; background: radial-gradient(circle, #5c1d12 0 32%, transparent 36%) 0 0 / 0.62em 0.5em; opacity: 0.85; }
+
+/* --- The meter (jam/taste.js) ---------------------------------------------------------------
+   A panel meter set into the end of the speaker, and a pilot lamp on the speaker beside it: the stake of
+   the test behind the radio, as a needle over a log scale from ×1 at the left stop to ×20 at a heavy mark,
+   with a wash of warmth on the face past the mark, fading out towards the right stop (where it has got to,
+   not an overload zone). Below ×1 the needle rests on the stop, dimmer the further the stake has sunk
+   (--sunk); a sliver of brass in the needle's shape stays at the most it has been (--peak); the lamp
+   lights at ×20 and stays lit until the experiment is started over below ×20. While the model warms up the
+   face is unlit and ten pips along an arc of their own light, one for each pick. It moves only after a station is kept, and then slowly, as a meter's needle settles.
+   The band and the lamp are honey, not green and not red: it shows how far the test has got and takes no
+   side in what that means. None of the colours of the two stations is on it: it is about neither of them.
+   It keeps the radio at its size: it is taller than the row it is in, and lets its bezel overlap the
+   body's margin above and the gap below (the negative margins), so the row, and the set, are as they were. */
+.radio .gauge {
+  --face: #f3ead6; --ink: #2b3540; --honey: #dcae5a; --sunk: 1; --swing: -40deg; --peak: -40deg;
+  position: relative; z-index: 1; display: block; flex: none; height: 2.6em; width: calc(2.6em * 112 / 34); margin: -0.62em 0 -0.48em;
+}
+:root[data-theme="dark"] .radio .gauge { --face: #e7dcc4; } /* (a little dimmer in the dark: it is lit from behind, not glaring) */
+.radio .gauge svg { display: block; width: 100%; height: 100%; overflow: hidden; }
+.radio .gauge .g-face { fill: var(--face); }
+.radio .gauge .g-zone { fill: url(#radio-meter-zone); stroke: none; }
+.radio .gauge .g-zone-from { stop-color: var(--honey); stop-opacity: 0.6; }
+.radio .gauge .g-zone-to { stop-color: var(--honey); stop-opacity: 0; }
+.radio .gauge .g-scale { fill: none; stroke: var(--ink); stroke-width: 1; stroke-linecap: round; opacity: 0.8; }
+.radio .gauge .g-mark { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
+.radio .gauge .g-glass { fill: #ffffff; opacity: 0.18; }
+.radio .gauge .g-bezel { fill: #26313b; stroke: rgb(255 255 255 / 0.14); stroke-width: 0.6; }
+/* the needle and the pointer at the peak turn about the pivot, under the lip */
+.radio .gauge .g-needle, .radio .gauge .g-peak { transform-box: view-box; transform-origin: 46.5px 55px; }
+.radio .gauge .g-needle { fill: var(--ink); opacity: var(--sunk); transform: rotate(var(--swing)); }
+.radio .gauge .g-peak { fill: #a8742e; opacity: 0; transform: rotate(var(--peak)); }
+.radio .gauge.risen .g-peak { opacity: 0.85; }
+/* the pips: warming up, one for each pick */
+.radio .gauge .g-pip { fill: rgb(246 241 231 / 0.16); opacity: 0; }
+.radio .gauge.warming .g-pip { opacity: 1; }
+.radio .gauge .g-pip.on { fill: #ecd3a2; } /* (paler than the presets' lamps: these are the meter's, and count nothing kept) */
+/* unlit: the face in shadow, the scale and the needle only just there */
+.radio .gauge.warming .g-face { fill: #3f3a34; }
+.radio .gauge.warming .g-scale, .radio .gauge.warming .g-mark { stroke: rgb(246 241 231 / 0.32); }
+.radio .gauge.warming .g-zone { opacity: 0.25; }
+.radio .gauge.warming .g-needle { fill: rgb(246 241 231 / 0.5); }
+.radio .gauge.warming .g-glass { opacity: 0.06; }
+/* the pilot lamp, in a pale ring: honey glass, dark until the stake has been to ×20, and then lit for good,
+   with a soft glow round it. (The moment it comes on, the glow spreads a little way from it, once, slowly.) */
+.radio .gauge .g-ring { fill: #c9c1b3; stroke: #26313b; stroke-width: 0.8; }
+.radio .gauge .g-lamp { fill: #4d3e2c; stroke: #26313b; stroke-width: 0.5; }
+.radio .gauge .g-shine { fill: #ffffff; opacity: 0.28; }
+.radio .gauge .g-halo { fill: #ffd889; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.radio .gauge.lit .g-lamp { fill: #ffd27e; stroke: #b98a3a; }
+.radio .gauge.lit .g-ring { fill: #efe3c6; }
+.radio .gauge.lit .g-shine { opacity: 0.75; }
+.radio .gauge.lit .g-halo { opacity: 0.32; }
+/* Slow, and eased: the needle settles where it now stands, with the least overshoot, as a meter's does; the
+   pointer follows it up; the face warms as the model comes on record; the lamp warms as the needle arrives.
+   Only once it has been drawn where it stands (live), so that nothing swings or fades into place on arriving
+   or on starting over; and never with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .radio:not(.still) .gauge.live .g-needle { transition: transform 1.6s cubic-bezier(0.3, 1.12, 0.45, 1), fill 1.4s ease, opacity 1.2s ease; }
+  .radio:not(.still) .gauge.live .g-peak { transition: transform 1.4s cubic-bezier(0.25, 0.8, 0.3, 1) 0.2s, opacity 0.8s ease; }
+  .radio:not(.still) .gauge.live .g-face { transition: fill 1.4s ease; }
+  .radio:not(.still) .gauge.live .g-scale, .radio:not(.still) .gauge.live .g-mark { transition: stroke 1.4s ease; }
+  .radio:not(.still) .gauge.live .g-zone, .radio:not(.still) .gauge.live .g-glass, .radio:not(.still) .gauge.live .g-pip { transition: opacity 1.2s ease, fill 0.8s ease; }
+  .radio:not(.still) .gauge.live .g-lamp, .radio:not(.still) .gauge.live .g-ring { transition: fill 1.6s ease 0.9s, stroke 1.6s ease 0.9s; }
+  .radio:not(.still) .gauge.live .g-shine, .radio:not(.still) .gauge.live .g-halo { transition: opacity 1.6s ease 0.9s; }
+  .radio:not(.still) .gauge.lighting .g-halo { animation: gauge-lamp 2.6s ease-in-out 0.9s; }
+}
+@keyframes gauge-lamp { 0% { opacity: 0; scale: 0.8; } 45% { opacity: 0.55; scale: 1.32; } 100% { opacity: 0.32; scale: 1; } }
+
 
 /* the dial: a band with ticks, a mark where each of the two stations is, and the needle */
 .radio .band { position: relative; height: 2em; border-radius: 0.5em; background: #f6f1e7; box-shadow: inset 0 0.16em 0 rgb(0 0 0 / 0.16); overflow: hidden; }
@@ -372,6 +442,7 @@
 .taste-lab .verdict { margin: 0; font-size: 0.9375rem; line-height: 1.45; font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); } /* (the same however the test stands) */
 .taste-lab dl { margin: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
 .taste-lab dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.42rem 0; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
+.taste-lab dl div[hidden] { display: none; }
 .taste-lab dt { color: var(--muted); }
 .taste-lab dd { margin: 0; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .taste-lab .likes { margin: 0; font-size: 0.9375rem; line-height: 1.5; font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
@@ -382,7 +453,8 @@
 .reading .phantom svg { display: block; width: 100%; height: auto; overflow: visible; }
 .reading .phantom .station rect { fill: color-mix(in srgb, var(--ink) 78%, var(--card)); }
 .reading .phantom .station .notes { fill: none; stroke: var(--card); stroke-width: 4; stroke-linecap: round; }
-.reading .phantom .station.unheard rect { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 4 4; }
+.reading .phantom .station.unheard rect { fill: var(--card); stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 4 4; }
+.reading .phantom .station.unheard.behind rect { opacity: 0.6; } /* (eight of them, stacked: those behind are fainter) */
 .reading .phantom .station.unheard .notes { stroke: var(--muted); opacity: 0.5; }
 .reading .phantom .bracket { fill: none; stroke: var(--muted); stroke-width: 1.4; }
 .reading .phantom figcaption { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; font-family: system-ui, sans-serif; font-size: 0.75rem; line-height: 1.35; color: var(--muted); text-align: center; }

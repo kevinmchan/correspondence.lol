@@ -36,7 +36,7 @@
 // to no server.
 
 const assert = require('node:assert/strict');
-const { PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays } = require('./phone.cjs');
+const { PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed } = require('./phone.cjs');
 
 const LISTING = process.argv.includes('--list');
 let chromium = null;
@@ -101,7 +101,7 @@ async function states() {
   const played = { 'postmarks:howto-solo:v1': true };
   // the radio: what of the set must be wholly on the screen, and the gallery's label on its plinth; somebody who has heard
   // its story out; somebody who has found Dot
-  const SET = ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.radio .lab-plate', '.penny-back', '#taste-behind-open', '.plinth .gallery-label'];
+  const SET = ['.radio .body', '.radio .antenna', '.radio .handle', '.radio .feet', '.radio .lab-plate', '#radio-meter', '.penny-back', '#taste-behind-open', '.plinth .gallery-label'];
   const told = { 'radio:taught:v1': true, 'radio:story:v1': 'told' };
   const withDot = { 'penny:dot:v1': true, 'penny:walked:v1': true };
   // ...and a radio on which a station has been kept five times running, twice over: two presets (packed as jam/taste.js keeps it)
@@ -118,6 +118,24 @@ async function states() {
   const found = begin(random);
   while (!standing(found.trials).significant && found.trials.length < 600) choose(found, like(found.current.front) >= like(found.current.back) ? 'front' : 'back', random);
   assert.equal(standing(found.trials).significant, true, 'a marked taste was not found in 600 picks');
+  // ...and the meter in its speaker, played by simulated tasters (phone.cjs): four picks into warming up; under way, at
+  // about ×6 with the most it has been above that; somebody with no taste, sunk below ×1; past ×20, the lamp lit and
+  // the needle in the band past the mark; and somebody under way who has started over (the stake carried on), three
+  // picks into warming up again; and somebody who reached ×20 and then fell back, started over at about ×14, the lamp
+  // still lit (×20 reached at any point of the one carried test stays reached), three picks into warming up again
+  const UNDER = (now) => now.picks >= 30 && now.stake >= 4.5 && now.stake <= 8 && now.peak >= now.stake * 1.3 && !now.significant;
+  const meters = {
+    warming: await radioPlayed((now) => now.picks >= 4),
+    underWay: await radioPlayed(UNDER, { seed: 7, most: 200, taste: 0.6 }),
+    sunk: await radioPlayed((now) => now.picks >= 30 && now.stake < 0.25, { seed: 6, most: 200, taste: 0 }),
+    reached: await radioPlayed((now) => now.significant && now.stake >= 20.5 && now.stake <= 29 && now.peak > now.stake * 1.05, { seed: 9, most: 300 }),
+    carried: await radioPlayed(UNDER, { seed: 7, most: 200, taste: 0.6, restart: 3 }),
+    litCarried: await radioPlayed((now) => now.peak >= 20 && now.stake < 16, { seed: 8, most: 300, taste: 0.6, restart: 3 }),
+  };
+  const stands = (kept) => standing(kept.trials, kept.carried);
+  assert.ok(stands(meters.underWay).stake > 1 && stands(meters.sunk).stake < 1 && stands(meters.reached).stake >= 20 && !stands(meters.underWay).significant, 'the meters are not where they should be');
+  assert.ok(meters.carried.carried > 1 && meters.carried.trials.length === 3 && meters.carried.restarts.length === 1, 'the meter after starting over');
+  assert.ok(meters.litCarried.carried < 20 && meters.litCarried.restarts[0].peak >= 20 && standing(meters.litCarried.trials, meters.litCarried.carried, meters.litCarried.restarts).significant, 'the meter lit after starting over below ×20');
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   const NIGHT = { 'tags:found:v1': ['night'] }; // somebody who has found the night
   // The night, once the way through to it is over: the only screen there is, with nothing left over it; and its picture drawn for the size it is shown at.
@@ -240,6 +258,16 @@ async function states() {
     // (the presets have no words: the set's lamps, and each station saved as its picture and its place on the dial)
     { name: 'Penny’s Radio, its presets', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': kept }, ready: '.radio .presets i.lit', then: (page) => page.locator('#taste-presets-open').click(), settle: 'dialog#taste-presets[open] .preset-list a', whole: ['#taste-presets-close'] },
     { name: 'Penny’s Radio, its presets, none yet', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', then: (page) => page.locator('#taste-presets-open').click(), settle: 'dialog#taste-presets[open]', whole: ['#taste-presets-close'] },
+    // (the meter in the speaker: the stake of the test, without a word; it keeps the set at its size in every state)
+    { name: 'Penny’s Radio, the meter warming up', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.warming }, ready: '#radio-meter.warming .g-pip.on', whole: SET },
+    { name: 'Penny’s Radio, the meter under way', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.underWay }, ready: '#radio-meter.risen:not(.warming):not(.lit)', whole: SET },
+    { name: 'Penny’s Radio, the meter sunk below ×1', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.sunk }, ready: '#radio-meter:not(.warming):not(.lit)', whole: SET },
+    { name: 'Penny’s Radio, the meter at significance', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.reached }, ready: '#radio-meter.lit:not(.warming)', whole: SET },
+    { name: 'Penny’s Radio, the meter after starting over', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.carried }, ready: '#radio-meter.warming .g-pip.on', whole: SET },
+    { name: 'Penny’s Radio, the meter lit after starting over below ×20', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.litCarried }, ready: '#radio-meter.warming.lit .g-pip.on', whole: SET },
+    // (the reading after starting over: what was carried over is a row of its own)
+    { name: 'Penny’s Radio, reading about it, after starting over', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.carried }, ready: '.radio .dot',
+      then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
     { name: 'the night, left alone until the way back has gone', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky.idle', wait: 9000, whole: ['.penny-back'] },

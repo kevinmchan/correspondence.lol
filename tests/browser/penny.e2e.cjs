@@ -169,6 +169,77 @@ async function main() {
     return { underWay: packed(twelve), significant: packed(found) };
   })();
 
+  // Penny's Radio's meter. A radio played by a simulated taster (phone.cjs), two picks short of the end of its
+  // warm-up; one somewhere under way; and one a pick short of ×20, by hand, in picks made by the rule before
+  // there were eight phantoms (the first pick called nothing, the next eleven each won the bet at 0.3 of the stake,
+  // ×1.3^11 is ×17.9, and the pair now up is on record at 0.9 for the front with the real challenger and 0.5 with
+  // the phantom, so that keeping the front wins 0.4 more: ×25). And the owner's own radio, as main saved it.
+  const { radioPlayed } = require('./phone.cjs');
+  const model = await import('../../jam/taste-model.js');
+  const TOLD = { 'radio:taught:v1': true, 'radio:story:v1': 'told' };
+  const VERSION = fs.readFileSync(path.join(ROOT, 'version.js'), 'utf8').match(/APP_VERSION = '([^']+)'/)[1];
+  const OWNER = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'radio-saved-v1.1.58.json'), 'utf8')).saves;
+  const early = await radioPlayed((now) => now.picks >= model.WARMUP - 2);
+  const going = await radioPlayed((now) => now.picks >= 30 && now.stake >= 4.5 && now.stake <= 8 && now.peak >= now.stake * 1.3 && !now.significant, { seed: 7, most: 200, taste: 0.6 });
+  const brink = await radioPlayed((now) => now.picks >= 12);
+  const old = ({ pPhantoms, ...trial }) => trial; // (a pick as it was kept before there were eight phantoms)
+  brink.trials = brink.trials.map((trial, i) => old({ ...trial, pick: 'front', ...(i === 0 ? { p: null, q: null, pPhantom: null } : { p: 0.7, q: 0.5, pPhantom: 0.4 }) }));
+  brink.current = old({ ...brink.current, first: 'front', p: 0.9, q: 0.5, pPhantom: 0.5 });
+  // ...and the same radio once that pair was kept (×20 at pick 13) and two more lost (old picks: ×0.7 each), the stake
+  // fallen back to about ×12, the lamp lit
+  const fallen = { ...brink, trials: [...brink.trials, { ...brink.current, pick: 'front' }, ...[0, 1].map(() => ({ ...brink.trials.at(-1), pick: 'back' }))] };
+  // What the meter shows, and says to a screen reader; and all of it as it is in the page (every attribute, the
+  // classes in any order, and the whole of what is drawn), so that nothing about it can change unnoticed.
+  const meterOf = (page) => page.locator('#radio-meter').evaluate((el) => {
+    const needle = el.querySelector('.g-needle');
+    const style = getComputedStyle(needle);
+    const attributes = [...el.attributes].map((one) => `${one.name}=${one.name === 'class' ? [...el.classList].sort().join(' ') : one.value}`).sort();
+    return {
+      attributes, drawn: el.innerHTML,
+      role: el.getAttribute('role'), now: el.getAttribute('aria-valuenow'), min: el.getAttribute('aria-valuemin'), max: el.getAttribute('aria-valuemax'), text: el.getAttribute('aria-valuetext'),
+      warming: el.classList.contains('warming'), risen: el.classList.contains('risen'), lit: el.classList.contains('lit'), lighting: el.classList.contains('lighting'),
+      swing: el.style.getPropertyValue('--swing'), peak: el.style.getPropertyValue('--peak'), sunk: el.style.getPropertyValue('--sunk'), pips: el.querySelectorAll('.g-pip.on').length,
+      needle: style.transform, swings: style.transitionDuration.split(',')[0], halo: el.querySelector('.g-halo').getAnimations().length,
+    };
+  });
+  // Anything at all that is written to the meter from now on: every attribute, class, child or word, anywhere in it.
+  const watchMeter = (page) => page.evaluate(() => {
+    window.meterChanges = [];
+    window.meterWatch?.disconnect();
+    window.meterWatch = new MutationObserver((list) => { for (const one of list) window.meterChanges.push(`${one.type} ${one.attributeName ?? ''} on ${one.target.nodeName}`); });
+    window.meterWatch.observe(document.querySelector('#radio-meter'), { attributes: true, attributeOldValue: true, childList: true, subtree: true, characterData: true });
+  });
+  const meterChanges = (page) => page.evaluate(() => window.meterChanges);
+  const keptOn = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('jam:taste:v1')));
+  const standingOn = (page) => page.evaluate(async () => {
+    const kept = JSON.parse(localStorage.getItem('jam:taste:v1'));
+    return (await import('/jam/taste-model.js')).standing(kept.trials, kept.carried ?? 1, kept.restarts ?? []);
+  });
+  const valueOf = (stake) => String(Math.round(Math.min(model.NEEDED, Math.max(0, stake)) * 100) / 100); // aria-valuenow: between its ends, roughly
+  // Both stations listened to, for long enough that one can be kept; and one kept (`side`: that one).
+  const listenToBoth = async (page) => {
+    if ((await page.locator('#taste-play').getAttribute('aria-pressed')) !== 'true') await page.locator('#taste-play').click();
+    await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
+    if ((await page.locator('.taste-card .face.heard').count()) < 2) await page.locator('#taste-flip').click();
+    await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
+  };
+  const keepOne = async (page, side = null) => {
+    const before = (await keptOn(page)).trials.length;
+    await listenToBoth(page);
+    const tuned = (await page.locator('.taste-card').evaluate((card) => card.classList.contains('turned'))) ? 'back' : 'front';
+    if (side && tuned !== side) await page.locator('#taste-flip').click();
+    await page.locator('#taste-pick').click();
+    await page.waitForFunction((n) => JSON.parse(localStorage.getItem('jam:taste:v1')).trials.length === n + 1, before, { timeout: 5000 });
+  };
+  const startOverOn = async (page) => {
+    await page.locator('#taste-behind-open').click();
+    await page.waitForSelector('#taste-behind[open]');
+    await page.locator('#taste-reset').click();
+    await page.locator('dialog.ask button.yes').click();
+    await page.waitForFunction(() => document.querySelector('#lab-picks').textContent === '0');
+    await page.locator('#taste-behind-close').click();
+  };
+
   const results = await Promise.all([
     check('the film is asked for, never forced: the app opens on the home page, and scene one has a door back', {}, async (page) => {
       await page.goto(origin);
@@ -938,6 +1009,11 @@ async function main() {
       await page.waitForFunction(() => document.querySelector('#lab-picks').textContent === '0');
       const fresh = await h.stored('jam:taste:v1');
       assert.deepEqual([fresh.trials.length, fresh.retired.length], [0, 0]);
+      // ...but not the stake, which carries on; and that it was started over is written down
+      const was = standing(radios.underWay.trials);
+      assert.equal(fresh.carried, was.stake);
+      assert.deepEqual(fresh.restarts.map(({ after, carried, peak }) => ({ after, carried, peak })), [{ after: 12, carried: was.stake, peak: was.peak }]);
+      assert.equal(await page.locator('#lab-carried-row').isVisible(), true, 'the reading says what was carried over');
       assert.equal(await page.locator('.radio .presets i.lit').count(), 0);
       assert.equal(await page.locator('#lab-verdict').textContent(), 'From the tenth choice on, the model calls each one before it is made.');
       await page.locator('#taste-behind-close').click();
@@ -960,6 +1036,364 @@ async function main() {
       await page.locator('#lab-hall a').first().click();
       await page.waitForURL((url) => `${url.pathname}${url.search}` === href);
       await page.waitForSelector('.jam-board .pad');
+    }),
+
+    check('the radio’s meter: unlit while the model warms up; nothing on it is written to from a pair coming up to a station kept, nor with the model’s call on that pair turned round; then it stands at the stake, and each pick is written down, metered or not, and copied out', { storage: { ...TOLD, 'jam:taste:v1': early }, permissions: ['clipboard-read', 'clipboard-write'] }, async (page, h) => {
+      await keepsCopies(page);
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .dot');
+      // warming up: unlit, a pip lit for each pick so far, the needle at ×1; and not a word on it
+      let m = await meterOf(page);
+      assert.equal(m.role, 'meter');
+      assert.deepEqual([m.min, m.max], ['0', String(model.NEEDED)]);
+      assert.deepEqual([m.warming, m.now, m.pips, m.risen, m.lit], [true, '1', model.WARMUP - 2, false, false]);
+      assert.match(m.text, new RegExp(`^Warming up: ${model.WARMUP - 2} of ${model.WARMUP}`));
+      assert.deepEqual(await h.words('#radio-meter'), [], 'words or numbers on the meter');
+      assert.deepEqual(await h.words('.radio .top-row'), ['Penny’s Radio'], 'words on the top of the set');
+      assert.equal(m.swings, '1.6s', 'the needle swings to where it stands, slowly');
+      // a pick while it warms up lights one more pip; the needle stays where it is; and it was made with no stake shown
+      await keepOne(page);
+      const warm = await meterOf(page);
+      assert.deepEqual([warm.warming, warm.pips, warm.swing, warm.now], [true, model.WARMUP - 1, m.swing, '1']);
+      assert.equal((await keptOn(page)).trials.at(-1).metered, false, 'metered while warming up');
+      // the last pick of the warm-up: the meter lights, at ×1, and the pair that comes up is the first the model calls
+      await keepOne(page);
+      m = await meterOf(page);
+      assert.equal(m.warming, false, 'it has warmed up');
+      assert.equal(m.now, valueOf((await standingOn(page)).stake));
+      assert.match(m.text, /^Evidence ×1\.0 of ×20$/);
+      let kept = await keptOn(page);
+      assert.equal(typeof kept.current.p, 'number', 'the model is on record about the pair that is up');
+      assert.equal(kept.current.pPhantoms.length, model.PHANTOMS, 'with eight phantoms');
+      // From here to a station kept, nothing on the meter is written to: not a station refused, not tuning, not
+      // listening, not the reading, not the presets. (Watched for any change at all, and compared whole.)
+      await sleep(1900); // (whatever the last pick set swinging has come to rest)
+      const before = await meterOf(page);
+      await watchMeter(page);
+      const same = async (what) => {
+        assert.deepEqual(await meterChanges(page), [], `the meter was written to on ${what}`);
+        assert.deepEqual(await meterOf(page), before, `the meter changed on ${what}`);
+      };
+      await page.locator('#taste-pick').click(); // too soon: neither has been heard
+      await sleep(400);
+      assert.equal((await keptOn(page)).trials.length, model.WARMUP, 'a station kept before both had been heard');
+      await same('a station refused');
+      await page.locator('#taste-flip').click();
+      await sleep(300);
+      await same('tuning');
+      await listenToBoth(page);
+      await page.locator('#taste-flip').click();
+      await sleep(600);
+      await same('listening');
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      await page.locator('#taste-behind-close').click();
+      await same('the reading');
+      await page.locator('#taste-presets-open').click();
+      await page.waitForSelector('#taste-presets[open]');
+      await page.locator('#taste-presets-close').click();
+      await sleep(300);
+      await same('the presets');
+      // Nor does it hang on what the model says of the pair that is up: with its call turned round (as it is kept
+      // on the device), and the radio loaded again, the meter is as it was; and nothing is written to it after.
+      await page.evaluate(() => {
+        const data = JSON.parse(localStorage.getItem('jam:taste:v1'));
+        for (const key of ['p', 'q', 'pPhantom']) data.current[key] = 1 - data.current[key];
+        data.current.pPhantoms = data.current.pPhantoms.map((p) => 1 - p);
+        localStorage.setItem('jam:taste:v1', JSON.stringify(data));
+      });
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      assert.deepEqual(await meterOf(page), before, 'the meter changed with the model’s call on the pair that is up turned round');
+      await watchMeter(page);
+      await listenToBoth(page);
+      await sleep(300);
+      assert.deepEqual(await meterChanges(page), [], 'the meter was written to after the reload');
+      // the first pick the model called (on that call, as it was kept): the meter stands at the stake, and is written to
+      await keepOne(page);
+      assert.ok((await meterChanges(page)).length > 0, 'the meter was not drawn after the pick');
+      const now = await standingOn(page);
+      assert.equal(now.bets, 1);
+      m = await meterOf(page);
+      assert.equal(m.now, valueOf(now.stake), 'the meter is not at the stake');
+      assert.deepEqual([m.warming, m.risen, m.lit, Number(m.sunk) <= 1], [false, now.peak > 1, false, true]);
+      // and the pick is written down with the meter in sight, what was heard of each side, how long it took, and the version
+      kept = await keptOn(page);
+      const last = kept.trials.at(-1);
+      assert.equal(last.metered, true);
+      assert.ok(last.heard.front >= 1500 && last.heard.back >= 1500, `heard: ${JSON.stringify(last.heard)}`);
+      assert.ok(Number.isInteger(last.decideMs) && last.decideMs >= Math.max(last.heard.front, last.heard.back), `decided in ${last.decideMs}ms, having heard ${JSON.stringify(last.heard)}`);
+      assert.deepEqual([last.ms, last.heardFront, last.heardBack], [last.decideMs, last.heard.front, last.heard.back], 'the same numbers under the names they were first kept by');
+      assert.equal(last.version, VERSION);
+      assert.equal(kept.trials[0].metered, undefined, 'the picks made before (here, by the simulated taster) have none of it, and still load');
+      // a pick made with the meter out of sight (the set moved off the screen once both have been heard) is written down so
+      await listenToBoth(page);
+      await page.addStyleTag({ content: '.radio-ground { translate: 0 -120vh; }' });
+      await page.locator('#taste-pick').dispatchEvent('click');
+      await page.waitForFunction((n) => JSON.parse(localStorage.getItem('jam:taste:v1')).trials.length === n, model.WARMUP + 2, { timeout: 5000 });
+      assert.equal((await keptOn(page)).trials.at(-1).metered, false, 'metered with the meter off the screen');
+      await page.evaluate(() => document.querySelectorAll('style').forEach((one) => { if (one.textContent.includes('-120vh')) one.remove(); }));
+      // all of which "Copy the data" gives out, with the version, the stake carried and the times it was started
+      // over; and not the pair that is up, nor what the model says of it
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      await page.locator('#taste-copy').click();
+      await page.waitForFunction(() => document.querySelector('#taste-copy').textContent === 'Copied', null, { timeout: 3000 });
+      const copied = JSON.parse(await copiedBy(page));
+      kept = await keptOn(page);
+      assert.deepEqual(copied.trials, kept.trials, 'every pick, as it is kept');
+      assert.deepEqual([copied.version, copied.carried, copied.restarts, copied.standing.picks], [VERSION, 1, [], model.WARMUP + 2]);
+      const out = copied.trials.at(-2);
+      assert.deepEqual({ metered: out.metered, heard: out.heard, decideMs: out.decideMs, version: out.version }, { metered: true, heard: last.heard, decideMs: last.decideMs, version: VERSION });
+      assert.equal('current' in copied, false, 'the pair that is up was copied out');
+      // and each look at the model is on the record: the reading opened twice before, and now once more, and copied
+      assert.deepEqual(copied.looked.map(({ what, after }) => ({ what, after })), [{ what: 'reading', after: model.WARMUP }, { what: 'reading', after: model.WARMUP + 2 }, { what: 'copy', after: model.WARMUP + 2 }]);
+      assert.ok(copied.looked.every((one) => one.at > 1795000000000 && one.version === VERSION));
+      assert.equal(JSON.stringify(copied).includes(JSON.stringify(kept.current.pPhantoms)), false, 'what the model says of the pair that is up was copied out');
+    }),
+
+    check('the radio’s meter: the station kept that takes it to ×20 lights the lamp, and it stays lit; announced once; Penny takes no notice; with reduced motion nothing swings', { storage: { ...TOLD, 'jam:taste:v1': brink }, reducedMotion: 'reduce' }, async (page, h) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .dot');
+      let m = await meterOf(page);
+      assert.equal(m.lit, false);
+      assert.equal(m.now, valueOf(1.3 ** 11), `the stake is ${m.now}, by the rule of picks made with one phantom`);
+      assert.equal(m.swings, '0s', 'with reduced motion the needle is put where it stands, not swung there');
+      assert.equal(await page.locator('#radio-story').textContent(), '');
+      // both heard, and the front kept: the real challenger's call for it beat the phantom's (and that pair, called
+      // with one phantom, is bet on by that rule)
+      await keepOne(page, 'front');
+      const crossed = (await keptOn(page)).trials.at(-1);
+      assert.equal(crossed.pick, 'front');
+      // Penny is as it is for any station kept (glad; thrilled for a preset), and gives the lamp no notice
+      assert.equal((await h.pal()).mood, crossed.retired ? 'thrilled' : 'glad', 'Penny made something of ×20');
+      const now = await standingOn(page);
+      assert.ok(now.stake >= model.NEEDED && now.reachedAt === 13, JSON.stringify(now));
+      assert.ok(Math.abs(now.stake - 1.3 ** 11 * 1.4) < 1e-9);
+      m = await meterOf(page);
+      assert.equal(m.now, valueOf(now.stake));
+      assert.deepEqual([m.lit, m.lighting], [true, true], 'the lamp comes on');
+      assert.match(m.text, /significant since pick 13/);
+      assert.match(await page.locator('#radio-story').textContent(), /lamp on the meter has come on/, 'and a screen reader is told');
+      assert.equal(await page.locator('#radio-meter .g-needle').evaluate((needle) => needle.getAnimations().length), 0, 'the needle swung');
+      assert.equal(m.halo, 0, 'the lamp glowed, with reduced motion');
+      // for good: after a reload it is lit, and not lit again
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.risen], [true, false, true]);
+      assert.equal(await page.locator('#radio-story').textContent(), '', 'announced again');
+      // and whatever the next pick does to the stake, the lamp stays lit and the pointer at the peak does not come down
+      await keepOne(page);
+      const after = await meterOf(page);
+      assert.deepEqual([after.lit, after.lighting], [true, false]);
+      assert.ok(parseFloat(after.peak) >= parseFloat(m.peak), `the pointer at the peak came down: ${m.peak} to ${after.peak}`);
+      assert.equal(after.now, valueOf((await standingOn(page)).stake));
+    }),
+
+    check('the radio’s meter: ×20 is marked only on a pick, never on arriving nor on starting over; and starting over carries the stake on, the needle where it was', { storage: { ...TOLD, 'jam:taste:v1': brink } }, async (page, h) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .dot');
+      await sleep(400);
+      let m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.halo], [false, false, 0]);
+      await keepOne(page, 'front');
+      m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting], [true, true]);
+      assert.ok(m.halo > 0, 'the lamp’s glow spreads, once');
+      const reached = await standingOn(page);
+      // started over at once, while it glows: the glow is not set off again, nor announced, and the stake carries on
+      await page.evaluate(() => { document.querySelector('#radio-story').textContent = ''; });
+      const needle = m.swing;
+      await startOverOn(page);
+      m = await meterOf(page);
+      assert.deepEqual([m.lighting, m.halo], [false, 0], 'starting over set off the lamp’s moment');
+      assert.equal(await page.locator('#radio-story').textContent(), '');
+      assert.deepEqual([m.warming, m.pips, m.swing], [true, 0, needle], 'warming up again, the needle where it was');
+      assert.equal(m.lit, true, 'carried at ×20 or more, it is lit from the start');
+      assert.match(m.text, /^Warming up: 0 of 10 picks before it counts; the stake carried over at ×25; significant since pick 13, before it was started over$/);
+      await sleep(3000);
+      assert.equal((await meterOf(page)).halo, 0, 'the glow came back');
+      const kept = await keptOn(page);
+      assert.equal(kept.carried, reached.stake);
+      assert.deepEqual(kept.restarts.map(({ after, carried, peak, reachedAt, version }) => ({ after, carried, peak, reachedAt, version })), [{ after: 13, carried: reached.stake, peak: reached.peak, reachedAt: 13, version: VERSION }]);
+      assert.ok(kept.restarts[0].at > 1795000000000);
+      // the pair that was up, thrown away unpicked, is written down with it (bet on: past the warm-up)
+      const { voided } = kept.restarts[0];
+      assert.deepEqual([voided.bet, voided.pPhantoms.length, typeof voided.p, typeof voided.front, ['front', 'back'].includes(voided.up)], [true, model.PHANTOMS, 'number', 'string', true]);
+      assert.ok(Number.isFinite(voided.heard.front) && Number.isFinite(voided.heard.back));
+      // a pick while it warms up again: a pip; nothing bet; the stake where it was carried
+      await keepOne(page);
+      m = await meterOf(page);
+      assert.deepEqual([m.pips, m.swing, m.lighting], [1, needle, false]);
+      assert.equal((await standingOn(page)).stake, reached.stake);
+      // and arriving at a radio already lit marks nothing either
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      await sleep(1500);
+      m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.halo], [true, false, 0]);
+      // A radio under way, started over: the needle stays where it was, the pointer goes back to it, the lamp unlit
+      // as it was, and the face warms up again; what it was left at is in the reading and in the data.
+      await page.evaluate((data) => localStorage.setItem('jam:taste:v1', JSON.stringify(data)), going);
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      const was = await standingOn(page);
+      const under = await meterOf(page);
+      assert.deepEqual([under.warming, under.risen, under.lit], [false, true, false]);
+      await startOverOn(page);
+      m = await meterOf(page);
+      assert.deepEqual([m.warming, m.swing, m.now, m.lit, m.lighting], [true, under.swing, under.now, false, false]);
+      assert.equal(m.peak, m.swing, 'the most it has been, since it was started over, is where it was carried');
+      assert.equal((await keptOn(page)).carried, was.stake);
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      assert.equal(await page.locator('#lab-carried').textContent(), `×${was.stake.toFixed(2)}`);
+      assert.equal(await page.locator('#lab-stake').textContent(), `×${was.stake.toFixed(2)} of ×20`);
+      assert.equal(await page.locator('#lab-verdict').textContent(), 'From the tenth choice on, the model calls each one before it is made.');
+      leftOpen(await h.reading());
+    }),
+
+    check('the radio’s meter: once lit, the lamp stays lit through a start over whatever stake is carried, below ×20 too; and nothing marks it again', { storage: { ...TOLD, 'jam:taste:v1': fallen } }, async (page, h) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .dot');
+      const was = await standingOn(page);
+      assert.ok(was.significant && was.reachedAt === 13 && was.stake < model.NEEDED && was.stake > 1, JSON.stringify(was));
+      let m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.halo], [true, false, 0], 'lit, and not marked on arriving');
+      assert.match(m.text, /^Evidence ×12 of ×20; at most ×25; significant since pick 13$/);
+      // started over at about ×12: the lamp stays lit (×20 was reached in the one test the stakes carried on make), with
+      // no moment, no announcement; the brass pointer is this experiment's own, back at the needle
+      await startOverOn(page);
+      m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.halo, m.warming, m.peak], [true, false, 0, true, m.swing], 'the lamp went out, or was marked again');
+      assert.equal(await page.locator('#radio-story').textContent(), '', 'announced again');
+      assert.match(m.text, /^Warming up: 0 of 10 picks before it counts; the stake carried over at ×12; significant since pick 13, before it was started over$/);
+      const kept = await keptOn(page);
+      assert.deepEqual([kept.carried, kept.restarts[0].peak, kept.restarts[0].reachedAt], [was.stake, was.peak, 13]);
+      const now = await standingOn(page);
+      assert.deepEqual([now.significant, now.reachedAt, now.reached, now.best, now.p], [true, 0, { experiment: 1, pick: 13 }, was.peak, 1 / was.peak]);
+      // the reading says so, in the same voice: significant, where, and the rule as far as the stake has ever got
+      await page.locator('#taste-behind-open').click();
+      await page.waitForSelector('#taste-behind[open]');
+      assert.equal(await page.locator('#lab-verdict').textContent(), `Significant at choice 13, before it was started over: p = ${(1 / was.peak).toFixed(3)}. The music itself predicts the choices.`);
+      assert.equal(await page.locator('#lab-meter').evaluate((el) => el.classList.contains('done')), true);
+      assert.match(await page.locator('#lab-meter').getAttribute('aria-label'), /^The furthest the stake has got: ×25,/);
+      leftOpen(await h.reading());
+      await page.locator('#taste-behind-close').click();
+      // a pick while it warms up again marks nothing; nor does a reload
+      await keepOne(page);
+      m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.pips], [true, false, 1]);
+      assert.equal(await page.locator('#radio-story').textContent(), '', 'a pick set off the moment again');
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      await sleep(1500);
+      m = await meterOf(page);
+      assert.deepEqual([m.lit, m.lighting, m.halo], [true, false, 0]);
+    }),
+
+    check('the radio’s meter: a radio saved before it, by main as it was, comes up with the same stake, the same peak and the same lamp, and goes on from there', { storage: { ...TOLD, 'jam:taste:v1': OWNER.significant.saved } }, async (page) => {
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .dot');
+      for (const [name, { saved, standing: was }] of Object.entries(OWNER)) {
+        await page.evaluate((data) => localStorage.setItem('jam:taste:v1', JSON.stringify(data)), saved);
+        await page.reload();
+        await page.waitForSelector('.radio .dot');
+        const now = await standingOn(page);
+        assert.deepEqual([now.stake, now.peak, now.significant, now.reachedAt, now.bets], [was.stake, was.peak, was.significant, was.reachedAt, was.bets], `${name}: not what main made of it`);
+        const m = await meterOf(page);
+        assert.deepEqual([m.now, m.lit, m.lighting, m.warming, m.risen], [valueOf(was.stake), was.significant, false, false, was.peak > 1], name);
+        assert.ok(was.peak === was.stake ? m.peak === m.swing : parseFloat(m.peak) > parseFloat(m.swing), `${name}: the pointer at the peak`);
+        assert.match(m.text, was.significant ? new RegExp(`significant since pick ${was.reachedAt}$`) : /^Evidence ×\d/);
+        const kept = await keptOn(page);
+        assert.deepEqual([kept.carried, kept.restarts], [1, []], 'an old save carries nothing over');
+        assert.deepEqual(kept.trials, saved.trials, `${name}: the picks were changed on loading`);
+      }
+      // the owner's radio as it was, significant, and a station kept on the pair that was up (called with one phantom):
+      // by that rule; and the pair that comes up next is called with eight
+      const { saved, standing: was } = OWNER.significant;
+      await page.evaluate((data) => localStorage.setItem('jam:taste:v1', JSON.stringify(data)), saved);
+      await page.reload();
+      await page.waitForSelector('.radio .dot');
+      await keepOne(page);
+      const kept = await keptOn(page);
+      const last = kept.trials.at(-1);
+      assert.equal('pPhantoms' in last, false);
+      const front = last.pick === 'front';
+      const [real, phantom] = [front ? last.p : 1 - last.p, front ? last.pPhantom : 1 - last.pPhantom];
+      const share = Math.min(model.ONE_PHANTOM, Math.abs(real - phantom));
+      const now = await standingOn(page);
+      assert.equal(now.stake, real === phantom ? was.stake : was.stake * (real > phantom ? 1 + share : 1 - share), 'the pick on the pair that was up, by its rule');
+      assert.deepEqual([now.significant, now.reachedAt], [true, was.reachedAt]);
+      assert.ok(now.peak >= was.peak);
+      assert.equal(kept.current.pPhantoms.length, model.PHANTOMS);
+      assert.equal(last.metered, true);
+      const m = await meterOf(page);
+      assert.deepEqual([m.now, m.lit, m.lighting], [valueOf(now.stake), true, false], 'the lamp was already lit: nothing to mark');
+    }),
+
+    check('the radio in two windows: a station kept in one is not undone by keeping the other side of the same pair in the other; the other takes the radio up as it was left', { storage: { ...TOLD, 'jam:taste:v1': going } }, async (a) => {
+      await a.goto(`${origin}/jam/?taste`);
+      await a.waitForSelector('.radio .dot');
+      const b = await a.context().newPage();
+      const errors = [];
+      b.on('pageerror', (error) => errors.push(error.message));
+      await b.goto(`${origin}/jam/?taste`);
+      await b.waitForSelector('.radio .dot');
+      await sleep(300);
+      // both windows have the same pair up, and both have heard it through
+      await listenToBoth(a);
+      await listenToBoth(b);
+      const before = await keptOn(a);
+      // a station kept in the first window
+      await keepOne(a);
+      const after = await keptOn(a);
+      assert.equal(after.trials.length, before.trials.length + 1);
+      // the second has taken the radio up as the first left it: the new pair, with nothing heard of it there yet,
+      // and its meter where the first window's is
+      await b.waitForFunction(() => document.querySelector('#taste-card .face.heard') === null, null, { timeout: 5000 });
+      assert.equal(await b.locator('#radio-meter').getAttribute('aria-valuetext'), await a.locator('#radio-meter').getAttribute('aria-valuetext'));
+      // and keeping a station in it at once (the other side of the pair it had, were it still up) changes nothing
+      await b.locator('#taste-pick').click();
+      await sleep(500);
+      assert.deepEqual((await keptOn(b)).trials, after.trials, 'a pick in the window left behind changed the picks kept');
+      // A save written by another window whose news never came (as after a while in the browser's cache): the pick in
+      // this window is refused, with a shake, nothing is written over, and it takes up what is there
+      await listenToBoth(b);
+      await b.evaluate(() => {
+        const data = JSON.parse(localStorage.getItem('jam:taste:v1'));
+        localStorage.setItem('jam:taste:v1', JSON.stringify({ ...data, gen: 'another window' }));
+      });
+      await b.locator('#taste-card').evaluate((card) => card.classList.remove('nope'));
+      await b.locator('#taste-pick').click();
+      await sleep(400);
+      let kept = await keptOn(b);
+      assert.deepEqual([kept.gen, kept.trials.length], ['another window', after.trials.length], 'a window wrote over a save it had not read');
+      assert.equal(await b.locator('#taste-card').evaluate((card) => card.classList.contains('nope')), true, 'refused without a shake');
+      // having taken it up, it can keep a station; and then the first window is the one left behind, and takes it up
+      await keepOne(b);
+      kept = await keptOn(b);
+      assert.equal(kept.trials.length, after.trials.length + 1);
+      assert.notEqual(kept.gen, 'another window');
+      await a.waitForFunction((n) => document.querySelector('#lab-picks').textContent === String(n), kept.trials.length, { timeout: 5000 });
+      assert.equal(await a.locator('#radio-meter').getAttribute('aria-valuetext'), await b.locator('#radio-meter').getAttribute('aria-valuetext'));
+      assert.deepEqual(errors, [], 'errors in the second window');
+    }),
+
+    check('the radio, its save spoilt: it is not written over but put aside, and the stake carries on from it, written down as lost', { storage: { ...TOLD, 'jam:taste:v1': { ...going, current: { ...going.current, front: '!' } } } }, async (page) => {
+      const was = model.standing(going.trials, 1);
+      await page.goto(`${origin}/jam/?taste`);
+      await page.waitForSelector('.radio .dot');
+      const { kept, aside } = await page.evaluate(() => ({
+        kept: JSON.parse(localStorage.getItem('jam:taste:v1')),
+        aside: Object.keys(localStorage).filter((key) => key.startsWith('jam:taste:v1:lost:')).map((key) => JSON.parse(localStorage.getItem(key))),
+      }));
+      assert.equal(aside.length, 1, 'the spoilt save was not put aside');
+      assert.deepEqual(aside[0].trials, going.trials, 'what was put aside is not the save as it was');
+      assert.deepEqual([kept.trials.length, kept.carried], [0, was.stake], 'the stake did not carry on');
+      assert.deepEqual(kept.restarts.map(({ after, carried, peak, lost }) => ({ after, carried, peak, lost })), [{ after: going.trials.length, carried: was.stake, peak: was.peak, lost: true }]);
+      assert.equal(await page.locator('#radio-meter').getAttribute('aria-valuenow'), valueOf(was.stake));
     }),
 
     check('home, with rooms: a feed of what is waiting on you on one tab, and everything else on the other', { storage: ACCOUNT }, async (page) => {

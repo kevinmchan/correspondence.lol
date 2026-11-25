@@ -578,15 +578,17 @@ the learning: it is the same on the first day and after a thousand stations,
 whatever the experiment makes of them, because a light that changed with the
 learning would say something about it (closer could be read as kept, or as
 narrowed), and the room does not take a side in the question the piece asks.
-Nothing else in the room follows the experiment either.
+Nothing else in the room follows the experiment either, but the meter on the
+set, which is the experiment's own (below), and takes no side either.
 
 **The set.** A small portable radio: a handle, an aerial, a plate with its
-name, a dial, a display, a readout, and along the bottom a tuning knob, play
-and pause, five preset lamps and Keep, and a tag hanging from its right side
-with a flask on it. It is drawn flat and given depth the way a drawing is: a
-solid edge down its right side and along its underside, a shadow on the plinth,
-a slight lean. All of it is always on the screen, at any size (everything on it
-is sized from its own width).
+name, a speaker with a meter set into its end and a lamp beside it, a dial, a
+display, a readout, and along the bottom a tuning knob, play and pause, five
+preset lamps and Keep, and a tag hanging from its right side with a flask on
+it. It is drawn flat and given depth the way a drawing is: a solid edge down
+its right side and along its underside, a shadow on the plinth, a slight lean.
+All of it is always on the screen, at any size (everything on it is sized from
+its own width).
 
 **Playing it.** Two stations are on the dial at a time, each a loop, each at a
 place on the dial worked out from the loop itself (so a loop is always the
@@ -694,8 +696,57 @@ glows in the colour of what has just sounded, harder on the beat; and at the
 top of every bar a gleam runs across it. At rest the notes twinkle. Both
 stations are lit by the same rules. With reduced motion only the bar moves.
 
+**The meter.** Set into the end of the speaker, beside the name plate, is a
+small panel meter with a cream face, and on the speaker beside it a pilot lamp.
+Its needle is the stake of the test behind the radio (below): how far the
+evidence has got. The scale is a log scale, even in multiples: ×1 at the left
+stop, ×20 at a heavy mark, and past the mark a wash of warm honey on the face,
+fading out towards the right stop, at about ×31 (a wash, not a band along the
+scale, so that it reads as where it has got to and not as a VU meter's
+overload zone). Below ×1 the needle rests on the left stop, and dims the
+further the stake has sunk, from full at ×1 to about half at ×1/20, so that
+how far below it is can be seen and not only that it is. A sliver of brass in
+the needle's own shape stays at the most it has been, as the drag pointer of a
+real meter is pushed up and left there. When the stake reaches ×20 the lamp
+warms up and stays lit, for good: that is significance at the 5% level, and
+starting over (below) does not put it out, whatever stake is carried on. Before the
+model is on record (the first ten picks of an experiment) the face is unlit,
+and ten small pips along an arc inside the scale light, one for each pick. There are no words or numbers on it; to a screen
+reader it is a meter, "Evidence ×5.9 of ×20; at most ×8.2", with
+"significant since pick 47" once it is ("significant since pick 47, before it
+was started over", if it got there in an experiment before this one). The
+numbers are in the reading.
+
+Soothing first. It moves slowly, as a meter's needle settles, with the least
+overshoot; with reduced motion it is put where it stands. The lamp and the
+band past ×20 are a neutral, warm honey, never green, which says "good", nor
+red, which says "bad": the meter shows how far the test has got, and leaning
+either way would tilt the question the piece asks. The one moment it marks is
+the lamp coming on: as the needle gets there the lamp warms, a soft glow
+spreads a little way from it, once, and one low bell sounds, the same for
+whoever it is and whatever was kept. Only a pick can do that: not arriving at a
+radio that is lit already, and not starting over. Penny takes no notice of it,
+as Penny gives no opinion of a station.
+
+It moves after a station is kept, and at no other time. Everything it shows is
+worked out from picks already made (`meter()` in `jam/taste-model.js`); the
+model's call on the pair that is up is never on the radio, not on the meter,
+nor anywhere else on its face. Were it there, whoever could see it could
+follow it, the needle would rise for following, and it would no longer be a
+measure of taste. So nothing on the meter is so much as written to between a
+pair coming up and a station being kept: not tuning, not listening, not a
+station refused, not a sheet opened, not a reload, not even with the model's
+call on that pair turned round. (The browser checks, `ONLY=meter npm run e2e`,
+hold it to this with a watch on every change to it and a whole copy of it
+compared before and after.)
+
+It keeps the set at its size: it is taller than the speaker it is set into,
+and its bezel overlaps the margin above and the gap below, so the set is the
+size it was on every phone.
+
 **The reading.** Nothing on the face of the radio says it is an experiment but
-the tag on its side, and nothing on its label. The tag opens the reading, a
+the tag on its side and the meter, which does not say it in words, and nothing
+on its label. The tag opens the reading, a
 sheet over the work: the gallery's entry for it, set as a gallery sets its
 words. (To a screen reader the tag is "Read about this radio": what pressing it
 does, and nothing of what is there.) At the top, small, the name of the place
@@ -728,10 +779,10 @@ reads as a reply: under a small heading of its own, "Where the test stands",
 comes the test as a figure, whose caption says what is measured and never
 begins with a yes, a no or a "not yet", does not count down, and is set the
 same however the test stands; then the numbers; what the model thinks you go
-for; the phantom, drawn (the station you kept, a challenger that is heard, and
-its twin, made alongside it and never heard, in a dashed outline, each
-captioned: "Its twin, never heard: the phantom"); how it works, folded; and
-what the sheet is used for: copying the data out, starting over (which asks
+for; the phantoms, drawn (the station you kept, a challenger that is heard, and
+its eight twins, made alongside it and never heard, a stack of dashed outlines,
+each captioned: "Its eight twins, never heard: the phantoms"); how it works,
+folded; and what the sheet is used for: copying the data out, starting over (which asks
 first), and showing how again. Going back to the radio is in a foot that does
 not scroll, so it is always in reach. The sheet keeps clear of the notch and
 the home bar. It opens at its title, with the title focused for a screen
@@ -754,35 +805,147 @@ advance which loop will be picked.
 
 **The test.** Being called right is not proof: someone who always keeps the
 reigning loop is easy to call and has shown no taste. So each time a
-challenger is needed, two are made in exactly the same way and one is thrown
-away unheard, the phantom. The model is asked about both. If the music made
-no difference to the pick, the real challenger would be no better a guide to
-it than the phantom: which of the two gives the actual pick the higher chance
-would be a fair coin, whatever the habits. A stake starting at 1 is bet on
-the real one each time, more the further apart the two predictions are. Such
-a stake reaches ×20 less than one time in twenty against a fair coin, however
-long one plays and however often one looks, so ×20 is significance at the 5%
-level with no number of picks fixed beforehand.
+challenger is needed, nine are made in exactly the same way (the same call,
+fresh randomness) and eight are thrown away unheard, the phantoms. Before the
+pick the model is asked about all nine, with the same weights, the same loop
+reigning and the same coin for which is heard first: how likely the pick to
+come would be with the real challenger (r), and with each phantom in its place
+(f1 to f8). If the music made no difference to the pick, the real challenger
+would be no better a guide to it than any phantom: it would be one of nine made
+alike, as likely to be any of them, whatever the habits. A stake starting at 1
+is multiplied after each pick by 0.1 + 0.9 × 9r / (r + f1 + … + f8): nine
+tenths of it ride on how much likelier the actual pick was with the real one
+than with the nine on average, and a tenth is held back so that one confident
+mistake never takes it all. Were the real one any of the nine, that ratio
+would be 1 on average, exactly, however the model came by its chances: a fair
+bet. Such a stake reaches ×20 less than one time in twenty against a fair bet,
+however long one plays and however often one looks (Ville's inequality), so
+×20 is significance at the 5% level with no number of picks fixed beforehand.
+That is why the meter can be looked at all the time, and why it may move only
+after a pick.
 
-The reading shows where it stands after every choice: the stake; a plain rule
-filling towards a mark at ×20 as far as the stake has ever got, in the colour
-of neither a win nor a loss (the gallery shows how far it has got, and does not
-cheer it); how often the model called the pick right, how often habit alone
-would have, how often the real challenger beat the phantom, and what the model
-thinks you go for, in words. The picks are kept on the device and can be copied
-out as JSON.
+**Starting over** throws away the picks, the model and the presets, and asks
+first (in the words it always has: what is carried is for the reading to
+explain); but the stake carries on from where it stands, into the new
+experiment, which warms up again. The product of one experiment's stake and the
+next is still a fair bet, so starting over never wipes out a loss, and cannot be
+used to reach ×20 by starting again whenever it sags. And so the stakes carried
+from one experiment to the next are one test, one test martingale, and its
+reaching ×20 at any point of the whole history is the event Ville's inequality
+bounds: once the lamp has lit it stays lit, and the test is significant, whatever
+stake is carried on afterwards, even one below ×20 (the owner, 25 November
+2026). `standing()` has it from the record of the restarts, each with the peak
+of its experiment and the pick at which it reached ×20 (`significant` and `best`
+are for the whole history, `reached` says where in it, `{ experiment, pick }`;
+`peak` and `reachedAt` are this experiment's). On the meter the needle stays
+where it was, the pointer at the peak comes back to it (the most it has been,
+since: the pointer is this experiment's own), and the face warms up again with
+the model; the lamp, if it was lit, stays lit. Only a pick sets off the moment
+the lamp comes on: a start over or a reload never plays it again.
 
-In simulation (`tests/taste.test.js`) a marked taste is found in about 160
-picks, a mild one in 200 to 400, and someone with no taste and a strong habit
-fools it about as often as the 1 in 20 allows. What it can find is limited to
-what the fifteen numbers can say. Nothing about how challengers are made
-looks at who has been winning beyond the length of the present reign.
+**Picks made before (v1.1.59 and earlier)** had one phantom, and a share of the
+stake rode on which of the two predictions gave the pick the higher chance, as
+far as two fifths. Each pick keeps the rule it was made under, fixed when its
+pair came up, before it was made: those picks, which have no `pPhantoms`, are
+worked out as they always were, to the last digit, so whoever had a stake, a
+peak and a ×20 under the old rule has the same stake, the same peak and the same
+lamp on the meter, and the stake carries on from there under the new one. (The
+pair that was up when the radio was last saved under the old rule was called
+with one phantom, so it is bet on by that rule too.) A fair bet followed by a
+fair bet is still a fair bet. Radios saved by v1.1.58 itself
+(`tests/fixtures/radio-saved-v1.1.58.json`: histories played with v1.1.58's own
+model, then two stations kept by hand on v1.1.58's radio in a browser, which
+saved them) hold it to this, in the unit tests and the browser checks.
+
+The reading shows where it stands after every choice: the stake; what it was
+carried over at, if it has been started over; a plain rule filling towards a
+mark at ×20 as far as the stake has ever got (in the whole history, before any
+start over too), in the colour of neither a win
+nor a loss (the gallery shows how far it has got, and does not cheer it); how
+often the model called the pick right, how often habit alone would have, how
+often the real challenger beat the phantoms (gave the pick a higher chance
+than they did on average), and what the model thinks you go for, in words.
+
+**What is written down.** The picks are kept on the device, each with its pair,
+what the model said of it beforehand (`p`, `q`, `pPhantom`, and since v1.1.60
+`pPhantoms`), the pick, and when (`at`), how long it took and how often the two
+were tuned between, and where the long form was (`bar`). Since the meter each
+is also written down with:
+
+- `metered`: true only if the needle was showing the stake (the model on record,
+  past its warm-up, so the pick was bet on) and the meter was in sight as the
+  pick was made (on the screen, at least half of it, not under a sheet, not
+  faded out, nothing over its middle, in a window that is not hidden); false
+  otherwise. Picks made before the meter have
+  no such field, and are the baseline: what was picked with no evidence in
+  sight. With it, "the model learnt my taste" can be told from "I learnt to
+  please the meter".
+- `heard`: how long each side was listened to, `{ front, back }`, in
+  milliseconds; `decideMs`: from the pair coming up to the pick (both counted on
+  that visit: a reload starts them again). (`ms`, `heardFront` and `heardBack`
+  are the same numbers, under the names they were first kept by.)
+- `version`: the app's.
+
+Each time it is started over is written down too (`restarts`: when, after
+which pick of the experiment it ended, the stake carried, the peak it had
+reached, the pick at which it reached ×20, `reachedAt`, and the version), with the stake the experiment now under way
+started from (`carried`), so that a restart is never invisible in the data.
+The pair that was up and was thrown away unpicked goes with it (`voided`: its
+loops, what the model had said of it, `p`, `q` and `pPhantoms`, whether it was
+bet on, `bet`, which side was tuned in, `up`, and how long each had been
+heard). That matters: after the warm-up the pair that is up is a bet, and
+somebody who starts over whenever the pick they are about to make looks like a
+loser can raise the stake with no taste at all (the decision to void depends on
+the music, so this is not the null the test covers, and Ville is not broken;
+but it is "pleasing the meter"). The record lets whoever studies the data see
+whether pairs were voided selectively. (Whether a pair voided after the
+warm-up should also be settled at the worse of its two outcomes, which would
+make voiding never pay and keep the test valid, is a change to the rule fixed
+on 24 November and is the owner's to make: it stays as it is, only
+written down, for now, and is logged as issue #101.) A save that is there and cannot be
+read is never written over: it is put aside under a key of its own
+(`jam:taste:v1:lost:…`), and a new experiment begins with the stake carried on
+from it as far as the picks' records give it, written down as a start over
+marked `lost`.
+
+Each time the model is looked at is written down as well (`looked`: the reading
+opened, `reading`, or the data copied out, `copy`, with after which pick, when,
+and the version), so that picks made after looking at the model can be told from
+picks made without. The reading's "So far it thinks you go for …" and the
+exported weights tell anyone who wants to know which way the model leans on the
+pair that is up; and the picks alone determine the model (it can be fitted again
+from them). Following the model is a way to please the meter with no taste;
+`looked` is how the report can see who might have.
+
+"Copy the data" gives out all of it, with where the test stands, the model's
+weights and the version; never the pair that is up, nor what the model says of
+it.
+
+**What a radio cannot hide.** It runs on the device, so the pair that is up,
+with the model's call on it and on its phantoms, is in the browser's storage in
+plain words, and anyone with the browser's developer tools can read it and win
+every bet. That is an inherent limit of a test run on the player's own device,
+and is accepted; the meter is a measure for somebody who plays the radio, not
+proof against somebody who takes it apart. The radio open in two windows is not
+a way round it: each save is marked, a window writes only over the save it last
+read or wrote, and a window whose pair has been overtaken by a pick made in the
+other refuses its own pick, with a shake, and takes up the radio as the other
+left it (otherwise the other side of the same pair could be kept in the second
+window after seeing the needle fall in the first, undoing the loss).
+
+In the study's simulation (below) a marked taste is found in about 51 picks,
+a mild one in about 87, and someone with no taste and a strong habit fools it
+no more often than the 1 in 20 allows; `tests/taste.test.js` holds the model to
+finding a marked taste, and not being fooled by habit. What it can find is
+limited to what the fifteen numbers can say. Nothing about how challengers are
+made looks at who has been winning beyond the length of the present reign.
 
 **Decided before any picks were looked at (24 November 2026).** A study of
 the test by simulation alone found it valid, including for someone who
 watches the stake and chases it, and found three changes worth making. The
 owner agreed to them before anyone's real picks had been looked at, and they
-go in with the meter on the radio's face:
+went in with the meter on the radio's face, in v1.1.60 (picks made before keep
+their rule, as above):
 
 - **Eight phantoms, and the bet as their likelihood ratio.** Each challenger
   is drawn nine times in the same way and eight are never heard; the stake is

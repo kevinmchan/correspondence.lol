@@ -541,7 +541,12 @@
           <div class="body">
             <div class="top-row">
               <span class="plate">Penny’s Radio</span>
-              <span class="grille" aria-hidden="true"></span>
+              <!-- The speaker, and set into its end a panel meter with a lamp beside it: the stake of the test behind the radio, as a
+                   needle (drawn by jam/taste.js, from the picks already made). It moves only after a station is kept. -->
+              <span class="speaker">
+                <span class="grille" aria-hidden="true"></span>
+                <span id="radio-meter" class="gauge warming" role="meter" aria-label="Evidence" aria-valuemin="0" aria-valuemax="20" aria-valuenow="1"></span>
+              </span>
             </div>
             <div class="band" aria-hidden="true">
               <span class="ticks"></span>
@@ -643,26 +648,30 @@
           <dl>
             <div><dt>Picks</dt><dd id="lab-picks"></dd></div>
             <div><dt>Stake</dt><dd id="lab-stake"></dd></div>
+            <div id="lab-carried-row" hidden><dt>Carried over, on starting over</dt><dd id="lab-carried"></dd></div>
             <div><dt>Called right by the model</dt><dd id="lab-called"></dd></div>
             <div><dt>Called right by habit alone</dt><dd id="lab-habits"></dd></div>
-            <div><dt>Beat the phantom</dt><dd id="lab-coin"></dd></div>
+            <div><dt>Beat the phantoms</dt><dd id="lab-coin"></dd></div>
           </dl>
           <p id="lab-likes" class="likes"></p>
-          <!-- The phantom, drawn: the station kept, a challenger that is heard, and its twin, made with it and never heard. -->
+          <!-- The phantoms, drawn: the station kept, a challenger that is heard, and its twins, made with it and never heard: a stack of them. -->
           <figure class="phantom">
-            <svg viewBox="0 0 300 66" aria-hidden="true">
+            <svg viewBox="0 0 300 72" aria-hidden="true">
               <path class="bracket" d="M150 15v-6h105v6M202.5 9V3"/>
               <g class="station kept"><rect x="20" y="18" width="70" height="44" rx="7"/><path class="notes" d="M32 48h8M46 38h8M60 30h8M74 42h4"/></g>
               <g class="station"><rect x="115" y="18" width="70" height="44" rx="7"/><path class="notes" d="M127 42h8M141 32h8M155 46h8M169 36h4"/></g>
+              <g class="station unheard behind"><rect x="228" y="26" width="70" height="44" rx="7"/></g>
+              <g class="station unheard behind"><rect x="224" y="22" width="70" height="44" rx="7"/></g>
               <g class="station unheard"><rect x="220" y="18" width="70" height="44" rx="7"/><path class="notes" d="M232 42h8M246 32h8M260 46h8M274 36h4"/></g>
             </svg>
-            <figcaption><span>The station you kept<span class="sr-only">;</span></span><span>A challenger, heard<span class="sr-only">;</span></span><span>Its twin, never heard: the phantom</span></figcaption>
+            <figcaption><span>The station you kept<span class="sr-only">;</span></span><span>A challenger, heard<span class="sr-only">;</span></span><span>Its eight twins, never heard: the phantoms</span></figcaption>
           </figure>
           <details>
             <summary>How it works</summary>
             <p>Every station you keep is written down. A model learns from them what you go for: how fast, how busy each instrument is, how high the tune sits, and a dozen things more. From the tenth pick on it says in advance which station you will keep. What the model thinks never changes what the radio plays.</p>
-            <p>Being called right is not proof of taste: someone who always keeps the station they already had is easy to call. So each time a challenger is needed, two are made and one is thrown away unheard, the phantom. If the music made no difference to your picks, the real challenger would be no better a guide to them than the phantom. The model is asked about both, and a stake is bet on the real one.</p>
+            <p>Being called right is not proof of taste: someone who always keeps the station they already had is easy to call. So each time a challenger is needed, nine are made in the same way and eight are thrown away unheard, the phantoms. If the music made no difference to your picks, the real challenger would be no better a guide to them than any phantom. The model is asked about all nine before you pick, and a stake is bet on how much likelier your pick was with the real one.</p>
             <p>If the music made no difference, the stake would reach ×20 less than one time in twenty, however long you play and however often you look. So ×20 is significance at the 5% level, and there is no number of picks to decide beforehand.</p>
+            <p>The meter on the radio is that stake, on a scale from ×1 to ×20 and a little past it; its lamp lights at ×20. It moves only after you keep a station, never while you choose, since what the model expects of the pair in front of you is not shown anywhere. Starting over carries the stake on, so that starting over never wipes out a loss: the experiments, one after another, are one test, so once the lamp has lit it stays lit, whatever the stake is carried at. Picks made before there were eight phantoms keep the rule they were made under.</p>
             <p>“Habit alone” is what can be called from which side of the dial a station is on, which one you already had, and which you heard first, knowing nothing about the music.</p>
           </details>
           <div class="taste-row end">
