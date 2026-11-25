@@ -86,6 +86,7 @@ const STREET = { ...ACCOUNT, 'home:tab:v1': 'lobby', 'correspondence:rooms:v1': 
 //   screen: which screen of the app it is (the name of its template in index.html, without "screen-").
 //   at: its address.  storage: what is on the device.  server: what the server says.
 //   ready: what is there when it has come up.  then(page): what has to be done to get it into the state.
+//   init(): run in the page before it loads (what an iPhone has that this browser has not).
 //   settle: what is there once it is in the state (wait: how long that may take, when it is a story being told).
 //   whole: the things that must be entirely on the screen without scrolling (and the screen must not scroll).
 //   small: things to press that may be under 44 by 44, as [pattern, why, least]. The pattern is matched against how the
@@ -157,6 +158,54 @@ async function states() {
       then: async (page) => { await page.locator('.screen-room > header #worlds').click(); await page.waitForSelector('.screen-room[data-world="serious"]:not([data-passage])', { timeout: 8000 }); await page.locator('.screen-room > main #chat').scrollIntoViewIfNeeded(); }, settle: '.screen-room[data-world="serious"]' },
     { name: 'a room, writing a pass phrase', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
       then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); }, settle: '#tokens .word' },
+    // The quiet room (room/room.css): what is yours to play lies nearest and lit; a tile lifts before it starts a game; the table is tidied with one bin.
+    { name: 'a room, one game yours to play among the rest', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: [GAMES[3], GAMES[0], GAMES[4], listed({ mode: 'phrase', size: 7, phrase_by: 0 })], messages: TALK }), ready: '#games li[data-state="go"]' },
+    { name: 'a room, a tile lifted before a game is started', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: (page) => page.locator('#modes [data-mode="coop"]').click(), settle: '#modes [data-armed]' },
+    { name: 'a room, tidying the table', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li',
+      then: (page) => page.locator('#tidy').click(), settle: '.table.tidy' },
+    // (with no phrase written, the start is a die: a phrase is picked at random)
+    { name: 'a room, writing a pass phrase, left empty for a random one', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: (page) => page.locator('#modes [data-mode="phrase"]').click(), settle: '#phrase-form .start-phrase.random' },
+    // (...and the die lifted by a first tap, the play mark beside it: a second would start the game, and tell the room)
+    { name: 'a room, writing a pass phrase, the die lifted', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-form .start-phrase.random').click(); }, settle: '#phrase-form .start-phrase[data-armed]' },
+    // What went wrong (here: nobody at the server) is a short line of its words beside what was tried, for as long as it
+    // stands, and what was tried shakes as they come; what was asked in a sheet is tried there, and the sheet shakes and
+    // has the words in it.
+    { name: 'a room, a game that could not be started', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#modes [data-mode="trial"]').click(); await page.locator('#modes [data-mode="trial"]').click(); }, settle: '#game-error:not(:empty)' },
+    { name: 'a room, at its desk, a game that could not be started', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); await page.locator('#phrase-form .start-phrase').click(); },
+      settle: '#phrase-error:not(:empty)' },
+    { name: 'a room, asked whether to put a game away (the board, not its name)', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#tidy').click(); await page.locator('#games .delete').first().click(); }, settle: 'dialog.ask[open] .picture svg' },
+    { name: 'a room, a game that could not be put away', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#tidy').click(); await page.locator('#games .delete').first().click(); await page.locator('dialog.ask[open] button.yes').click(); },
+      settle: 'dialog.ask[open] [role="alert"]:not(:empty)' },
+    { name: 'a room, a name that could not be changed', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#room-name button').click(); await page.locator('#room-name input').fill('Thursday club'); await page.locator('#room-name input').press('Enter'); },
+      settle: '#name-error:not(:empty)' },
+    // (the room's options: a pencil and a door)
+    { name: 'a room, its options', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: (page) => page.locator('#more').click(), settle: '#more-menu:not([hidden])' },
+    { name: 'a room, that could not be left', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#more').click(); await page.locator('#leave').click(); await page.locator('dialog.ask[open] button.yes').click(); },
+      settle: 'dialog.ask[open] [role="alert"]:not(:empty)' },
+    { name: 'a room, a link that leads nowhere', screen: 'room', at: '/room/?id=not-a-room', storage: ACCOUNT, ready: '#room-error:not(:empty)' },
+    { name: 'opening a room, it went wrong', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room',
+      then: async (page) => { await page.locator('#room-name').fill('Tuesday club'); await page.locator('#create-room button[type="submit"]').click(); },
+      settle: '#create-error:not(:empty)' },
+    { name: 'joining a room, it went wrong', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room',
+      then: async (page) => { await page.locator('#join-code').fill('K7M-2QP'); await page.locator('#join-room button[type="submit"]').click(); },
+      settle: '#join-error:not(:empty)' },
+    { name: 'a room, seen by somebody not in it, it went wrong at the door', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, you: null, messages: null, games: null }), ready: '#join:not([hidden])',
+      then: (page) => page.locator('#join-form button[type="submit"]').click(), settle: '#join-error:not(:empty)' },
+    // (where the phone can hand the code to its share sheet, as an iPhone can: the share button on the mat, by the bell)
+    { name: 'a room, at its door, with the code to share', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      init: () => { navigator.share = async () => {}; }, then: (page) => page.locator('.share.mat').scrollIntoViewIfNeeded(), settle: '#share-button:not([hidden])' },
+    // (the lobby's street, calm: a room with something waiting on you has its window lit)
+    { name: 'home, the lobby, a street with a window lit', screen: 'home', at: '/', storage: STREET, server: rooms(GAMES), ready: '#rooms .street .lot-link.lit' },
     { name: 'the game, the smallest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
     { name: 'the game, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'],
       small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
@@ -231,6 +280,7 @@ async function look(browser, origin, phoneName, state) {
   const { context, page, phone, errors } = await open(browser, phoneName, { storage: state.storage ?? {}, server: state.server });
   const wrong = [];
   try {
+    if (state.init) await page.addInitScript(state.init); // (what the phone has that this browser has not)
     await page.goto(origin + state.at);
     await page.waitForSelector(state.ready, { timeout: 15000 });
     if (state.then) await state.then(page);

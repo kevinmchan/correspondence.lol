@@ -1002,6 +1002,345 @@ async function main() {
       await page.waitForURL(/\/postmarks\/\?game=33333333/, { timeout: 5000 });
     }),
 
+    // The quiet room (room/room.css), and what it says (CLAUDE.md, "Look and words": the words on a screen are its
+    // content, and its descriptions are kept for screen readers).
+    check('a quiet room: its words are only its content; what is yours lies nearest; one tap on a tile (or the die at the desk) starts nothing, the second starts the game; one bin tidies the table; the chat says each thing once, a game started only while that game is not on the table; what went wrong is a short line of its words beside it, with a shake, while it stands', { storage: ACCOUNT, timezoneId: 'UTC', locale: 'en-US' }, async (page, h) => {
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const game = (over) => ({ kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });
+      let games = [game({ id: 'b2222222-2222-4222-8222-222222222222', mode: 'trial', size: 6, mine: 'won', finished: 2 }), game({ id: 'a1111111-1111-4111-8111-111111111111', last_player: 1 })];
+      const [trial, together] = games;
+      const at = (m) => new Date(Date.UTC(2026, 10, 24, 18, m)).toISOString();
+      const line = (id, body, gameId) => ({ id, seat: null, body, at: at(id), game_kind: 'postmarks', game_id: gameId });
+      const note = (id, body, minute) => ({ id, seat: 1, body, at: at(minute), game_kind: null, game_id: null });
+      const messages = [
+        line(1, 'Sam started a game of Postmarks', together.id), // its game is on the table: said there already
+        line(2, 'Ada started a 6 × 6 game of Postmarks', trial.id), // (as it was once worded) the same
+        line(3, 'Ada started a Postmarks time trial', 'c3333333-3333-4333-8333-333333333333'), // its game is gone: the line stays
+        line(4, 'Pass phrase solved: Sam started a game of Postmarks', together.id), // a phrase solved, whatever its words: it stays
+        line(5, 'Sam finished the time trial in 3:12', trial.id),
+        note(6, 'one', 6), note(7, 'two', 7), note(8, 'three', 30),
+      ];
+      const asked = [];
+      let refuse = true; // (the server says no to putting a game away, the first time)
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(room_get|postmarks_start|postmarks_delete)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const name = route.request().url().match(/rpc\/(\w+)/)[1];
+        asked.push(name);
+        const args = JSON.parse(route.request().postData());
+        if (name === 'postmarks_delete') {
+          if (refuse) return route.fulfill({ status: 400, json: { message: 'Only the room’s members can do that.' }, headers: cors });
+          games = games.filter((one) => one.id !== args.p_game);
+          return route.fulfill({ json: {}, headers: cors });
+        }
+        if (name !== 'room_get') return route.abort();
+        return route.fulfill({ json: { id: args.p_room, name: 'Book club', code: 'K7M2QP', you: 0, people, messages: args.p_after ? [] : messages, games }, headers: cors });
+      });
+      await page.goto(`${origin}/room/?id=11111111-1111-4111-8111-111111111111`);
+      await page.waitForSelector('#games li');
+      await sleep(900); // (the furniture settles)
+      // What can be read on the screen, exactly: names, notes, the code. No labels, no headings, no words on buttons, no
+      // placeholders, nothing written on the table; and the line that a game was started is on the table instead. (Faces
+      // are emoji: people's faces are content too. The time shows where somebody starts to speak.) A regression guard on
+      // the rule: a word that only describes, put back on the room, fails here.
+      const seen = () => page.evaluate(() => {
+        const out = [];
+        const walk = (node) => {
+          if (node.nodeType === 3) { if (node.textContent.trim()) out.push(node.textContent.trim().replace(/\s+/g, ' ')); return; }
+          if (node.nodeType !== 1 || node.classList.contains('sr-only') || ['SCRIPT', 'STYLE', 'TEMPLATE'].includes(node.tagName)) return;
+          if (!node.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return;
+          node.childNodes.forEach(walk);
+        };
+        document.querySelectorAll('.screen-room > :is(header, main)').forEach(walk);
+        for (const field of document.querySelectorAll('.screen-room > :is(header, main) input')) if (field.placeholder && field.checkVisibility()) out.push(`(placeholder) ${field.placeholder}`);
+        return out;
+      });
+      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP']);
+      // yours to play first; nothing on the table is written, it is said to screen readers
+      assert.deepEqual(await page.locator('#games li').evaluateAll((all) => all.map((li) => li.dataset.state)), ['go', 'won']);
+      // (and who started each, which the line in the chat said, put away while the game is on the table)
+      assert.deepEqual(await page.locator('#games a.game').evaluateAll((all) => all.map((a) => a.getAttribute('aria-label'))), ['Together 5 × 5, started by Sam: your move, 1 of 5 posts found, 3 hearts left', 'Time trial 6 × 6, started by Ada: you finished, 2 finished']);
+      // ...and what is not yours rests, with some of its colour still (soft, not grey)
+      const rest = await page.locator('#games li[data-state="won"] .mini').evaluate((board) => getComputedStyle(board).filter);
+      assert.match(rest, /saturate\(0\.5\)/, `a game at rest keeps half its colour (${rest})`);
+      // the chat: each thing said once; who and when once a run; every note alike (nothing lit as new)
+      const hidden = () => page.locator('.chat-log li.note').evaluateAll((all) => all.map((li) => li.hidden));
+      assert.deepEqual(await hidden(), [true, true, false, false, false], 'a game started is said by the table while it is on it');
+      assert.deepEqual(await page.locator('.chat-log li:not(.note)').evaluateAll((all) => all.map((li) => li.classList.contains('more'))), [false, true, false]);
+      assert.equal(await page.locator('.chat-log li.fresh, .chat-log [class*="new"]').count(), 0, 'no note is marked as new');
+      // the line the server says a game was started with, as it is worded now and was before, and nothing else
+      const started = await page.evaluate(async () => {
+        const { STARTED } = await import('/shared/chat.js');
+        return [
+          'Sam started a game of Postmarks', 'Ada started a 5 × 5 game of Postmarks', 'Kevin started a Postmarks time trial', 'Bo started a Postmarks pass phrase',
+          'Wilhelmina Longname wrote a Postmarks pass phrase to solve', 'Mary Ann started a 9 × 9 game of Postmarks', 'Abcdefghijklmnopqrst started a game of Postmarks', '🐸 started a game of Postmarks',
+          'Abcdefghijklmnopqrstu started a game of Postmarks', 'Pass phrase solved: Sam started a game of Postmarks', 'Pass phrase solved: started a game of Postmarks',
+          'A pass phrase went unsolved: Bo wrote a Postmarks pass phrase to solve', 'Sam finished the time trial in 3:12', 'Sam started a game of Postmarks, and won', 'Sam opened the room', 'started a game of Postmarks',
+        ].map((body) => STARTED.test(body));
+      });
+      assert.deepEqual(started, [true, true, true, true, true, true, true, true, false, false, false, false, false, false, false, false]);
+      // a tile: one tap lifts it and starts nothing; a tap elsewhere sets it down; the second tap starts the game
+      await page.locator('#modes [data-mode="coop"]').click();
+      assert.equal(await page.locator('#modes [data-mode="coop"][data-armed]').count(), 1);
+      await sleep(400);
+      assert.equal(asked.includes('postmarks_start'), false, 'one tap started a game');
+      await page.locator('#chat input').click();
+      assert.equal(await page.locator('#modes [data-armed]').count(), 0);
+      await page.locator('#modes [data-mode="trial"]').click();
+      await sleep(400);
+      assert.equal(asked.includes('postmarks_start'), false, 'nor did one tap on another');
+      // (what is shaken, from here on)
+      await page.evaluate(() => {
+        window.shaken = [];
+        const animate = Element.prototype.animate;
+        Element.prototype.animate = function (keyframes, options) {
+          if (this.closest?.('.screen-room, dialog') && JSON.stringify(keyframes).includes('translate')) window.shaken.push(this.id || this.tagName.toLowerCase());
+          return animate.call(this, keyframes, options);
+        };
+      });
+      // (where a thing lies on the page, or in its sheet, once whatever moves it for a moment, a shake or a sheet coming,
+      // has done; and what there is to press that was not there when last looked at)
+      const still = () => page.evaluate(() => Promise.all(document.getAnimations().filter((one) => one.playState === 'running' && one.effect?.getComputedTiming().iterations !== Infinity).map((one) => one.finished.catch(() => {}))));
+      const lies = async (locator) => {
+        await still();
+        return locator.evaluate((one) => {
+          const box = one.getBoundingClientRect();
+          const page = one.closest('dialog') ? [0, 0] : [scrollY, scrollX];
+          return [box.top + page[0], box.left + page[1], box.width, box.height].map(Math.round);
+        });
+      };
+      const presses = (look) => page.evaluate((again) => {
+        const now = [...document.querySelectorAll('.screen-room > :is(header, main) :is(button, a[href], input), dialog[open] :is(button, a[href], input)')].filter((one) => one.checkVisibility());
+        const come = again ? now.filter((one) => !window.pressable.has(one)).map((one) => one.outerHTML.slice(0, 80)) : [];
+        window.pressable = new Set(now);
+        return come;
+      }, look);
+      const box = (locator) => locator.evaluate((one) => one.getBoundingClientRect().toJSON());
+      const tiles = await lies(page.locator('#modes'));
+      await presses();
+      await page.locator('#modes [data-mode="trial"]').click();
+      await page.waitForSelector('#game-error:not(:empty)');
+      assert.equal(asked.filter((name) => name === 'postmarks_start').length, 1, 'the second tap starts it');
+      // what went wrong (here, the server could not be reached): a short line of its words beside the tiles, said at once
+      // to screen readers too (role="alert"), and the tiles shake as they come; no mark to press for them, and nothing
+      // moves for them. It stands until a tile is touched again.
+      const line1 = page.locator('#game-error');
+      const shown = (words) => words.evaluate((one) => !one.closest('.sr-only') && one.checkVisibility() && one.getBoundingClientRect().width > 40);
+      assert.equal(await line1.getAttribute('role'), 'alert');
+      assert.match(await line1.textContent(), /reach the server/);
+      assert.deepEqual(await page.evaluate(() => window.shaken), ['modes'], 'the tiles shook');
+      assert.equal(await shown(line1), true, 'its words are on the screen');
+      const said = await line1.textContent();
+      await still(); // (they come in softly)
+      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', said, 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP'], 'its words are the one thing come on the screen, after the tiles');
+      assert.deepEqual(await lies(page.locator('#modes')), tiles, 'the tiles have not moved');
+      const under = await box(line1);
+      const row = await box(page.locator('#modes'));
+      assert.ok(under.top >= row.bottom && under.top - row.bottom < 40 && Math.abs((under.left + under.right) / 2 - (row.left + row.right) / 2) < 2, `the words are just under the tiles (${JSON.stringify([under, row])})`);
+      assert.deepEqual(await presses(true), [], 'and nothing has come to press');
+      await page.locator('#modes [data-mode="coop"]').click();
+      assert.equal(await line1.textContent(), '', 'touched again, it is not still said');
+      assert.equal(await shown(line1), false, 'and its words are gone');
+      await page.locator('#chat input').click();
+      // renaming the room, refused: the name is back as it was, and shakes, and the words lie under it, over the top wall
+      // of the building, above the people; nothing moves for them (a tile tapped as the name was left is still where it
+      // was for its second tap). Tried again, what went wrong is not still said.
+      const name = await lies(page.locator('#room-name'));
+      const house = await lies(page.locator('#house'));
+      await page.locator('#room-name button.rename').click();
+      await page.locator('#room-name input').fill('Thursday club');
+      await page.locator('#room-name input').press('Enter');
+      await page.waitForSelector('#name-error:not(:empty)');
+      assert.equal(await page.locator('#room-name button.rename').textContent(), 'Book club');
+      assert.equal(await page.locator('#name-error').getAttribute('role'), 'alert');
+      assert.match(await page.locator('#name-error').textContent(), /reach the server/);
+      assert.equal(await shown(page.locator('#name-error')), true, 'its words are on the screen');
+      assert.deepEqual(await page.evaluate(() => window.shaken), ['modes', 'room-name'], 'the name shook');
+      assert.deepEqual([await lies(page.locator('#room-name')), await lies(page.locator('#house'))], [name, house], 'neither the name nor the building has moved');
+      const slip = await box(page.locator('#name-error'));
+      const sign = await box(page.locator('#room-name'));
+      const seats = await box(page.locator('#members'));
+      assert.ok(slip.top >= sign.bottom && slip.top - sign.bottom < 12 && slip.bottom <= seats.top && Math.abs((slip.left + slip.right) / 2 - (sign.left + sign.right) / 2) < 2, `the words lie just under the name, above the people (${JSON.stringify([slip, sign, seats])})`);
+      // (whatever face the phone sets them in: a narrower phone, or wider letters, wrap them onto a second line, and they
+      // must still lie above the people)
+      const wide = await page.addStyleTag({ content: '#name-error { letter-spacing: 0.14em; }' });
+      const wrapped = await box(page.locator('#name-error'));
+      assert.ok(wrapped.height > slip.height * 1.4, `with wider letters, the words take two lines (${JSON.stringify([slip, wrapped])})`);
+      assert.ok(wrapped.top === slip.top && wrapped.bottom <= seats.top, `and still lie above the people (${JSON.stringify([wrapped, seats])})`);
+      await wide.evaluate((style) => style.remove());
+      await page.locator('#room-name button.rename').click();
+      assert.equal(await page.locator('#name-error').textContent(), '', 'tried again, it is not still said');
+      await page.locator('#room-name input').press('Escape');
+      assert.equal(await shown(page.locator('#name-error')), false);
+      // leaving, refused: asked in a sheet (with no words of explanation in it), and the sheet stays, shakes, and the
+      // words come in it, under the question; its answers stay where they were under the finger. Stay puts it away.
+      await page.locator('#more').click();
+      assert.deepEqual(await page.locator('#more-menu button').evaluateAll((all) => all.map((one) => [one.getAttribute('aria-label'), one.textContent.trim()])), [['Rename room', ''], ['Leave room', '']], 'the room\'s options are a pencil and a door, with their words for screen readers');
+      await page.locator('#leave').click();
+      await page.waitForSelector('dialog.ask[open]');
+      assert.equal(await page.locator('dialog.ask[open] p:not([role="alert"])').count(), 0, 'nothing but the question and its answers');
+      const answers = await lies(page.locator('dialog.ask[open] .buttons'));
+      await presses();
+      await page.locator('dialog.ask[open] button.yes').click();
+      await page.waitForSelector('dialog.ask[open] [role="alert"]:not(:empty)');
+      assert.match(await page.locator('dialog.ask[open] [role="alert"]').textContent(), /reach the server/);
+      assert.equal(await shown(page.locator('dialog.ask[open] [role="alert"]')), true, 'its words are in the sheet');
+      assert.deepEqual((await page.evaluate(() => window.shaken)).slice(2), ['dialog'], 'the sheet shook');
+      assert.deepEqual(await lies(page.locator('dialog.ask[open] .buttons')), answers, 'its answers have not moved');
+      const between = await page.locator('dialog.ask[open]').evaluate((sheet) => {
+        const [question, words, buttons] = ['h2', '[role="alert"]', '.buttons'].map((one) => sheet.querySelector(one).getBoundingClientRect());
+        return words.top >= question.bottom && words.bottom <= buttons.top;
+      });
+      assert.equal(between, true, 'the words are between the question and its answers');
+      assert.deepEqual(await presses(true), [], 'and nothing has come to press');
+      await page.locator('dialog.ask[open] button.quiet').click();
+      assert.equal(await page.locator('dialog[open]').count(), 0, 'Stay puts it away');
+      // one bin for the table: pressed, a tap on a board asks to put it away; an Escape is for the question first
+      assert.equal(await page.locator('#games .delete').first().isVisible(), false);
+      await page.locator('#tidy').click();
+      await page.locator('#games .delete').first().click();
+      await page.waitForSelector('dialog.ask[open]');
+      await page.keyboard.press('Escape');
+      await sleep(300);
+      assert.equal(await page.locator('.table.tidy').count(), 1, 'the Escape was for the question');
+      // put away, and the server says no: the sheet it was asked in (which shows the board, not its name, and no
+      // words of explanation) stays, shakes, and the words come in it, while its answers stay where they were; not
+      // under the tiles. Tried again, they go, and come again.
+      await page.locator('#games .delete').first().click();
+      await page.waitForSelector('dialog.ask[open] .picture svg rect');
+      assert.equal(await page.locator('dialog.ask[open] h2').evaluate((title) => title.classList.contains('sr-only')), true, 'the board is shown in place of its name');
+      assert.equal(await page.locator('dialog.ask[open] p:not([role="alert"])').count(), 0);
+      const kept = await lies(page.locator('dialog.ask[open] .buttons'));
+      await page.locator('dialog.ask[open] button.yes').click();
+      await page.waitForSelector('dialog.ask[open] [role="alert"]:not(:empty)');
+      const words = page.locator('dialog.ask[open] [role="alert"]');
+      assert.match(await words.textContent(), /members can do that/);
+      assert.equal(await shown(words), true, 'its words are there, with nothing to press for them');
+      assert.deepEqual(await lies(page.locator('dialog.ask[open] .buttons')), kept, 'its answers have not moved');
+      assert.equal(await page.locator('#game-error').textContent(), '', 'not under the tiles');
+      const shakes = (await page.evaluate(() => window.shaken)).length;
+      await page.locator('dialog.ask[open] button.yes').click();
+      await page.waitForSelector('dialog.ask[open] [role="alert"]:not(:empty)');
+      assert.equal((await page.evaluate(() => window.shaken)).length, shakes + 1, 'tried again and refused again: the words went, and came again with a shake');
+      assert.deepEqual(await lies(page.locator('dialog.ask[open] .buttons')), kept, 'and its answers have still not moved');
+      await page.locator('dialog.ask[open] button.quiet').click();
+      assert.equal(await page.locator('#games li').count(), 2, 'the game is still on the table');
+      // and put away again, it goes: its line that it was started comes back, as the table no longer says so
+      refuse = false;
+      await page.locator('#games li[data-state="go"] .delete').click();
+      await page.locator('dialog.ask[open] button.yes').click();
+      await page.waitForFunction(() => document.querySelectorAll('#games li').length === 1, null, { timeout: 5000 });
+      assert.deepEqual(await hidden(), [false, true, false, false, false], 'a game gone from the table: the line that it was started is back');
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('.table.tidy').count(), 0);
+      // at the desk, the box left empty, the start is a die; and it too tells the room, so it takes two taps, as a tile does
+      await page.locator('#modes [data-mode="phrase"]').click();
+      await page.waitForSelector('#compose:not([hidden])');
+      const die = page.locator('#phrase-form .start-phrase');
+      const starts = () => asked.filter((name) => name === 'postmarks_start').length;
+      const begun = starts();
+      assert.equal(await die.evaluate((one) => one.classList.contains('random')), true, 'the empty box\'s start is a die');
+      await die.click();
+      await sleep(400);
+      assert.equal(starts(), begun, 'one tap on the die starts nothing');
+      assert.equal(await die.getAttribute('data-armed'), '', 'it is lifted');
+      assert.equal(await page.locator('#phrase-form .start-phrase .play').isVisible(), true, 'with the play mark beside it');
+      await page.locator('#phrase-text').click();
+      assert.equal(await die.getAttribute('data-armed'), null, 'a tap elsewhere sets it down');
+      const desk = await lies(die);
+      await die.click();
+      await die.click();
+      await page.waitForSelector('#phrase-error:not(:empty)');
+      assert.equal(starts(), begun + 1, 'the second tap starts the game');
+      assert.equal((await page.evaluate(() => window.shaken)).at(-1), 'phrase-form', 'and refused, the desk shook');
+      assert.match(await page.locator('#phrase-error').textContent(), /reach the server/);
+      assert.equal(await shown(page.locator('#phrase-error')), true, 'and its words are under the die');
+      assert.deepEqual(await lies(die), desk, 'which has not moved');
+      const dieBox = await box(die);
+      const deskWords = await box(page.locator('#phrase-error'));
+      assert.ok(deskWords.top >= dieBox.bottom && deskWords.top - dieBox.bottom < 40, `the words are just under the die (${JSON.stringify([deskWords, dieBox])})`);
+      await page.locator('#phrase-text').fill('meet me at the old post office');
+      assert.equal(await page.locator('#phrase-error').textContent(), '', 'once what was typed changes, it is not still said');
+    }),
+
+    // Opening a room and joining one: their doors are held back until there is what they need, so those can never be
+    // refused for want of it; a refusal from the server is a short line of its words under the door, and the door
+    // shakes (with less motion asked for, it does not), until what was typed is changed.
+    check('opening and joining a room: the door is held back until there is a name, or a whole code; what went wrong is said under it, with a shake, until what was typed changes', { storage: ACCOUNT }, async (page) => {
+      // (what is shaken, on each screen)
+      const watch = () => page.evaluate(() => {
+        window.shaken = [];
+        const animate = Element.prototype.animate;
+        Element.prototype.animate = function (keyframes, options) {
+          if (JSON.stringify(keyframes).includes('translate')) window.shaken.push(this.id || this.tagName.toLowerCase());
+          return animate.call(this, keyframes, options);
+        };
+      });
+      const shaken = () => page.evaluate(() => window.shaken);
+      const still = () => page.evaluate(() => Promise.all(document.getAnimations().filter((one) => one.playState === 'running' && one.effect?.getComputedTiming().iterations !== Infinity).map((one) => one.finished.catch(() => {}))));
+      const lies = async (locator) => {
+        await still();
+        const box = await locator.evaluate((one) => one.getBoundingClientRect().toJSON());
+        return ['top', 'left', 'width', 'height'].map((side) => Math.round(box[side]));
+      };
+      const shown = (words) => words.evaluate((one) => !one.closest('.sr-only') && one.checkVisibility() && one.getBoundingClientRect().width > 40);
+      const under = (words, door) => page.evaluate(([a, b]) => {
+        const [w, d] = [document.querySelector(a).getBoundingClientRect(), document.querySelector(b).getBoundingClientRect()];
+        return w.top >= d.bottom && w.top - d.bottom < 40 && Math.abs((w.left + w.right) / 2 - (d.left + d.right) / 2) < 2;
+      }, [words, door]);
+
+      await page.goto(`${origin}/?open`);
+      const open = page.locator('#create-room button[type="submit"]');
+      await page.waitForSelector('#create-room');
+      await watch();
+      assert.equal(await open.isDisabled(), true, 'no name: the door is held back');
+      await page.locator('#room-name').fill('   ');
+      assert.equal(await open.isDisabled(), true, 'nor spaces');
+      await page.locator('#room-name').press('Enter');
+      assert.equal(await page.locator('#create-error').textContent(), '', 'and Enter says nothing');
+      await page.locator('#room-name').fill('Tuesday club');
+      assert.equal(await open.isDisabled(), false);
+      const plus = await lies(open);
+      await open.click();
+      await page.waitForSelector('#create-error:not(:empty)');
+      assert.equal(await page.locator('#create-error').getAttribute('role'), 'alert');
+      assert.match(await page.locator('#create-error').textContent(), /reach the server/);
+      assert.equal(await shown(page.locator('#create-error')), true, 'its words are on the screen');
+      assert.equal(await under('#create-error', '#create-room button[type="submit"]'), true, 'just under the door');
+      assert.deepEqual(await shaken(), ['create-room'], 'and the board shook');
+      assert.deepEqual(await lies(open), plus, 'the door has not moved');
+      assert.equal(await page.locator('#create-room button').count(), 1, 'nothing has come to press');
+      await page.locator('#room-name').fill('Tuesday Club');
+      assert.equal(await page.locator('#create-error').textContent(), '', 'once what was typed changes, it is not still said');
+      assert.equal(await shown(page.locator('#create-error')), false);
+
+      // (joining, with less motion asked for: the words come all the same, and nothing shakes)
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(`${origin}/?join`);
+      const join = page.locator('#join-room button[type="submit"]');
+      await page.waitForSelector('#join-room');
+      await watch();
+      assert.equal(await page.locator('#join-code').getAttribute('placeholder'), '•••-•••', 'the shape of a code, not an example of one');
+      assert.equal(await join.isDisabled(), true);
+      await page.locator('#join-code').fill('K7M-2Q');
+      assert.equal(await join.isDisabled(), true, 'five of six: held back');
+      await page.locator('#join-code').press('Enter');
+      assert.equal(await page.locator('#join-error').textContent(), '');
+      await page.locator('#join-code').fill('k7m2qp');
+      assert.equal(await join.isDisabled(), false, 'a whole code, however it is written');
+      const way = await lies(join);
+      await join.click();
+      await page.waitForSelector('#join-error:not(:empty)');
+      assert.equal(await page.locator('#join-error').getAttribute('role'), 'alert');
+      assert.match(await page.locator('#join-error').textContent(), /reach the server/);
+      assert.equal(await shown(page.locator('#join-error')), true, 'its words are on the screen');
+      assert.equal(await under('#join-error', '#join-room button[type="submit"]'), true, 'just under the door');
+      assert.deepEqual(await shaken(), [], 'with less motion asked for, nothing shook');
+      assert.deepEqual(await lies(join), way, 'the door has not moved');
+      await page.locator('#join-code').fill('k7m2qq');
+      assert.equal(await page.locator('#join-error').textContent(), '', 'once what was typed changes, it is not still said');
+    }),
+
     check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page, h) => {
       await page.goto(`${origin}/?home`);
       await sleep(2700);
@@ -1508,6 +1847,11 @@ async function main() {
       assert.ok(size.y + size.height <= 844 && size.y >= 0, 'and on the screen without scrolling');
       assert.match(await portal.evaluate((el) => getComputedStyle(el, '::before').backgroundImage), /conic-gradient/, 'a ring of light, as the home page\'s portal is');
       assert.equal(await w.turning(), false, 'and still, as the room is, until somebody passes through it');
+      // (at rest in the cartoon, soft and low, with no glow, as the room is: nothing louder than what is waiting on you)
+      const ringPaint = () => portal.evaluate((el) => ({ filter: getComputedStyle(el).filter, glow: getComputedStyle(el, '::before').boxShadow }));
+      const resting = await ringPaint();
+      assert.match(resting.filter, /saturate\(0\.42\)/, `at rest in the cartoon the ring's colours are soft (${JSON.stringify(resting)})`);
+      assert.equal((resting.glow.match(/rgb/g) ?? []).length, 1, `and it has no glow round it, only its rim (${resting.glow})`);
       const light = await w.tint();
       await w.watch();
       await sleep(3000);
@@ -1558,6 +1902,8 @@ async function main() {
       const film = (await w.holed()).film;
       assert.deepEqual([film.inner, film.outer], [0, 3], `inside, the film over the drama leaves the portal out too (${JSON.stringify(film)})`);
       assert.equal(await w.turning(), false, 'once through, the portal is still again');
+      await sleep(600);
+      assert.equal((await ringPaint()).filter, 'none', 'and inside, where it is the way back and the one colour in black and white, its colours are full');
       assert.equal(await w.tint(), '#050505', `the browser's own bars go dark with the drama (from ${light})`);
       w.same(calm, await w.boxes(), 'inside');
       assert.equal(await w.hear(), heard, 'a screen reader hears the same room, inside');
@@ -1573,7 +1919,15 @@ async function main() {
       assert.equal(await w.passage(), undefined, 'a crossing, not a passage');
       w.same(calm, await w.boxes(), 'the cartoon breaking through');
       await w.fills();
+      // (the night's hidden mark lies still while the worlds cross: its copy, in the copy of the page, is never taken for
+      // something it must keep clear of; and that copy is the mark as it is, kept so without copying the page again)
+      const lying = await w.mark();
+      assert.equal(lying.page?.hidden, false, `the night's mark has a place at the top of the room (${JSON.stringify(lying)})`);
+      if (await page.evaluate(() => Boolean(document.querySelector('.screen-room > .worlds-copy')))) assert.deepEqual(lying.copy, lying.page, 'its copy is the mark as it is');
       await page.keyboard.type('across ', { delay: 60 });
+      const crossed = await w.mark();
+      assert.deepEqual([crossed.page.style, crossed.page.hidden], [lying.page.style, lying.page.hidden], 'the night\'s mark has not moved while the worlds cross');
+      if (crossed.copy) assert.deepEqual(crossed.copy, crossed.page, 'and its copy is still the mark as it is');
       const down = await page.evaluate(() => performance.now());
       await w.scroll('chat');
       assert.equal(await w.inSight(), false, 'down at the chat, the portal is out of sight');
@@ -1584,7 +1938,9 @@ async function main() {
       assert.ok(since.every((one) => one.world === 'split' || one.world === 'serious'), `the cartoon went back by a seam, with no cut (${JSON.stringify((await w.seen()).filter((one) => one.at > down).map((one) => [Math.round(one.at - down), one.world]))})`);
       assert.equal(await field.inputValue(), 'across the seam', 'what was typed is all there');
       assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.screen-room > main .chat form input')), true, 'and the field still has the focus');
-      assert.equal(await w.filled(), 0, 'and the page was not copied again for the typing, nor for the room\'s poll putting back what was there');
+      assert.equal(await w.filled(), 0, 'and the page was not copied again for the typing, nor for the room\'s poll putting back what was there, nor for the night\'s mark');
+      const after = await w.mark();
+      assert.deepEqual([after.page.style, after.page.hidden], [lying.page.style, lying.page.hidden], 'and the night\'s mark is where it was');
       assert.equal(await page.evaluate(() => document.querySelectorAll('.worlds-copy, .worlds-splice').length), 0, 'the drama has it all again');
       assert.deepEqual(await w.timers(), [], 'and while the portal is out of sight, nothing waits to break through');
       w.same(calm, await w.boxes(), 'the drama back');
@@ -1622,6 +1978,7 @@ async function main() {
       await sleep(4500);
       assert.deepEqual(await w.seen(), [], 'and nothing crosses after');
       assert.deepEqual(await w.timers(), []);
+      assert.deepEqual(await ringPaint(), resting, 'and the ring rests again, soft');
 
       // not kept: after a reload the room begins outside
       await page.reload();
@@ -1856,6 +2213,53 @@ async function main() {
       assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#f6f1e7', 'the browser\'s bars as they were');
       await page.clock.resume();
     }),
+
+    // The two worlds on the quiet room: the portal is the way in and out as it was, and the drama keeps its look: every
+    // game on the table a photograph in black and white, the one that is yours still nearest; the tiles steel drawers.
+    check('two worlds, on the quiet room: the portal steps in and back out; inside, every game is a photograph and what is yours is still nearest; the chat, at rest, shows whole notes in either world', { storage: ACCOUNT }, async (page) => {
+      const w = await worldsHelpers(page);
+      const portal = page.locator('.screen-room > header #worlds');
+      // (the chat at rest at its foot: no note is cut across by its top edge, where it fades)
+      const cut = () => page.evaluate(() => {
+        const log = document.querySelector('.screen-room > main .chat-log');
+        const edge = log.getBoundingClientRect().top;
+        const shown = [...log.children].filter((li) => li.getClientRects().length).map((li) => li.getBoundingClientRect());
+        return { cut: shown.filter((box) => box.top < edge - 0.5 && box.bottom > edge + 0.5).length, over: log.scrollHeight > log.clientHeight + 1 };
+      });
+      assert.deepEqual(await cut(), { cut: 0, over: true }, 'outside, the chat runs over and is cut between notes');
+      const look = () => page.evaluate(() => {
+        const boards = [...document.querySelectorAll('.screen-room > main #games li')].map((li) => ({ state: li.dataset.state, paper: getComputedStyle(li.querySelector('.mini')).backgroundColor, photo: getComputedStyle(li.querySelector('.mini svg')).filter, tilt: getComputedStyle(li.querySelector('.mini')).rotate }));
+        const tile = getComputedStyle(document.querySelector('.screen-room > main #modes .mode')).backgroundImage;
+        return { boards, tile };
+      });
+      const outside = await look();
+      assert.deepEqual(outside.boards.map((one) => one.state), ['go', 'go', 'won'], 'what is yours lies nearest');
+      assert.ok(outside.boards.every((one) => one.paper !== 'rgb(235, 231, 222)' && !/grayscale/.test(one.photo) && one.tilt === 'none'), `outside, the boards are the room's own, lying straight (${JSON.stringify(outside.boards)})`);
+      await w.watch();
+      await portal.click();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious' && !document.querySelector('.screen-room').dataset.passage, null, { timeout: 5000 });
+      assert.equal(await portal.getAttribute('aria-pressed'), 'true');
+      const inside = await look();
+      assert.deepEqual(inside.boards.map((one) => one.state), ['go', 'go', 'won'], 'inside, what is yours still lies nearest');
+      assert.ok(inside.boards.every((one) => one.paper === 'rgb(235, 231, 222)' && /grayscale\(1\)/.test(one.photo)), `inside, every game is a photograph on its paper (${JSON.stringify(inside.boards)})`);
+      assert.ok(inside.boards.every((one) => one.tilt !== 'none') && new Set(inside.boards.map((one) => one.tilt)).size > 1, `put down a little askew, each its own way (${JSON.stringify(inside.boards.map((one) => one.tilt))})`);
+      assert.match(inside.tile, /gradient/, 'and the tiles are steel');
+      assert.deepEqual(await cut(), { cut: 0, over: true }, 'inside, the chat the same');
+      await portal.click();
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'playful' && !document.querySelector('.screen-room').dataset.passage, null, { timeout: 5000 });
+      assert.deepEqual(await w.ways(), ['in', 'out'], 'in through the portal, and back out through it');
+      await sleep(300);
+      assert.equal(await w.left(), 0, 'back outside, nothing of the other world is left over');
+      assert.deepEqual(await look(), outside, 'and the room is as it was');
+      // to the desk and back: the chat, hidden while the desk is out, is fitted again as it was left, between notes
+      await page.locator('#modes [data-mode="phrase"]').click();
+      await page.waitForSelector('#compose:not([hidden])');
+      await sleep(300);
+      await page.locator('#phrase-back').click();
+      await page.waitForSelector('.screen-room > main #room:not([hidden])');
+      await sleep(400);
+      assert.deepEqual(await cut(), { cut: 0, over: true }, 'back from the desk, the chat is cut between notes again');
+    }),
   ]));
 
   // A room, with games and a chat, opened by a member; and what is needed to watch its worlds. (`steer`: the chances
@@ -2045,6 +2449,11 @@ async function main() {
         window.worldsFillsWatch = [each, come];
       }),
       filled: () => page.evaluate(() => window.worldsFills),
+      // the night's hidden mark (penny/tags.js) on the page, where it lies and whether it is shown; and its twin in the copy
+      mark: () => page.evaluate(() => {
+        const at = (one) => one && { style: one.getAttribute('style'), hidden: one.hidden, glint: one.classList.contains('glint') };
+        return { page: at(document.querySelector('.screen-room > main .tag-hidden')), copy: at(document.querySelector('.screen-room > .worlds-copy .tag-hidden')) };
+      }),
       // the colour the browser is asked to give its own bars round the page; and whether the portal's ring is turning
       tint: () => page.evaluate(() => document.querySelector('meta[name="theme-color"]').content),
       turning: () => page.evaluate(() => getComputedStyle(document.querySelector('.screen-room > header #worlds'), '::before').animationName !== 'none'),

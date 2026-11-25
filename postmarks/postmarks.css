@@ -281,11 +281,19 @@ button.round:disabled { opacity: 0.35; }
 .howto .mini {
   --loop: 4.5s;
   position: relative;
+  z-index: 1;
   flex: none;
   width: 5.25rem;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 3px;
+  /* a little board on its slab, lying askew (as a room's boards once did: the look is its own now, room/room.css
+     keeping its boards to the room) */
+  padding: 0.2rem;
+  border-radius: 0.7rem;
+  rotate: -3deg;
+  background: #22303c;
+  box-shadow: 0.14rem 0.18rem 0 #0d141a, 0.34rem 0.44rem 0 rgb(30 16 4 / 0.26);
 }
 
 .howto .mini span {

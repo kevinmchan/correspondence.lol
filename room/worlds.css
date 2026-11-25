@@ -3,11 +3,11 @@
    The cartoon is the room as it is drawn everywhere else (room/room.css). Its
    other self is the same room shot as live action, a drama, at night: concrete
    and floorboards for the map's squares, a plaster wall, a lamp over a walnut
-   table, the games as case files with photographs clipped to them, the people
-   as passport photographs, the three tiles as the drawers of a steel cabinet, a
-   dark rug with typed cards passed across it, a brass plate for the code, a
-   title card for the name; grain, hard light and the dark at the edges over all
-   of it.
+   table, the games as photographs in black and white on their paper, put down
+   a little askew, the people as passport photographs, the three tiles as the
+   drawers of a steel cabinet, a dark rug with typed cards passed across it, a
+   brass plate for the code, a title card for the name; grain, hard light and
+   the dark at the edges over all of it.
 
    ALL OF IT IS PAINT. Nothing here may change the size or the place of
    anything that can be pressed or typed in, or of anything that would move it:
@@ -21,13 +21,22 @@
    the game's colours round a middle that shows where it leads. From outside that is the dark of
    the drama; from inside, the light of the cartoon, a long way off. It belongs to neither world:
    the copy of the page, and the film over the drama, have a hole where it is (room/worlds.js), so
-   it looks the same whichever world is round it. It never grows or shrinks: nothing under a
-   finger moves. And it is still, as the room is, until somebody passes through it: only then does
-   its ring turn. */
+   that neither world's paint is laid over it. It never grows or shrinks: nothing under a finger
+   moves. And it is still, as the room is, until somebody passes through it: only then does its
+   ring turn.
+   In the cartoon at rest, which is how a room is nearly all the time, it rests as the room does:
+   its colours soft and low and no glow round it, so that nothing in the room is louder than what
+   is waiting on you. It comes to its full colours while somebody passes through it, and inside
+   the drama, where it is the way back and the one colour in a world of black and white. (Paint
+   only: its box is the same either way.) */
 .screen-room .topbar .worlds-portal, .screen-room .topbar .worlds-portal::before { animation: none; }
 .screen-room .topbar .worlds-portal { width: 2.75rem; height: 2.75rem; }
+.screen-room[data-world="playful"]:not([data-passage]) .topbar .worlds-portal { filter: saturate(0.42) brightness(0.86); opacity: 0.82; }
+:root:not([data-theme="dark"]) .screen-room[data-world="playful"]:not([data-passage]) .topbar .worlds-portal { opacity: 0.74; } /* (its dark middle, on the day's paper) */
+.screen-room[data-world="playful"]:not([data-passage]) .topbar .worlds-portal::before { box-shadow: 0 0 0 2px var(--paper); }
 @media (prefers-reduced-motion: no-preference) {
   .screen-room[data-passage] .topbar .worlds-portal::before { animation: portal-turn 7s linear infinite; }
+  .screen-room .topbar .worlds-portal { transition: filter 500ms ease, opacity 500ms ease; }
 }
 .worlds-portal[aria-pressed="true"]::after {
   background: radial-gradient(circle at 50% 46%, #fff 0 9%, #fff6df 22%, #f1dfb4 52%, #b99c66 100%);
@@ -44,6 +53,9 @@
 }
 .worlds-copy > main { flex: 1; min-height: 0; } /* (as a screen's own main is) */
 .worlds-copy[data-paint="serious"] { background: #0e0f10; }
+/* (the ground past the ends of the page, where it is pulled further than it goes, is the drama's dark too, as the
+   browser's bars are while the page is the drama) */
+html:root:has(#screens > .screen-room[data-world="serious"]:not(.leaving)) body { background-color: #0e0f10; }
 .worlds-copy *, .worlds-copy *::before, .worlds-copy *::after { animation: none !important; transition: none !important; }
 /* a change of world made between two frames: nothing eases into it */
 .screen-room[data-cut] *, .screen-room[data-cut] *::before, .screen-room[data-cut] *::after { transition: none !important; }
@@ -88,7 +100,6 @@
 /* --- Held in both worlds: the labels that change face ----------------------------------
    (their line heights, measured as they were, so that the other face cannot move them) */
 .house h2 { line-height: 1.25; }
-.house .mode strong { line-height: 1.0625rem; }
 
 /* --- The serious world: its stock ----------------------------------------------------- */
 .screen-room {
@@ -180,7 +191,7 @@
 .screen-room [data-paint="serious"] .seat .name { border-radius: 1px; background: var(--s-paper); color: var(--s-ink); box-shadow: var(--s-shadow); }
 .screen-room [data-paint="serious"] .seat.you .name { background: #121212; color: var(--s-paper); box-shadow: inset 0 0 0 1px rgb(231 226 214 / 0.25), var(--s-shadow); }
 
-/* --- The table, walnut under the lamp; the games on it, case files with a photograph -------- */
+/* --- The table, walnut under the lamp; the games on it, photographs ----------------------- */
 .screen-room [data-paint="serious"] .table {
   border-radius: 0.35rem;
   background:
@@ -189,27 +200,29 @@
     linear-gradient(90deg, #2f241b, #3d2e22 50%, #2f241b);
   box-shadow: 0 1.1rem 1.7rem -0.1rem rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.09), inset 0 0 2.2rem rgb(0 0 0 / 0.5);
 }
-.screen-room [data-paint="serious"] .game .slip {
-  border-radius: 0.1rem 0.25rem 0.25rem 0.1rem;
-  background: linear-gradient(100deg, rgb(0 0 0 / 0.12), transparent 18%), var(--fibre) 0 0 / 10rem 10rem, var(--s-manila);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0.15rem 0.35rem 0.25rem rgb(0 0 0 / 0.72), 0.3rem 0.7rem 1rem rgb(0 0 0 / 0.35);
-}
-.screen-room [data-paint="serious"] .game .slip strong { color: var(--s-ink); }
-.screen-room [data-paint="serious"] .game .slip span { color: var(--s-ink-2); }
-.screen-room [data-paint="serious"] .game .slip .go { color: var(--s-blood); text-decoration: underline 1.5px rgb(78 20 15 / 0.7); text-underline-offset: 0.22em; }
-.screen-room [data-paint="serious"] .game[data-state="lost"] .slip strong, .screen-room [data-paint="serious"] .game[data-state="won"] .slip strong { color: #4d4a43; }
-.screen-room [data-paint="serious"] #games a.game:focus-visible .slip { box-shadow: 0 0.3rem 0.55rem rgb(0 0 0 / 0.65), 0 0 0 0.16rem #d7a979; }
-.screen-room [data-paint="serious"] .mini { border-radius: 1px; background: #ebe7de; box-shadow: 0.12rem 0.3rem 0.25rem rgb(0 0 0 / 0.75); }
+/* Every game a photograph, in black and white on its paper. (The room lays what is yours nearest and lifted, and the
+   rest further off: here those lie out of the lamp's light, darker, and what is over darker still. :root, to be sure of
+   standing over the room's own rules for them, which read the theme there.) */
+:root .screen-room [data-paint="serious"] #games li[data-state] .mini { border-radius: 1px; background: #ebe7de; box-shadow: 0.12rem 0.3rem 0.25rem rgb(0 0 0 / 0.75); filter: none; opacity: 1; }
+:root .screen-room [data-paint="serious"] #games li[data-state="go"] .mini { box-shadow: 0.2rem 0.55rem 0.5rem rgb(0 0 0 / 0.8); }
+:root .screen-room [data-paint="serious"] #games li[data-state="wait"] .mini { filter: brightness(0.8); }
+:root .screen-room [data-paint="serious"] #games li:is([data-state="won"], [data-state="lost"]) .mini { filter: brightness(0.62); }
+/* (put down on the desk a little askew, each its own way, and what is yours the most: the photograph is turned, never the
+   way into its game, which lies over it as it does in the cartoon) */
+.screen-room [data-paint="serious"] #games li:nth-child(odd) .mini { rotate: -1.8deg; }
+.screen-room [data-paint="serious"] #games li:nth-child(even) .mini { rotate: 2.3deg; }
+.screen-room [data-paint="serious"] #games li:nth-child(3n) .mini { rotate: -0.9deg; }
+.screen-room [data-paint="serious"] #games li[data-state="go"] .mini { rotate: -2.8deg; }
 .screen-room [data-paint="serious"] .mini svg:first-child { filter: grayscale(1) contrast(1.45) brightness(0.86); }
 .screen-room [data-paint="serious"] .mini[data-state="lost"] svg:first-child { filter: grayscale(1) contrast(1.2) brightness(0.55); opacity: 1; }
-.screen-room [data-paint="serious"] .mini .kind { background: #d9d3c4; color: var(--s-ink); box-shadow: 0 0.12rem 0.3rem rgb(0 0 0 / 0.65); }
+.screen-room [data-paint="serious"] #games .mini .kind { background: #d9d3c4; color: var(--s-ink); box-shadow: 0 0.12rem 0.3rem rgb(0 0 0 / 0.65); }
 .screen-room [data-paint="serious"] .mini[data-state="go"]::after { background: radial-gradient(circle at 36% 32%, #93352b, #5c1711 72%); box-shadow: 0 0 0 0.1rem rgb(0 0 0 / 0.25), 0.05rem 0.15rem 0.3rem rgb(0 0 0 / 0.7); animation: none; }
 .screen-room [data-paint="serious"] .mini[data-state="won"]::after { background-color: #dcd6c8; box-shadow: 0 0.12rem 0.3rem rgb(0 0 0 / 0.65); }
 .screen-room [data-paint="serious"] #games .delete { color: #a3a7ac; }
 .screen-room [data-paint="serious"] #games .delete:hover, .screen-room [data-paint="serious"] #games .delete:focus-visible { color: #d9dcdf; border-color: #a3a7ac; }
 .screen-room [data-paint="serious"] #no-games { color: #a39d90; }
 
-/* --- The three tiles: the drawers of a steel cabinet, each with a card in its holder ------ */
+/* --- The three tiles: the drawers of a steel cabinet (one pulled out, when it is lifted) ------ */
 .screen-room [data-paint="serious"] .house .mode {
   border-radius: 0.2rem; color: #1d1e20;
   background:
@@ -220,12 +233,11 @@
 }
 .screen-room [data-paint="serious"] .house .mode:active { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 -1px 0 rgb(0 0 0 / 0.35), 0 0.15rem 0.35rem rgb(0 0 0 / 0.65); }
 .screen-room [data-paint="serious"] .house .mode .icon { color: #232528; filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.4)); }
-/* (the card's words keep the room's own type, face, size, weight and spacing: set in another,
-   they wrapped onto two lines in one world and one in the other on some machines, and the
-   tile changed height under a finger. Only their colour and the card behind them change.) */
-.screen-room [data-paint="serious"] .house .mode strong {
-  background: #e2dccd; color: #161616; box-shadow: 0 0 0 0.2rem #e2dccd, 0 0 0 calc(0.2rem + 1.5px) #43474c;
-}
+.screen-room [data-paint="serious"] .house .mode .play { color: #232528; }
+/* (no type is set on a tile here: on the quiet room a tile has no words to see, only its drawing and its play mark,
+   and whatever is in it keeps the room's own face, size, weight and spacing. Set in another, words once wrapped
+   onto two lines in one world and one in the other on some machines, and the tile changed height under a finger.
+   Only colours, and the steel behind them, change.) */
 
 /* --- The chat: a dark rug, and cards passed across it ------------------------------------ */
 .screen-room [data-paint="serious"] .rug {
@@ -255,10 +267,7 @@
 .screen-room [data-paint="serious"] .rug .chat form button { background: #131416; color: #e6e1d4; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0.3rem 0 #000, 0 0.5rem 0.9rem rgb(0 0 0 / 0.55); }
 .screen-room [data-paint="serious"] .rug .chat form button:active { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0.08rem 0 #000; }
 
-/* --- At the door: a typed notice and a steel bell; a coir mat, and a brass plate ---------- */
-.screen-room [data-paint="serious"] .house .notify { border-radius: 1px; background: var(--fibre) 0 0 / 10rem 10rem, var(--s-paper); color: var(--s-ink); box-shadow: 0 0.3rem 0.6rem rgb(0 0 0 / 0.6); }
-.screen-room [data-paint="serious"] .notify .bell { border-radius: 50%; background: radial-gradient(circle at 38% 32%, #e4e7ea, #868b91 55%, #3b3f44); color: #1a1a1a; box-shadow: 0 0.15rem 0.3rem rgb(0 0 0 / 0.55); }
-.screen-room [data-paint="serious"] .house .notify button { background: #131416; color: #e6e1d4; box-shadow: 0 0.24rem 0 #000; }
+/* --- At the door: a coir mat, and a brass plate; the share button and the bell beside it, dark discs ------------ */
 .screen-room [data-paint="serious"] .mat {
   border-radius: 0.2rem; background: var(--speck) 0 0 / 5rem 5rem, repeating-linear-gradient(90deg, rgb(0 0 0 / 0.18) 0 1px, transparent 1px 3px), #352c22;
   box-shadow: inset 0 0 0 0.22rem #352c22, inset 0 0 0 0.36rem #4f4333, 0 0.35rem 0.7rem rgb(0 0 0 / 0.6);
@@ -300,3 +309,4 @@
 .screen-room [data-paint="serious"] form.desk button[type="submit"] { background: #131416; color: #e6e1d4; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0.3rem 0 #000, 0 0.5rem 0.9rem rgb(0 0 0 / 0.55); }
 .screen-room [data-paint="serious"] #compose #phrase-back { background: #1c1d1f; color: #e6e1d4; box-shadow: 0 0.3rem 0.6rem rgb(0 0 0 / 0.6); }
 .screen-room [data-paint="serious"] .message.bad { color: #d99a86; }
+.screen-room [data-paint="serious"] form.desk .start-phrase.random[data-armed] { background: #26282b; }
