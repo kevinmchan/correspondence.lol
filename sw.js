@@ -35,6 +35,7 @@ const PRECACHE = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
+  '/shared/energy.js',
   '/shared/api.js',
   '/shared/feed.js',
   '/shared/chat.js',

@@ -14,6 +14,7 @@ import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
 import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
+import { ENERGY_KEY, earnedOn, finish, held, most, played, read as readEnergy } from '/shared/energy.js';
 import { watchPresence } from '/shared/push.js';
 import { claim as callPal } from '/penny/pal.js';
 import { hide as hideTag } from '/penny/tags.js';
@@ -121,7 +122,7 @@ export function mount(root, life) {
   });
   const el = {
     back: $('back'), profile: $('profile'), loading: $('loading'),
-    play: $('play'), turn: $('turn'), hearts: $('hearts'), found: $('found'), board: $('board'),
+    play: $('play'), turn: $('turn'), energy: $('energy'), hearts: $('hearts'), found: $('found'), board: $('board'),
     roster: $('roster'), tools: $('tools'), submit: $('submit'), help: $('help'),
     narration: $('narration'), message: $('message'), newGame: $('new-game'), restart: $('restart'), lostChoice: $('lost-choice'), retryRun: $('retry-run'), revealRun: $('reveal-run'), hint: $('hint'), hintNote: $('hint-note'),
     chatBox: $('chat-box'), chat: $('chat'), chatUnread: $('chat-unread'), chatToggle: $('chat-toggle'), chatCount: $('chat-count'),
@@ -409,6 +410,108 @@ export function mount(root, life) {
   const FX = ['fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-pick', 'fx-reveal'];
 
   // Restart a one-shot animation class on an element.
+  // --- Energy, playing alone ---------------------------------------------------------
+  // Every post found is energy at once, and finishing the board entirely earns
+  // as much again (shared/energy.js). The meter is this board: how much of all
+  // it can earn has been earned. The count beside it is all there is. A post
+  // found sends a spark from it to the meter, and the meter and the count take
+  // it in as it lands; a board finished sends a shower of them.
+  let energy = readEnergy(load(ENERGY_KEY));
+  const meter = { board: null, count: 0, fill: 0 }; // what the meter shows now
+  let landing = Promise.resolve(); // sparks land one after another
+  function showMeter(count, fill, gain) {
+    meter.count = count;
+    meter.fill = fill;
+    el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
+    el.energy.querySelector('.count').textContent = String(count);
+    el.energy.setAttribute('aria-label', `Energy ${count}`);
+    if (gain) replay(el.energy, 'gain');
+  }
+  // A spark from a square of the board to the meter; resolves as it lands.
+  function spark(from, delay = 0) {
+    return new Promise((done) => {
+      const start = from.getBoundingClientRect();
+      const end = el.energy.querySelector('.bolt').getBoundingClientRect();
+      const bit = document.createElement('i');
+      bit.className = 'energy-spark';
+      bit.setAttribute('aria-hidden', 'true');
+      const x0 = start.left + start.width / 2, y0 = start.top + start.height / 2;
+      const dx = end.left + end.width / 2 - x0, dy = end.top + end.height / 2 - y0;
+      bit.style.left = `${x0}px`;
+      bit.style.top = `${y0}px`;
+      document.body.append(bit);
+      const flight = bit.animate([
+        { transform: 'translate(-50%, -50%) scale(0.4)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1.25)', opacity: 1, offset: 0.18 },
+        { transform: `translate(calc(-50% + ${dx * 0.45}px), calc(-50% + ${dy * 0.45 - 60}px)) scale(1)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.55)`, opacity: 0.9 },
+      ], { duration: 720, delay, easing: 'cubic-bezier(0.45, 0, 0.55, 1)', fill: 'both' });
+      const landed = () => { bit.remove(); done(); };
+      flight.onfinish = landed;
+      flight.oncancel = landed;
+    });
+  }
+  // The count, counting up to where it is going.
+  function countUp(to, fill) {
+    const from = meter.count;
+    const began = performance.now();
+    const long = Math.min(900, 120 + (to - from) * 60);
+    meter.fill = fill;
+    el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
+    replay(el.energy, 'gain');
+    return new Promise((done) => {
+      const step = () => {
+        if (life.over) return done();
+        const t = Math.min(1, (performance.now() - began) / long);
+        const now = Math.round(from + (to - from) * (1 - (1 - t) ** 2));
+        el.energy.querySelector('.count').textContent = String(now);
+        meter.count = now;
+        if (t < 1) requestAnimationFrame(step);
+        else { showMeter(to, fill, false); done(); }
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  // `newly`: the squares just opened as posts, as buttons; `quiet`: a board just put on screen.
+  function tallyEnergy(newly, quiet) {
+    el.energy.hidden = Boolean(online);
+    el.turn.hidden = !online; // (playing alone, the meter is in its place)
+    if (online || !game) return;
+    const board = `${game.size}:${game.seed}`;
+    const now = played(energy, { size: game.size, seed: game.seed, status: game.status, found: lettersFound(game) });
+    if (now.gained) {
+      energy = now.state;
+      save(ENERGY_KEY, energy);
+    }
+    const count = held(energy);
+    const fill = earnedOn(energy, game).energy / most(game.size);
+    const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
+    meter.board = board;
+    if (still) {
+      landing = Promise.resolve();
+      showMeter(count, fill, false);
+      return;
+    }
+    const before = count - now.gained;
+    const postsFill = (earnedOn(energy, game).energy - (now.won ? finish(game.size) : 0)) / most(game.size);
+    const sources = newly.length ? newly : [...el.board.querySelectorAll('.cell[data-state="letter"]')].slice(-now.posts);
+    landing = landing.then(async () => {
+      if (now.posts) {
+        await Promise.all(sources.slice(0, now.posts).map((cell, i) => spark(cell, 260 + i * 120)));
+        if (life.over) return;
+        await countUp(before + now.posts, postsFill);
+      }
+      if (now.won) {
+        // the whole board, finished: a shower from every post on it, after the board's own moment
+        const posts = [...el.board.querySelectorAll('.cell[data-state="letter"]')];
+        await Promise.all(posts.map((cell, i) => spark(cell, 450 + i * 90)));
+        if (life.over) return;
+        await countUp(count, fill);
+        replay(el.energy, 'full');
+      }
+    });
+  }
+
   function replay(node, name) {
     node.classList.remove(name);
     void node.offsetWidth;
@@ -726,6 +829,7 @@ export function mount(root, life) {
       return { button, cell, drafted, name, content, label, from: button.dataset.state };
     });
     const effects = quiet ? new Map() : boardEffects(squares.filter((s) => s.from !== s.name));
+    const opened = squares.filter((s) => s.name === 'letter' && s.from !== 'letter' && s.from !== undefined).map((s) => s.button);
     for (const { button, cell, drafted, name, content, label, from } of squares) {
       if (from !== name) {
         button.dataset.state = name;
@@ -764,6 +868,7 @@ export function mount(root, life) {
       seen.hearts = game.hearts;
     }
     el.hearts.setAttribute('aria-label', `${game.hearts} of ${START_HEARTS} hearts left`);
+    tallyEnergy(opened, quiet);
     el.found.textContent = `${found}/${game.size} posts`;
     if (seen.found !== found) {
       if (!quiet && seen.found !== null && found > seen.found) replay(el.found, 'bump');
@@ -794,7 +899,9 @@ export function mount(root, life) {
           }, settle + 900);
           setTimeout(() => pal.mood('glad').look(null).hearts(3), settle + 2100);
         }
-        setTimeout(finale, settle + (letter ? 2600 : 1700)); // the board has its moment first
+        // the board has its moment first; and playing alone, its energy has landed on the meter
+        const moment = new Promise((done) => setTimeout(done, settle + (letter ? 2600 : 1700)));
+        Promise.all([moment, online ? null : landing.then(() => new Promise((done) => setTimeout(done, 500)))]).then(() => { if (!life.over) finale(); });
       } else if (!quiet && seen.status === 'playing' && game.status === 'lost') {
         sfx('lose', { delay: 450 });
         setTimeout(finale, 1900);
