@@ -972,6 +972,60 @@ async function main() {
       await page.mouse.move(one.lights[0].x, one.lights[0].y, { steps: 6 });
       await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The small star.', null, { timeout: 2000 });
       await page.mouse.up();
+      // Nothing comes off a light when it twinkles: whatever is lit, however close to them, is one of the five. (Specks
+      // once came off and were knocked about for a second or two: flies round a lamp. The places looked at above are too
+      // far off to have seen them.) Each light's shape is drawn again here, with room round it for how far it may have
+      // wandered and for its points drawn out, and anything bright outside all of them is counted. The big star is
+      // touched three times, and looked at as it settles.
+      const loose = () => page.evaluate(async () => {
+        const { PICTURE, frame, starPath } = await import('/penny/stars.js');
+        const view = document.querySelector('.sky-view');
+        const dense = view.width / view.clientWidth;
+        const place = frame(view.clientWidth, view.clientHeight);
+        const cover = document.createElement('canvas');
+        cover.width = view.width;
+        cover.height = view.height;
+        const ink = cover.getContext('2d');
+        ink.lineJoin = 'round';
+        ink.lineCap = 'round';
+        for (const light of PICTURE) {
+          const [x, y] = [place.x + light.x * place.side, place.y + light.y * place.side];
+          if (light.kind === 'dot') {
+            ink.setTransform(dense, 0, 0, dense, 0, 0);
+            ink.beginPath();
+            ink.arc(x, y, light.r * place.side + 22, 0, Math.PI * 2);
+            ink.fill();
+            continue;
+          }
+          ink.setTransform(dense * place.side, 0, 0, dense * place.side, dense * x, dense * y);
+          ink.lineWidth = 32 / place.side; // (sixteen pixels of room, each side of its edge)
+          const shape = new Path2D(starPath(light, place.side));
+          for (const [across, up] of [[light.a * 1.75, 0], [0, light.b * 1.75]]) { // (its points, drawn out as far as they ever are)
+            shape.moveTo(-across, -up);
+            shape.lineTo(across, up);
+          }
+          ink.fill(shape);
+          ink.stroke(shape);
+        }
+        const lit = view.getContext('2d').getImageData(0, 0, view.width, view.height).data;
+        const covered = ink.getImageData(0, 0, view.width, view.height).data;
+        let pixels = 0;
+        let brightest = 0;
+        for (let i = 0; i < lit.length; i += 4) {
+          if (lit[i] <= 46 || covered[i + 3] !== 0) continue; // (a glow is fainter than that, out there)
+          pixels += 1;
+          brightest = Math.max(brightest, lit[i]);
+        }
+        return { pixels, brightest };
+      });
+      for (let touches = 0; touches < 3; touches++) {
+        await page.mouse.click(one.lights[4].x, one.lights[4].y);
+        for (let looks = 0; looks < 5; looks++) {
+          await sleep(150);
+          const off = await loose();
+          assert.equal(off.pixels, 0, `something is lit that is not one of the five lights: ${off.pixels} pixels of it, the brightest ${off.brightest}`);
+        }
+      }
       // the way back keeps out of the picture when it is left alone, and comes back for a touch
       await page.waitForSelector('.sky.idle', { timeout: 6000 });
       await sleep(900); // (it fades)
@@ -983,6 +1037,67 @@ async function main() {
       await page.waitForSelector('.home-map');
       await page.waitForFunction(() => document.querySelectorAll('#screens .screen').length === 1, null, { timeout: 5000 });
       assert.notEqual(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top is the page\'s again');
+    }),
+
+    // Through the mark from a long page. The night is one picture the size of the window, whatever it is come to
+    // from. It once measured itself as it arrived, while the page being left still held the screen open to its own
+    // length: it drew its picture for that length and was then squashed into the window, so the stars changed size as
+    // the tumble landed, and stayed the wrong shape. And the picture that tumbles in is the night's own, in the same
+    // place; on its way there it is only moved, turned and scaled, which is what a phone can do smoothly.
+    check('through the mark from a long page: the night is the size of the window, and the picture that tumbles in lands where the night has it', { storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page) => {
+      const night = () => page.evaluate(async () => {
+        const { frame } = await import('/penny/stars.js');
+        const view = document.querySelector('.sky-view');
+        const room = view.getBoundingClientRect();
+        const place = frame(view.clientWidth, view.clientHeight);
+        const sharp = Math.min(window.devicePixelRatio || 1, 2);
+        return { shown: [view.clientWidth, view.clientHeight], drawnFor: [view.width / sharp, view.height / sharp], window: [window.innerWidth, window.innerHeight], picture: [room.left + place.x, room.top + place.y, place.side, place.side] };
+      });
+      const landed = () => page.waitForFunction(() => document.querySelector('.screen-sky') && document.querySelectorAll('#screens .screen').length === 1 && !document.querySelector('.tag-rise') && !document.documentElement.classList.contains('tumbling'), null, { timeout: 8000 });
+      await page.goto(origin);
+      await page.waitForSelector('.tag-hidden:not([hidden])', { timeout: 9000 });
+      const long = await page.evaluate(() => document.scrollingElement.scrollHeight);
+      assert.ok(long > PHONE.height + 100, `the home page, with rooms on it, is a long one (${long})`);
+      // every frame of the way through: where the square with the picture in it is laid out, and where it is seen to be
+      await page.evaluate(() => {
+        window.tumbled = [];
+        const each = () => {
+          const square = document.querySelector('.tag-rise > div');
+          if (square) {
+            const laid = getComputedStyle(square);
+            const seen = square.getBoundingClientRect();
+            window.tumbled.push({ laid: [laid.left, laid.top, laid.width, laid.height].join(' '), seen: [seen.left, seen.top, seen.width, seen.height], done: square.getAnimations().every((one) => one.playState === 'finished') });
+          }
+          if (!window.tumbledOver) requestAnimationFrame(each);
+        };
+        requestAnimationFrame(each);
+      });
+      await page.locator('.tag-hidden').click();
+      await landed();
+      const frames = await page.evaluate(() => {
+        window.tumbledOver = true;
+        return window.tumbled;
+      });
+      const there = await night();
+      assert.deepEqual(there.shown, there.window, 'the night is the size of the window');
+      assert.deepEqual(there.drawnFor, there.shown, 'and its picture is drawn for the size it is shown at, not for the length of the page it was come to from');
+      assert.ok(frames.length > 20, `the way through was watched (${frames.length} frames of it)`);
+      assert.equal(new Set(frames.map((one) => one.laid)).size, 1, 'on its way the picture is laid out once: after that it is only moved, turned and scaled');
+      const last = frames.filter((one) => one.done).at(-1);
+      assert.ok(last, 'it landed before it was taken away');
+      for (const [i, part] of ['left', 'top', 'width', 'height'].entries()) {
+        assert.ok(Math.abs(last.seen[i] - there.picture[i]) <= 0.5, `where it landed is not where the night has its picture (${part}: ${last.seen[i]}, and the night's ${there.picture[i]})`);
+      }
+      // And for somebody who has asked for less motion, from what is kept on the home page: no tumble, and the night the size of the window all the same.
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(origin);
+      await page.waitForSelector('.tag-kept');
+      await sleep(600);
+      await page.locator('.tag-kept').click();
+      await landed();
+      const again = await night();
+      assert.deepEqual(again.shown, again.window);
+      assert.deepEqual(again.drawnFor, again.shown, 'with less motion its picture is drawn for the size it is shown at too');
     }),
 
     check('the night, with reduced motion and by keyboard: nothing moves, and the keys 1 to 5 are its five lights', { reducedMotion: 'reduce', viewport: { width: 1024, height: 768 } }, async (page) => {
