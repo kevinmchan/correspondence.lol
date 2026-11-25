@@ -226,6 +226,15 @@ Only the first quarter is built. The shape of the whole:
 **Who or what makes the sound is not decided, and nothing in the app says or
 hints.** Dot is a friend met on the way, not the one being looked for.
 
+**The solo campaign runs on energy, earned by work (the owner, 25 November
+2026).** Penny earns energy by completing work, and the work is how Penny meets
+new characters. What the work is, what the energy is spent on and how it is
+shown are not decided yet. It is held to two things unless the owner says
+otherwise: it is earned by care and never bought, waited out or nagged for
+(an energy that pressures people to come back or to pay is the opposite of
+this story); and the people met at work are the "others" of the theme above,
+who can light up parts of Penny it has lost touch with.
+
 ### Where Penny is
 
 The screen is a map seen from far above, and Penny is not on it. Penny stands
