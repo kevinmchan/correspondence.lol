@@ -242,7 +242,7 @@ earned and shown has begun (the owner, 25 November 2026): in every game,
 alone or in a room, every post found is energy at once, and finishing the board
 entirely earns as much again (`shared/energy.js`). **The bar is a stat of the
 whole app, not of one game** (the owner, 25 November 2026): one bar for
-everything earned, which about twenty games fill (`BAR`, 240: boards are drawn
+everything earned, which about ten games fill (`BAR`, 140; twenty at first: boards are drawn
 at sizes 5 to 9, so a game finished earns 14 on average). It is under the play
 button on the home page, and in a game where the words of the turn were (in a
 room, beside them), with a current running through it and a spark flickering
