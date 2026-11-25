@@ -2232,6 +2232,9 @@ async function main() {
           pressed: 'pressed' in li.dataset, moved: [getComputedStyle(li).translate, getComputedStyle(li).scale], shadow: getComputedStyle(li).boxShadow,
         };
       }));
+      // (where a card settles once pressed: its transitions are run to their end before it is read, since a page under
+      // load can draw no frame for a while and a transition read by the clock may not yet have begun to move)
+      const settled = () => page.locator('#games li').evaluateAll((all) => all.forEach((li) => li.getAnimations({ subtree: true }).filter((one) => one instanceof CSSTransition).forEach((one) => one.finish())));
       const rest = await cards();
       assert.deepEqual(rest.map(({ state, lit, breathing }) => [state, lit, breathing]), [['go', true, true], ['go', false, false], ['won', false, false]], 'the first game waiting on you is lit and breathes; the other waiting on you is still');
       assert.equal(new Set(rest.map((one) => one.button)).size, 3, `the lit button, the still seal-tinted one, and a quiet one are each their own colour (${rest.map((one) => one.button)})`);
@@ -2257,6 +2260,7 @@ async function main() {
       await page.mouse.move(...await middle(1));
       await page.mouse.down();
       await sleep(300);
+      await settled();
       let now = await cards();
       assert.equal(now[1].pressed, true);
       assert.deepEqual(now[1].moved, ['none', 'none'], 'with reduced motion, it does not move');
@@ -2279,6 +2283,7 @@ async function main() {
       await page.mouse.move(...await middle(0));
       await page.mouse.down();
       await sleep(300);
+      await settled();
       now = await cards();
       assert.deepEqual(now[0].moved, ['0px 1.92px', '0.975'], 'it goes down a little');
       assert.equal(now[0].breathing, false, 'and holds its breath');
