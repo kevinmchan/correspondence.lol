@@ -423,6 +423,7 @@ export function mount(root, life) {
     meter.count = count;
     meter.fill = fill;
     el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
+    el.energy.classList.toggle('empty', fill === 0);
     el.energy.querySelector('.count').textContent = String(count);
     el.energy.setAttribute('aria-label', `Energy ${count}`);
     if (gain) replay(el.energy, 'gain');
@@ -431,7 +432,8 @@ export function mount(root, life) {
   function spark(from, delay = 0) {
     return new Promise((done) => {
       const start = from.getBoundingClientRect();
-      const end = el.energy.querySelector('.bolt').getBoundingClientRect();
+      const bar = el.energy.querySelector('.bar').getBoundingClientRect();
+      const end = { left: bar.left + bar.width * meter.fill, top: bar.top, width: 0, height: bar.height }; // the end the current has reached
       const bit = document.createElement('i');
       bit.className = 'energy-spark';
       bit.setAttribute('aria-hidden', 'true');
@@ -446,10 +448,30 @@ export function mount(root, life) {
         { transform: `translate(calc(-50% + ${dx * 0.45}px), calc(-50% + ${dy * 0.45 - 60}px)) scale(1)`, opacity: 1, offset: 0.55 },
         { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.55)`, opacity: 0.9 },
       ], { duration: 720, delay, easing: 'cubic-bezier(0.45, 0, 0.55, 1)', fill: 'both' });
-      const landed = () => { bit.remove(); done(); };
+      const landed = () => { bit.remove(); glints(end.left, end.top + end.height / 2); done(); };
       flight.onfinish = landed;
       flight.oncancel = landed;
     });
+  }
+  // Sparkles thrown off where a spark lands.
+  function glints(x, y) {
+    for (let i = 0; i < 6; i++) {
+      const bit = document.createElement('i');
+      bit.className = 'energy-glint';
+      bit.setAttribute('aria-hidden', 'true');
+      bit.style.left = `${x}px`;
+      bit.style.top = `${y}px`;
+      document.body.append(bit);
+      const angle = -Math.PI / 2 + (i - 2.5) * 0.55 + (Math.random() - 0.5) * 0.4;
+      const far = 16 + Math.random() * 18;
+      const flight = bit.animate([
+        { transform: 'translate(-50%, -50%) scale(0.3) rotate(0deg)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${Math.cos(angle) * far}px), calc(-50% + ${Math.sin(angle) * far}px)) scale(1) rotate(90deg)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(calc(-50% + ${Math.cos(angle) * far * 1.3}px), calc(-50% + ${Math.sin(angle) * far * 1.3 + 8}px)) scale(0.2) rotate(160deg)`, opacity: 0 },
+      ], { duration: 520 + Math.random() * 200, easing: 'ease-out', fill: 'both' });
+      flight.onfinish = () => bit.remove();
+      flight.oncancel = () => bit.remove();
+    }
   }
   // The count, counting up to where it is going.
   function countUp(to, fill) {
@@ -458,6 +480,7 @@ export function mount(root, life) {
     const long = Math.min(900, 120 + (to - from) * 60);
     meter.fill = fill;
     el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
+    el.energy.classList.toggle('empty', fill === 0);
     replay(el.energy, 'gain');
     return new Promise((done) => {
       const step = () => {
