@@ -2553,7 +2553,8 @@ async function main() {
       assert.equal(await page.locator('.screen-room').evaluate((r) => r.classList.contains('meadow')), false, 'a room as it always was');
       const boxes = () => page.evaluate(() => [...document.querySelectorAll('.screen-room > :is(header, main) :is(button, a, input, textarea, h1, h2, .table, .rug, .seat)')]
         .filter((one) => one.getClientRects().length).map((one) => { const r = one.getBoundingClientRect(); return `${one.id || one.className} ${r.x.toFixed(1)},${r.y.toFixed(1)} ${r.width.toFixed(1)}x${r.height.toFixed(1)}`; }));
-      await sleep(1200); // (the furniture settles as the room opens)
+      const settled = () => page.evaluate(() => Promise.all(document.getAnimations().filter((one) => one.effect?.getComputedTiming().iterations !== Infinity).map((one) => one.finished.catch(() => {})))); // (the furniture settles as the room opens)
+      await settled();
       const plain = await boxes();
       assert.ok(plain.length > 8, 'the room is all there to measure');
       await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 250, spent: 0, boards: [] })));
@@ -2561,8 +2562,10 @@ async function main() {
       await page.waitForSelector('#house:not([hidden])');
       assert.equal(await page.locator('.screen-room').evaluate((r) => r.classList.contains('meadow')), true, 'earned: the room wears the meadow');
       assert.equal(await page.locator('.meadow-bits .sun').isVisible(), true, 'the sun is out');
-      await sleep(1200);
-      assert.deepEqual(await boxes(), plain, 'paint only: everything there is to press, and all that would move it, in the same place and the same size');
+      await settled();
+      const worn = await boxes();
+      assert.deepEqual(worn.filter((one) => !plain.includes(one)), [], 'paint only: everything there is to press, and all that would move it, in the same place and the same size');
+      assert.equal(worn.length, plain.length, 'and as many of them');
       await page.goto(`${origin}/`);
       await page.waitForSelector('#meadow[aria-pressed="true"]:not([disabled])');
       assert.equal(Number(await page.locator('#home-bar .bar i').evaluate((i) => i.style.getPropertyValue('--fill'))), 10 / 240, 'and the bar begins again');
