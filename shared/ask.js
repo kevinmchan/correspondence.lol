@@ -6,9 +6,10 @@ import { oops } from './place.js';
 
 // `picture`: something to show in place of the title's words (the title is then
 // said to screen readers only). `attempt`: what the yes does, tried with the
-// sheet still open; if it is refused, the sheet shakes and a mark comes under
-// the question, pressed for the words (oops() in shared/place.js), and the yes
-// can be tried again, or the question put away.
+// sheet still open; if it is refused, the sheet shakes and a short line of
+// what went wrong comes under the question (oops() in shared/place.js), while
+// the answers stay where they are under the finger; and the yes can be tried
+// again, or the question put away.
 function sheet({ title, detail, yes, no, danger, picture = null, attempt = null }) {
   return new Promise((resolve) => {
     const dialog = document.createElement('dialog');
@@ -39,6 +40,11 @@ function sheet({ title, detail, yes, no, danger, picture = null, attempt = null 
     buttons.className = 'buttons';
     let answer = false;
     let trying = false;
+    // (when what went wrong comes, the sheet grows upward from where its answers are: they stay under the finger, for the
+    // yes to be tried again or the question put away)
+    const stay = () => {
+      dialog.style.marginBlock = `auto ${getComputedStyle(dialog).marginBottom}`;
+    };
     const add = (text, value, className) => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -55,7 +61,10 @@ function sheet({ title, detail, yes, no, danger, picture = null, attempt = null 
             answer = true;
             dialog.close();
           } catch (failure) {
-            if (dialog.open) oops(refused, failure.message, { shake: dialog });
+            if (dialog.open) {
+              stay();
+              oops(refused, failure.message, { shake: dialog });
+            }
           } finally {
             trying = false;
             button.disabled = false;

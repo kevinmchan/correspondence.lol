@@ -55,8 +55,8 @@ export function createChat(root, { roomId, you, people, onSent, calm = false }) 
   error.className = 'message bad';
   error.setAttribute('role', 'alert');
   root.replaceChildren(log, form, error);
-  // (in the calm chat, what went wrong is a shake of the box and a mark beside it, pressed for its words; and it is not
-  // still said once what was typed is changed)
+  // (in the calm chat, what went wrong is a short line of its words under the box, which shakes as they come; and it is
+  // not still said once what was typed is changed)
   const say = (text) => (calm ? oops(error, text, { shake: form }) : (error.textContent = text));
   if (calm) input.addEventListener('input', () => say(''));
 

@@ -61,9 +61,9 @@ export function mount(root, life) {
   const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
 
-  // A link that leads nowhere (or a room that could not be reached the first time): the empty plot, with the mark in
-  // the middle of it, pressed for its words; the arrow at the top is the way home. (The name over it is said to screen
-  // readers only, as the room's; and the room is looked for again, unless it is not there.)
+  // A link that leads nowhere (or a room that could not be reached the first time): the empty plot, with what went wrong
+  // in a short line of words in the middle of it; the arrow at the top is the way home. (The name over it is said to
+  // screen readers only, as the room's; and the room is looked for again, unless it is not there.)
   function fail(text) {
     el.loading.hidden = true;
     el.name.textContent = 'Room';
@@ -123,9 +123,7 @@ export function mount(root, life) {
     button.textContent = room.name;
     button.setAttribute('aria-label', `${room.name}. Rename the room`);
     button.addEventListener('click', editName);
-    // (and beside it, while it stands, the mark that it could not be changed)
-    const mark = el.name.querySelector(':scope > .oops-mark');
-    el.name.replaceChildren(button, ...(mark ? [mark] : []));
+    el.name.replaceChildren(button);
   }
 
   function editName() {
@@ -162,8 +160,8 @@ export function mount(root, life) {
           render();
           return;
         } catch (failure) {
-          // said where it was tried: the name, back as it was (below), shakes, and the mark comes beside it
-          oops(el.nameError, failure.message, { shake: el.name, place: (mark) => el.name.append(mark) });
+          // said where it was tried: the name, back as it was (below), shakes, and the words come under it
+          oops(el.nameError, failure.message, { shake: el.name });
         }
       }
       renaming = false;
@@ -445,7 +443,7 @@ export function mount(root, life) {
     editName();
   });
 
-  // Leaving is asked in a sheet, and tried there: refused, the sheet shakes and the mark comes in it (shared/ask.js).
+  // Leaving is asked in a sheet, and tried there: refused, the sheet shakes and the words come in it (shared/ask.js).
   el.leave.addEventListener('click', () => {
     moreMenu(false);
     ask(`Leave ${room.name}?`, {
@@ -493,7 +491,7 @@ export function mount(root, life) {
   });
 
   // The sheet that asks shows the board that was pressed, not its name; putting it away is tried there, and refused,
-  // the sheet shakes and the mark comes in it (shared/ask.js).
+  // the sheet shakes and the words come in it (shared/ask.js).
   el.games.addEventListener('click', (event) => {
     const button = event.target.closest('.delete');
     if (!button) return;

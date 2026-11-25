@@ -1,7 +1,7 @@
 // A room is a place: a building on the map, drawn in room/room.css. What is
 // drawn of it on more than one screen is made here: the colour it keeps, its
 // roof (the home page, and the room as seen by somebody not in it), a game as
-// a small board lying on its table, the mark that says something went wrong
+// a small board lying on its table, the line that says something went wrong
 // there, and the way in at its door.
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -74,46 +74,23 @@ export function roof({ kind = 0, wide = 160, high = 92, lit = false, bare = fals
   return svg;
 }
 
-// Something went wrong there (the server said no, or could not be reached),
-// said as everything in a room is, without words on the screen: what was tried
-// shakes, gently, once, and a soft red mark comes beside it, which can be
-// pressed for the words. `holder` is the page's own role="alert" element: the
-// words go in it, so a screen reader says them at once, and it stays out of
-// sight until the mark is pressed. `shake` is what was tried (for somebody who
-// has asked for less motion, nothing moves: the mark simply comes). The mark
-// goes just before the holder, or wherever `place(mark)` puts it. An empty
-// `text` takes the mark away again (once the thing is tried again, or what was
-// typed is changed); the same text again changes nothing.
-const OOPS = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6.8v6.4M12 17.3v.01"/></svg>';
-const marks = new WeakMap();
+// Something went wrong there (the server said no, or could not be reached):
+// a short line of its words beside what was tried, for as long as it stands,
+// and what was tried shakes, gently, once. (The owner's choice, 25 November
+// 2026: the words while they apply, not behind a mark to press.) `holder` is
+// the page's own role="alert" element, beside the thing that was tried and
+// after it, so that what was tried does not move for them (room/room.css says
+// where each lies); a screen reader says them at once too. `shake` is what
+// was tried (for somebody who has asked for less motion, nothing moves: the
+// words simply come). An empty `text` takes the line away again (once the
+// thing is tried again, or what was typed is changed); the same text again
+// changes nothing.
 const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-export function oops(holder, text, { shake = null, place = null } = {}) {
+export function oops(holder, text, { shake = null } = {}) {
   const said = text ?? '';
-  let mark = marks.get(holder);
-  if (!mark && !said) return; // (nothing has gone wrong here yet: nothing to take away, and the page is left as it is)
-  if (!mark) {
-    mark = document.createElement('button');
-    mark.type = 'button';
-    mark.className = 'oops-mark';
-    mark.hidden = true;
-    mark.setAttribute('aria-label', 'What went wrong');
-    mark.setAttribute('aria-expanded', 'false');
-    if (holder.id) mark.setAttribute('aria-controls', holder.id);
-    mark.innerHTML = OOPS;
-    mark.addEventListener('click', () => {
-      const open = holder.classList.contains('sr-only');
-      holder.classList.toggle('sr-only', !open);
-      mark.setAttribute('aria-expanded', String(open));
-    });
-    marks.set(holder, mark);
-    holder.classList.add('oops', 'sr-only');
-  }
-  if (said && !mark.isConnected) (place ?? ((one) => holder.before(one)))(mark);
-  if (holder.textContent === said) return;
-  holder.classList.add('sr-only');
-  mark.setAttribute('aria-expanded', 'false');
+  if (holder.textContent === said) return; // (nothing new to say, or nothing to take away: the page is left as it is)
+  holder.classList.add('oops');
   holder.textContent = said;
-  mark.hidden = !said;
   // (a shake of the head: a few pixels either way, settling, in half a second)
   if (said && shake && !still()) {
     shake.animate([{ translate: '0' }, { translate: '-0.22rem 0' }, { translate: '0.18rem 0' }, { translate: '-0.1rem 0' }, { translate: '0' }], { duration: 480, easing: 'ease-in-out' });

@@ -287,39 +287,33 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
   .house .mode .play { transition: width 500ms ease, opacity 700ms ease; }
 }
 
-/* --- Something went wrong: what was tried shakes, and a soft red mark comes beside it, pressed for the words ---
-   (oops() in shared/place.js; the words are in a role="alert", said at once to screen readers) */
-.oops-mark {
-  flex: none; align-self: center; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%;
-  background: color-mix(in oklab, var(--accent) 16%, var(--card, #fff)); color: var(--accent);
-  box-shadow: 0 0 0 0.12rem color-mix(in srgb, var(--accent) 35%, transparent); transform: none; -webkit-tap-highlight-color: transparent;
-}
-.oops-mark svg { width: 1.3rem; height: 1.3rem; }
-.oops-mark[aria-expanded="true"] { background: color-mix(in oklab, var(--accent) 30%, var(--card, #fff)); }
-.message.bad.oops:not(.sr-only) {
+/* --- Something went wrong: a short line of its words beside what was tried, for as long as it stands ---------
+   (oops() in shared/place.js: what was tried shakes, gently, once, as they come; they are in a role="alert", said at
+   once to screen readers; and they come after what was tried, so that it does not move) */
+.message.bad.oops {
   align-self: center; box-sizing: border-box; max-width: min(100%, 20rem); margin: 0; padding: 0.55rem 0.85rem; border-radius: 0.95rem;
   background: color-mix(in oklab, var(--accent) 10%, var(--card, #fff)); color: color-mix(in oklab, var(--ink) 88%, var(--accent));
   font-family: system-ui, sans-serif; font-size: 0.9375rem; line-height: 1.35; text-align: center; overflow-wrap: anywhere;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .oops-mark:not([hidden]) { animation: oops-in 600ms ease-out; }
-  .message.bad.oops:not(.sr-only):not(:empty) { animation: oops-words 500ms ease-out; }
+  .message.bad.oops:not(:empty) { animation: oops-words 600ms ease-out; }
 }
-@keyframes oops-in { from { opacity: 0; scale: 0.85; } to { opacity: 1; scale: 1; } }
 @keyframes oops-words { from { opacity: 0; } to { opacity: 1; } }
-/* ...on the name over the building, beside it (room.js editName) */
-h1.sign .oops-mark { display: inline-grid; vertical-align: middle; margin-left: 0.3rem; }
-h1.sign .oops-mark svg { width: 1.2rem; height: 1.2rem; }
+/* ...under the name over the building (room.js editName): a slip hung from the name over the building's top wall,
+   above the people, and nothing moves for it: neither the name, nor anything in the room (a tile tapped as the name
+   was left would otherwise be somewhere else for its second tap) */
+.plot > #name-error.oops {
+  position: absolute; z-index: 2; top: -0.7rem; left: 50%; translate: -50% 0; width: max-content; max-width: min(calc(100% - 0.5rem), 24rem);
+  margin: 0; padding: 0.45rem 0.7rem; font-size: 0.875rem; box-shadow: var(--soft-1);
+}
 /* ...where a room was looked for and is not there (a link that leads nowhere): in the middle of the empty plot */
-.plot > .oops-mark { margin: 2.4rem auto 0.7rem; }
-.plot > .message.bad.oops:not(.sr-only) { margin: 0 auto; }
+.plot > .message.bad.oops { margin: 2.4rem auto 0.7rem; }
 /* A sheet that asks to put a game away shows the board itself, not its name (room.js likeness) */
 dialog.ask .picture { display: grid; place-items: center; margin: 0.2rem 0 0.4rem; }
 dialog.ask .picture .likeness { display: block; width: 5.4rem; padding: 0.26rem; border-radius: 0.9rem; box-shadow: 0 0.6rem 1.2rem -0.4rem rgb(0 0 0 / 0.35); }
 dialog.ask .picture svg { display: block; width: 100%; height: auto; }
 /* ...in a sheet, asked and refused (shared/ask.js): under its question, over its answers */
-dialog.ask .oops-mark { margin: 0.8rem auto 0; }
-dialog.ask .message.bad.oops:not(.sr-only) { margin: 0.6rem auto 0; color: var(--ink); }
+dialog.ask .message.bad.oops { margin: 0.9rem auto 0; color: var(--ink); }
 
 /* --- The chat: notes passed across a rug ---------------------------------------------------
    Quiet: who said a thing, and when, only where they start to speak; what the
@@ -413,7 +407,7 @@ form.desk {
 form.desk .field { align-self: stretch; }
 form.desk input { background: var(--card); border: 0; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 12%, transparent), inset 0 0.08rem 0.25rem rgb(0 0 0 / 0.1); border-radius: 1.1rem; text-align: center; }
 form.desk .phrase .word { background: var(--slab); color: #f3ebe0; box-shadow: var(--soft-1); }
-form.desk .message.bad.oops:not(.sr-only) { background: var(--card); }
+form.desk .message.bad.oops { background: var(--card); }
 /* its start: a die while the box is empty (a phrase is picked at random), the play mark once one is written */
 form.desk .start-phrase .die, form.desk .start-phrase.random .play { display: none; }
 form.desk .start-phrase.random .die { display: block; }

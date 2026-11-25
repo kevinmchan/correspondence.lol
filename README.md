@@ -1019,18 +1019,24 @@ room are its content: names, notes, the code.
   mat, with the code friends join with, a bell while notifications are off,
   and a bush either side.
 - **Something that went wrong** (the server says no, or cannot be reached) is
-  a shake and a mark: what was tried (the tiles, the desk, the name, a door,
-  the chat's box) shakes gently, once, and a soft red mark comes beside it;
-  pressed, the mark shows the words. The words are in the page's
+  said in a short line of its words beside what was tried, for as long as it
+  stands, and what was tried (the tiles, the desk, the name, a door, the
+  chat's box) shakes gently, once, as they come; there is no mark to press for
+  them (the owner's choice, 25 November 2026). The words are in the page's
   `role="alert"`, so a screen reader says them at once. With less motion
-  asked for, nothing shakes: the mark simply comes. It stands until the thing
-  is tried again or what was typed is changed. What is asked in a sheet
-  (leaving the room, putting a game away) is tried with the sheet still open:
-  refused, the sheet shakes and the mark comes in it, and it can be tried
-  again or put away. A link that leads nowhere is the empty plot with the
-  mark in it. The room's options, under the three dots, are a pencil and a
-  door with the way out of it; the sheets they lead to ask their question with
-  no words of explanation.
+  asked for, nothing shakes: the words simply come. They stand until the thing
+  is tried again or what was typed is changed. They come after what was
+  tried, so that it does not move, nor anything beside it: under the tiles,
+  the desk's start, a door, the chat's box; under the name, they lie over the
+  building's top wall, above the people, and nothing in the room moves for
+  them (a tile tapped as the name was left is still there for its second
+  tap). What is asked in a sheet (leaving the room, putting a game away) is
+  tried with the sheet still open: refused, the sheet shakes and the words
+  come in it, under the question, while its answers stay where they were
+  under the finger; it can be tried again or put away. A link that leads
+  nowhere is the empty plot with the words in it. The room's options, under
+  the three dots, are a pencil and a door with the way out of it; the sheets
+  they lead to ask their question with no words of explanation.
 - **Writing a pass phrase** is the same room, at its writing desk. The box has
   no words in it; while it is empty, the start is a die (a phrase is picked at
   random), and once a phrase is written, the play mark. A game started from
