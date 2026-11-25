@@ -30,9 +30,11 @@ are made.
   labels are kept to the fewest. Labels, placeholders, hints and the words on
   buttons are descriptions too; the words a screen shows are its content
   (names, messages, a code, a phrase). What a description said stays for
-  screen readers (`aria-label`, `.sr-only`); an error is a shake and a mark,
-  with its words in `role="alert"`. Prefer taking a thing away to swapping its
-  word for a new mark.
+  screen readers (`aria-label`, `.sr-only`). An error is a short line of its
+  words beside what was tried, for as long as it stands, with a gentle shake
+  of what was tried, in `role="alert"`; never behind a mark to press (the
+  owner's choice, 25 November 2026). Prefer taking a thing away to swapping
+  its word for a new mark.
 - The one exception the owner has given is Penny's Radio as an exhibit: its
   label and its reading are words, set as a museum sets them. Any other place
   where only words will do is the owner's to allow.

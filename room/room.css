@@ -1,21 +1,25 @@
 /* Rooms: buildings on the map.
 
    The rest of this world is seen from far above, and so is a room: a building
-   standing in the map, with its roof off for the people in it. Its floor is
-   the map's own rounded tiles, lit; its walls are in the one colour the room
-   keeps (shared/place.js); and what a room has is furniture in it. The people
-   are tokens at the head of a table, the games are small boards laid on the
-   table, a game is started from one of three tiles in the floor, the chat is
-   notes passed across a rug, and at the door are a bell and the mat, which
-   has the code friends join with.
+   standing in the map, with its roof off for the people in it. Its walls are
+   in the one colour the room keeps (shared/place.js), and what a room has is
+   furniture in it. The people are tokens at the head of a table, the games
+   are small boards laid on the table, a game is started from one of three
+   tiles in the floor, the chat is notes passed across a rug, and at the door
+   are the mat, which has the code friends join with, and a bell.
 
    Somebody who is not in the room sees it from outside, roof on, and asks at
    the door. On the home page each room is its roof among the others. Opening
    a room is choosing a plot; joining one is finding a door by its code.
 
-   Everything is drawn flat and given depth the way a drawing is, as Penny's
-   Radio is (jam/taste.css): a solid edge down the right side and along the
-   underside, and a shadow on the ground. */
+   It is a quiet room in the evening. Its colours are soft and a little dusky,
+   the room's own included; its shapes are round, and lie in soft shadow
+   rather than on hard edges; nothing is patterned; things move slowly when
+   they move at all. And one thing in it is loud: what is waiting on you. That
+   board alone is bright, lifted and lit, with its seal breathing (never
+   beating). Everything else rests: games others are playing lie further off,
+   small and dim, and finished ones dimmer still. Nothing is written that the
+   room can show instead: the words are kept for screen readers. */
 
 /* --- The colour a room keeps ------------------------------------------------------------ */
 .r0 { --room: #f08a76; }
@@ -35,381 +39,494 @@
 :root[data-theme="dark"] .r6 { --room: #d09ac6; }
 
 /* --- The world ---------------------------------------------------------------------------
-   Never the white of a page: the ground is the map, the same squares as
-   everywhere, going on all round the building and lined up with its floor. */
+   Never the white of a page, nor the black of a screen: warm paper by day, a
+   warm dusk at night. The ground is the map, the same squares as everywhere,
+   faint, going on all round the building. Every colour in a room is mixed
+   towards the evening it stands in, so that none of them shouts. */
 .screen-room, .screen-open, .screen-join {
-  --wall: var(--room, #9aa7b1); /* (a building nobody has found yet has no colour) */
-  --wall-side: color-mix(in srgb, var(--wall) 62%, #141c24);
-  --wall-w: 0.75rem; --house-r: 1.7rem;
-  --ex: 0.32rem; --ey: 0.4rem; /* how far a solid edge goes: to the right, and down */
-  --shade: rgb(20 28 36 / 0.1); /* a shadow on the ground */
-  --floor: #fffdf8; --grout: #f0e8d6;
-  --path: color-mix(in srgb, #f8d95a 38%, var(--paper));
-  --wood: #94643c; --wood-side: #5f3d21; --on-wood: #fff3e0;
-  --mat: #e2c796; --mat-line: #b99561; --mat-side: #96774a;
-  --note-mine: #f8d95a; --note-mine-side: #c4a232;
+  --paper: #f1ebe2; --ink: #3d3632; --muted: #8a7e73; --accent: #c4533c;
+  --card: #fbf8f3; --lip: #e3d9cb;
+  --dusk: #efe6da; /* what every colour is softened towards */
+  --wall: color-mix(in oklab, var(--room, #9aa7b1) 54%, var(--dusk)); /* (a building nobody has found yet has no colour) */
+  --wall-w: 0.6rem; --house-r: 1.9rem;
+  --floor: #f9f5ef;
+  --wood: #ebdfcf; --on-wood: #8c7a68;
+  --slab: #4a413c; /* what a game's small board is set in */
+  --seal: #c8553e; --tick: #8fae84;
+  --lamp: rgb(255 196 120 / 0.34); /* the light over what is waiting on you */
+  --mat: #e5d5ba; --mat-slip: #fbf6ee; --mat-ink: #4a3f35;
+  --mine: 26%; /* how much of the room's colour your own notes take */
+  --soft-1: 0 0.12rem 0.35rem rgb(70 50 35 / 0.12);
+  --soft-2: 0 0.5rem 1.4rem -0.4rem rgb(70 50 35 / 0.22), 0 0.1rem 0.3rem rgb(70 50 35 / 0.06);
+  --lifted: 0 1rem 1.6rem -0.5rem rgb(70 45 30 / 0.42), 0 0.2rem 0.45rem rgb(70 45 30 / 0.14);
+  --shade: rgb(70 50 35 / 0.08); /* a shadow on the ground */
+  --face-mix: 78%; /* how much of a person's own colour their token keeps */
   --square: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='4.3' y='4.3' width='91.4' height='91.4' rx='20'/%3E%3C/svg%3E");
-  position: relative; overflow: clip; background: var(--paper);
+  position: relative; overflow: clip; background: var(--paper); color: var(--ink);
 }
-:root[data-theme="dark"] .screen-room, :root[data-theme="dark"] .screen-open, :root[data-theme="dark"] .screen-join {
-  --wall: var(--room, #5c6b78);
-  --shade: rgb(0 0 0 / 0.26);
-  --floor: #27313a; --grout: #1c242c;
-  --path: color-mix(in srgb, #d6ba5c 20%, var(--paper));
-  --wood: #86593a; --wood-side: #4b301b;
-  --mat: #c4a877; --mat-line: #97794a; --mat-side: #6d5531;
-  --note-mine: #d6ba5c; --note-mine-side: #8f7a30;
+:root[data-theme="dark"] :is(.screen-room, .screen-open, .screen-join) {
+  --paper: #1d1918; --ink: #ebe2d5; --muted: #a09385; --accent: #d9765f;
+  --card: #2d2725; --lip: #3a322f;
+  --dusk: #3b3331;
+  --wall: color-mix(in oklab, var(--room, #5c6b78) 44%, var(--dusk));
+  --floor: #27221f;
+  --wood: #342c28; --on-wood: #a69383;
+  --slab: #191514;
+  --seal: #d8664d; --tick: #7d9c74;
+  --lamp: rgb(255 196 130 / 0.15);
+  --mat: #54493c; --mat-slip: #3a322b; --mat-ink: #efe4d3;
+  --mine: 34%;
+  --soft-1: 0 0.12rem 0.35rem rgb(0 0 0 / 0.28);
+  --soft-2: 0 0.6rem 1.5rem -0.4rem rgb(0 0 0 / 0.5), 0 0.1rem 0.3rem rgb(0 0 0 / 0.2);
+  --lifted: 0 1.1rem 1.7rem -0.5rem rgb(0 0 0 / 0.7), 0 0.25rem 0.5rem rgb(0 0 0 / 0.3);
+  --shade: rgb(0 0 0 / 0.22);
+  --face-mix: 66%;
 }
-.screen-room main, .screen-open main, .screen-join main { gap: 0; padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem)); }
+/* (and the ground past the ends of the page, where it is pulled further than it goes, is the same evening: with the
+   browser's bar, which shared/profile.js tints to match) */
+:root[data-theme="dark"]:has(#screens > :is(.screen-room, .screen-open, .screen-join):not(.leaving)) body { background-color: #1d1918; }
+.screen-room main, .screen-open main, .screen-join main { gap: 0; padding-bottom: max(1.75rem, calc(env(safe-area-inset-bottom) + 1rem)); }
+/* (the fields here have no border to make them up to a finger's size: see tests/browser/mini.e2e.cjs) */
+:is(.screen-room, .screen-open, .screen-join) input[type="text"] { min-height: 2.75rem; }
 
 /* The plot the building stands on: eight squares of the map across. */
 .plot { position: relative; isolation: isolate; container-type: inline-size; width: min(100%, 30rem); }
 .plot > * { --pitch: calc(100cqw / 8); }
 .plot-map.map-far {
   inset: calc(var(--pitch) * -16) calc(var(--pitch) * -3) calc(var(--pitch) * -44); z-index: -4;
-  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  background: color-mix(in srgb, var(--ink) 4.5%, transparent);
   --fade: linear-gradient(#000, #000); /* the same all over: this page is as long as the room is full */
 }
-/* a path of lit squares, from the door down to the edge of the map */
+/* a path of squares a shade warmer, from the door down to the edge of the map */
 .plot-path {
   position: absolute; z-index: -3; top: 0; bottom: calc(var(--pitch) * -44); left: calc(var(--pitch) * 3); width: calc(var(--pitch) * 2);
-  background: var(--path); pointer-events: none;
+  background: color-mix(in oklab, var(--wall) 16%, transparent); pointer-events: none;
   -webkit-mask: var(--square) 0 0 / var(--pitch) var(--pitch); mask: var(--square) 0 0 / var(--pitch) var(--pitch);
 }
 
+/* --- The top of the screen: the way home, the room's options, you ---------------------------- */
+.home-link {
+  width: 2.75rem; height: 2.75rem; margin-left: -0.55rem; display: grid; place-items: center; border-radius: 50%;
+  color: var(--muted); -webkit-tap-highlight-color: transparent;
+}
+.home-link svg { width: 1.3rem; height: 1.3rem; }
+.home-link:active { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.screen-room .topbar .quiet.round { border: 0; background: none; color: var(--muted); box-shadow: none; }
+.screen-room .topbar .quiet.round:active { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+/* the room's options, under the three dots: a pencil, and a door with the way out of it (their words for screen readers) */
+.screen-room .pop-menu { min-width: 0; padding: 0.3rem; gap: 0.2rem; border-radius: 1.6rem; background: var(--card); border: 0; box-shadow: var(--soft-2); }
+.screen-room .pop-menu button { width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.screen-room .pop-menu button.danger { color: var(--accent); }
+.screen-room .pop-menu button svg { width: 1.3rem; height: 1.3rem; }
+
 /* --- The name: the map's label for the place ---------------------------------------------
-   A board, pinned in the room's colour, hanging over the top of the building. */
-h1.sign {
-  position: relative; z-index: 1; align-self: center; max-width: min(calc(100% - 3.6rem), 25rem);
-  margin: 0.55rem 0 -0.85rem; padding: 0.3rem 0.95rem 0.4rem; border-radius: 0.85rem;
-  background: var(--card); color: var(--ink); rotate: -1.2deg;
-  box-shadow: var(--ex) var(--ey) 0 var(--lip), 0.7rem 0.85rem 0 var(--shade);
-  font-size: clamp(1.3rem, 5.8vw, 1.7rem); line-height: 1.22;
+   Written over the building, quietly, as a map writes the name of a place. */
+h1.sign:not(.sr-only) {
+  position: relative; z-index: 1; align-self: center; max-width: min(calc(100% - 3rem), 24rem); min-height: 2.75rem;
+  margin: 0.3rem 0 0.9rem; padding: 0;
+  color: color-mix(in oklab, var(--ink) 88%, var(--paper)); font-weight: 400; letter-spacing: 0.01em;
+  font-size: clamp(1.2rem, 5vw, 1.45rem); line-height: 1.25;
 }
-h1.sign::before { /* the pin */
-  content: ""; position: absolute; top: -0.4rem; left: 50%; width: 0.85rem; height: 0.85rem; margin-left: -0.425rem; border-radius: 50%;
-  background: var(--wall); box-shadow: 0.09rem 0.12rem 0 var(--wall-side), inset 0 0.1rem 0 rgb(255 255 255 / 0.35);
-}
-.screen-open h1.sign, .screen-join h1.sign { padding: 0.55rem 1.2rem 0.65rem; }
-h1.sign button.rename { min-height: 2.75rem; padding: 0 0.15em; }
+h1.sign button.rename { min-height: 2.75rem; padding: 0 0.3em; text-decoration: none; border-radius: 0.8rem; }
 h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
 
-.plot > .lede { padding: 2.2rem 1rem 1rem; } /* opening the room, or what went wrong */
-.plot > .lede a { display: inline-block; padding: 0.8rem 0.4rem; font-style: normal; }
+.plot > .lede { padding: 2.2rem 1rem 1rem; font-style: normal; color: var(--muted); } /* opening the room, or what went wrong */
 
 /* --- The building, roof off ---------------------------------------------------------------- */
 .house {
-  --door: min(76cqw, 21rem);
-  position: relative; margin-bottom: 3.4rem; border-radius: var(--house-r);
-  padding: calc(var(--wall-w) + var(--ey) + 1.15rem) calc(var(--wall-w) + 0.5rem) calc(var(--wall-w) + 0.25rem);
+  --door: min(64cqw, 17.5rem);
+  position: relative; margin-bottom: 3.6rem; border-radius: var(--house-r);
+  padding: calc(var(--wall-w) + 1.5rem) calc(var(--wall-w) + 0.7rem) calc(var(--wall-w) + 0.25rem);
   font-family: system-ui, sans-serif; text-align: left;
 }
-/* the floor: the map's squares, lit */
-.house-floor { position: absolute; inset: 0; z-index: -2; border-radius: inherit; background: var(--grout); box-shadow: 0.85rem 1.05rem 0 var(--shade); overflow: hidden; }
-.house-floor::before { content: ""; position: absolute; inset: 0; background: var(--floor); -webkit-mask: var(--square) 0 0 / var(--pitch) var(--pitch); mask: var(--square) 0 0 / var(--pitch) var(--pitch); }
-/* the walls: a ring with a gap at the bottom for the door, and the same ring a little down and to the right for its solid edge */
+/* the floor: plain and warm, in a soft shadow on the ground */
+.house-floor { position: absolute; inset: 0; z-index: -2; border-radius: inherit; background: var(--floor); box-shadow: 0 1.2rem 2.4rem -0.8rem var(--shade), 0 0.3rem 0.8rem var(--shade); }
+/* the walls: a ring with a gap at the bottom for the door */
 .house-walls { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-.house-walls::before, .house-walls::after {
+.house-walls::after {
   content: ""; position: absolute; inset: 0; border: var(--wall-w) solid var(--wall); border-radius: var(--house-r);
   -webkit-mask: linear-gradient(#000 0 0) 50% 100% / var(--door) calc(var(--wall-w) + 1px) no-repeat, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) 50% 100% / var(--door) calc(var(--wall-w) + 1px) no-repeat, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
 }
-.house-walls::before { border-color: var(--wall-side); translate: var(--ex) var(--ey); }
 .house.writing { --door: 0px; }
-.inside { display: flex; flex-direction: column; gap: 1rem; }
-.house h2 {
-  margin: 0; text-align: center; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--ink) 58%, var(--floor));
-}
+.inside { display: flex; flex-direction: column; gap: 1.6rem; } /* a slow rhythm down the page: room between things */
+.house h2 { margin: 0; }
 
 /* --- The people in it: tokens at the head of the table, each with its name over it --------- */
-.seats { position: relative; z-index: 1; list-style: none; margin: 0 0 -2.15rem; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 0.3rem; }
-.seat { display: flex; flex-direction: column-reverse; align-items: center; gap: 0.22rem; min-width: 4.2rem; max-width: 7rem; }
-.seat .name {
-  padding: 0.12rem 0.5rem 0.16rem; border-radius: 0.55rem; background: var(--card); color: var(--ink); box-shadow: 0 0.12rem 0 var(--lip);
-  font-size: 0.75rem; font-weight: 700; line-height: 1.25; text-align: center; overflow-wrap: anywhere;
-}
-.seat.you .name { background: var(--ink); color: var(--paper); box-shadow: 0 0.12rem 0 color-mix(in srgb, var(--ink) 62%, #000); }
-.seat .avatar, .skylight .avatar {
-  width: 2.7rem; height: 2.7rem; font-size: 1.5rem;
-  box-shadow: 0.13rem 0.17rem 0 color-mix(in srgb, var(--bg) 60%, #141c24), 0.32rem 0.44rem 0 rgb(20 28 36 / 0.16), inset 0 0.1rem 0 rgb(255 255 255 / 0.3);
+.seats { position: relative; z-index: 1; list-style: none; margin: 0 0 -3.05rem; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1.1rem; }
+.seat { display: flex; flex-direction: column-reverse; align-items: center; gap: 0.3rem; min-width: 3.2rem; max-width: 6.5rem; }
+.seat .name { font-size: 0.75rem; font-weight: 600; line-height: 1.25; text-align: center; color: var(--muted); overflow-wrap: anywhere; }
+.seat.you .name { color: color-mix(in oklab, var(--ink) 82%, var(--floor)); }
+.seat .avatar, .skylight .avatar, .rug .chat-log li > .avatar {
+  width: 2.6rem; height: 2.6rem; font-size: 1.4rem;
+  background: color-mix(in oklab, var(--bg) var(--face-mix), var(--floor)); box-shadow: var(--soft-1);
 }
 
 /* --- The table, and the games on it ------------------------------------------------------- */
 .table {
-  position: relative; padding: 1.7rem 0.45rem 0.65rem 0.55rem; border-radius: 1.35rem;
-  background: var(--wood) repeating-linear-gradient(90deg, transparent 0 calc(25% - 1.5px), rgb(0 0 0 / 0.1) calc(25% - 1.5px) 25%);
-  box-shadow: var(--ex) var(--ey) 0 var(--wood-side), 0.8rem 1rem 0 var(--shade), inset 0 0.14rem 0 rgb(255 255 255 / 0.2);
+  position: relative; padding: 3.2rem 0.9rem 1.15rem; border-radius: 1.7rem;
+  background: var(--wood); box-shadow: var(--soft-2);
 }
-#games { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-#games li { display: flex; align-items: center; gap: 0.1rem; }
-#games a.game { flex: 1; min-width: 0; min-height: 3.75rem; display: flex; align-items: center; color: var(--ink); text-decoration: none; -webkit-tap-highlight-color: transparent; transition: translate 70ms ease; }
-#games a.game:active { translate: 0.08rem 0.12rem; }
-/* the slip that says what it is and where it stands, tucked under the board */
-.game .slip {
-  flex: 1; min-width: 0; margin-left: -1rem; padding: 0.45rem 0.6rem 0.5rem 1.45rem; display: flex; flex-direction: column; gap: 0.08rem;
-  border-radius: 0.35rem 0.85rem 0.85rem 0.35rem; background: var(--card); box-shadow: 0.13rem 0.17rem 0 rgb(30 16 4 / 0.34);
+.table:has(#tidy:not([hidden])) { padding-bottom: 3.1rem; } /* (a strip along its foot for the bin) */
+/* Yours to play first, on a line of their own, nearest; then the rest, further off. */
+#games { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.7rem 0.8rem; }
+#games:has(> [data-state="go"])::after { content: ""; order: 1; flex-basis: 100%; height: 0; }
+#games li { order: 2; position: relative; width: 2.95rem; }
+#games li[data-state="go"] { order: 0; width: 5.4rem; margin: 0.1rem 0.35rem 0.55rem; }
+/* (three or more waiting on you: each a little smaller, so that they still lie side by side) */
+#games:has(> [data-state="go"] ~ [data-state="go"] ~ [data-state="go"]) li[data-state="go"] { width: 4.3rem; margin: 0.1rem 0.15rem 0.55rem; }
+/* the lamp: warm light pooled on the table round what is waiting on you */
+#games li[data-state="go"]::before {
+  content: ""; position: absolute; inset: -48%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--lamp), transparent);
 }
-.game .slip strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.125rem; line-height: 1.2; overflow-wrap: anywhere; }
-.game .slip span { font-size: 0.8125rem; line-height: 1.3; color: var(--muted); }
-.game .slip .go { color: var(--accent); font-weight: 600; }
-.game .slip .bit { white-space: nowrap; color: inherit; font: inherit; }
-#games a.game:focus-visible { outline: none; }
-#games a.game:focus-visible .slip { box-shadow: 0.13rem 0.17rem 0 rgb(30 16 4 / 0.34), 0 0 0 0.16rem #f8d95a; }
-#games .delete { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; display: inline-grid; place-items: center; border-color: transparent; color: var(--on-wood); opacity: 0.8; }
-#games .delete:hover, #games .delete:focus-visible { color: var(--on-wood); border-color: var(--on-wood); opacity: 1; }
-#no-games { padding: 0.55rem 0.5rem 0.75rem; text-align: center; font-size: 0.9375rem; color: var(--on-wood); }
+/* the way into the game lies over its board; tidying, the way to put it away lies there instead */
+#games a.game, #games .delete { position: absolute; inset: 0; z-index: 2; border-radius: 0.7rem; -webkit-tap-highlight-color: transparent; }
+#games a.game:focus-visible, #games .delete:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#games .delete { display: none; padding: 0; border: 0; background: none; color: var(--ink); }
 
-/* A game as a small board: the game's own squares, on a slab, lying a little askew. */
-.mini {
-  position: relative; z-index: 1; flex: none; display: block; width: 3.6rem; padding: 0.2rem; border-radius: 0.7rem; rotate: -3deg;
-  background: #22303c; box-shadow: 0.14rem 0.18rem 0 #0d141a, 0.34rem 0.44rem 0 rgb(30 16 4 / 0.26);
+/* A game as a small board: the game's own squares, set in a slab. (A room's own: the game's how-to draws its
+   pictures as small boards too, in its own stylesheet, postmarks/postmarks.css.) */
+.screen-room .mini {
+  position: relative; z-index: 1; display: block; width: 100%; box-sizing: border-box; padding: 0.17rem; border-radius: 0.6rem;
+  background: var(--slab); box-shadow: var(--soft-1);
+  transition: filter 600ms ease, opacity 600ms ease, translate 300ms ease;
 }
-#games li:nth-child(even) .mini { rotate: 2.5deg; }
-#games li:nth-child(3n) .mini { rotate: -1deg; }
-.mini svg { display: block; width: 100%; height: auto; }
-.mini .d0 { fill: #f08a76; } .mini .d1 { fill: #f8d95a; } .mini .d2 { fill: #7cc46a; } .mini .d3 { fill: #2aa198; } .mini .d4 { fill: #9ad3f7; }
-.mini .d5 { fill: #736dd0; } .mini .d6 { fill: #f3b3e6; } .mini .d7 { fill: #b98a63; } .mini .d8 { fill: #cdd6dd; }
-:root[data-theme="dark"] .mini .d0 { fill: #d98572; } :root[data-theme="dark"] .mini .d1 { fill: #d6ba5c; } :root[data-theme="dark"] .mini .d2 { fill: #72ad66; }
-:root[data-theme="dark"] .mini .d3 { fill: #3f9d95; } :root[data-theme="dark"] .mini .d4 { fill: #82b7da; } :root[data-theme="dark"] .mini .d6 { fill: #d09ac6; }
-:root[data-theme="dark"] .mini .d7 { fill: #9c6f4b; } :root[data-theme="dark"] .mini .d8 { fill: #a9b3bc; }
-.mini .post { fill: #f6f1e7; stroke: #22303c; stroke-width: 0.07; }
-.mini .seal { fill: #c8442e; }
-/* what kind of game it is: the picture from the tile that starts one, on a tag at its corner */
-.mini .kind { position: absolute; left: -0.4rem; bottom: -0.35rem; width: 1.5rem; height: 1.5rem; padding: 0.2rem; box-sizing: border-box; border-radius: 50%; background: #f6f1e7; color: #22303c; stroke-width: 2.2; box-shadow: 0.07rem 0.1rem 0 #0d141a; }
-.mini[data-kind="coop"] .kind { display: none; } /* (a board for everybody is the plain case) */
-/* where it stands: yours to play is sealed in red; solved is ticked; out of hearts is put out */
-.mini::after { content: ""; position: absolute; left: -0.42rem; top: -0.42rem; width: 1.25rem; height: 1.25rem; border-radius: 50%; box-sizing: border-box; display: none; }
-.mini[data-state="go"]::after { display: block; background: #c8442e; box-shadow: 0 0 0 0.13rem #f6f1e7, 0.07rem 0.11rem 0 0.13rem #0d141a; }
-.mini[data-state="won"]::after {
-  display: block; background: #7cc46a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4.2 4.2L18 8.5' fill='none' stroke='%2322303c' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 82% no-repeat;
-  box-shadow: 0 0 0 0.13rem #f6f1e7, 0.07rem 0.11rem 0 0.13rem #0d141a;
+#games li:active .mini { translate: 0 0.08rem; }
+.screen-room .mini svg { display: block; width: 100%; height: auto; }
+.screen-room .mini .d0 { fill: #f08a76; } .screen-room .mini .d1 { fill: #f8d95a; } .screen-room .mini .d2 { fill: #7cc46a; } .screen-room .mini .d3 { fill: #2aa198; } .screen-room .mini .d4 { fill: #9ad3f7; }
+.screen-room .mini .d5 { fill: #736dd0; } .screen-room .mini .d6 { fill: #f3b3e6; } .screen-room .mini .d7 { fill: #b98a63; } .screen-room .mini .d8 { fill: #cdd6dd; }
+:root[data-theme="dark"] .screen-room .mini .d0 { fill: #d98572; } :root[data-theme="dark"] .screen-room .mini .d1 { fill: #d6ba5c; } :root[data-theme="dark"] .screen-room .mini .d2 { fill: #72ad66; }
+:root[data-theme="dark"] .screen-room .mini .d3 { fill: #3f9d95; } :root[data-theme="dark"] .screen-room .mini .d4 { fill: #82b7da; } :root[data-theme="dark"] .screen-room .mini .d6 { fill: #d09ac6; }
+:root[data-theme="dark"] .screen-room .mini .d7 { fill: #9c6f4b; } :root[data-theme="dark"] .screen-room .mini .d8 { fill: #a9b3bc; }
+.screen-room .mini .post { fill: #f6f1e7; stroke: var(--slab); stroke-width: 0.07; }
+.screen-room .mini .seal { fill: var(--seal); }
+/* Yours to play: the one board in the room in its full colours, lifted off the table. */
+#games li[data-state="go"] .mini { padding: 0.26rem; border-radius: 0.9rem; box-shadow: var(--lifted); translate: 0 -0.15rem; }
+/* Everything else rests: games others are playing in colours gone soft (but still theirs: the table keeps some colour)... */
+#games li:not([data-state="go"]) .mini { filter: saturate(0.5) brightness(0.98); opacity: 0.74; background: color-mix(in oklab, var(--slab) 62%, var(--wood)); }
+/* (in the dark, soft colour, not mud: their colours kept at half, and their light, not dimmed on top of that) */
+:root[data-theme="dark"] #games li:not([data-state="go"]) .mini { filter: saturate(0.55) brightness(0.95); opacity: 0.9; background: var(--slab); }
+/* ...and finished ones softer still */
+#games li[data-state="won"] .mini, #games li[data-state="lost"] .mini { opacity: 0.48; }
+#games li[data-state="lost"] .mini { filter: grayscale(1) brightness(0.9); }
+/* what kind of game it is: the picture from the tile that starts one, at its corner (a game together is the plain case) */
+.screen-room .mini .kind {
+  position: absolute; left: -0.3rem; bottom: -0.3rem; width: 1.15rem; height: 1.15rem; padding: 0.17rem; box-sizing: border-box; border-radius: 50%;
+  background: var(--card); color: var(--muted); stroke-width: 2.2; box-shadow: var(--soft-1);
 }
-.mini[data-state="lost"] svg:first-child { filter: saturate(0.25) brightness(0.92); opacity: 0.8; }
-.game[data-state="lost"] .slip strong, .game[data-state="won"] .slip strong { color: color-mix(in srgb, var(--ink) 70%, var(--card)); }
+#games li[data-state="go"] .mini .kind { left: -0.4rem; bottom: -0.4rem; width: 1.5rem; height: 1.5rem; padding: 0.22rem; color: var(--ink); }
+:root[data-theme="dark"] .screen-room .mini .kind { background: #3d3533; color: #d9cdbf; }
+.screen-room .mini[data-kind="coop"] .kind { display: none; }
+/* where it stands: yours to play has a seal; solved is ticked; out of hearts is greyed (above) */
+.screen-room .mini::after { content: ""; position: absolute; left: -0.32rem; top: -0.32rem; width: 1rem; height: 1rem; border-radius: 50%; box-sizing: border-box; display: none; }
+.screen-room .mini[data-state="go"]::after {
+  display: block; left: -0.42rem; top: -0.42rem; width: 1.3rem; height: 1.3rem; background: var(--seal);
+  box-shadow: 0 0 0 0.16rem var(--wood), 0 0 0.6rem 0.12rem color-mix(in srgb, var(--seal) 45%, transparent);
+}
+.screen-room .mini[data-state="won"]::after {
+  display: block; background: var(--tick) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6.5 12.5l3.8 3.8L17.5 9' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 80% no-repeat;
+  box-shadow: 0 0 0 0.14rem var(--wood);
+}
 @media (prefers-reduced-motion: no-preference) {
-  .mini[data-state="go"]::after { animation: seal-call 1.8s ease-in-out infinite; }
+  /* the seal breathes: a slow glow, in and out, not a beat */
+  .screen-room .mini[data-state="go"]::after { animation: seal-breathe 5.2s ease-in-out infinite; }
+  #games li[data-state="go"]::before { animation: lamp-breathe 5.2s ease-in-out infinite; }
 }
-@keyframes seal-call { 0%, 60%, 100% { scale: 1; } 30% { scale: 1.22; } }
+@keyframes seal-breathe {
+  0%, 100% { box-shadow: 0 0 0 0.16rem var(--wood), 0 0 0.3rem 0.04rem color-mix(in srgb, var(--seal) 30%, transparent); }
+  50% { box-shadow: 0 0 0 0.16rem var(--wood), 0 0 1.1rem 0.38rem color-mix(in srgb, var(--seal) 52%, transparent); }
+}
+@keyframes lamp-breathe { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
-/* --- Three tiles to start a game from ------------------------------------------------------ */
-.start { display: flex; flex-direction: column; gap: 0.5rem; }
-.house .modes { gap: 0.65rem; padding-right: var(--ex); }
+/* Tidying the table: one bin at its corner. Pressed, every board lies alike, each with a cross to put it away. */
+.table .tidy {
+  position: absolute; right: 0.4rem; bottom: 0.3rem; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: none; color: var(--on-wood); opacity: 0.75; -webkit-tap-highlight-color: transparent;
+}
+.table .tidy svg { width: 1.15rem; height: 1.15rem; }
+.table .tidy .on, .table .tidy[aria-pressed="true"] .off { display: none; }
+.table .tidy[aria-pressed="true"] .on { display: block; }
+.table .tidy[aria-pressed="true"] { opacity: 1; background: var(--card); color: var(--ink); box-shadow: var(--soft-1); }
+.table.tidy #games a.game { display: none; }
+.table.tidy #games .delete { display: block; }
+.table.tidy #games .delete svg {
+  position: absolute; right: -0.45rem; top: -0.45rem; width: 1.45rem; height: 1.45rem; padding: 0.2rem; box-sizing: border-box; border-radius: 50%;
+  background: var(--card); color: var(--ink); box-shadow: var(--soft-1);
+}
+.table.tidy #games li .mini { filter: saturate(0.5); opacity: 0.88; translate: none; box-shadow: var(--soft-1); }
+.table.tidy #games li::before { display: none; }
+.table.tidy #games .mini::after { animation: none; }
+
+/* --- Three tiles to start a game from ------------------------------------------------------
+   Quiet until touched: the same soft ground, the kind of game drawn on each.
+   Touched, a tile lifts, takes its colour, and shows that it will play. */
+.start { display: flex; flex-direction: column; align-items: stretch; gap: 0.6rem; }
+.house .modes { gap: 0.8rem; padding: 0 0.6rem; }
 .house .mode {
-  --tile: #f08a76; --press: color-mix(in srgb, var(--tile) 60%, #141c24);
-  gap: 0.3rem; padding: 0.75rem 0.3rem 0.7rem; border-radius: 1.15rem; background: var(--tile); color: #22303c;
-  box-shadow: var(--ex) var(--ey) 0 var(--press), inset 0 0.14rem 0 rgb(255 255 255 / 0.32);
-  transition: translate 70ms ease, box-shadow 70ms ease, filter 120ms ease;
+  --tile: color-mix(in oklab, #f08a76 64%, var(--dusk)); --on-tile: #3d3632;
+  height: 3.5rem; padding: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.25rem;
+  border-radius: 1.2rem; background: color-mix(in oklab, var(--ink) 5%, var(--floor)); color: var(--muted);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent); transform: none;
 }
-.house .mode[data-mode="trial"] { --tile: #f8d95a; }
-.house .mode[data-mode="phrase"] { --tile: #9ad3f7; }
-:root[data-theme="dark"] .house .mode { --tile: #d98572; }
-:root[data-theme="dark"] .house .mode[data-mode="trial"] { --tile: #d6ba5c; }
-:root[data-theme="dark"] .house .mode[data-mode="phrase"] { --tile: #82b7da; }
-.house .mode .icon, .house .modes .mode .icon { width: 2rem; height: 2rem; color: #22303c; stroke-width: 1.9; }
-.house .mode strong { font-family: system-ui, sans-serif; font-weight: 800; font-size: 0.875rem; letter-spacing: 0.01em; }
-.house .mode:hover, .house .mode:focus-visible { filter: brightness(1.05); }
-.house .mode:active { transform: none; translate: calc(var(--ex) * 0.7) calc(var(--ey) * 0.7); box-shadow: calc(var(--ex) * 0.3) calc(var(--ey) * 0.3) 0 var(--press), inset 0 0.14rem 0 rgb(255 255 255 / 0.32); }
-.start .message { text-align: center; }
+.house .mode[data-mode="trial"] { --tile: color-mix(in oklab, #f8d95a 62%, var(--dusk)); }
+.house .mode[data-mode="phrase"] { --tile: color-mix(in oklab, #9ad3f7 62%, var(--dusk)); }
+:root[data-theme="dark"] .house .mode { --tile: color-mix(in oklab, #d98572 56%, var(--dusk)); --on-tile: #f3ebe0; }
+:root[data-theme="dark"] .house .mode[data-mode="trial"] { --tile: color-mix(in oklab, #d6ba5c 52%, var(--dusk)); }
+:root[data-theme="dark"] .house .mode[data-mode="phrase"] { --tile: color-mix(in oklab, #82b7da 52%, var(--dusk)); }
+.house .modes .mode .icon { width: 1.65rem; height: 1.65rem; color: inherit; stroke-width: 1.6; }
+.house .mode .play { width: 0; height: 1rem; opacity: 0; color: inherit; }
+.house .mode:hover, .house .mode:focus-visible { filter: none; color: var(--ink); }
+.house .mode:active { transform: none; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent); }
+.house .mode[data-armed] { background: var(--tile); color: var(--on-tile); translate: 0 -0.2rem; box-shadow: var(--lifted); }
+.house .mode[data-armed] .play { width: 1rem; opacity: 1; }
+.house .modes[data-busy] .mode { opacity: 0.6; }
+@media (prefers-reduced-motion: no-preference) {
+  .house .mode { transition: background-color 600ms ease, color 600ms ease, box-shadow 600ms ease, translate 600ms cubic-bezier(0.3, 0.7, 0.3, 1); }
+  .house .mode .play { transition: width 500ms ease, opacity 700ms ease; }
+}
 
-/* --- The chat: notes passed across a rug --------------------------------------------------- */
+/* --- Something went wrong: a short line of its words beside what was tried, for as long as it stands ---------
+   (oops() in shared/place.js: what was tried shakes, gently, once, as they come; they are in a role="alert", said at
+   once to screen readers; and they come after what was tried, so that it does not move) */
+.message.bad.oops {
+  align-self: center; box-sizing: border-box; max-width: min(100%, 20rem); margin: 0; padding: 0.55rem 0.85rem; border-radius: 0.95rem;
+  background: color-mix(in oklab, var(--accent) 10%, var(--card, #fff)); color: color-mix(in oklab, var(--ink) 88%, var(--accent));
+  font-family: system-ui, sans-serif; font-size: 0.9375rem; line-height: 1.35; text-align: center; overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .message.bad.oops:not(:empty) { animation: oops-words 600ms ease-out; }
+}
+@keyframes oops-words { from { opacity: 0; } to { opacity: 1; } }
+/* ...under the name over the building (room.js editName): a slip hung from the name over the building's top wall,
+   above the people, and nothing moves for it: neither the name, nor anything in the room (a tile tapped as the name
+   was left would otherwise be somewhere else for its second tap) */
+.plot > #name-error.oops {
+  position: absolute; z-index: 2; top: -0.7rem; left: 50%; translate: -50% 0; width: max-content; max-width: min(calc(100% - 0.5rem), 24rem);
+  margin: 0; padding: 0.45rem 0.7rem; font-size: 0.875rem; box-shadow: var(--soft-1);
+}
+/* ...where a room was looked for and is not there (a link that leads nowhere): in the middle of the empty plot */
+.plot > .message.bad.oops { margin: 2.4rem auto 0.7rem; }
+/* A sheet that asks to put a game away shows the board itself, not its name (room.js likeness) */
+dialog.ask .picture { display: grid; place-items: center; margin: 0.2rem 0 0.4rem; }
+dialog.ask .picture .likeness { display: block; width: 5.4rem; padding: 0.26rem; border-radius: 0.9rem; box-shadow: 0 0.6rem 1.2rem -0.4rem rgb(0 0 0 / 0.35); }
+dialog.ask .picture svg { display: block; width: 100%; height: auto; }
+/* ...in a sheet, asked and refused (shared/ask.js): under its question, over its answers */
+dialog.ask .message.bad.oops { margin: 0.9rem auto 0; color: var(--ink); }
+
+/* --- The chat: notes passed across a rug ---------------------------------------------------
+   Quiet: who said a thing, and when, only where they start to speak; what the
+   room itself says as a soft line; every note alike. */
 .rug {
-  --rug: color-mix(in srgb, var(--wall) 24%, var(--floor)); --rug-line: color-mix(in srgb, var(--wall) 62%, var(--floor));
-  position: relative; margin: 0.35rem 0; padding: 0.8rem 0.65rem 0.7rem; border-radius: 0.7rem; background: var(--rug);
-  box-shadow: inset 0 0 0 0.2rem var(--rug), inset 0 0 0 0.34rem var(--rug-line), 0.16rem 0.22rem 0 var(--shade);
+  --rug: color-mix(in oklab, var(--wall) 10%, var(--floor));
+  position: relative; padding: 0.95rem 0.75rem 0.8rem; border-radius: 1.5rem; background: var(--rug);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--wall) 16%, transparent);
 }
-/* its fringe, at both ends */
-.rug::before, .rug::after { content: ""; position: absolute; left: 0.5rem; right: 0.5rem; height: 0.4rem; background: repeating-linear-gradient(90deg, var(--rug-line) 0 0.14rem, transparent 0.14rem 0.36rem); }
-.rug::before { bottom: 100%; }
-.rug::after { top: 100%; }
-.rug .chat { gap: 0.6rem; }
-.rug .chat-log { height: auto; min-height: 4.6rem; max-height: min(21rem, 52vh); padding: 0.35rem 0.4rem 0.55rem 0.3rem; gap: 0.7rem; border-radius: 0.5rem; }
+.rug .chat { gap: 0.7rem; }
+.rug .chat-log { height: auto; min-height: 0; max-height: min(22rem, 54vh); padding: 0.9rem 0.35rem 0.45rem 0.2rem; gap: 0.8rem; border-radius: 0.9rem; }
+/* (what has scrolled up out of it fades, rather than being cut. At rest at its foot the log is as tall as the notes that
+   fit in it whole, so the fade lies over the space between two of them and no half of a line is left there: shared/chat.js) */
+.rug .chat-log { -webkit-mask: linear-gradient(transparent, #000 0.7rem); mask: linear-gradient(transparent, #000 0.7rem); }
+.rug .chat-log:empty { display: none; }
 .rug .chat-log:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.rug .chat-log:empty::before { content: "Nothing said yet. Pass a note across."; margin: auto; font-size: 0.875rem; color: color-mix(in srgb, var(--ink) 62%, var(--rug)); }
-/* a note: whose it is and when, over a slip of ruled paper lying a little askew */
-.rug .chat-log li { display: grid; grid-template-columns: auto auto 1fr; align-items: end; column-gap: 0.4rem; max-width: 90%; font-size: 0.9375rem; text-align: left; }
-.rug .chat-log li > .avatar { grid-area: 1 / 1 / 3 / 2; width: 2rem; height: 2rem; font-size: 1.1rem; margin-bottom: 0.15rem; box-shadow: 0.1rem 0.13rem 0 color-mix(in srgb, var(--bg) 60%, #141c24), inset 0 0.08rem 0 rgb(255 255 255 / 0.3); }
-.rug .chat-log .who { grid-area: 1 / 2; font-size: 0.75rem; font-weight: 700; color: color-mix(in srgb, var(--ink) 78%, var(--rug)); }
-.rug .chat-log time { grid-area: 1 / 3; font-size: 0.6875rem; color: color-mix(in srgb, var(--ink) 62%, var(--rug)); }
+/* a note: whose it is and when, over a soft slip of paper */
+.rug .chat-log li { display: grid; grid-template-columns: 2rem auto 1fr; align-items: end; column-gap: 0.5rem; max-width: 92%; font-size: 0.9375rem; text-align: left; }
+.rug .chat-log li.more { margin-top: -0.45rem; } /* (the next note in a run lies close under the last) */
+.rug .chat-log li > .avatar { grid-area: 1 / 1 / 3 / 2; width: 2rem; height: 2rem; font-size: 1.05rem; margin-bottom: 0.1rem; }
+.rug .chat-log li.more > .avatar { visibility: hidden; }
+.rug .chat-log .who { grid-area: 1 / 2; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.rug .chat-log time { grid-area: 1 / 3; font-size: 0.6875rem; color: color-mix(in oklab, var(--muted) 80%, var(--rug)); }
 .rug .chat-log p {
-  grid-area: 2 / 2 / 3 / 4; justify-self: start; margin: 0.18rem 0 0; padding: 0.5rem 0.75rem; border-radius: 0.25rem 0.75rem 0.75rem 0.75rem; rotate: -0.7deg;
-  line-height: 1.4; color: var(--ink);
-  background: var(--card) repeating-linear-gradient(transparent 0 calc(1.4em - 1px), color-mix(in srgb, var(--ink) 9%, transparent) calc(1.4em - 1px) 1.4em) 0 0.5rem;
-  box-shadow: 0.12rem 0.16rem 0 var(--lip), 0.3rem 0.38rem 0 var(--shade);
+  grid-area: 2 / 2 / 3 / 4; justify-self: start; margin: 0.2rem 0 0; padding: 0.55rem 0.85rem; border-radius: 1.1rem 1.1rem 1.1rem 0.4rem;
+  line-height: 1.45; color: color-mix(in oklab, var(--ink) 84%, var(--card)); background: var(--card); box-shadow: var(--soft-1);
 }
-.rug .chat-log li:nth-child(even) p { rotate: 0.5deg; }
-.rug .chat-log li.mine { grid-template-columns: 1fr auto auto; }
-.rug .chat-log li.mine .who { grid-area: 1 / 2; }
-.rug .chat-log li.mine time { grid-area: 1 / 3; }
-.rug .chat-log li.mine p {
-  grid-area: 2 / 1 / 3 / 4; justify-self: end; border-radius: 0.75rem 0.25rem 0.75rem 0.75rem; rotate: 0.7deg; color: #22303c;
-  background: var(--note-mine) repeating-linear-gradient(transparent 0 calc(1.4em - 1px), rgb(34 48 60 / 0.12) calc(1.4em - 1px) 1.4em) 0 0.5rem;
-  box-shadow: 0.12rem 0.16rem 0 var(--note-mine-side), 0.3rem 0.38rem 0 var(--shade);
+.rug .chat-log li.mine { grid-template-columns: 1fr auto; }
+.rug .chat-log li.mine time { grid-area: 1 / 2; }
+.rug .chat-log li.mine p { grid-area: 2 / 1 / 3 / 3; justify-self: end; border-radius: 1.1rem 1.1rem 0.4rem 1.1rem; background: color-mix(in oklab, var(--wall) var(--mine), var(--card)); color: var(--ink); }
+/* what the room itself says: a soft line; where it leads to a game, the whole line leads there */
+.rug .chat-log li.note { display: block; align-self: center; max-width: 100%; text-align: center; font-size: 0.8125rem; font-weight: 500; line-height: 1.35; color: color-mix(in oklab, var(--muted) 88%, var(--rug)); }
+.rug .chat-log li.note.game { display: block; padding: 0; border: 0; background: none; white-space: normal; }
+.rug .chat-log li.note.game a {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 2.75rem; padding: 0 0.7rem; border-radius: 0.9rem;
+  color: inherit; font-weight: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent;
 }
-.rug .chat-log li.mine:nth-child(even) p { rotate: -0.5deg; }
-/* what the room itself says: a line; and where it leads to a game, a ticket to press */
-.rug .chat-log li.note { display: block; align-self: center; max-width: 100%; text-align: center; font-size: 0.75rem; font-weight: 600; color: color-mix(in srgb, var(--ink) 66%, var(--rug)); }
-.rug .chat-log li.note.game {
-  display: flex; align-items: center; gap: 0.35rem; padding: 0 0.3rem 0 0.8rem; border-radius: 0.7rem; white-space: pre-wrap;
-  background: color-mix(in srgb, var(--card) 70%, transparent); border: 1.5px dashed color-mix(in srgb, var(--ink) 30%, transparent);
-}
-.rug .chat-log li.note.game a { display: inline-flex; align-items: center; justify-content: center; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.5rem; font-weight: 800; color: var(--accent); text-underline-offset: 0.2em; }
+.rug .chat-log li.note.game a::after { content: ""; flex: none; width: 0.36rem; height: 0.36rem; border: solid currentColor; border-width: 1.5px 1.5px 0 0; rotate: 45deg; opacity: 0.6; }
+.rug .chat-log li.note.game a:active { background: color-mix(in oklab, var(--ink) 6%, transparent); }
 /* writing one */
-.rug .chat form { gap: 0.5rem; padding-right: var(--ex); }
-.rug .chat form input { min-width: 0; }
-.rug .chat form button { --press: color-mix(in srgb, var(--ink) 62%, #000); box-shadow: var(--ex) var(--ey) 0 var(--press); transition: translate 70ms ease, box-shadow 70ms ease; }
-.rug .chat form button:active { transform: none; translate: calc(var(--ex) * 0.7) calc(var(--ey) * 0.7); box-shadow: calc(var(--ex) * 0.3) calc(var(--ey) * 0.3) 0 var(--press); }
-
-/* --- At the door: the bell, and the mat ---------------------------------------------------- */
-.house .notify {
-  gap: 0.6rem; padding: 0.55rem 0.6rem; border-radius: 0.95rem; background: var(--card); color: var(--ink); rotate: 0.4deg;
-  box-shadow: 0.13rem 0.17rem 0 var(--lip), 0.34rem 0.44rem 0 var(--shade); font-size: 0.8125rem; line-height: 1.32;
+.rug .chat form { gap: 0.55rem; align-items: center; }
+.rug .chat form input {
+  min-width: 0; border: 0; border-radius: 1.4rem; padding: 0.7rem 1rem;
+  background: color-mix(in oklab, var(--ink) 6%, var(--rug)); box-shadow: inset 0 0.08rem 0.25rem rgb(0 0 0 / 0.1);
 }
-.notify .bell { flex: none; width: 2.3rem; height: 2.3rem; display: grid; place-items: center; border-radius: 26%; background: #f8d95a; color: #22303c; box-shadow: inset 0 -0.18rem 0 rgb(0 0 0 / 0.16); }
-.notify .bell svg { width: 62%; height: 62%; }
-.house .notify button { padding: 0.5rem 0.85rem; min-height: 2.75rem; font-size: 0.875rem; }
-
-/* The mat lies in the doorway, half in and half out. It is woven, so it has no lip: a border worked into it, and a fringe at its ends. */
-.mat {
-  position: relative; border: 0; border-radius: 0.6rem; background: var(--mat); color: #22303c;
-  box-shadow: inset 0 0 0 0.22rem var(--mat), inset 0 0 0 0.36rem var(--mat-line), 0.14rem 0.2rem 0 var(--mat-side), 0.4rem 0.5rem 0 var(--shade);
+.rug .chat form input:focus-visible { box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--wall) 80%, var(--ink)); }
+.rug .chat form button.send {
+  flex: none; width: 2.9rem; height: 2.9rem; padding: 0; display: grid; place-items: center; border-radius: 50%;
+  background: color-mix(in oklab, var(--wall) 55%, var(--card)); color: var(--ink); box-shadow: var(--soft-1); transform: none;
 }
-.mat::before, .mat::after { content: ""; position: absolute; top: 0.45rem; bottom: 0.45rem; width: 0.4rem; background: repeating-linear-gradient(0deg, var(--mat-line) 0 0.14rem, transparent 0.14rem 0.36rem); }
-.mat::before { right: 100%; }
-.mat::after { left: 100%; }
+.rug .chat form button.send:active { transform: none; box-shadow: none; scale: 0.96; }
+.rug .chat form button.send svg { width: 1.25rem; height: 1.25rem; translate: -0.06rem 0.06rem; }
+
+/* --- At the door: the mat, with the code on it, and the bell ----------------------------- */
+.mat { position: relative; border: 0; border-radius: 1.1rem; background: var(--mat); color: var(--mat-ink); box-shadow: var(--soft-2); }
 .house .share {
-  align-self: center; box-sizing: border-box; width: calc(var(--door) - 2rem); margin: 0.25rem 0 -2rem; padding: 0.6rem 0.75rem 0.7rem; gap: 0.3rem;
-  text-align: center; font-size: 0.75rem; font-weight: 600; color: #22303c;
+  align-self: center; box-sizing: border-box; width: calc(var(--door) - 0.6rem); margin: 0.2rem 0 -2.4rem; padding: 0.55rem; gap: 0.4rem;
+  text-align: center; font-size: 0.75rem; color: var(--mat-ink);
 }
-.house .share > div { gap: 0.45rem; padding-right: 0.2rem; }
+.house .share > div { display: flex; align-items: center; gap: 0.3rem; padding: 0; }
 .house .share .code {
-  flex: 1; min-width: 0; padding: 0.35rem 0.4rem; font-size: clamp(1.1rem, 5.4cqw, 1.35rem); border: 0; border-radius: 0.6rem; background: #fffdf8; color: #22303c;
-  box-shadow: 0.13rem 0.17rem 0 var(--mat-side); transition: translate 70ms ease, box-shadow 70ms ease;
+  flex: 1; min-width: 0; padding: 0.35rem 0.4rem; font-size: clamp(1.05rem, 5cqw, 1.25rem); border: 0; border-radius: 0.8rem;
+  background: var(--mat-slip); color: var(--mat-ink); box-shadow: none; letter-spacing: 0.1em;
 }
-.house .share .code.copied { color: #c8442e; letter-spacing: 0.02em; }
-.house .share .code:active, .house .share .quiet:active { translate: 0.09rem 0.12rem; box-shadow: 0.04rem 0.05rem 0 var(--mat-side); }
-.house .share .quiet { flex: none; min-height: 2.75rem; padding: 0.35rem 0.75rem; border: 0; border-radius: 0.6rem; background: #22303c; color: #f6f1e7; font-size: 0.875rem; font-weight: 700; box-shadow: 0.13rem 0.17rem 0 var(--mat-side); }
+.house .share .code.copied { color: var(--accent); letter-spacing: 0.02em; }
+.house .share .quiet.round { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; border: 0; background: none; color: var(--mat-ink); box-shadow: none; transform: none; }
+.house .share .quiet.round svg { width: 1.25rem; height: 1.25rem; }
+.house .share .quiet.round:active { background: color-mix(in oklab, var(--mat-ink) 10%, transparent); }
+.house .notify { display: flex; width: auto; padding: 0; gap: 0; background: none; border-radius: 0; }
+.house .notify .bell .strike { display: none; }
+.house .notify[data-state="denied"] .bell { opacity: 0.6; }
+.house .notify[data-state="denied"] .bell .strike { display: inline; }
 
 /* a bush either side of the door, outside */
 .yard { position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none; }
-.yard i { position: absolute; top: 0.75rem; width: 1.55rem; height: 1.55rem; border-radius: 30%; background: #7cc46a; box-shadow: 0.16rem 0.2rem 0 #4c8a3c, 0.4rem 0.5rem 0 var(--shade), inset 0 0.12rem 0 rgb(255 255 255 / 0.3); }
-.yard i::after { content: ""; position: absolute; left: 62%; top: -38%; width: 78%; height: 78%; border-radius: 30%; background: #8fd17c; box-shadow: 0.13rem 0.17rem 0 #4c8a3c, inset 0 0.1rem 0 rgb(255 255 255 / 0.3); }
-.yard i:first-child { left: 1.1rem; }
-.yard i:last-child { right: 2.4rem; }
-:root[data-theme="dark"] .yard i { background: #5c9652; box-shadow: 0.16rem 0.2rem 0 #33602b, 0.4rem 0.5rem 0 var(--shade); }
-:root[data-theme="dark"] .yard i::after { background: #72ad66; box-shadow: 0.13rem 0.17rem 0 #33602b; }
-
-/* --- The top of the screen, over the map --------------------------------------------------- */
-.screen-room .topbar .quiet.round { border: 0; background: var(--card); color: var(--ink); box-shadow: 0 0.16rem 0 var(--lip); }
-.screen-room .topbar .quiet.round:active { translate: 0 0.1rem; box-shadow: 0 0.05rem 0 var(--lip); }
+.yard i { position: absolute; top: 0.8rem; width: 1.4rem; height: 1.4rem; border-radius: 40%; background: #a9c09b; box-shadow: var(--soft-1); }
+.yard i::after { content: ""; position: absolute; left: 62%; top: -38%; width: 78%; height: 78%; border-radius: 40%; background: #b6cba9; box-shadow: var(--soft-1); }
+.yard i:first-child { left: 1.2rem; }
+.yard i:last-child { right: 2.3rem; }
+:root[data-theme="dark"] .yard i { background: #4b5c45; }
+:root[data-theme="dark"] .yard i::after { background: #566a4f; }
 
 /* --- Writing a pass phrase: the same room, at its writing desk ----------------------------- */
-#compose { max-width: none; gap: 0.6rem; padding-bottom: 1.2rem; text-align: center; }
-#compose .lede { font-family: Georgia, serif; }
-#compose .hint { color: color-mix(in srgb, var(--ink) 66%, var(--floor)); }
+#compose { max-width: none; gap: 0.8rem; padding-bottom: 1.2rem; align-items: center; text-align: center; }
+#compose .desk-head { display: grid; place-items: center; color: var(--muted); }
+#compose .desk-head svg { width: 1.9rem; height: 1.9rem; }
 form.desk {
-  box-sizing: border-box; margin-top: 0.3rem; padding: 0.9rem 0.8rem 1rem; gap: 0.75rem; border-radius: 1.35rem;
-  background: var(--wood) repeating-linear-gradient(0deg, transparent 0 calc(33.3% - 1.5px), rgb(0 0 0 / 0.1) calc(33.3% - 1.5px) 33.3%);
-  box-shadow: var(--ex) var(--ey) 0 var(--wood-side), 0.8rem 1rem 0 var(--shade), inset 0 0.14rem 0 rgb(255 255 255 / 0.2);
+  box-sizing: border-box; margin-top: 0.2rem; padding: 1rem 0.9rem 1.1rem; gap: 0.9rem; align-items: center; border-radius: 1.5rem;
+  background: var(--wood); box-shadow: var(--soft-2);
 }
-form.desk .field { padding: 0.6rem 0.65rem 0.7rem; border-radius: 0.35rem 0.85rem 0.85rem 0.85rem; background: var(--card); box-shadow: 0.13rem 0.17rem 0 rgb(30 16 4 / 0.34); rotate: -0.5deg; }
-form.desk #token-note, form.desk .hint { color: var(--on-wood); }
-form.desk .message.bad { padding: 0.35rem 0.6rem; border-radius: 0.6rem; background: var(--card); font-size: 0.9375rem; }
-form.desk .phrase .word { box-shadow: 0.1rem 0.14rem 0 #0d141a; background: #22303c; color: #f6f1e7; }
-form.desk button[type="submit"] { --press: #b9962a; background: #f8d95a; color: #22303c; box-shadow: var(--ex) var(--ey) 0 var(--press); transition: translate 70ms ease, box-shadow 70ms ease; }
-form.desk button[type="submit"]:active { transform: none; translate: calc(var(--ex) * 0.7) calc(var(--ey) * 0.7); box-shadow: calc(var(--ex) * 0.3) calc(var(--ey) * 0.3) 0 var(--press); }
-#compose #phrase-back { min-height: 2.75rem; margin-top: 0.5rem; padding: 0.5rem 1.1rem; border: 0; background: var(--card); color: var(--ink); box-shadow: 0.13rem 0.17rem 0 var(--lip); }
+form.desk .field { align-self: stretch; }
+form.desk input { background: var(--card); border: 0; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 12%, transparent), inset 0 0.08rem 0.25rem rgb(0 0 0 / 0.1); border-radius: 1.1rem; text-align: center; }
+form.desk .phrase .word { background: var(--slab); color: #f3ebe0; box-shadow: var(--soft-1); }
+form.desk .message.bad.oops { background: var(--card); }
+/* its start: a die while the box is empty (a phrase is picked at random), the play mark once one is written */
+form.desk .start-phrase .die, form.desk .start-phrase.random .play { display: none; }
+form.desk .start-phrase.random .die { display: block; }
+/* ...and a game started tells the whole room, so, as a tile does, the die takes two taps: the first lifts it, and the
+   play mark comes beside it; the second starts (room.js liftDie) */
+.screen-room form.desk .start-phrase.random[data-armed] { grid-auto-flow: column; gap: 0.08rem; translate: 0 -0.2rem; background: color-mix(in oklab, var(--go) 94%, var(--card)); }
+form.desk .start-phrase.random[data-armed] .play { display: block; }
+form.desk .start-phrase.random[data-armed] svg { width: 1.1rem; height: 1.1rem; }
+@media (prefers-reduced-motion: no-preference) {
+  form.desk .start-phrase { transition: translate 600ms cubic-bezier(0.3, 0.7, 0.3, 1), background-color 600ms ease; }
+}
+#compose #phrase-back { width: 2.75rem; height: 2.75rem; margin-top: 0.3rem; padding: 0; display: grid; place-items: center; border: 0; background: none; color: var(--muted); }
+#compose #phrase-back svg { width: 1.3rem; height: 1.3rem; }
+
+/* the buttons that go somewhere, drawn: a round, soft button with its picture */
+/* (in the colour of the room, or where there is no room yet, of the lobby's tile that led here) */
+:is(.screen-room, .screen-open, .screen-join) form.card button.icon-button[type="submit"] {
+  --go: var(--wall);
+  align-self: center; width: 3.3rem; height: 3.3rem; padding: 0; display: grid; place-items: center; border-radius: 50%;
+  background: color-mix(in oklab, var(--go) 78%, var(--card)); color: var(--ink); box-shadow: var(--lifted); transform: none;
+}
+.screen-open form.card button.icon-button[type="submit"] { --go: color-mix(in oklab, #f08a76 60%, var(--dusk)); }
+.screen-join form.card button.icon-button[type="submit"] { --go: color-mix(in oklab, #9ad3f7 58%, var(--dusk)); }
+:root[data-theme="dark"] .screen-open form.card button.icon-button[type="submit"] { --go: color-mix(in oklab, #d98572 58%, var(--dusk)); }
+:root[data-theme="dark"] .screen-join form.card button.icon-button[type="submit"] { --go: color-mix(in oklab, #82b7da 52%, var(--dusk)); }
+:is(.screen-room, .screen-open, .screen-join) form.card button.icon-button[type="submit"]:active { transform: none; scale: 0.96; box-shadow: var(--soft-1); }
+/* (held back, sunk into its card, until there is something to go in with: a name, a whole code, a phrase that will do) */
+:is(.screen-room, .screen-open, .screen-join) form.card button.icon-button[type="submit"]:disabled { opacity: 0.4; box-shadow: none; scale: 1; }
+form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 
 /* --- A building with its roof on ----------------------------------------------------------
    The home page's rooms; the room as seen by somebody not in it; and the one
-   being looked for by its code. (shared/place.js draws it.) */
-.roof { display: block; width: 100%; height: auto; overflow: visible; }
-.roof .shade { fill: var(--shade, rgb(20 28 36 / 0.1)); }
-.roof .side { fill: color-mix(in srgb, var(--room, #9aa7b1) 62%, #141c24); }
-.roof .top { fill: var(--room, #9aa7b1); }
-.roof .far { fill: rgb(255 255 255 / 0.2); }
-.roof .near { fill: rgb(0 0 0 / 0.07); }
-.roof .course { fill: none; stroke: rgb(0 0 0 / 0.1); stroke-linecap: round; }
-.roof .ridge, .roof .hip { fill: none; stroke: color-mix(in srgb, var(--room, #9aa7b1) 72%, #141c24); stroke-linecap: round; stroke-linejoin: round; }
-.roof .glint { fill: none; stroke: rgb(255 255 255 / 0.45); stroke-linecap: round; }
-.roof .well { fill: rgb(0 0 0 / 0.08); stroke: color-mix(in srgb, var(--room, #9aa7b1) 72%, #141c24); stroke-width: 1.5; }
-.roof .green { fill: #7cc46a; stroke: #4c8a3c; stroke-width: 1; }
-.roof .pot { fill: #8a97a3; } .roof .pot-side { fill: #3b4d63; } .roof .flue { fill: #22303c; }
-.roof .pane { fill: #22303c; stroke: color-mix(in srgb, var(--room, #9aa7b1) 72%, #141c24); stroke-width: 1.5; transition: fill 300ms ease; }
-.roof .gleam { fill: none; stroke: rgb(255 255 255 / 0.3); stroke-linecap: round; }
-.roof .doormat { fill: #e2c796; stroke: #96774a; stroke-width: 1; }
-.lit .roof .pane, .roof.lit .pane { fill: #f8d95a; filter: drop-shadow(0 0 3px rgb(248 217 90 / 0.9)); }
-.lit .roof .gleam { stroke: rgb(255 255 255 / 0.7); }
+   being looked for by its code. (shared/place.js draws it.) Its colour is the
+   room's, softened as the walls are, and it is soft as they are: no hard edge
+   down its side and no shadow set off under it, but a soft one round it; no
+   courses of tiles, no squares of garden. Its ridge, its chimney, its window;
+   and the window is lit, gently, when something inside is waiting on you. */
+.roof {
+  --roof: color-mix(in oklab, var(--room, #9aa7b1) 62%, #efe6da); --roof-line: color-mix(in oklab, var(--roof) 82%, #3a2e28);
+  display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0.45rem 0.8rem var(--shade, rgb(70 50 35 / 0.1)));
+}
+:root[data-theme="dark"] .roof { --roof: color-mix(in oklab, var(--room, #5c6b78) 46%, #3b3331); --roof-line: color-mix(in oklab, var(--roof) 75%, #120f0e); }
+.roof .top { fill: var(--roof); }
+.roof .far { fill: rgb(255 255 255 / 0.1); }
+.roof .near { fill: rgb(0 0 0 / 0.04); }
+.roof .ridge, .roof .hip { fill: none; stroke: var(--roof-line); stroke-linecap: round; stroke-linejoin: round; }
+.roof .well { fill: rgb(0 0 0 / 0.04); stroke: var(--roof-line); stroke-width: 1.5; }
+/* (the chimney a shade of the roof itself, and its opening one shade further: never a dark square at a corner, which
+   would read as a button) */
+.roof .pot { fill: rgb(0 0 0 / 0.12); } .roof .flue { fill: rgb(0 0 0 / 0.18); }
+.roof .pane { fill: #3a322e; stroke: var(--roof-line); stroke-width: 1.5; transition: fill 900ms ease; }
+:root[data-theme="dark"] .roof .pane { fill: #1d1918; }
+.roof .gleam { fill: none; stroke: rgb(255 255 255 / 0.2); stroke-linecap: round; }
+.roof .doormat { fill: #e2cfae; stroke: #c4ad88; stroke-width: 1; }
+:root[data-theme="dark"] .roof .doormat { fill: #6b5c49; stroke: #574a3a; }
+.lit .roof .pane, .roof.lit .pane, :root[data-theme="dark"] .lit .roof .pane { fill: #f2cf7a; filter: drop-shadow(0 0 4px rgb(242 207 122 / 0.75)); }
+.lit .roof .gleam { stroke: rgb(255 255 255 / 0.6); }
+@media (prefers-reduced-motion: no-preference) {
+  .lit .roof .pane { animation: window-breathe 5.2s ease-in-out infinite; }
+}
+@keyframes window-breathe { 0%, 100% { filter: drop-shadow(0 0 2px rgb(242 207 122 / 0.5)); } 50% { filter: drop-shadow(0 0 7px rgb(242 207 122 / 0.95)); } }
 
 /* seen by somebody who is not in it, and the door found by its code */
 .outside { display: flex; flex-direction: column; align-items: center; padding-bottom: 1rem; font-family: system-ui, sans-serif; }
 .roof-big { position: relative; width: 100%; }
 /* whoever is in, at the skylight */
-.skylight { position: absolute; left: 50%; top: 61%; translate: -50% -50%; display: flex; gap: 0.35rem; padding: 0.4rem 0.55rem 0.5rem; border-radius: 1.1rem; background: #22303c; box-shadow: inset 0 0.2rem 0 rgb(0 0 0 / 0.35), 0 0 0 0.14rem color-mix(in srgb, var(--wall) 72%, #141c24); }
+.skylight { position: absolute; left: 50%; top: 61%; translate: -50% -50%; display: flex; gap: 0.4rem; padding: 0.4rem 0.55rem 0.45rem; border-radius: 1.2rem; background: color-mix(in oklab, var(--roof-line, #3a322e) 40%, #1d1918); box-shadow: inset 0 0.15rem 0.4rem rgb(0 0 0 / 0.35); }
 .skylight .avatar { width: 2.3rem; height: 2.3rem; font-size: 1.3rem; }
-.outside form.mat { box-sizing: border-box; width: min(100% - 2.4rem, 21rem); max-width: none; margin-top: -1.1rem; padding: 0.95rem 0.95rem 1rem; gap: 0.7rem; align-items: stretch; text-align: left; }
-.outside form.mat fieldset { min-width: 0; padding: 0; gap: 0.7rem; background: none; box-shadow: none; border-radius: 0; }
-.outside form.mat .lede { font-family: system-ui, sans-serif; font-style: normal; font-size: 0.9375rem; line-height: 1.35; color: #22303c; text-align: center; }
-.outside form.mat .field > span { color: #22303c; }
-.outside form.mat input { background: #fffdf8; color: #22303c; border-color: var(--mat-line); }
-.outside form.mat input:focus-visible { border-color: #c8442e; }
-.outside form.mat input::placeholder { color: #8a7a60; opacity: 1; }
-.outside form.mat button[type="submit"] { background: #22303c; color: #f6f1e7; --press: #0d141a; box-shadow: var(--ex) var(--ey) 0 var(--press); transition: translate 70ms ease, box-shadow 70ms ease; }
-.outside form.mat button[type="submit"]:active { transform: none; translate: calc(var(--ex) * 0.7) calc(var(--ey) * 0.7); box-shadow: calc(var(--ex) * 0.3) calc(var(--ey) * 0.3) 0 var(--press); }
-.outside form.mat .message.bad { padding: 0.35rem 0.6rem; border-radius: 0.6rem; background: #fffdf8; color: #b3261e; font-size: 0.9375rem; }
-.outside form.mat .hint { text-align: center; }
-.outside form.mat .hint a { display: flex; align-items: center; justify-content: center; min-height: 2.75rem; margin: -0.3rem 0 -0.5rem; color: #22303c; font-weight: 600; text-underline-offset: 0.2em; }
-.outside input.code-input { text-align: center; font-size: 1.5rem; font-weight: 700; }
+.outside form.mat { box-sizing: border-box; width: min(100% - 3rem, 18.5rem); max-width: none; margin-top: -1.1rem; padding: 1rem 1rem 0.9rem; gap: 0.75rem; align-items: center; text-align: center; }
+.outside form.mat fieldset { width: 100%; min-width: 0; padding: 0; gap: 0.75rem; align-items: center; background: none; box-shadow: none; border-radius: 0; }
+.outside form.mat .field { align-self: stretch; }
+/* (a field keeps a soft edge, so that it does not vanish into its card in the dark) */
+.outside form.mat input { background: var(--mat-slip); color: var(--mat-ink); border: 0; border-radius: 1rem; text-align: center; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--mat-ink) 18%, transparent), inset 0 0.08rem 0.25rem rgb(0 0 0 / 0.12); }
+.outside form.mat input:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.outside form.mat input::placeholder { color: color-mix(in oklab, var(--mat-ink) 45%, var(--mat-slip)); opacity: 1; }
+.outside input.code-input { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.08em; }
+.outside .sync { width: 2.75rem; height: 2.75rem; margin: -0.35rem 0 -0.45rem; display: grid; place-items: center; border-radius: 50%; color: var(--mat-ink); opacity: 0.7; }
+.outside .sync svg { width: 1.2rem; height: 1.2rem; }
 
 /* --- Opening a room: a plot, staked out ---------------------------------------------------- */
-.lot { position: relative; margin-bottom: 1.5rem; padding: 2.6rem 1.1rem 2.7rem; border-radius: var(--house-r); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.lot::before { content: ""; position: absolute; inset: 0; z-index: -2; border-radius: inherit; background: var(--floor); opacity: 0.75; -webkit-mask: var(--square) 0 0 / var(--pitch) var(--pitch); mask: var(--square) 0 0 / var(--pitch) var(--pitch); }
+.lot { position: relative; margin: 1.2rem 0 1.5rem; padding: 2.6rem 1.1rem 2.9rem; border-radius: var(--house-r); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.lot::before { content: ""; position: absolute; inset: 0; z-index: -2; border-radius: inherit; background: color-mix(in oklab, var(--floor) 55%, transparent); }
 /* string, from stake to stake */
-.lot-lines { position: absolute; inset: 0.3rem; z-index: -1; border: 0.14rem dashed color-mix(in srgb, var(--ink) 50%, transparent); border-radius: calc(var(--house-r) - 0.3rem); pointer-events: none; }
-.lot-lines i { position: absolute; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: #c8442e; box-shadow: 0.1rem 0.13rem 0 #7a2c1e, 0.26rem 0.34rem 0 var(--shade), inset 0 0.1rem 0 rgb(255 255 255 / 0.3); }
-.lot-lines i:nth-child(1) { left: 0.2rem; top: 0.2rem; }
-.lot-lines i:nth-child(2) { right: 0.2rem; top: 0.2rem; }
-.lot-lines i:nth-child(3) { left: 0.2rem; bottom: 0.2rem; }
-.lot-lines i:nth-child(4) { right: 0.2rem; bottom: 0.2rem; }
-.lot .lede { font-size: 1rem; color: color-mix(in srgb, var(--ink) 70%, var(--paper)); }
+.lot-lines { position: absolute; inset: 0.3rem; z-index: -1; border: 1.5px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: calc(var(--house-r) - 0.3rem); pointer-events: none; }
+.lot-lines i { position: absolute; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: color-mix(in oklab, var(--accent) 55%, var(--paper)); box-shadow: var(--soft-1); }
+.lot-lines i:nth-child(1) { left: 0.25rem; top: 0.25rem; }
+.lot-lines i:nth-child(2) { right: 0.25rem; top: 0.25rem; }
+.lot-lines i:nth-child(3) { left: 0.25rem; bottom: 0.25rem; }
+.lot-lines i:nth-child(4) { right: 0.25rem; bottom: 0.25rem; }
 /* the board planted in it, to write its name on */
-.lot form.placard { position: relative; max-width: 21rem; margin-top: 0; }
-.lot form.placard::after { content: ""; position: absolute; left: 50%; top: 100%; width: 0.8rem; height: 1.5rem; margin-left: -0.4rem; z-index: -1; border-radius: 0 0 0.3rem 0.3rem; background: var(--wood); box-shadow: var(--ex) 0.2rem 0 var(--wood-side), 0.5rem 0.5rem 0 var(--shade); }
-.lot form.placard fieldset { border-radius: 1.1rem; box-shadow: var(--ex) var(--ey) 0 var(--lip), 0.8rem 1rem 0 var(--shade); }
-.lot form.placard button[type="submit"], .lot form.placard button[type="submit"]:active { margin-right: var(--ex); }
-.lot form.placard button[type="submit"] { --press: color-mix(in srgb, var(--ink) 62%, #000); box-shadow: var(--ex) var(--ey) 0 var(--press); transition: translate 70ms ease, box-shadow 70ms ease; }
-.lot form.placard button[type="submit"]:active { transform: none; translate: calc(var(--ex) * 0.7) calc(var(--ey) * 0.7); box-shadow: calc(var(--ex) * 0.3) calc(var(--ey) * 0.3) 0 var(--press); }
+.lot form.placard { position: relative; max-width: 19rem; margin-top: 0; }
+.lot form.placard::after { content: ""; position: absolute; left: 50%; top: 100%; width: 0.7rem; height: 1.5rem; margin-left: -0.35rem; z-index: -1; border-radius: 0 0 0.35rem 0.35rem; background: color-mix(in oklab, var(--wood) 70%, var(--muted)); box-shadow: var(--soft-1); }
+.lot form.placard fieldset { align-items: center; border-radius: 1.4rem; box-shadow: var(--soft-2); }
+.lot form.placard .field { align-self: stretch; }
+.lot form.placard input { border: 0; border-radius: 1rem; background: color-mix(in oklab, var(--ink) 5%, var(--card)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 15%, transparent), inset 0 0.08rem 0.25rem rgb(0 0 0 / 0.1); font-family: Georgia, serif; font-size: 1.25rem; text-align: center; }
+.lot form.placard input:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 /* --- The home page: your rooms, a street of them -------------------------------------------- */
-.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem 0.9rem; }
+.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 1rem; }
 .street a {
-  --shade: rgb(20 28 36 / 0.1);
+  --shade: rgb(70 50 35 / 0.08);
   height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding: 0.2rem 0.1rem 0.3rem;
   color: var(--ink); text-decoration: none; border-radius: 1rem; -webkit-tap-highlight-color: transparent;
 }
-:root[data-theme="dark"] .street a { --shade: rgb(0 0 0 / 0.26); }
-.street .roof { transition: translate 80ms ease; }
-.street a:active .roof { translate: 0.12rem 0.16rem; }
-.street a:hover .roof, .street a:focus-visible .roof { filter: brightness(1.05); }
+:root[data-theme="dark"] .street a { --shade: rgb(0 0 0 / 0.34); }
+@media (prefers-reduced-motion: no-preference) { .street .roof { transition: translate 300ms ease; } }
+.street a:active .roof { translate: 0 0.12rem; }
 /* its name, on a plate at its door */
 .street strong {
-  position: relative; max-width: 100%; margin-top: -0.2rem; padding: 0.2rem 0.6rem 0.25rem; border-radius: 0.6rem; background: var(--card); box-shadow: 0 0.16rem 0 var(--lip);
-  font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.2; text-align: center; overflow-wrap: anywhere;
+  position: relative; max-width: 100%; margin-top: -0.1rem; padding: 0.2rem 0.65rem 0.25rem; border-radius: 0.8rem; background: var(--card); box-shadow: 0 0.1rem 0.35rem rgb(0 0 0 / 0.12);
+  font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.25; text-align: center; overflow-wrap: anywhere;
+  color: color-mix(in oklab, var(--ink) 88%, var(--card));
 }
-.street span { margin-top: 0.3rem; font-family: system-ui, sans-serif; font-size: 0.75rem; color: var(--muted); text-align: center; }
-/* an odd one out has a bit of garden beside it */
-.street::after {
-  content: ""; align-self: center; justify-self: center; width: calc(1.75rem * 4); height: calc(1.75rem * 2); margin-bottom: 2.2rem; opacity: 0.75; /* whole squares of it, four by two */
-  background: color-mix(in srgb, #7cc46a 55%, transparent); -webkit-mask: var(--square, none) 0 0 / 1.75rem 1.75rem; mask: var(--square, none) 0 0 / 1.75rem 1.75rem;
-  --square: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='7' y='7' width='86' height='86' rx='22'/%3E%3C/svg%3E");
-}
-.street:has(> li:last-child:nth-child(even))::after { display: none; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* coming in from the map: the furniture settles, a piece after a piece */
-  .screen-room .inside > * { animation: arrive 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
-  .screen-room .inside > *:nth-child(2) { animation-delay: 40ms; }
-  .screen-room .inside > *:nth-child(3) { animation-delay: 80ms; }
-  .screen-room .inside > *:nth-child(n + 4) { animation-delay: 120ms; }
+  /* coming in from the map: the furniture settles, slowly, a piece after a piece */
+  .screen-room .inside > * { animation: settle 700ms cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+  .screen-room .inside > *:nth-child(2) { animation-delay: 80ms; }
+  .screen-room .inside > *:nth-child(3) { animation-delay: 160ms; }
+  .screen-room .inside > *:nth-child(n + 4) { animation-delay: 240ms; }
 }
+@keyframes settle { from { opacity: 0; transform: translateY(0.3rem); } to { opacity: 1; transform: none; } }

@@ -1,4 +1,4 @@
-import { ask } from '/shared/ask.js';
+import { ask, tell } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
 import { createChat } from '/shared/chat.js';
@@ -8,7 +8,7 @@ import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js'
 import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
-import { miniBoard, roof, roomClass } from '/shared/place.js';
+import { door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
 import { twoWorlds } from '/room/worlds.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
@@ -18,19 +18,26 @@ import { twoWorlds } from '/room/worlds.js';
 // with its roof off for the people in it, and with its roof on for anybody
 // else. What is made here is what goes in it: the tokens of the people at its
 // table, and the games laid on the table as small boards.
+//
+// It is a quiet room, and one thing in it is loud: what is waiting on you. A
+// game that is yours to play lies nearest, its board bright and lifted under
+// a lamp, its seal breathing; the rest lie further off, small and dim, and the
+// finished ones dimmer still. Nothing on the table is written: where a game
+// stands is said by its board, and in words to screen readers.
 export function mount(root, life) {
 
   const $ = (id) => root.querySelector(`#${id}`);
   const { setTimeout } = life; // timers that stop when the screen leaves
   const el = {
-    name: $('room-name'), loading: $('loading'),
+    name: $('room-name'), nameError: $('name-error'), loading: $('loading'), roomError: $('room-error'),
     join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
     house: $('house'), room: $('room'), members: $('members'), profile: $('profile'), joinFaces: $('join-faces'),
-    notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), roomCode: $('room-code'), shareButton: $('share-button'),
-    games: $('games'), noGames: $('no-games'),
-    modes: $('modes'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
+    notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), notifyError: $('notify-error'),
+    roomCode: $('room-code'), shareButton: $('share-button'),
+    games: $('games'), noGames: $('no-games'), tidy: $('tidy'), table: root.querySelector('.table'),
+    modes: $('modes'), modeNote: $('mode-note'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
     phraseError: $('phrase-error'), phraseBack: $('phrase-back'), tokens: $('tokens'), tokenNote: $('token-note'), gameError: $('game-error'),
-    chat: $('chat'), leave: $('leave'), leaveError: $('leave-error'), more: $('more'), moreMenu: $('more-menu'), rename: $('rename'),
+    chat: $('chat'), leave: $('leave'), more: $('more'), moreMenu: $('more-menu'), rename: $('rename'),
   };
 
   const requested = new URLSearchParams(location.search).get('id');
@@ -54,13 +61,15 @@ export function mount(root, life) {
   const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
 
+  // A link that leads nowhere (or a room that could not be reached the first time): the empty plot, with what went wrong
+  // in a short line of words in the middle of it; the arrow at the top is the way home. (The name over it is said to
+  // screen readers only, as the room's; and the room is looked for again, unless it is not there.)
   function fail(text) {
-    el.loading.hidden = false;
-    el.loading.textContent = `${text} `;
-    const home = document.createElement('a');
-    home.href = '/';
-    home.textContent = 'Back to the start';
-    el.loading.append(home);
+    el.loading.hidden = true;
+    el.name.textContent = 'Room';
+    el.name.classList.add('sr-only');
+    el.name.removeAttribute('aria-busy');
+    oops(el.roomError, text);
   }
 
   function list(names) {
@@ -68,29 +77,32 @@ export function mount(root, life) {
     return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   }
 
-  const TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.5h9.4L17.500 7M10 11v5M14 11v5"/></svg>'.replace('17.500', '17.5');
+  const CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7.5 7.5l9 9M16.5 7.5l-9 9"/></svg>';
 
   const MODE_NAMES = { coop: 'Together', trial: 'Time trial', phrase: 'Pass phrase' };
 
-  // Where a game stands for whoever is looking: in words, and as a state its
-  // board on the table shows ('go': theirs to play; 'wait'; 'won'; 'lost').
+  // Where a game stands for whoever is looking: as a state its board on the
+  // table shows ('go': theirs to play; 'wait'; 'won'; 'lost'), and in words
+  // for screen readers (`said`), which is the only place they are written.
   function gameStatus(game) {
     if (game.mode === 'trial' || game.mode === 'phrase') {
       // the solo modes: where you stand, and how many have finished
       const done = `${game.finished} finished`;
-      if (game.phrase_by === room.you) return { text: `You wrote this one · ${done}`, state: 'wait' };
-      if (game.mine === 'won') return { text: `${game.mode === 'trial' ? 'You finished' : 'You solved it'} · ${done}`, state: 'won' };
-      if (game.mine === 'lost') return { text: `You ran out of hearts · ${done}`, state: 'lost' };
-      if (game.mode === 'phrase') return { text: `${game.mine === 'playing' ? 'In progress' : 'Not started'} · ${done}`, go: true, state: 'go' };
-      return { text: `${game.mine === 'playing' ? 'Your clock is running' : 'Not started'} · ${done}`, go: true, state: 'go' };
+      if (game.phrase_by === room.you) return { said: ['you wrote this one', done], state: 'wait' };
+      if (game.mine === 'won') return { said: [game.mode === 'trial' ? 'you finished' : 'you solved it', done], state: 'won' };
+      if (game.mine === 'lost') return { said: ['you ran out of hearts', done], state: 'lost' };
+      if (game.mode === 'phrase') return { said: [game.mine === 'playing' ? 'in progress' : 'not started', done], state: 'go' };
+      return { said: [game.mine === 'playing' ? 'your clock is running' : 'not started', done], state: 'go' };
     }
-    const hearts = '♥'.repeat(game.hearts) + '♡'.repeat(3 - game.hearts);
-    if (game.status === 'won') return { text: `Solved in ${game.moves} turns · ${hearts}`, state: 'won' };
-    if (game.status === 'lost') return { text: `Out of hearts · ${game.found}/${game.size} posts found`, state: 'lost' };
-    const progress = `${game.found}/${game.size} posts · ${hearts}`;
-    if (game.last_player === room.you) return { text: `Waiting for someone else · ${progress}`, state: 'wait' };
-    return { text: `Your move · ${progress}`, go: true, state: 'go' };
+    const hearts = `${game.hearts} ${game.hearts === 1 ? 'heart' : 'hearts'} left`;
+    const found = `${game.found} of ${game.size} posts found`;
+    if (game.status === 'won') return { said: [`solved in ${game.moves} turns`, hearts], state: 'won' };
+    if (game.status === 'lost') return { said: ['out of hearts', found], state: 'lost' };
+    if (game.last_player === room.you) return { said: ['waiting for someone else', found, hearts], state: 'wait' };
+    return { said: ['your move', found, hearts], state: 'go' };
   }
+  // nearest first: what is yours to play, then what others are playing, then what is over
+  const NEAR = { go: 0, wait: 1, won: 2, lost: 2 };
 
   // The picture a kind of game goes by: the one on the tile that starts it.
   const modeIcon = (mode) => el.modes.querySelector(`[data-mode="${mode}"] svg`)?.cloneNode(true) ?? null;
@@ -109,7 +121,6 @@ export function mount(root, life) {
     button.type = 'button';
     button.className = 'rename';
     button.textContent = room.name;
-    button.title = 'Rename the room';
     button.setAttribute('aria-label', `${room.name}. Rename the room`);
     button.addEventListener('click', editName);
     el.name.replaceChildren(button);
@@ -117,6 +128,7 @@ export function mount(root, life) {
 
   function editName() {
     renaming = true;
+    oops(el.nameError, ''); // (tried again: what went wrong the last time is not still said)
     const form = document.createElement('form');
     form.className = 'rename';
     const input = document.createElement('input');
@@ -148,7 +160,8 @@ export function mount(root, life) {
           render();
           return;
         } catch (failure) {
-          el.gameError.textContent = failure.message;
+          // said where it was tried: the name, back as it was (below), shakes, and the words come under it
+          oops(el.nameError, failure.message, { shake: el.name });
         }
       }
       renaming = false;
@@ -166,9 +179,12 @@ export function mount(root, life) {
   }
 
   function render() {
+    el.name.classList.remove('sr-only');
     showName();
     setTitle();
+    el.name.removeAttribute('aria-busy');
     el.loading.hidden = true;
+    oops(el.roomError, ''); // (found after all)
 
     if (room.you === null) {
       // people still in the room (those who left keep their place in the list, marked)
@@ -178,7 +194,10 @@ export function mount(root, life) {
         ? 'You’ve been invited to a game here. Join the room to play.'
         : n === 0 ? 'Nobody is here at the moment. Join to play and chat.'
           : `${list(here)} ${n === 1 ? 'is' : 'are'} here. Join to play and chat.`;
-      if (!el.joinName.value) el.joinName.value = myName();
+      if (!el.joinName.value) {
+        el.joinName.value = myName();
+        joining(false); // (the door: a name is there now)
+      }
       $('join-sign-in').href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
       // whoever is in shows at the skylight (as many as it has room for)
       el.joinFaces.replaceChildren(...room.people.filter((person) => !person.left).slice(0, 5).map((person) => avatar(person)));
@@ -212,7 +231,14 @@ export function mount(root, life) {
       li.className = seat === room.you ? 'seat you' : 'seat';
       const name = document.createElement('span');
       name.className = 'name';
-      name.textContent = person.name + (seat === room.you ? ' (you)' : '');
+      name.textContent = person.name;
+      if (seat === room.you) {
+        // (yours is the face at the top of the screen as well: it is not said here but to screen readers)
+        const you = document.createElement('span');
+        you.className = 'sr-only';
+        you.textContent = ' (you)';
+        name.append(you);
+      }
       li.append(avatar(person), name);
       return [li];
     }));
@@ -225,48 +251,6 @@ export function mount(root, life) {
       el.roomCode.dataset.code = code;
       copyable(el.roomCode, code);
     }
-
-    // each game a small board on the table, on the slip that says where it stands
-    el.games.replaceChildren(...room.games.map((game) => {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.className = 'game';
-      a.href = gameUrl(game.kind, game.id);
-      const title = document.createElement('strong');
-      title.textContent = `${MODE_NAMES[game.mode] ?? 'Together'} ${game.size} × ${game.size}`;
-      const status = gameStatus(game);
-      a.dataset.state = status.state;
-      // (said in pieces, so that where the line has to turn it turns between two of them)
-      const line = document.createElement('span');
-      status.text.split(' · ').forEach((piece, i) => {
-        const bit = document.createElement('span');
-        bit.className = 'bit';
-        bit.textContent = piece;
-        line.append(i ? ' · ' : '', bit);
-      });
-      if (status.go) line.className = 'go';
-      const board = miniBoard(game, status.state);
-      const kind = modeIcon(game.mode ?? 'coop');
-      if (kind) {
-        kind.setAttribute('class', 'kind');
-        board.append(kind);
-      }
-      const slip = document.createElement('span');
-      slip.className = 'slip';
-      slip.append(title, line);
-      a.append(board, slip);
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'quiet round delete';
-      remove.dataset.game = game.id;
-      remove.dataset.name = title.textContent;
-      remove.title = 'Delete this game';
-      remove.setAttribute('aria-label', `Delete ${title.textContent}`);
-      remove.innerHTML = TRASH;
-      li.append(a, remove);
-      return li;
-    }));
-    el.noGames.hidden = room.games.length > 0;
 
     if (!watcher) {
       watcher = watchRoom(room.id, refresh);
@@ -281,10 +265,54 @@ export function mount(root, life) {
     if (!chat) {
       chat = createChat(el.chat, {
         roomId: room.id, you: room.you, people: room.people, onSent: () => watcher.poke(),
+        calm: true,
       });
     }
     chat.setPeople(room.people);
     const fromOthers = chat.add(room.messages);
+    chat.onTable(new Set(room.games.map((game) => game.id)));
+
+    // each game a small board lying on the table: the nearest are yours to play
+    const laid = room.games.map((game) => ({ game, status: gameStatus(game) }))
+      .sort((a, b) => NEAR[a.status.state] - NEAR[b.status.state]);
+    // (who started each, as its line in the chat says: that line is put away while the game is on the table, so its
+    // board says it to screen readers instead)
+    const by = (game) => {
+      const line = chat.starter(game.id);
+      return line ? `, ${line.wrote ? 'written' : 'started'} by ${line.who}` : '';
+    };
+    // (laid again only when something on it has changed: a seal's slow breath is not cut short by every look at the server)
+    const table = JSON.stringify(laid.map(({ game, status }) => [game.id, game.mode, game.size, game.found, status.state, status.said, by(game)]));
+    if (el.games.dataset.laid !== table) el.games.replaceChildren(...laid.map(({ game, status }) => {
+      const li = document.createElement('li');
+      li.dataset.state = status.state;
+      const name = `${MODE_NAMES[game.mode] ?? 'Together'} ${game.size} × ${game.size}`;
+      const board = miniBoard(game, status.state);
+      const kind = modeIcon(game.mode ?? 'coop');
+      if (kind) {
+        kind.setAttribute('class', 'kind');
+        board.append(kind);
+      }
+      // the board is what is seen; over it, the way into the game, or (tidying) the way to put it away
+      const a = document.createElement('a');
+      a.className = 'game';
+      a.href = gameUrl(game.kind, game.id);
+      a.setAttribute('aria-label', `${name}${by(game)}: ${status.said.join(', ')}`);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'delete';
+      remove.dataset.game = game.id;
+      remove.dataset.name = name;
+      remove.setAttribute('aria-label', `Delete ${name}`);
+      remove.innerHTML = CROSS;
+      li.append(board, a, remove);
+      return li;
+    }));
+    el.games.dataset.laid = table;
+    el.noGames.hidden = room.games.length > 0;
+    el.tidy.hidden = room.games.length === 0;
+    if (!room.games.length) tidying(false);
+
     if (document.hidden && fromOthers) {
       unread += fromOthers;
       setTitle();
@@ -321,11 +349,14 @@ export function mount(root, life) {
   });
   life.on(window, 'online', refresh);
 
+  // At the door: in, under a name (the door is held back until there is one).
+  const joining = door(el.joinForm, el.joinName, el.joinError, (value) => value.trim().length > 0);
   el.joinForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const name = el.joinName.value.trim();
-    if (!name) return;
-    el.joinError.textContent = '';
+    if (!name || el.joinForm.querySelector('button[type="submit"]').disabled) return;
+    oops(el.joinError, '');
+    joining(true);
     try {
       room = await rpc('room_join', { p_room: roomId, p_name: name, p_token: myToken() });
       setMyName(name);
@@ -337,39 +368,52 @@ export function mount(root, life) {
         go(gameUrl('postmarks', nextGame), { replace: true }); // the game they were invited to
         return;
       }
+      joining(false);
       render();
       refresh(); // restart polling at the live pace
     } catch (error) {
-      el.joinError.textContent = error.message;
+      oops(el.joinError, error.message, { shake: el.joinForm });
+      joining(false);
     }
   });
 
   // --- Notifications ------------------------------------------------------------
+  // A bell by the mat, while they are not on: a tap turns them on (the
+  // browser asks its own question, in its own words). Where the app has to be
+  // installed first, the tap opens the guide to that. Where they have been
+  // blocked, the bell is struck through, and a tap says where to allow them,
+  // the one thing here that only words can say.
+  const BLOCKED = 'Notifications are blocked for this site. You can allow them in your browser or system settings.';
   function renderNotify() {
     const state = pushState();
     el.notify.hidden = state === 'granted' || state === 'unsupported';
-    el.notifyButton.hidden = state === 'denied';
-    if (state === 'default') {
-      el.notifyText.textContent = 'Get a notification when a game starts, it’s your turn, or someone messages the room.';
-      el.notifyButton.textContent = 'Turn on';
-    } else if (state === 'install-first') {
-      el.notifyText.textContent = 'Install the app to get a notification when a game starts, it’s your turn, or someone messages the room.';
-      el.notifyButton.textContent = 'Show me how';
-    } else if (state === 'denied') {
-      el.notifyText.textContent = 'Notifications are blocked for this site. You can allow them in your browser or system settings.';
-    }
+    el.notify.dataset.state = state;
+    const said = {
+      default: ['Turn on notifications', 'Get a notification when a game starts, it’s your turn, or someone messages the room.'],
+      'install-first': ['Show me how to install the app', 'Install the app to get a notification when a game starts, it’s your turn, or someone messages the room.'],
+      denied: ['Notifications are blocked', BLOCKED],
+    }[state];
+    if (!said) return;
+    el.notifyButton.setAttribute('aria-label', said[0]);
+    el.notifyText.textContent = said[1];
   }
 
   el.notifyButton.addEventListener('click', async () => {
-    if (pushState() === 'install-first') {
+    const state = pushState();
+    if (state === 'install-first') {
       window.openInstallGuide?.();
       return;
     }
+    if (state === 'denied') {
+      tell('Notifications are blocked', { detail: 'You can allow them in your browser or system settings.' });
+      return;
+    }
     el.notifyButton.disabled = true;
+    oops(el.notifyError, '');
     try {
       await enablePush();
     } catch (error) {
-      el.notifyText.textContent = `Couldn’t turn on notifications: ${error.message}`;
+      oops(el.notifyError, `Couldn’t turn on notifications: ${error.message}`, { shake: el.notifyButton });
       el.notifyButton.disabled = false;
       return;
     }
@@ -383,7 +427,6 @@ export function mount(root, life) {
   const moreMenu = (open) => {
     el.moreMenu.hidden = !open;
     el.more.setAttribute('aria-expanded', String(open));
-    if (open) el.leaveError.textContent = '';
   };
   el.more.addEventListener('click', () => moreMenu(el.moreMenu.hidden));
   life.on(document, 'pointerdown', (event) => {
@@ -400,21 +443,19 @@ export function mount(root, life) {
     editName();
   });
 
-  el.leave.addEventListener('click', async () => {
+  // Leaving is asked in a sheet, and tried there: refused, the sheet shakes and the words come in it (shared/ask.js).
+  el.leave.addEventListener('click', () => {
     moreMenu(false);
-    if (!(await ask(`Leave ${room.name}?`, { detail: 'You can come back with its code.', yes: 'Leave room', no: 'Stay', danger: true }))) return;
-    if (life.over) return;
-    el.leave.disabled = true;
-    el.leaveError.textContent = '';
-    try {
-      await rpc('room_leave', { p_room: roomId, p_token: myToken() });
-      watcher?.poke();
-      forgetRoom(roomId); // off this device's list of rooms
-      go('/');
-    } catch (error) {
-      el.leaveError.textContent = error.message;
-      el.leave.disabled = false;
-    }
+    ask(`Leave ${room.name}?`, {
+      yes: 'Leave room', no: 'Stay', danger: true,
+      attempt: async () => {
+        if (life.over) return;
+        await rpc('room_leave', { p_room: roomId, p_token: myToken() });
+        watcher?.poke();
+        forgetRoom(roomId); // off this device's list of rooms
+        go('/');
+      },
+    });
   });
 
   // --- Your profile: name and avatar --------------------------------------------
@@ -435,33 +476,105 @@ export function mount(root, life) {
 
   // --- Deleting a game ---------------------------------------------------------------
   // Any member can delete any game in the room. It disappears for everyone.
-  el.games.addEventListener('click', async (event) => {
-    const button = event.target.closest('.delete');
-    if (!button) return;
-    if (!(await ask(`Delete ${button.dataset.name}?`, { detail: 'It will be gone for everyone in the room.', yes: 'Delete', no: 'Keep it', danger: true }))) return;
-    if (life.over) return;
-    button.disabled = true;
-    el.gameError.textContent = '';
-    try {
-      await rpc('postmarks_delete', { p_game: button.dataset.game, p_token: myToken() });
-      watcher?.poke();
-      await refresh();
-    } catch (error) {
-      el.gameError.textContent = error.message;
-      button.disabled = false;
-    }
+  // There is one way to it for the whole table, not one on every game: the
+  // table is tidied (the bin at its corner), and then a tap on a board puts it
+  // away, once that is agreed to.
+  function tidying(on) {
+    el.table.classList.toggle('tidy', on);
+    el.tidy.setAttribute('aria-pressed', String(on));
+    el.tidy.setAttribute('aria-label', on ? 'Done putting games away' : 'Put games away');
+  }
+  el.tidy.addEventListener('click', () => tidying(!el.table.classList.contains('tidy')));
+  life.on(document, 'keydown', (event) => {
+    // (an Escape that closes the question sheet is for the sheet, not the table)
+    if (event.key === 'Escape' && el.table.classList.contains('tidy') && !document.querySelector('dialog[open]')) tidying(false);
   });
 
+  // The sheet that asks shows the board that was pressed, not its name; putting it away is tried there, and refused,
+  // the sheet shakes and the words come in it (shared/ask.js).
+  el.games.addEventListener('click', (event) => {
+    const button = event.target.closest('.delete');
+    if (!button) return;
+    ask(`Delete ${button.dataset.name}?`, {
+      picture: likeness(button.closest('li').querySelector('.mini')), yes: 'Delete', no: 'Keep it', danger: true,
+      attempt: async () => {
+        if (life.over) return;
+        await rpc('postmarks_delete', { p_game: button.dataset.game, p_token: myToken() });
+        watcher?.poke();
+        await refresh();
+      },
+    });
+  });
+  // A board as it lies on the table, to be shown in a sheet: the sheet is not in the room, so its colours are fixed
+  // as they are here (in full, as it is pressed: not resting).
+  function likeness(board) {
+    const svg = board.querySelector('svg').cloneNode(true);
+    const drawn = [...board.querySelectorAll('svg *')];
+    [...svg.querySelectorAll('*')].forEach((one, i) => {
+      const style = getComputedStyle(drawn[i]);
+      one.setAttribute('fill', style.fill);
+      if (style.stroke !== 'none') one.setAttribute('stroke', style.stroke);
+      one.removeAttribute('class');
+    });
+    const frame = document.createElement('span');
+    frame.className = 'likeness';
+    frame.style.background = getComputedStyle(el.games).getPropertyValue('--slab');
+    frame.append(svg);
+    return frame;
+  }
+
   // --- Starting a game ----------------------------------------------------------------
-  // One tile per kind of game. Together and Time trial start on a tap; Pass
-  // phrase first offers a box for writing the phrase (left empty, a random one
-  // is used and its starter can play too).
+  // One tile per kind of game, with no words on it: the picture is the kind.
+  // A game started tells the whole room, so Together and Time trial take two
+  // taps: the first lifts the tile and shows a play mark on it, the second
+  // starts. (A tap anywhere else, or a while left alone, sets it down again.)
+  // Pass phrase goes to a desk for writing the phrase first, which tells
+  // nobody (left empty, a random one is used and its starter can play too).
+  let armed = null;
+  let settle = null;
+  function arm(tile) {
+    disarm();
+    oops(el.gameError, ''); // (a game that could not be started is not still said, once another is begun)
+    armed = tile;
+    tile.dataset.armed = '';
+    el.modeNote.textContent = 'Press again to start. Everyone in the room is told.';
+    settle = setTimeout(disarm, 9000);
+  }
+  function disarm() {
+    clearTimeout(settle);
+    if (!armed) return;
+    delete armed.dataset.armed;
+    armed = null;
+    el.modeNote.textContent = '';
+  }
+  life.on(document, 'pointerdown', (event) => {
+    if (armed && !event.target.closest('#modes')) disarm();
+    if (!event.target.closest('#phrase-form .start-phrase')) liftDie(false);
+  });
+
+  // At the desk, while the box is empty, the start is a die (a phrase picked at random), and that game tells the whole
+  // room too: so, as a tile does, it takes two taps. The first lifts it and brings the play mark beside the die; the
+  // second starts. (Typing, a tap anywhere else, or a while left alone, sets it down again.)
+  let rolled = null;
+  function liftDie(on) {
+    const start = el.phraseForm.querySelector('button[type="submit"]');
+    clearTimeout(rolled);
+    if (on) {
+      start.dataset.armed = '';
+      el.tokenNote.textContent = 'Press again to start. Everyone in the room is told.';
+      rolled = setTimeout(() => liftDie(false), 9000);
+    } else if (start.hasAttribute('data-armed')) {
+      delete start.dataset.armed;
+      el.tokenNote.textContent = '';
+    }
+  }
+
   async function startGame(mode, phrase = null) {
     if (el.modes.dataset.busy) return;
     if (phrase !== null) phrase = tidyPhrase(phrase);
-    if (phrase !== null && phraseProblem(phrase)) return; // already said under the box
+    if (phrase !== null && phraseProblem(phrase)) return; // already marked at the box
     el.modes.dataset.busy = 'true';
-    el.gameError.textContent = '';
+    oops(el.gameError, '');
     try {
       // A written phrase gets a board with one post per word where it can; the
       // server then splits the phrase into exactly one token per post.
@@ -475,20 +588,26 @@ export function mount(root, life) {
       watcher?.poke();
       go(gameUrl('postmarks', game.id));
     } catch (error) {
-      (composing ? el.phraseError : el.gameError).textContent = error.message;
+      oops(composing ? el.phraseError : el.gameError, error.message, { shake: composing ? el.phraseForm : el.modes });
       delete el.modes.dataset.busy;
     }
   }
 
   // Show the tokens the phrase turns into, as it is typed: exactly one for each
   // post on its board. Anything wrong with the phrase is said at once, the box
-  // is marked and Start is held back until it is put right.
+  // is marked and Start is held back until it is put right. While the box is
+  // empty, Start is a die: a phrase is picked at random.
   function previewTokens() {
+    liftDie(false);
     const phrase = tidyPhrase(el.phraseText.value);
     const problem = phraseProblem(phrase);
-    el.phraseError.textContent = problem ?? '';
+    oops(el.phraseError, problem ?? '');
     el.phraseText.setAttribute('aria-invalid', String(Boolean(problem)));
-    el.phraseForm.querySelector('button[type="submit"]').disabled = Boolean(problem);
+    const start = el.phraseForm.querySelector('button[type="submit"]');
+    start.disabled = Boolean(problem);
+    const random = !phrase.trim();
+    start.classList.toggle('random', random);
+    start.setAttribute('aria-label', random ? 'Start game with a random phrase' : 'Start game');
     const size = phraseBoardSize(phrase);
     const tokens = tokenize(phrase, size);
     // Cards are updated in place so that typing only animates what changed.
@@ -526,15 +645,28 @@ export function mount(root, life) {
     const tile = event.target.closest('[data-mode]');
     if (!tile) return;
     if (tile.dataset.mode !== 'phrase') {
+      if (tile !== armed) {
+        arm(tile);
+        return;
+      }
+      disarm();
       startGame(tile.dataset.mode);
       return;
     }
+    disarm();
+    oops(el.gameError, '');
     history.pushState(null, '', '#phrase');
     showCompose(true);
   });
 
   el.phraseForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    const start = el.phraseForm.querySelector('button[type="submit"]');
+    if (start.classList.contains('random') && !start.hasAttribute('data-armed')) {
+      liftDie(true);
+      return;
+    }
+    liftDie(false);
     startGame('phrase', el.phraseText.value);
   });
 

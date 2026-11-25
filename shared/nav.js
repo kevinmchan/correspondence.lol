@@ -11,6 +11,7 @@
 // every address still opens directly (each path serves this same page).
 
 import { play } from '/postmarks/sound.js';
+import { screenUp } from './profile.js';
 import { newLife } from './screen.js';
 // (what is hidden on every screen, and the way through it: it listens for each screen as it arrives)
 import '/penny/tags.js';
@@ -79,6 +80,7 @@ async function show(url, { announce }) {
   stage.append(root);
   window.scrollTo(0, 0);
   current = { key: keyOf(url), screen, root, life };
+  screenUp(screen.name); // (the browser's bars, for the ground it stands on)
   module[screen.mount ?? 'mount'](root, life);
   // (Penny, who stands over all the screens, wants to know whose turn it is: penny/pal.js)
   window.dispatchEvent(new CustomEvent('screen', { detail: { name: screen.name, life, root } }));

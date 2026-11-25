@@ -65,7 +65,22 @@ export function applyTheme() {
   const choice = themeChoice();
   const dark = choice === 'dark' || (choice === 'auto' && systemDark.matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#161d24' : '#f6f1e7');
+  tintBars();
+}
+
+// The browser's own bars (Safari's, round the page) are the colour of the ground the screen that is up stands on: the
+// page's paper; and in the dark, on a room's screens, the warm evening a room stands in (room/room.css), not the page's
+// blue-black. shared/nav.js says which screen is up, before it is put to work (so that a screen with bars of its own,
+// the night or a room's drama, takes them from there, and puts them back).
+const EVENING = ['room', 'open', 'join'];
+let up = null;
+function tintBars() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', !dark ? '#f6f1e7' : EVENING.includes(up) ? '#1d1918' : '#161d24');
+}
+export function screenUp(name) {
+  up = name;
+  tintBars();
 }
 systemDark.addEventListener('change', applyTheme); // on 'auto', follow the device as it changes
 

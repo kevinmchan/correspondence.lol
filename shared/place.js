@@ -1,7 +1,8 @@
 // A room is a place: a building on the map, drawn in room/room.css. What is
 // drawn of it on more than one screen is made here: the colour it keeps, its
-// roof (the home page, and the room as seen by somebody not in it), and a
-// game as a small board lying on its table.
+// roof (the home page, and the room as seen by somebody not in it), a game as
+// a small board lying on its table, the line that says something went wrong
+// there, and the way in at its door.
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -26,34 +27,27 @@ function draw(tag, attributes = {}) {
   return node;
 }
 
-// A roof, seen from above: a slab in the room's colour with a solid edge down
-// its right side and along its underside, a shadow on the ground, and a mat at
-// its door. `kind` is how it is built: 0 a ridge from end to end, 1 hipped, 2
-// flat, with a garden. Drawn `wide` by `high`, in units of about a pixel.
-// `lit` is its skylight with the lights on; `bare` leaves the skylight and
-// the mat off, for where the page puts its own there.
+// A roof, seen from above: a soft slab in the room's colour (its shadow is
+// room/room.css's), and a mat at its door. `kind` is how it is built: 0 a
+// ridge from end to end, 1 hipped, 2 flat, with a parapet. Drawn `wide` by
+// `high`, in units of about a pixel. `lit` is its skylight with the lights
+// on; `bare` leaves the skylight and the mat off, for where the page puts its
+// own there.
 export function roof({ kind = 0, wide = 160, high = 92, lit = false, bare = false } = {}) {
   const svg = draw('svg', { viewBox: `0 0 ${wide} ${high}`, class: `roof k${kind}${lit ? ' lit' : ''}`, 'aria-hidden': 'true' });
   const s = high / 92; // everything on it is sized from its height
   const [x, y, w, h, r] = [1, 1, wide - 9 * s - 2, high - 18 * s - 2, 13 * s];
-  const slab = (dx, dy, name) => draw('rect', { x: x + dx, y: y + dy, width: w, height: h, rx: r, class: name });
   const mid = y + h / 2;
-  // the mat at its door, the shadow it throws, its edge, and the roof itself
-  svg.append(slab(9 * s, 11 * s, 'shade'));
+  // the mat at its door, and the roof itself
   if (!bare) svg.append(draw('rect', { x: x + w / 2 - 15 * s, y: y + h + 1 * s, width: 30 * s, height: 11 * s, rx: 2.5 * s, class: 'doormat' }));
-  svg.append(slab(5 * s, 6 * s, 'side'), slab(0, 0, 'top'));
+  svg.append(draw('rect', { x, y, width: w, height: h, rx: r, class: 'top' }));
   const top = `M${x} ${mid}V${y + r}Q${x} ${y} ${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${mid}Z`;
   if (kind === 2) {
-    // flat: a parapet round it, and a few squares of garden
+    // flat: a parapet round it
     svg.append(draw('rect', { x: x + 7 * s, y: y + 7 * s, width: w - 14 * s, height: h - 14 * s, rx: r - 5 * s, class: 'well' }));
-    for (const [gx, gy] of [[0, 0], [1, 0], [0, 1]]) svg.append(draw('rect', { x: x + 16 * s + gx * 15 * s, y: y + 15 * s + gy * 15 * s, width: 13 * s, height: 13 * s, rx: 3.4 * s, class: 'green' }));
   } else {
-    // two slopes: the far one catches the light. Courses of tiles across both.
+    // two slopes: the far one catches the light
     svg.append(draw('path', { d: top, class: 'far' }));
-    for (let i = 1; i < 6; i++) {
-      if (i === 3) continue;
-      svg.append(draw('path', { d: `M${x + 5 * s} ${y + (h * i) / 6}H${x + w - 5 * s}`, class: 'course', 'stroke-dasharray': `${13 * s} ${2.4 * s}`, 'stroke-dashoffset': i % 2 ? 0 : 7 * s, 'stroke-width': 1.6 * s }));
-    }
     const [a, b] = kind === 1 ? [x + h / 2, x + w - h / 2] : [x + 9 * s, x + w - 9 * s];
     if (kind === 1) {
       // hipped: the ridge stops short, and a hip runs from each end of it to the corners
@@ -62,14 +56,10 @@ export function roof({ kind = 0, wide = 160, high = 92, lit = false, bare = fals
         draw('path', { d: `M${x + 3 * s} ${y + 3 * s}L${a} ${mid}L${x + 3 * s} ${y + h - 3 * s}M${x + w - 3 * s} ${y + 3 * s}L${b} ${mid}L${x + w - 3 * s} ${y + h - 3 * s}`, class: 'hip', 'stroke-width': 2 * s }),
       );
     }
-    svg.append(
-      draw('path', { d: `M${a} ${mid}H${b}`, class: 'ridge', 'stroke-width': 4 * s }),
-      draw('path', { d: `M${a} ${mid - 1.4 * s}H${b}`, class: 'glint', 'stroke-width': 1.2 * s }),
-    );
-    // a chimney, with its own edge
+    svg.append(draw('path', { d: `M${a} ${mid}H${b}`, class: 'ridge', 'stroke-width': 4 * s }));
+    // a chimney
     const [cx, cy, c] = [x + w - 36 * s, y + 9 * s, 13 * s];
     svg.append(
-      draw('rect', { x: cx + 2.6 * s, y: cy + 3.2 * s, width: c, height: c, rx: 3 * s, class: 'pot-side' }),
       draw('rect', { x: cx, y: cy, width: c, height: c, rx: 3 * s, class: 'pot' }),
       draw('rect', { x: cx + 3.6 * s, y: cy + 3.6 * s, width: c - 7.2 * s, height: c - 7.2 * s, rx: 1.6 * s, class: 'flue' }),
     );
@@ -82,6 +72,51 @@ export function roof({ kind = 0, wide = 160, high = 92, lit = false, bare = fals
     draw('path', { d: `M${lx + 5 * s} ${ly + 13 * s}L${lx + 13 * s} ${ly + 5 * s}M${lx + 13 * s} ${ly + 14 * s}L${lx + 19 * s} ${ly + 8 * s}`, class: 'gleam', 'stroke-width': 1.8 * s }),
   );
   return svg;
+}
+
+// Something went wrong there (the server said no, or could not be reached):
+// a short line of its words beside what was tried, for as long as it stands,
+// and what was tried shakes, gently, once. (The owner's choice, 25 November
+// 2026: the words while they apply, not behind a mark to press.) `holder` is
+// the page's own role="alert" element, beside the thing that was tried and
+// after it, so that what was tried does not move for them (room/room.css says
+// where each lies); a screen reader says them at once too. `shake` is what
+// was tried (for somebody who has asked for less motion, nothing moves: the
+// words simply come). An empty `text` takes the line away again (once the
+// thing is tried again, or what was typed is changed); the same text again
+// changes nothing.
+const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+export function oops(holder, text, { shake = null } = {}) {
+  const said = text ?? '';
+  if (holder.textContent === said) return; // (nothing new to say, or nothing to take away: the page is left as it is)
+  holder.classList.add('oops');
+  holder.textContent = said;
+  // (a shake of the head: a few pixels either way, settling, in half a second)
+  if (said && shake && !still()) {
+    shake.animate([{ translate: '0' }, { translate: '-0.22rem 0' }, { translate: '0.18rem 0' }, { translate: '-0.1rem 0' }, { translate: '0' }], { duration: 480, easing: 'ease-in-out' });
+  }
+}
+
+// A way in (opening a room, joining one, a name at a room's door): its button
+// is held back until what it needs is there, `whole(value)` (so it is never
+// pressed for nothing, and nothing has to be said about that), and while it is
+// being tried; and what went wrong the last time goes once what was typed is
+// changed. Returns going(on), to say when it is being tried.
+export function door(form, input, error, whole) {
+  const button = form.querySelector('button[type="submit"]');
+  let trying = false;
+  const check = () => {
+    button.disabled = trying || !whole(input.value);
+  };
+  input.addEventListener('input', () => {
+    check();
+    oops(error, '');
+  });
+  check();
+  return (on) => {
+    trying = on;
+    check();
+  };
 }
 
 // A random number generator from a seed (mulberry32).
