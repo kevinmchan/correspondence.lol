@@ -604,7 +604,8 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
    room's name lettered on it (two lines at most, and then an ellipsis), and under that its face: a wide window and a
    door. The window is dark, and lit, gently, when something inside is waiting on you. Shops in a row are as tall as
    one another: one with a one-line name has a little more wall over its window. */
-.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.3rem 1rem; }
+/* (over the map's faint squares, which are drawn across the whole page: a shop is solid) */
+.street { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.3rem 1rem; }
 .street a {
   --shade: rgb(70 50 35 / 0.13);
   --board: color-mix(in oklab, var(--room, #9aa7b1) 56%, #f1e6d6); --eave: color-mix(in oklab, var(--room, #9aa7b1) 30%, #f6eee2);
