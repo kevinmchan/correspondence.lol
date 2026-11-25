@@ -173,6 +173,29 @@ async function main() {
       await idle();
     };
     const stored = (key) => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), key);
+    // What does not last long enough to be asked after, written down in the page as it happens, from now on: each
+    // mood Penny takes ('mood glad'), and on the map a square left ajar and shut again ('ajar', 'shut').
+    const watch = () => page.evaluate(() => {
+      window.__seen = [];
+      window.__seeing?.disconnect();
+      const board = document.querySelector('#walk-board');
+      const isAjar = () => Boolean(board?.querySelector('.cell.ajar'));
+      let ajar = isAjar();
+      window.__seeing = new MutationObserver((list) => {
+        for (const { target, attributeName, oldValue } of list) { // (in the order things happened)
+          if (attributeName === 'data-mood') {
+            if (target.dataset.mood !== oldValue) window.__seen.push(`mood ${target.dataset.mood}`);
+          } else if (isAjar() !== ajar) {
+            ajar = !ajar;
+            window.__seen.push(ajar ? 'ajar' : 'shut');
+          }
+        }
+      });
+      window.__seeing.observe(document.querySelector('.pal'), { attributes: true, attributeFilter: ['data-mood'], attributeOldValue: true });
+      if (board) window.__seeing.observe(board, { attributes: true, attributeFilter: ['class'], subtree: true });
+    });
+    // ...and what has been written down so far; or, given `last`, once that is in it
+    const seen = async (last = null, timeout = 15000) => (await page.waitForFunction((want) => (want === null || window.__seen.includes(want)) && window.__seen, last, { timeout })).jsonValue();
     // what a person could read on the screen (not what is there for screen readers only)
     const words = (selector) => page.evaluate((sel) => {
       const seen = [];
@@ -188,7 +211,7 @@ async function main() {
     const reading = () => page.locator('#taste-behind .taste-lab').evaluate((sheet) => [...sheet.querySelectorAll('p, blockquote, figcaption, dd, dt, h2, h3, summary, span, li')]
       .filter((one) => one.getClientRects().length && !one.closest('.sr-only') && [...one.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
       .map((one) => one.textContent.replace(/\s+/g, ' ').trim()));
-    return { pal, feeling, board, centre, tap, twice, open, idle, until, says, portalOpen, through, stored, words, reading };
+    return { pal, feeling, board, centre, tap, twice, open, idle, until, says, portalOpen, through, stored, watch, seen, words, reading };
   };
 
   // The question Penny's Radio asks, and what its reading is held to (README, "The question Penny's Radio asks"): it is
@@ -467,13 +490,24 @@ async function main() {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
       // place 1: one tap leaves the square ajar and Penny listens, and hears the post; two taps open it
+      // (The square is ajar for 500 ms; and the second time, with Penny holding its breath, for 650. On a busy machine
+      // a tap made from here has come back, and the question after it been put, later than that: asked 684 ms after
+      // the tap landed, the square had been shut for 180. So the page writes down what a tap brings, and that is
+      // read: nothing here is asked after by the clock.)
+      await page.waitForSelector('#walk-board .cell');
+      await h.watch();
       await h.tap(0);
-      assert.equal(await page.locator('#walk-board .cell.ajar').count(), 1, 'one tap leaves the square ajar');
+      assert.deepEqual((await h.seen('shut')).filter((one) => !one.startsWith('mood')), ['ajar', 'shut'], 'one tap leaves the square ajar');
       await h.says('right here');
-      await page.waitForFunction(() => !document.querySelector('#walk-board .cell.ajar'));
+      // (No sooner: the second time, two taps 650 ms apart are still a double tap. With nothing else for the machine to
+      // do the next tap used to land 541 to 553 ms after the last, and the post was opened here and not below:
+      // `holding` and `hopeful`, which were waited for, were moods of that.)
+      await sleep(600);
+      await h.watch();
       await h.tap(0);
-      await h.until('holding');
-      await h.until('hopeful'); // nothing came: the breath is let go
+      // it has heard the post there: ajar again, it holds its breath; and nothing came: shut, and the breath is let go
+      const second = await h.seen('mood hopeful');
+      assert.deepEqual(second.slice(second.indexOf('ajar')), ['ajar', 'mood holding', 'shut', 'mood hopeful']);
       await h.open(0);
       assert.equal(await h.board(), 'L');
       assert.ok(await h.portalOpen());
