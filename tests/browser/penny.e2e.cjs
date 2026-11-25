@@ -51,6 +51,15 @@ async function main() {
   const browser = await chromium.launch();
 
   // One check: its own window, its own storage. Any error on the page fails it.
+  // What a page put on the clipboard, as it wrote it. The clipboard itself is
+  // the machine's, one for every window: two checks that copy at the same time
+  // read each other's (a radio's data once came back as a music maker's link).
+  const keepsCopies = (page) => page.addInitScript(() => {
+    const write = navigator.clipboard.writeText.bind(navigator.clipboard);
+    navigator.clipboard.writeText = (text) => { window.__copied = text; return write(text); };
+  });
+  const copiedBy = (page) => page.evaluate(() => window.__copied ?? null);
+
   async function check(name, { storage = {}, viewport = PHONE, ...options }, run) {
     if (process.env.ONLY && !new RegExp(process.env.ONLY).test(name)) return null; // ONLY=regex runs the checks it names
     const started = Date.now();
@@ -496,6 +505,7 @@ async function main() {
     }),
 
     check('the music maker: a beat can be saved, renamed and shared, and a shared one opens on the board without losing what was there', { permissions: ['clipboard-read', 'clipboard-write'] }, async (page) => {
+      await keepsCopies(page); // (what this page copies, not whatever another window copied last)
       const stored = (key) => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), key);
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
@@ -514,7 +524,7 @@ async function main() {
       await page.evaluate(() => { delete Navigator.prototype.share; });
       await page.locator('#jam-share').click();
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
-      const link = await page.evaluate(() => navigator.clipboard.readText());
+      const link = await copiedBy(page);
       assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{39}$/);
       // something else is made, not saved; then the link is opened
       await page.locator('.jam-board .pad').nth(40).click();
@@ -883,6 +893,7 @@ async function main() {
     }),
 
     check('the radio, under way: the reading says where the test stands the same way however it stands; the data is copied; starting over asks first; a preset opens in the music maker', { storage: { 'radio:taught:v1': true, 'radio:story:v1': 'told', 'jam:taste:v1': radios.underWay }, permissions: ['clipboard-read', 'clipboard-write'] }, async (page, h) => {
+      await keepsCopies(page); // (what this page copies, not whatever another window copied last)
       await page.goto(`${origin}/jam/?taste`);
       await page.waitForSelector('.radio .presets i.lit');
       // the presets: each station saved, as its picture and its place on the dial, the latest first, and nothing else to read
@@ -906,7 +917,7 @@ async function main() {
       // the data, copied out: said on the button, and back after a while
       await page.locator('#taste-copy').click();
       await page.waitForFunction(() => document.querySelector('#taste-copy').textContent === 'Copied', null, { timeout: 3000 });
-      const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()));
+      const copied = JSON.parse(await copiedBy(page));
       assert.equal(copied.trials.length, 12);
       assert.equal(copied.standing.picks, 12);
       await page.waitForFunction(() => document.querySelector('#taste-copy').textContent === 'Copy the data', null, { timeout: 4000 });
