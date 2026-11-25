@@ -2947,7 +2947,15 @@ async function main() {
         return { copy: c / n, film: f / n, world: copy?.dataset.paint };
       }),
       // whether the portal is left out of the copy and the film (it belongs to neither world): of points inside its
-      // ring, and of points just beyond it, how many each covers (round the way a passage faces, or else below it)
+      // ring, all the way round, and of points just beyond it (the way a passage faces, or else below it), how many
+      // each covers.
+      // (Not points on the seam itself. The copy and the film are cut along the seam's two edges, which meet at the
+      // middle of the portal, and their shapes are written to a tenth of a pixel: so along an edge, inside the ring,
+      // a hair of a world less than a tenth of a pixel wide may lie over the portal, or be missing beside it. The
+      // points once stood at fixed angles, 0.3 radians either side of the way the passage faces; and 600 ms in, the
+      // seam is from 0.24 to 0.35 radians open each side, by the way it happens to lean and where the look falls
+      // between two frames: now and then its edge lay under them, and the hair was counted as the portal covered.
+      // Points within 0.3 px of where the shapes are cut are left out, where the seam is at that look, and no others.)
       holed: () => page.evaluate(() => {
         const root = document.querySelector('.screen-room');
         const ctx = document.createElement('canvas').getContext('2d');
@@ -2965,7 +2973,16 @@ async function main() {
         const edges = [...root.querySelectorAll('.worlds-splice.edge')].map((edge) => Number(edge.style.transform.match(/rotate\(([-\d.]+)rad\)/)?.[1]) + Math.PI / 2);
         const [mid, half] = edges.length === 2 ? [(edges[0] + edges[1]) / 2, Math.abs(edges[1] - edges[0]) / 2] : [Math.PI / 2, 0.5];
         const at = (d, a) => [o.x + d * Math.cos(a), o.y + d * Math.sin(a)];
-        const inner = [0.35, 0.65, 0.9].flatMap((k) => [-0.3, 0, 0.3].map((da) => at(k * o.r, mid + da)));
+        // where the shapes are cut, from the middle of the portal: the seam's two edges; and, where a part is more than
+        // half a turn and so is made of two pieces, the line they join along (room/worlds.js, within)
+        const cuts = edges.length === 2 ? [mid - half, mid + half, half > Math.PI / 2 ? mid : mid + Math.PI] : [];
+        const clear = ([x, y]) => cuts.every((a) => {
+          const [along, off] = [(x - o.x) * Math.cos(a) + (y - o.y) * Math.sin(a), (x - o.x) * Math.sin(a) - (y - o.y) * Math.cos(a)];
+          return along < 0 || Math.abs(off) > 0.3;
+        });
+        // (the way the passage faces and 0.3 radians either side of it, as ever; and eleven more places round the ring)
+        const round = [-0.3, 0, 0.3, ...Array.from({ length: 11 }, (_, i) => ((i + 1) * Math.PI) / 6 + 0.1)];
+        const inner = [0.35, 0.65, 0.9].flatMap((k) => round.map((da) => at(k * o.r, mid + da))).filter(clear);
         const outer = [-0.4, 0, 0.4].map((k) => at(o.r + 10, mid + k * Math.min(half, 0.5))); // (inside the seam's opening)
         const count = (el, points, dx, dy) => {
           const it = shape(el);
@@ -3069,6 +3086,7 @@ async function main() {
           const drama = way === 'in' ? one.copy : 1 - one.copy;
           assert.ok(Math.abs(one.film - drama) < 0.03, `${way}, ${one.at} ms: the film is over the drama's part, and only that (${what})`);
           const { copy: c, film: f, points } = one.holed;
+          assert.ok(points.inner >= 36, `${way}, ${one.at} ms: the portal was looked at all the way round (${JSON.stringify(one.holed)})`);
           assert.deepEqual([c.inner, f.inner], [0, 0], `${way}, ${one.at} ms: the portal is in neither world: the copy and the film leave it out (${JSON.stringify(one.holed)})`);
           if (one.at >= 600) assert.deepEqual([c.outer, f.outer], [way === 'in' ? points.outer : 0, points.outer], `${way}, ${one.at} ms: ...and only it: just beyond it, below, the drama (${JSON.stringify(one.holed)})`);
         });
