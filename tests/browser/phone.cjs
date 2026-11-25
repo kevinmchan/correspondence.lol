@@ -59,6 +59,45 @@ const listed = (over) => ({ id: '33333333-3333-4333-8333-333333333333', kind: 'p
 // What the server says of a room (room_get).
 const roomSays = (id, name, games = []) => ({ id, name, code: 'K7M2QP', you: 0, members: PEOPLE.map((one) => one.name), people: PEOPLE, messages: [], games });
 
+// Penny's Radio as somebody has played it, kept as jam/taste.js keeps it on the
+// device (jam:taste:v1). The picks are made by a simulated taster, as in
+// tests/taste.test.js: somebody who likes a fast tempo, drums, a low tune and
+// no silences (as much as `taste` says: 0 is no taste at all), and leans a
+// little towards the station already kept. They pick until enough(standing,
+// state) says so (standing() of jam/taste-model.js, after each pick), and
+// never more than `most` times. With `restart`, they then start over (the
+// stake carries on) and make that many picks more. The same seed, the same radio.
+async function radioPlayed(enough, { seed = 6, most = 400, taste = 1, restart = null } = {}) {
+  const { FEATURES, begin, choose, features, standing, startOver } = await import('../../jam/taste-model.js');
+  const { encode } = await import('../../jam/beat.js');
+  const seeded = (start) => {
+    let a = start >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+  const likes = [];
+  for (const [name, much] of [['tempo', 4], ['drums', 3], ['bellsHigh', -4], ['space', -3]]) likes[FEATURES.findIndex((one) => one.key === name)] = much * taste;
+  const like = (beat) => features(beat).reduce((sum, value, i) => sum + value * (likes[i] ?? 0), 0);
+  const [random, own] = [seeded(seed), seeded(seed + 1000)];
+  const pick = (state) => {
+    const { front, back, reigning } = state.current;
+    const z = like(front) - like(back) + (reigning === 'front' ? 0.3 : reigning === 'back' ? -0.3 : 0);
+    choose(state, own() < 1 / (1 + Math.exp(-z)) ? 'front' : 'back', random);
+  };
+  let state = begin(random);
+  for (let i = 0; i < most && !enough(standing(state.trials, state.carried), state); i++) pick(state);
+  if (restart !== null) {
+    state = startOver(state, random, { at: 1795000000000, version: 'v1.1.60' });
+    for (let i = 0; i < restart; i++) pick(state);
+  }
+  const pack = (pair) => ({ ...pair, front: encode(pair.front), back: encode(pair.back), phantom: encode(pair.phantom) });
+  return { v: 1, streak: state.streak, retired: state.retired.map(encode), trials: state.trials.map(pack), current: pack(state.current), carried: state.carried, restarts: state.restarts };
+}
+
 // A page of the app on one of the phones.
 //   storage: what is on the device ({ key: value }), put there once
 //   server(name, args): what the server answers to a call of its function `name`;
@@ -170,4 +209,4 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
   }, { safe: insets, skip: ignore });
 }
 
-module.exports = { ROOT, PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays };
+module.exports = { ROOT, PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };

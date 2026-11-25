@@ -135,10 +135,15 @@ export function mount(root, life) {
 
   function showName() {
     if (renaming) return; // do not pull the field out from under someone typing
+    // (Only when it is not there already as it should be. The poll comes round every few seconds with the same room:
+    // were the name's button made again each time, whoever had the keyboard on it would lose their place, and a
+    // finger pressing it when the poll came would let go of another button, which is no tap at all.)
+    const there = el.name.firstElementChild;
     if (room.you === null) {
-      el.name.textContent = room.name;
+      if (there || el.name.textContent !== room.name) el.name.textContent = room.name;
       return;
     }
+    if (el.name.childNodes.length === 1 && there?.matches('button.rename') && there.textContent === room.name) return;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'rename';
