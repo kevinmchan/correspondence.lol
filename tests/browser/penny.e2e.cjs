@@ -815,10 +815,40 @@ async function main() {
         await page.mouse.move(x - 60, y, { steps: 4 });
         await page.mouse.up();
       };
-      const doubleTap = async () => {
-        await page.mouse.click(x, y);
-        await sleep(90);
-        await page.mouse.click(x, y);
+      // Two taps, 90 ms apart, as a person makes them: and what the radio made of them, asked of the page and not of
+      // the clock. Each press and each lift is a message to the browser, and on a busy machine they arrive late: the
+      // second tap has come 398 and 407 ms after the first, where the radio counts two taps as one for 380, and it
+      // then rightly took them for two taps and kept nothing and refused nothing. And what it does answer does not
+      // stand to be read: its "not yet" is on the sign for half a second (the radio tunes to the station not heard
+      // yet, and the order to listen to that one comes 500 ms after), which a check that looks 250 ms later, on a
+      // machine that is late, has found already gone. So the page keeps what it was given and every order hung
+      // since, with the words for a screen reader as they were then. `answered` says whether the radio took the two
+      // taps as one. Two that were quick and were not taken fail the check; two the machine stretched are made again.
+      const doubleTap = async (answered) => {
+        for (let tries = 1; ; tries++) {
+          await page.evaluate(() => {
+            if (!window.__hand) {
+              for (const type of ['pointerdown', 'pointerup']) window.addEventListener(type, () => window.__hand.push({ type, at: performance.now() }), true); // (the radio times a tap as it is handled)
+              new MutationObserver(() => window.__hand.push({ type: 'order', order: document.querySelector('#dash-sign [data-order]')?.dataset.order ?? '', note: document.querySelector('#taste-note').textContent, at: performance.now() }))
+                .observe(document.querySelector('#dash-sign'), { childList: true });
+            }
+            window.__hand = [];
+          });
+          await page.mouse.click(x, y);
+          await sleep(90);
+          await page.mouse.click(x, y);
+          // (the radio answers a tap as it lands, and the order it hangs is on record in the same turn)
+          const seen = await page.evaluate(() => ({ hand: window.__hand, kept: JSON.parse(localStorage.getItem('jam:taste:v1')).trials.length }));
+          const downs = seen.hand.filter((one) => one.type === 'pointerdown');
+          const ups = seen.hand.filter((one) => one.type === 'pointerup');
+          // what was hung once the second tap had landed: the first of them is the radio's answer to it
+          seen.orders = ups.length === 2 ? seen.hand.slice(seen.hand.indexOf(ups[1]) + 1).filter((one) => one.type === 'order') : [];
+          if (answered(seen)) return seen;
+          const quick = downs.length === 2 && ups.length === 2 && ups[1].at - ups[0].at < 200 && ups.every((up, i) => up.at - downs[i].at < 200);
+          assert.ok(!quick, `two quick taps on the display were not taken as a double tap (${JSON.stringify(seen.hand.filter((one) => one.type !== 'order').map((one) => Math.round(one.at - seen.hand[0].at)))} ms)`);
+          assert.ok(tries < 8, `the machine is too slow to make a double tap on the display: ${tries} tries`);
+          await sleep(1000); // at least: the slow taps are forgotten before the next two
+        }
       };
       const turned = () => page.evaluate(() => document.querySelector('.taste-card').classList.contains('turned'));
       const kept = () => page.evaluate(() => JSON.parse(localStorage.getItem('jam:taste:v1')));
@@ -829,25 +859,30 @@ async function main() {
       assert.equal(await turned(), !was, 'a swipe did not tune to the other station');
       await says('listen');
       // too soon: neither station has been listened to. The refusal is that one's, and has no reason in it
-      await doubleTap();
+      const refused = await doubleTap((seen) => seen.orders.some((one) => one.order === 'not-yet') || seen.kept > 0); // (refused; or, wrongly, kept)
       await sleep(250);
       assert.equal((await kept()).trials.length, 0, 'a station was kept before both had been heard');
-      assert.equal(await tape(), 'not-yet');
-      assert.match(await page.locator('#taste-note').textContent(), /Tune to|Stay on/, 'a screen reader is still told what to do');
+      assert.equal(refused.orders[0]?.order, 'not-yet');
+      assert.match(refused.orders[0].note, /Tune to|Stay on/, 'a screen reader is still told what to do');
       assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
       assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
       // listened to both: the order is to keep one, and it does not say which
+      // (Which station has been heard is asked of the radio. The refusal tunes to a station not heard yet; when the
+      // double tap had to be made again, the one that was up had been heard through by then, and the radio is now on
+      // the other: the order is to listen, there is no "the other one" to wait for, and a swipe would leave it.)
+      const onlyThisHeard = () => page.evaluate(() => Boolean(document.querySelector('.taste-card .face.tuned.heard')) && document.querySelectorAll('.taste-card .face.heard').length < 2);
       const pickOne = async () => {
         await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
-        if ((await page.locator('.taste-card .face.heard').count()) < 2) await swipe();
+        if (await onlyThisHeard()) await swipe();
         await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
         const up = (await turned()) ? 'back' : 'front';
-        await doubleTap();
+        const had = (await kept()).trials.length;
+        await doubleTap((seen) => seen.kept > had);
         await sleep(250);
         return up;
       };
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
-      if ((await page.locator('.taste-card .face.heard').count()) < 2) await says('other');
+      if (await onlyThisHeard()) await says('other');
       const first = await pickOne();
       assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: that is all there was to show');
       let data = await kept();
