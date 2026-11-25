@@ -1546,6 +1546,32 @@ async function main() {
         ].map((body) => STARTED.test(body));
       });
       assert.deepEqual(started, [true, true, true, true, true, true, true, true, false, false, false, false, false, false, false, false]);
+      // the room is asked for again every so often (a poll; the socket saying something changed; the phone back
+      // online), and is mostly the same room: what has not changed stays as it is. Here somebody's name has changed, and
+      // the room's has not: its button is the one it was, not another like it. So the keyboard keeps its place on it;
+      // and a finger that was pressing it as the answer came is pressing it still, and letting go is a tap. (It was once
+      // made again every time: the focus fell to the page, and a press held across it let go of another button, and was
+      // lost.)
+      const again = async (name) => {
+        people[1].name = name;
+        await page.evaluate(() => window.dispatchEvent(new Event('online')));
+        await page.waitForFunction((want) => document.querySelector('#members .seat:not(.you) .name')?.textContent === want, name, { timeout: 5000 });
+      };
+      const title = page.locator('#room-name button.rename');
+      await title.focus();
+      await page.evaluate(() => { window.nameWas = document.querySelector('#room-name button.rename'); });
+      const spot = await title.boundingBox();
+      await page.mouse.move(spot.x + spot.width / 2, spot.y + spot.height / 2);
+      await page.mouse.down();
+      await again('Adah');
+      assert.equal(await page.evaluate(() => document.querySelector('#room-name button.rename') === window.nameWas), true, 'the room asked for again: the name\'s button is the one it was');
+      assert.equal(await page.evaluate(() => document.activeElement === window.nameWas), true, 'and the keyboard is still on it');
+      await page.mouse.up();
+      await page.waitForSelector('#room-name form.rename input', { timeout: 2000 }); // (a press held meanwhile is a tap: the name is a field)
+      await page.locator('#room-name input').press('Escape');
+      assert.equal(await title.textContent(), 'Book club');
+      await page.evaluate(() => document.activeElement.blur());
+      await again('Ada');
       // a tile: one tap lifts it and starts nothing; a tap elsewhere sets it down; the second tap starts the game
       await page.locator('#modes [data-mode="coop"]').click();
       assert.equal(await page.locator('#modes [data-mode="coop"][data-armed]').count(), 1);
