@@ -2534,6 +2534,36 @@ async function main() {
       await sleep(1500);
       assert.deepEqual(await reads(), { count: 242, fill: 2 / 240, kept: 242, sparks: 0, meadow: true }, 'a post found again earns nothing');
     }),
+    // The second bar filled: the owner's thanks, in words, once, before the sheet at the end of the game.
+    check('energy: the second bar filled brings the owner\'s thanks, once, before the end of the game', { storage: { 'postmarks:howto:v1': true, 'correspondence:energy:v1': { earned: 472, spent: 0, boards: [] } } }, async (page) => {
+      const { newGame } = await import('../../postmarks/game.js');
+      const game = newGame({ size: 5, seed: 4, players: ['You'] });
+      await page.goto(`${origin}/`);
+      await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
+      await page.goto(`${origin}/postmarks/`);
+      await page.waitForSelector('#energy:not([hidden])');
+      await page.evaluate(() => document.querySelector('dialog[open]')?.close());
+      const open = (row) => page.locator(`#board .cell[data-cell="${row * game.size + game.solution[row]}"]`).dblclick();
+      for (let row = 0; row < game.size - 1; row++) { await open(row); await sleep(300); }
+      await sleep(2500);
+      assert.equal(await page.locator('dialog.thanks').count(), 0, 'not before the bar is full');
+      await open(game.size - 1);
+      await page.waitForSelector('dialog.thanks[open]', { timeout: 15000 });
+      assert.equal((await page.locator('dialog.thanks p').innerText()).trim(), 'Speedy! Thanks for being an early tester. We\u2019re working on your prize 🤍');
+      assert.equal(await page.locator('dialog.finale[open]').count(), 0, 'the end of the game waits for it');
+      await page.locator('dialog.thanks .start').click();
+      await page.waitForSelector('dialog.finale[open]', { timeout: 6000 });
+      assert.equal(await page.locator('dialog.thanks').count(), 0);
+      // and only the once
+      await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 472, spent: 0, boards: [] })));
+      await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
+      await page.reload();
+      await page.waitForSelector('#energy:not([hidden])');
+      await page.evaluate(() => document.querySelector('dialog[open]')?.close());
+      for (let row = 0; row < game.size; row++) { await open(row); await sleep(300); }
+      await page.waitForSelector('dialog.finale[open]', { timeout: 15000 });
+      assert.equal(await page.locator('dialog.thanks').count(), 0, 'not a second time');
+    }),
     // At home, under the play button, the same bar; the meadow at its end grey until it is earned, then a toggle that a
     // room follows: worn from the moment it is earned, taken off and put back on, and kept on the device.
     check('the meadow: grey at the end of the bar until it is earned; then worn by every room, and taken off and put back at home', { storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', 'correspondence:energy:v1': { earned: 100, spent: 0, boards: [] } } }, async (page) => {

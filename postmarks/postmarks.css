@@ -418,6 +418,12 @@ button.round:disabled { opacity: 0.35; }
 
 .howto .start svg { width: 1.3rem; height: 1.3rem; }
 
+/* The second bar's thanks (ui.js, thanks): the meadow, the owner's words, and a heart to go on. */
+.howto.thanks { padding: 1.5rem 1.25rem 1.25rem; }
+.howto.thanks .thanks-meadow { display: block; width: 3.5rem; height: 3.5rem; margin: 0 auto 0.9rem; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper), 0 0 1rem 0.15rem rgb(180 224 149 / 0.7); }
+:root[data-theme="dark"] .howto.thanks .thanks-meadow { --m-grout: #2a4a2e; --m-grass: #3d6a3e; --m-sun: #f3e3a8; --m-rays: rgb(243 227 168 / 0.3); }
+.howto.thanks p { margin: 0 0 1.2rem; font-size: 1.0625rem; line-height: 1.45; text-wrap: balance; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* crosses arrive one after another, hold, then the picture starts over */
   .howto .mini .cross::after {

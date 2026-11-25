@@ -420,6 +420,8 @@ export function mount(root, life) {
   // it lands; a board finished sends a shower of them. A bar filled flares, the
   // first time the meadow blooms in colour, and it begins again.
   let energy = readEnergy(load(ENERGY_KEY));
+  const THANKS_KEY = 'correspondence:thanks:v1'; // the second bar's thanks, once shown
+  const THANKS = 'Speedy! Thanks for being an early tester. We\u2019re working on your prize 🤍';
   const meter = { board: null, fill: 0 }; // what the meter shows now
   let landing = Promise.resolve(); // sparks land one after another
   const mark = el.energy.querySelector('.meadow-mark');
@@ -520,11 +522,13 @@ export function mount(root, life) {
       save(ENERGY_KEY, energy);
     }
     const count = held(energy);
+    // the second time the bar fills: a word of thanks, once (the owner's words, 25 November 2026)
+    const second = now.gained && energy.earned - now.gained < 2 * BAR && energy.earned >= 2 * BAR && !load(THANKS_KEY);
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
-      landing = Promise.resolve();
       showMeter(count, energy.earned, false);
+      landing = second ? thanks() : Promise.resolve();
       return;
     }
     const before = energy.earned - now.gained;
@@ -544,7 +548,31 @@ export function mount(root, life) {
         if (life.over) return;
         replay(el.energy, 'full');
         await fillTo(count, afterPosts, energy.earned);
+        if (life.over) return;
       }
+      if (second) await thanks();
+    });
+  }
+
+  // A sheet with the owner's thanks, for the second bar filled: words, by the owner's leave, and a heart to go on.
+  // Resolves when it is closed. Kept as seen at once, so it comes only the once.
+  function thanks() {
+    save(THANKS_KEY, true);
+    return new Promise((done) => {
+      const sheet = document.createElement('dialog');
+      sheet.className = 'howto thanks';
+      sheet.setAttribute('aria-labelledby', 'thanks-words');
+      sheet.innerHTML = `<svg class="thanks-meadow" viewBox="0 0 40 40" aria-hidden="true"><use href="#meadow-glimpse"/></svg>
+        <p id="thanks-words">${THANKS}</p>
+        <button type="button" class="start" aria-label="On with the game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z" fill="currentColor"/></svg></button>`;
+      const close = () => sheet.close();
+      sheet.querySelector('.start').addEventListener('click', close);
+      sheet.addEventListener('click', (event) => { if (event.target === sheet) close(); });
+      sheet.addEventListener('close', () => { sheet.remove(); done(); }, { once: true });
+      life.onEnd(() => sheet.remove());
+      document.body.append(sheet);
+      sheet.showModal();
+      sheet.querySelector('.start').focus();
     });
   }
 

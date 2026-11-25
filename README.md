@@ -269,7 +269,11 @@ and a firefly for the butterfly). It is paint only, as the drama is: nothing
 that can be pressed moves or changes size, and the drama through the portal is
 the drama still. On the home page the glimpse is then a toggle (pressed, with a
 soft ring of light): it takes the meadow off and puts it back on, and the
-choice is kept on the device. What later bars are for is not decided.
+choice is kept on the device. The second time the bar fills, a sheet over
+the game says, in the owner's words, "Speedy! Thanks for being an early
+tester. We're working on your prize 🤍", with the meadow over it and a heart
+to go on; once, and before the sheet at the end of the game. What later bars
+are for is not decided.
 
 A bigger board earns more; a faster one no more;
 hints are free; a board played again earns only for what it has not earned
