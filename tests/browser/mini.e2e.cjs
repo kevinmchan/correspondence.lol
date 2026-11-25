@@ -156,6 +156,8 @@ async function states() {
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
     { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
+    // (Play at the head of the page, the face in its corner, and the portal at its foot beside Penny: the lobby with a street of rooms is the longest the page gets)
+    { name: 'home, the lobby, at its foot', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li', then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '#portal' },
     { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
     { name: 'home, the feed with nothing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },

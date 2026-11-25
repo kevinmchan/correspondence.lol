@@ -385,7 +385,7 @@ window.addEventListener('screen', (event) => {
 
 // --- Kept on the home page ---------------------------------------------------------------
 // What has been found is on the home page's map from then on, small, in the
-// corner across from the portal: a touch goes through it.
+// top left corner, across from your face: a touch goes through it.
 export function showKept(root) {
   const main = root.querySelector('main');
   for (const [index, tag] of TAGS.filter((each) => hasFound(each.name)).entries()) {

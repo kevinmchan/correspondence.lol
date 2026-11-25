@@ -473,9 +473,13 @@ async function main() {
       let it = await pal();
       assert.ok(['peek', 'low'].includes(it.height), `at rest Penny waits low, not ${it.height}`);
       assert.equal(it.alone, true, 'Dot has not been found yet');
-      await page.waitForFunction(() => Number(document.querySelector('.pal').style.getPropertyValue('--x')) < 0.3, null, { timeout: 15000 });
+      // (the portal is at the foot of the page, on the left: Penny comes over from 0.7 to stand beside it, clear of it)
+      await page.waitForFunction(() => Number(document.querySelector('.pal').style.getPropertyValue('--x')) < 0.5, null, { timeout: 15000 });
       it = await pal();
       assert.ok(['up', 'peek'].includes(it.height), 'Penny has come up to show the portal');
+      await sleep(900); // (the walk over)
+      const clear = await page.evaluate(() => document.querySelector('.pal-penny').getBoundingClientRect().left - document.querySelector('#portal').getBoundingClientRect().right);
+      assert.ok(clear >= 0, `Penny stands over the portal it is showing, by ${-clear}px`);
       assert.deepEqual((await words('.pal')).filter((text) => text !== '♥'), [], 'nothing written in Penny\'s layer');
       await page.locator('#portal').click({ force: true });
       await page.waitForURL(/\?walk/);

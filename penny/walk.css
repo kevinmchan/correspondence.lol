@@ -206,7 +206,8 @@
 .home-map.map-far { --fade: radial-gradient(circle at var(--lit-x) var(--lit-y), #000 0, rgb(0 0 0 / 0.8) 3rem, rgb(0 0 0 / 0.3) 9rem); }
 /* the portal takes up one block of sixteen squares */
 /* (on a phone with a notch it comes down clear of it) */
-.home-portal { position: absolute; z-index: 1; left: calc(0.875rem + 3px); top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem)); width: calc(3.5rem - 6px); }
+/* (at the foot of the page, on the left, where Penny stands on the right: above the version) */
+.home-portal { position: absolute; z-index: 1; left: calc(0.875rem + 3px); bottom: calc(env(safe-area-inset-bottom, 0px) + 2rem); width: calc(3.5rem - 6px); }
 /* the page ends above Penny's head, so that nothing has to be read or pressed through it */
 .screen-home main { padding-bottom: calc(var(--pal-w) * 0.6 + env(safe-area-inset-bottom, 0px) + 1.2rem); }
 
