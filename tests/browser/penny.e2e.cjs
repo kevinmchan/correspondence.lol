@@ -1347,6 +1347,13 @@ async function main() {
       // with one phantom, is bet on by that rule)
       await listenToBoth(page);
       await h.watch(); // (Penny's moods, from here on)
+      // ...and the lamp's: lit, and marked as lighting for the 3.4 s its glow takes. That mark was asked after too,
+      // four questions on from the pick: 0.07 to 2.5 s after it on a busy machine, and once, by then, it had gone.
+      await page.evaluate(() => {
+        window.__lamp = [];
+        const meter = document.querySelector('#radio-meter');
+        new MutationObserver(() => window.__lamp.push([meter.classList.contains('lit'), meter.classList.contains('lighting')])).observe(meter, { attributes: true, attributeFilter: ['class'] });
+      });
       await keepOne(page, 'front');
       const crossed = (await keptOn(page)).trials.at(-1);
       assert.equal(crossed.pick, 'front');
@@ -1360,7 +1367,9 @@ async function main() {
       assert.ok(Math.abs(now.stake - 1.3 ** 11 * 1.4) < 1e-9);
       m = await meterOf(page);
       assert.equal(m.now, valueOf(now.stake));
-      assert.deepEqual([m.lit, m.lighting], [true, true], 'the lamp comes on');
+      const lamp = await page.evaluate(() => window.__lamp); // [lit, lighting], each time the meter's classes changed
+      assert.deepEqual(lamp, [[true, true], [true, false]].slice(0, lamp.length || 1), 'the lamp comes on');
+      assert.equal(m.lit, true, 'and stays on');
       assert.match(m.text, /significant since pick 13/);
       assert.match(await page.locator('#radio-story').textContent(), /lamp on the meter has come on/, 'and a screen reader is told');
       assert.equal(await page.locator('#radio-meter .g-needle').evaluate((needle) => needle.getAnimations().length), 0, 'the needle swung');
