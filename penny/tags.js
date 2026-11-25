@@ -205,8 +205,10 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
   let at = null; // where it is: a square of the map as [column, row], or a place on the page as [column, row] of a grid of its own
   let nowhere = -Infinity; // when the screen was last looked over and found to have no place for it
   const since = performance.now();
-  // What of the page is at a point of the window, the mark itself and Penny's layer aside.
-  const under = (x, y) => document.elementsFromPoint(x, y).find((element) => !mark.contains(element) && !element.closest('.pal, .pal-air')) ?? null;
+  // What of the page is at a point of the window, the mark itself and Penny's layer aside; and whatever is inert, which
+  // is not the page but a picture laid over it (a room's other world, laid over the room as a copy of it while the two
+  // are crossing: room/worlds.js), with nothing there to press.
+  const under = (x, y) => document.elementsFromPoint(x, y).find((element) => !mark.contains(element) && !element.closest('.pal, .pal-air, [inert]')) ?? null;
   const ground = (element) => element === main || Boolean(element?.matches?.(GROUND));
 
   function place() {
@@ -229,9 +231,11 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
     const play = board()?.getBoundingClientRect();
     const penny = document.querySelector('.pal:not([data-height="gone"]) .pal-penny')?.getBoundingClientRect();
     const drawn = [...main.querySelectorAll(THROUGH)].map((each) => each.getBoundingClientRect());
-    // everything else there is to press, as a finger has it: by its box
+    // everything else there is to press, as a finger has it: by its box. (Not what is inert: nothing there can be
+    // pressed. A copy of the page laid over it holds a copy of the mark, exactly over the mark: counted, it would
+    // move the mark off itself every second.)
     const pressed = [...document.querySelectorAll(PRESSED)]
-      .filter((each) => each !== mark && !each.closest('.pal, .pal-air, template, .screen.leaving') && getComputedStyle(each).visibility !== 'hidden')
+      .filter((each) => each !== mark && !each.closest('.pal, .pal-air, template, .screen.leaving, [inert]') && getComputedStyle(each).visibility !== 'hidden')
       .map((each) => each.getBoundingClientRect())
       .filter((box) => box.width > 0 && box.height > 0);
     const over = (left, top, box, by) => Math.min(left + size, box.right) - Math.max(left, box.left) > by && Math.min(top + size, box.bottom) - Math.max(top, box.top) > by;

@@ -291,8 +291,21 @@ export function twoWorlds(root, life, portal) {
     const [gone, come] = [change.removedNodes, change.addedNodes];
     return gone.length !== come.length || [...come].some((node, i) => !node.isEqualNode(gone[i]));
   };
+  // The night's hidden mark (penny/tags.js) is put down, and glints, on its own clock: what changes on it is put on its
+  // twin in the copy as it changes, rather than the whole page being copied again for it.
+  const mirror = (change) => {
+    if (change.type !== 'attributes' || !change.target.closest?.('.tag-hidden')) return false;
+    const twin = twinOf(change.target);
+    if (!twin) return false; // (not in the copy yet: it is copied with the rest)
+    const value = change.target.getAttribute(change.attributeName);
+    if (twin.getAttribute(change.attributeName) !== value) {
+      if (value === null) twin.removeAttribute(change.attributeName);
+      else twin.setAttribute(change.attributeName, value);
+    }
+    return true;
+  };
   const watch = new MutationObserver((seen) => {
-    if (copy && seen.some(real)) refill();
+    if (copy && seen.filter((change) => !mirror(change)).some(real)) refill();
   });
   function refill() {
     if (refilling || !copy) return;

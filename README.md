@@ -961,58 +961,119 @@ A solo game needs no room and is saved in the browser only.
 **A room is a place.** It is drawn as a building on the map, seen from above
 like everything else in the game (`room/room.css`, `shared/place.js`). Each
 room keeps one of the game's seven colours and one of three roofs (a ridge,
-hipped, or flat with a garden), chosen from its id, so it is the same
+hipped, or flat with a parapet), chosen from its id, so it is the same
 building wherever it is drawn.
 
+**A room is quiet.** It should feel like a warm room in the evening: soft,
+low colours (the room's own softened towards dusk, and the dark theme a warm
+dark, never black), round shapes in soft shadow rather than hard edges,
+nothing patterned, room between things, and slow movement or none. In the
+dark the whole of a room's screens is that evening, past the ends of the page
+too, and the browser's bar is tinted to match. One thing in it is loud, and
+only one: what is waiting on you. A person should see in half a second
+whether the room needs them. Nothing is written that the room can show
+instead; what a word said is kept for screen readers. The words left on a
+room are its content: names, notes, the code.
+
 - **Inside**, the roof is off. The walls are in the room's colour and the
-  floor is the map's own squares. Its name is the map's label for it, pinned
-  over the wall. The people in it are tokens at the head of a table, with
-  their names over them. The games lie on the table as small boards, each on a
-  slip that says where it stands, with a red pin on one that is yours to
-  play, a tick on one that is solved, and the board greyed when it is lost.
-  The boards are not the games' own districts: a room is not told those, as
-  they would give the game away. They are made from the game's id, the same
-  each time, so a game keeps its face. Three tiles start a game. The chat is
-  notes passed across a rug. At the door there is a bell (notifications) and
-  the mat, with the code friends join with, and a bush either side.
-- **Writing a pass phrase** is the same room, at its writing desk.
+  floor is plain. Its name is the map's label for it, written over the
+  building. The people in it are tokens at the head of a table, with their
+  names over them. The games lie on the table as small boards, with nothing
+  written on them. A game that is yours to play lies nearest, on a line of
+  its own: the one board in its full colours, lifted, in a pool of lamplight,
+  with a red seal that breathes slowly (a glow, never a beat). Games others
+  are playing lie further off, small, keeping about half their colour (soft,
+  never grey: the table keeps its colours); finished ones softer still, with a
+  tick if solved, greyed if lost. A small
+  tag at a board's corner is its kind (a stopwatch, a key; a game together is
+  the plain one). The boards are not the games' own districts: a room is not
+  told those, as they would give the game away. They are made from the game's
+  id, the same each time, so a game keeps its face. Who started a game, which
+  the chat said, is said by its board to screen readers. One bin at the
+  table's corner tidies it: pressed, each board can be put away with a tap,
+  and the sheet that asks shows that board, not its name.
+  Three tiles start a game, quiet until touched, with only the kind of game
+  drawn on each. A game started tells the whole room, so a tile takes two
+  taps: the first lifts it into its colour with a play mark on it, the second
+  starts. (Pass phrase goes first to a desk, which tells nobody.) The chat is
+  notes passed across a rug: who and when only where somebody starts to speak,
+  what the room says as a soft line that leads to its game, and every note
+  alike (nothing is marked as new). A game being started is not said there
+  while the game is on the table (the line is matched whole, as the server
+  words it now and has worded it before; a pass phrase solved is never taken
+  for one); once the game is gone from the table, its line is back. At rest at
+  its foot, the chat shows whole notes, its top falling between two of them,
+  so that nothing half cut off lingers in the fade there. At the door is the
+  mat, with the code friends join with, a bell while notifications are off,
+  and a bush either side.
+- **Something that went wrong** (the server says no, or cannot be reached) is
+  a shake and a mark: what was tried (the tiles, the desk, the name, a door,
+  the chat's box) shakes gently, once, and a soft red mark comes beside it;
+  pressed, the mark shows the words. The words are in the page's
+  `role="alert"`, so a screen reader says them at once. With less motion
+  asked for, nothing shakes: the mark simply comes. It stands until the thing
+  is tried again or what was typed is changed. What is asked in a sheet
+  (leaving the room, putting a game away) is tried with the sheet still open:
+  refused, the sheet shakes and the mark comes in it, and it can be tried
+  again or put away. A link that leads nowhere is the empty plot with the
+  mark in it. The room's options, under the three dots, are a pencil and a
+  door with the way out of it; the sheets they lead to ask their question with
+  no words of explanation.
+- **Writing a pass phrase** is the same room, at its writing desk. The box has
+  no words in it; while it is empty, the start is a die (a phrase is picked at
+  random), and once a phrase is written, the play mark. A game started from
+  the die tells the room too, so the die takes two taps, as a tile does: the
+  first lifts it and brings the play mark beside it, the second starts.
 - **Outside**, for somebody who is not in it, the roof is on. Whoever is in
   shows at the skylight, and the mat at the door is where to ask in.
 - **On the home page** your rooms are a street of roofs, each with its name on
-  a plate at its door. A room with something waiting on you has its skylight
-  lit. **Opening a room** is a plot staked out on the map, with a board
-  planted in it to write the name on. **Joining one** is a grey building, its
-  colour not yet known, with its mat to write the code on.
+  a plate at its door, the last opened first. The roofs are soft as the room
+  is: no hard edge down a side, no shadow set off under it, no courses of
+  tiles, no squares of garden, and no garden at the end of the street; the
+  chimney is a shade of the roof, never a dark square at a corner. A room
+  with something waiting on you has its window lit, glowing slowly. **Opening
+  a room** is a plot staked out on the map, with a board planted in it to
+  write the name on. **Joining one** is a grey building, its colour not yet
+  known, with its mat to write the code on; the box shows the shape of a code
+  (`•••-•••`), not an example of one. Each door's button is held back until
+  there is what it needs (a name, a whole code; at a room's own door, a name),
+  so that nobody is told off for pressing it too soon; and the fields keep a
+  soft edge, so that they do not vanish in the dark.
 
 **Two worlds.** Inside a room, a member has a portal in the top bar: a ring of
 light like the home page's, with no words on it, still until somebody passes
-through it (`room/worlds.js`, `room/worlds.css`). Through it is the room's
-other self, the same room shot as live action, a drama, at night: concrete and
-floorboards for the map's squares, a lamp over a walnut table, the games as
-case files with photographs clipped to them, the people as passport
-photographs, the tiles as steel drawers, typed cards across a dark rug, a brass
-plate for the code, a title card for the name, and grain and hard light over
-all of it; the browser's own bars go dark with it. Stepping in is a passage: a
-seam is drawn down out of the portal, a hairline of light, and its two edges
-sweep apart across the room with the drama between them, until they meet again
-above the portal. Inside, the drama is the room, and while the portal is in
-sight the cartoon breaks back through it now and then (the first time soon
-after stepping in, then every quarter of a minute to a minute): a seam crosses
-the room, the cartoon on one side and the drama on the other, and travels,
-waits, sometimes takes the whole screen, and goes back. The portal is the way
-back, and the way back is always within reach: scrolled down to the games or
-the chat, where the portal is out of sight, nothing breaks through, and
-whatever had begun goes back gently, by a seam, with no cut. Stepping out is as
-much a passage as stepping in: the seam is drawn out of the portal again and
-sweeps back the other way, the drama closing into it until it is gone; then
-everything stops. A press on the way through turns round; a press while the
-cartoon is breaking through lets the seam go on and give the cartoon the room.
-Being inside is not kept: every visit to a room, and every reload, begins
-outside. The serious world is paint and never geometry, so nothing that can be
-pressed or typed in moves; where both worlds are seen, the other is an inert
-copy of the page that taps go through, with a hole where the portal is, which
-belongs to neither world. Never more than three changes come in a second (a
-passage turning round is one), however often the portal is pressed, and each
+through it (`room/worlds.js`, `room/worlds.css`). In the cartoon at rest it
+rests as the room does, its colours soft and low and no glow round it, so that
+it is never louder than what is waiting on you; it comes to its full colours
+while somebody passes through it, and inside the drama, where it is the way
+back. Through it is the room's other self, the same room shot as live action, a
+drama, at night: concrete and floorboards for the map's squares, a lamp over a
+walnut table, the games as photographs in black and white on their paper, put
+down a little askew (the one that is yours still nearest, the rest further off
+in the dark beyond the lamp), the people as passport photographs, the tiles as
+steel drawers, typed cards across a dark rug, a brass plate for the code, a
+title card for the name, and grain and hard light over all of it; the browser's
+own bars go dark with it, and so does the ground past the ends of the page.
+Stepping in is a passage: a seam is drawn down out of the portal, a hairline of
+light, and its two edges sweep apart across the room with the drama between
+them, until they meet again above the portal. Inside, the drama is the room,
+and while the portal is in sight the cartoon breaks back through it now and
+then (the first time soon after stepping in, then every quarter of a minute to
+a minute): a seam crosses the room, the cartoon on one side and the drama on
+the other, and travels, waits, sometimes takes the whole screen, and goes back.
+The portal is the way back, and the way back is always within reach: scrolled
+down to the games or the chat, where the portal is out of sight, nothing breaks
+through, and whatever had begun goes back gently, by a seam, with no cut.
+Stepping out is as much a passage as stepping in: the seam is drawn out of the
+portal again and sweeps back the other way, the drama closing into it until it
+is gone; then everything stops. A press on the way through turns round; a press
+while the cartoon is breaking through lets the seam go on and give the cartoon
+the room. Being inside is not kept: every visit to a room, and every reload,
+begins outside. The serious world is paint and never geometry, so nothing that
+can be pressed or typed in moves; where both worlds are seen, the other is an
+inert copy of the page that taps go through, with a hole where the portal is,
+which belongs to neither world. Never more than three changes come in a second
+(a passage turning round is one), however often the portal is pressed, and each
 way a passage goes is kept at least half a second, so that no part of the
 window changes more often either. With reduced motion, stepping in and out are
 slow cross-fades that never turn round, each world is kept a while before the
@@ -1069,8 +1130,8 @@ Elsewhere it opens a guide with a picture and steps for the device: iPhone and
 iPad (Safari and other browsers), Android, desktop Chrome and Edge, and Safari
 on a Mac. The banner stays until the app is installed and cannot be dismissed.
 It is not shown in desktop Firefox, which cannot install web apps. Room pages
-have no banner; where installing is needed for notifications, the room's
-notification prompt says so and opens the same guide.
+have no banner; where installing is needed for notifications, the bell at the
+room's door opens the same guide (and says so to screen readers).
 
 ## Notifications
 

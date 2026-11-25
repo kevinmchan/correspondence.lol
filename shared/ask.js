@@ -2,7 +2,14 @@
 // browser's grey boxes. Each returns a promise: ask() resolves true or false,
 // tell() resolves when it has been read.
 
-function sheet({ title, detail, yes, no, danger }) {
+import { oops } from './place.js';
+
+// `picture`: something to show in place of the title's words (the title is then
+// said to screen readers only). `attempt`: what the yes does, tried with the
+// sheet still open; if it is refused, the sheet shakes and a mark comes under
+// the question, pressed for the words (oops() in shared/place.js), and the yes
+// can be tried again, or the question put away.
+function sheet({ title, detail, yes, no, danger, picture = null, attempt = null }) {
   return new Promise((resolve) => {
     const dialog = document.createElement('dialog');
     dialog.className = 'ask';
@@ -10,21 +17,51 @@ function sheet({ title, detail, yes, no, danger }) {
     const heading = document.createElement('h2');
     heading.textContent = title;
     dialog.setAttribute('aria-label', title);
+    if (picture) {
+      const shown = document.createElement('div');
+      shown.className = 'picture';
+      shown.setAttribute('aria-hidden', 'true');
+      shown.append(picture);
+      heading.className = 'sr-only';
+      dialog.append(shown);
+    }
     dialog.append(heading);
     if (detail) {
       const more = document.createElement('p');
       more.textContent = detail;
       dialog.append(more);
     }
+    const refused = document.createElement('p');
+    refused.className = 'message bad';
+    refused.setAttribute('role', 'alert');
+    if (attempt) dialog.append(refused);
     const buttons = document.createElement('div');
     buttons.className = 'buttons';
     let answer = false;
+    let trying = false;
     const add = (text, value, className) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = text;
       button.className = className;
-      button.addEventListener('click', () => {
+      button.addEventListener('click', async () => {
+        if (trying) return;
+        if (value && attempt) {
+          trying = true;
+          button.disabled = true;
+          oops(refused, '');
+          try {
+            await attempt();
+            answer = true;
+            dialog.close();
+          } catch (failure) {
+            if (dialog.open) oops(refused, failure.message, { shake: dialog });
+          } finally {
+            trying = false;
+            button.disabled = false;
+          }
+          return;
+        }
         answer = value;
         dialog.close();
       });
@@ -34,9 +71,12 @@ function sheet({ title, detail, yes, no, danger }) {
     if (no) add(no, false, 'quiet');
     const go = add(yes, true, danger ? 'yes danger' : 'yes');
     dialog.append(buttons);
-    // a tap outside, or Escape, is a no
+    // a tap outside, or Escape, is a no (but not while the yes is being tried)
     dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) dialog.close();
+      if (event.target === dialog && !trying) dialog.close();
+    });
+    dialog.addEventListener('cancel', (event) => {
+      if (trying) event.preventDefault();
     });
     dialog.addEventListener('close', () => {
       dialog.remove();
@@ -49,8 +89,9 @@ function sheet({ title, detail, yes, no, danger }) {
 }
 
 // A question with two answers. `danger` paints the yes in the warning colour.
-export const ask = (title, { detail = '', yes = 'OK', no = 'Cancel', danger = false } = {}) =>
-  sheet({ title, detail, yes, no, danger });
+// (`picture` and `attempt`: see sheet.)
+export const ask = (title, { detail = '', yes = 'OK', no = 'Cancel', danger = false, picture = null, attempt = null } = {}) =>
+  sheet({ title, detail, yes, no, danger, picture, attempt });
 
 // Something to be told, with one button to put it away.
 export const tell = (title, { detail = '', ok = 'OK' } = {}) => sheet({ title, detail, yes: ok, no: null, danger: false });

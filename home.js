@@ -256,7 +256,10 @@ export function mount(root, life) {
   // feed is what says so, in words; this is the same thing seen from outside.)
   function lightRooms() {
     const waiting = new Set(items.map((item) => item.room?.id));
-    for (const lot of rooms.querySelectorAll('.lot-link')) lot.classList.toggle('lit', waiting.has(lot.dataset.room));
+    for (const lot of rooms.querySelectorAll('.lot-link')) {
+      lot.classList.toggle('lit', waiting.has(lot.dataset.room));
+      lot.querySelector('.waiting').hidden = !waiting.has(lot.dataset.room);
+    }
   }
 
   function showRooms() {
@@ -273,9 +276,15 @@ export function mount(root, life) {
       a.href = roomUrl(room.id);
       const name = document.createElement('strong');
       name.textContent = room.name;
+      // (the street is in the order they were last opened: the date is said only to screen readers)
       const when = document.createElement('span');
-      when.textContent = `Last opened ${new Date(room.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
-      a.append(roof({ kind: look.kind }), name, when);
+      when.className = 'sr-only';
+      when.textContent = `, last opened ${new Date(room.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+      const waiting = document.createElement('span');
+      waiting.className = 'sr-only waiting';
+      waiting.textContent = ', something is waiting on you';
+      waiting.hidden = true;
+      a.append(roof({ kind: look.kind }), name, when, waiting);
       li.append(a);
       return li;
     }));
