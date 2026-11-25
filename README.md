@@ -242,11 +242,12 @@ earned and shown has begun (the owner, 25 November 2026): in a game played
 alone, every post found is energy at once, and finishing the board entirely
 earns as much again (`shared/energy.js`). Where the words of the turn were, a
 bar for the board (how much of all it can earn has been earned), with a
-current running through it and a spark flickering at the end it has reached,
-and the count of all there is; no mark beside them (the owner, 25 November
-2026: "no electric icon, just an animated, electrified bar"). A post found
-sends a spark from itself to the end of the bar, which throws off sparkles as
-it lands, and the bar and the count take it in; a
+current running through it and a spark flickering at the end it has reached;
+no mark beside it and no number (the owner, 25 November 2026: "no electric
+icon, just an animated, electrified bar"; and then no count). What is held in
+all is said only to screen readers. A post found sends a spark from itself to
+the end of the bar, which throws off sparkles as it lands, and the bar takes
+it in; a
 board finished sends a shower from every post on it, and the sheet at the end
 waits until it has landed. A bigger board earns more; a faster one no more;
 hints are free; a board played again earns only for what it has not earned

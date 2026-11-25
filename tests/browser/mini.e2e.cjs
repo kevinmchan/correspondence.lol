@@ -249,8 +249,8 @@ async function states() {
     { name: 'the game, the smallest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 5, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'] },
     { name: 'the game, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': newGame({ size: 9, seed: 11, players: ['You'] }) }, ready: '#board .cell', whole: ['#board', '#tools'],
       small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
-    // Energy, playing alone: the meter part way along this board, and a count grown long, beside the hearts and the posts
-    { name: 'the game, energy part way, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 9, seed: 11, players: ['You'] }), 4), 'correspondence:energy:v1': { earned: 12840, spent: 0, boards: [{ b: '9:11', p: 4, w: false }] } }, ready: '#energy:not([hidden]) .count', whole: ['#board', '#tools', '#energy'],
+    // Energy, playing alone: the bar part way along this board, beside the hearts and the posts, with a great deal held (said only to screen readers)
+    { name: 'the game, energy part way, the biggest board', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 9, seed: 11, players: ['You'] }), 4), 'correspondence:energy:v1': { earned: 12840, spent: 0, boards: [{ b: '9:11', p: 4, w: false }] } }, ready: '#energy:not([hidden])', whole: ['#board', '#tools', '#energy'],
       small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
     { name: 'the game, how to play', screen: 'game', at: '/postmarks/', ready: 'dialog.howto[open]' },
     { name: 'the walk, the first place', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 0 }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back'] },

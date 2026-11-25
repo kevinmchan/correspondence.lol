@@ -413,9 +413,10 @@ export function mount(root, life) {
   // --- Energy, playing alone ---------------------------------------------------------
   // Every post found is energy at once, and finishing the board entirely earns
   // as much again (shared/energy.js). The meter is this board: how much of all
-  // it can earn has been earned. The count beside it is all there is. A post
-  // found sends a spark from it to the meter, and the meter and the count take
-  // it in as it lands; a board finished sends a shower of them.
+  // it can earn has been earned; there is no number (the owner's choice), and
+  // all that is held is said only to screen readers. A post found sends a spark
+  // from it to the end of the bar, which takes it in as it lands; a board
+  // finished sends a shower of them.
   let energy = readEnergy(load(ENERGY_KEY));
   const meter = { board: null, count: 0, fill: 0 }; // what the meter shows now
   let landing = Promise.resolve(); // sparks land one after another
@@ -424,8 +425,7 @@ export function mount(root, life) {
     meter.fill = fill;
     el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
     el.energy.classList.toggle('empty', fill === 0);
-    el.energy.querySelector('.count').textContent = String(count);
-    el.energy.setAttribute('aria-label', `Energy ${count}`);
+    el.energy.setAttribute('aria-label', `Energy ${count}`); // (all that is held, for screen readers: no number on the screen)
     if (gain) replay(el.energy, 'gain');
   }
   // A spark from a square of the board to the meter; resolves as it lands.
@@ -473,27 +473,10 @@ export function mount(root, life) {
       flight.oncancel = () => bit.remove();
     }
   }
-  // The count, counting up to where it is going.
-  function countUp(to, fill) {
-    const from = meter.count;
-    const began = performance.now();
-    const long = Math.min(900, 120 + (to - from) * 60);
-    meter.fill = fill;
-    el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
-    el.energy.classList.toggle('empty', fill === 0);
-    replay(el.energy, 'gain');
-    return new Promise((done) => {
-      const step = () => {
-        if (life.over) return done();
-        const t = Math.min(1, (performance.now() - began) / long);
-        const now = Math.round(from + (to - from) * (1 - (1 - t) ** 2));
-        el.energy.querySelector('.count').textContent = String(now);
-        meter.count = now;
-        if (t < 1) requestAnimationFrame(step);
-        else { showMeter(to, fill, false); done(); }
-      };
-      requestAnimationFrame(step);
-    });
+  // The bar taking in what has landed.
+  function fillTo(count, fill) {
+    showMeter(count, fill, true);
+    return new Promise((done) => setTimeout(done, 650));
   }
   // `newly`: the squares just opened as posts, as buttons; `quiet`: a board just put on screen.
   function tallyEnergy(newly, quiet) {
@@ -522,14 +505,14 @@ export function mount(root, life) {
       if (now.posts) {
         await Promise.all(sources.slice(0, now.posts).map((cell, i) => spark(cell, 260 + i * 120)));
         if (life.over) return;
-        await countUp(before + now.posts, postsFill);
+        await fillTo(before + now.posts, postsFill);
       }
       if (now.won) {
         // the whole board, finished: a shower from every post on it, after the board's own moment
         const posts = [...el.board.querySelectorAll('.cell[data-state="letter"]')];
         await Promise.all(posts.map((cell, i) => spark(cell, 450 + i * 90)));
         if (life.over) return;
-        await countUp(count, fill);
+        await fillTo(count, fill);
         replay(el.energy, 'full');
       }
     });

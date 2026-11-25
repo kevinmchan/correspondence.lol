@@ -28,7 +28,7 @@
 
 /* Energy, playing alone (ui.js, tallyEnergy): a bar with a current running
    through it (a slow travelling shimmer, and a spark flickering at the end it
-   has reached), and the count of all there is. No mark beside it: the bar is it. */
+   has reached). No mark beside it and no number: the bar is it. */
 .energy { display: flex; align-items: center; gap: 0.6rem; align-self: center; font-family: system-ui, sans-serif; }
 .energy[hidden] { display: none; }
 .energy .bar {
@@ -55,7 +55,6 @@
   opacity: 0.9;
 }
 .energy.empty .bar i::after { display: none; }
-.energy .count { min-width: 2ch; font-size: 1.0625rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* a spark, from a post found to the bar; and the sparkles it throws off as it lands */
 .energy-spark, .energy-glint {
   position: fixed; z-index: 30; pointer-events: none;
@@ -70,7 +69,6 @@
   .energy .bar i::after { animation: energy-flicker 1.9s steps(1) infinite; }
   .energy.gain .bar i { animation: energy-current 2.6s linear infinite, energy-take 650ms ease-out; }
   .energy.gain .bar i::after { animation: energy-flare 650ms ease-out; }
-  .energy.gain .count { animation: bump 420ms cubic-bezier(0.3, 1.8, 0.5, 1); display: inline-block; }
   .energy.full .bar i { animation: energy-current 1.3s linear infinite, energy-full 1.4s ease-out; }
 }
 @keyframes energy-current { to { background-position: 3rem 0, 0 0; } }
