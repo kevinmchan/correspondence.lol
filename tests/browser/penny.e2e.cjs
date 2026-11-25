@@ -346,12 +346,26 @@ async function main() {
       await page.waitForSelector('.slow-tip.on', { timeout: 9000 }); // caught waiting: shown
       await sleep(4500);
       assert.equal(await kept(), 0, 'what Penny showed was left on the page');
-      // a rush across the room
-      await page.mouse.move(40, 300);
-      await page.mouse.down();
-      await page.mouse.move(350, 380, { steps: 1 });
-      await page.mouse.move(40, 460, { steps: 1 });
-      await page.mouse.up();
+      // A rush across the room: there and back in a fiftieth of a second. The room tells fast from slow by the times
+      // on what the hand sends it, which a screen stamps as the finger moves, however late the page gets them. Sent
+      // one by one from here they are stamped as they arrive, and on a busy machine that is late: the press and the
+      // first stroke have come 176 ms to a second apart, which is 320 pixels at a walk, and the room rightly kept
+      // it. So the rush is sent with its times on it, 8 ms from one to the next, and the page says what it was given.
+      await page.evaluate(() => {
+        window.__rush = [];
+        for (const type of ['pointerdown', 'pointermove', 'pointerup']) window.addEventListener(type, (event) => window.__rush.push(event.timeStamp), true);
+      });
+      const hand = await page.context().newCDPSession(page);
+      const began = Date.now() / 1000 - 1;
+      const sent = (type, x, y, ms, held) => hand.send('Input.dispatchMouseEvent', { type, x, y, timestamp: began + ms / 1000, button: type === 'mouseMoved' && !held ? 'none' : 'left', buttons: held ? 1 : 0, clickCount: type === 'mouseMoved' ? 0 : 1 });
+      await sent('mouseMoved', 40, 300, 0, false);
+      await sent('mousePressed', 40, 300, 8, true);
+      await sent('mouseMoved', 350, 380, 16, true);
+      await sent('mouseMoved', 40, 460, 24, true);
+      await sent('mouseReleased', 40, 460, 32, false);
+      await hand.detach();
+      const given = await page.evaluate(() => window.__rush);
+      assert.ok(given.length === 5 && given[4] - given[0] < 40, `the rush did not reach the room as a rush: ${JSON.stringify(given.map((at) => Math.round(at - given[0])))} ms`);
       assert.equal(await kept(), 0, 'a rush left something behind');
       assert.equal(await page.locator('#slow-portal').isVisible(), false, 'the way on opened for nothing');
       assert.equal(await page.locator('.slow-tip.on').count(), 0, 'still being shown how after a touch');
