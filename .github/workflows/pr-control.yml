@@ -3,18 +3,17 @@
 # an exception is, are written at the top of tests/pr-control.cjs.
 #
 # It runs again when the description or the labels change, because that is
-# where an exception is asked for and given. It also runs on every push to a
-# branch that is not main, so that what it will say of a pull request is known
-# before there is one (there, with no description to read, there can be no
-# exception: it says what is met and what is not).
+# where an exception is asked for and given. It runs once for each push to a
+# pull request, and not on pushes to a branch besides: it used to run on both,
+# twice over for every push, eleven minutes where five and a half say as much.
+# What it will say before there is a pull request is found by running it by
+# hand: `node tests/pr-control.cjs --base origin/main`.
 name: PR control
 
 on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, edited, labeled, unlabeled]
-  push:
-    branches-ignore: [main]
 
 permissions:
   contents: read

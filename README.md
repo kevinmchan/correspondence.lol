@@ -67,6 +67,10 @@ every pull request by `.github/workflows/pr-control.yml`):
    suite for the mini: there are more after it than before, and at least one
    has a name that was not there. Renaming one, or swapping one for another, is
    not adding one.
+   This is asked only of a pull request that changes the interface (a `.html`
+   or `.css` file outside `tests/`): a fix to a check or to a rule of the app
+   has no new state to put on a phone, and goes in on its passing runs. No
+   pull request may leave fewer test screens than it found.
 2. **Passing runs.** `npm test`, `npm run e2e` and `npm run e2e:mini` all
    pass. A browser that is missing is a failure there, not a skip.
 

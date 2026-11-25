@@ -43,6 +43,7 @@ const ACCOUNT = {
   'correspondence:name:v1': 'Sam',
   'correspondence:rooms:v1': [{ id: '11111111-1111-4111-8111-111111111111', name: 'Book club', at: 1795000000000 }, { id: '22222222-2222-4222-8222-222222222222', name: 'Family', at: 1795000000000 }],
 };
+const { quietSocket } = require('./socket.cjs');
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 async function main() {
@@ -60,11 +61,23 @@ async function main() {
   });
   const copiedBy = (page) => page.evaluate(() => window.__copied ?? null);
 
+  // No more than AT_ONCE checks at a time (8, or what AT_ONCE says). They are written to run side by side, a batch
+  // at once, and a batch is some thirty windows: on a machine of four cores, a tap made here was reaching its page
+  // hundreds of milliseconds late, and nearly every check that failed now and then failed of that. The rest wait
+  // their turn, in the order they were written.
+  const AT_ONCE = Number(process.env.AT_ONCE) || 8;
+  let running = 0;
+  const waiting = [];
+  const turn = () => (running < AT_ONCE ? (running += 1, Promise.resolve()) : new Promise((go) => waiting.push(go)));
+  const done = () => { const next = waiting.shift(); if (next) next(); else running -= 1; };
+
   async function check(name, { storage = {}, viewport = PHONE, ...options }, run) {
     if (process.env.ONLY && !new RegExp(process.env.ONLY).test(name)) return null; // ONLY=regex runs the checks it names
+    await turn();
     const started = Date.now();
     const context = await browser.newContext({ viewport, ...options });
     await context.route(/supabase\.co/, (route) => route.abort());
+    await quietSocket(context); // (and its live socket is answered here, not by the service)
     await context.addInitScript((store) => {
       if (sessionStorage.getItem('e2e:seeded')) return; // once a window: a reload must keep what the app has saved
       sessionStorage.setItem('e2e:seeded', '1');
@@ -84,6 +97,7 @@ async function main() {
       failure = error;
     }
     await context.close();
+    done();
     const seconds = ((Date.now() - started) / 1000).toFixed(0);
     console.log(`${failure ? 'not ok' : 'ok'} - ${name} (${seconds}s)`);
     if (failure) console.log(`  ${String(failure.stack || failure).split('\n').slice(0, 6).join('\n  ')}`);

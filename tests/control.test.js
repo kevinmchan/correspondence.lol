@@ -30,6 +30,21 @@ test('a pull request passes the control when it adds a test screen and its runs 
   assert.deepEqual(result.added, ['c']);
 });
 
+test('new test screens are asked only of a pull request that changes a page or a stylesheet of the app', () => {
+  const same = { before: ['a', 'b'], after: ['a', 'b'], suites: passing };
+  assert.equal(verdict({ ...same, changed: ['tests/browser/penny.e2e.cjs', 'jam/taste.js', 'README.md'] }).passes, true, 'a check, a rule and the README');
+  assert.match(verdict({ ...same, changed: ['jam/taste.js'] }).lines.join('\n'), /NOT ASKED: new test screens/);
+  assert.equal(verdict({ ...same, changed: ['jam/taste.js', 'room/room.css'] }).passes, false, 'a stylesheet');
+  assert.equal(verdict({ ...same, changed: ['index.html'] }).passes, false, 'a page');
+  assert.equal(verdict({ ...same, changed: ['tests/fixtures/page.html'] }).passes, true, 'a page of the tests is not one of the app');
+  assert.equal(verdict({ ...same, changed: [] }).passes, true, 'nothing at all');
+  assert.equal(verdict({ ...same }).passes, false, 'what it changes is not known: asked');
+  assert.equal(verdict({ ...same, changed: null }).passes, false);
+  assert.equal(verdict({ before: ['a', 'b'], after: ['a'], suites: passing, changed: ['jam/taste.js'] }).passes, false, 'it may not take a test screen away');
+  assert.equal(verdict({ before: ['a', 'b'], after: ['a', 'c'], suites: passing, changed: ['jam/taste.js'] }).passes, false, 'nor swap one');
+  assert.equal(verdict({ ...same, suites: failing, changed: ['jam/taste.js'] }).passes, false, 'and its runs still have to pass');
+});
+
 test('without a new test screen it does not pass: renaming one, or swapping one for another, is not adding one', () => {
   assert.equal(verdict({ before: ['a', 'b'], after: ['a', 'b'], suites: passing }).passes, false, 'nothing added');
   assert.equal(verdict({ before: ['a', 'b'], after: ['a', 'c'], suites: passing }).passes, false, 'one renamed');
