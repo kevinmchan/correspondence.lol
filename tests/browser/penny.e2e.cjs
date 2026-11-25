@@ -1196,38 +1196,15 @@ async function main() {
         assert.ok(seen.empty.length > 20, `${seen.empty.length} places looked at`);
         for (const colour of seen.empty) assert.ok(colour[0] <= 14 && colour[2] <= 18, `something in the sky that is not in the picture: ${colour}`);
       }
-      // nobody stands under it, and there is not a word
-      assert.equal((await h.pal()).height, 'gone', 'Penny is in the night');
-      assert.deepEqual(await h.words('.screen-sky'), []);
-      assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top of a phone is the night');
-      // a light that is touched twinkles: for a moment it is brighter. (Touched while it is at rest, to be sure of that.)
-      let before = 255;
-      for (let tries = 0; tries < 60 && before > 118; tries++) {
-        await sleep(150);
-        before = (await look()).lights[2].colour[0];
-      }
-      await page.mouse.click(one.lights[2].x, one.lights[2].y);
-      await sleep(70);
-      const after = (await look()).lights[2].colour[0];
-      assert.ok(after > before + 20, `the middle star, touched, did not twinkle: ${before} then ${after}`);
-      assert.ok(after < 222 - 20, `and even then it is well short of the picture: ${after}`);
-      assert.equal(await said(), 'The middle star.');
-      // a touch anywhere else, and the nearest answers
-      await page.mouse.click(30, 800);
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The lower dot.', null, { timeout: 2000 });
-      // a finger run across them, and each twinkles as it is reached
-      await page.mouse.move(one.lights[0].x - 60, one.lights[0].y);
-      await page.mouse.down();
-      await page.mouse.move(one.lights[0].x, one.lights[0].y, { steps: 6 });
-      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The small star.', null, { timeout: 2000 });
-      await page.mouse.up();
       // Nothing comes off a light when it twinkles: whatever is lit, however close to them, is one of the five. (Specks
       // once came off and were knocked about for a second or two: flies round a lamp. The places looked at above are too
       // far off to have seen them.) Each light's shape is drawn again here, with room round it for how far it may have
       // wandered and for its points drawn out, and anything bright outside all of them is counted. The big star is
-      // touched three times, and looked at as it settles.
+      // touched three times, and looked at as it settles. (This is looked at before any finger is held near them: a
+      // light that is warmed strays further, as it is meant to, and further than the room it is given here. And the
+      // far ones, which wander most, are given the most.)
       const loose = () => page.evaluate(async () => {
-        const { PICTURE, frame, starPath } = await import('/penny/stars.js');
+        const { PICTURE, frame, nearness, starPath } = await import('/penny/stars.js');
         const view = document.querySelector('.sky-view');
         const dense = view.width / view.clientWidth;
         const place = frame(view.clientWidth, view.clientHeight);
@@ -1242,12 +1219,12 @@ async function main() {
           if (light.kind === 'dot') {
             ink.setTransform(dense, 0, 0, dense, 0, 0);
             ink.beginPath();
-            ink.arc(x, y, light.r * place.side + 22, 0, Math.PI * 2);
+            ink.arc(x, y, light.r * place.side + 26, 0, Math.PI * 2);
             ink.fill();
             continue;
           }
           ink.setTransform(dense * place.side, 0, 0, dense * place.side, dense * x, dense * y);
-          ink.lineWidth = 32 / place.side; // (sixteen pixels of room, each side of its edge)
+          ink.lineWidth = (2 * (16 + 10 * (1 - nearness(light)))) / place.side; // (room each side of its edge: sixteen pixels for the big star, more for the others)
           const shape = new Path2D(starPath(light, place.side));
           for (const [across, up] of [[light.a * 1.75, 0], [0, light.b * 1.75]]) { // (its points, drawn out as far as they ever are)
             shape.moveTo(-across, -up);
@@ -1275,6 +1252,31 @@ async function main() {
           assert.equal(off.pixels, 0, `something is lit that is not one of the five lights: ${off.pixels} pixels of it, the brightest ${off.brightest}`);
         }
       }
+      // nobody stands under it, and there is not a word
+      assert.equal((await h.pal()).height, 'gone', 'Penny is in the night');
+      assert.deepEqual(await h.words('.screen-sky'), []);
+      assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content), '#09090d', 'the strip at the top of a phone is the night');
+      // a light that is touched twinkles: for a moment it is brighter. (Touched while it is at rest, to be sure of that.)
+      let before = 255;
+      for (let tries = 0; tries < 60 && before > 118; tries++) {
+        await sleep(150);
+        before = (await look()).lights[2].colour[0];
+      }
+      await page.mouse.click(one.lights[2].x, one.lights[2].y);
+      await sleep(70);
+      const after = (await look()).lights[2].colour[0];
+      assert.ok(after > before + 20, `the middle star, touched, did not twinkle: ${before} then ${after}`);
+      assert.ok(after < 222 - 20, `and even then it is well short of the picture: ${after}`);
+      assert.equal(await said(), 'The middle star.');
+      // a touch anywhere else, and the nearest answers
+      await page.mouse.click(30, 800);
+      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The lower dot.', null, { timeout: 2000 });
+      // a finger run across them, and each twinkles as it is reached
+      await page.mouse.move(one.lights[0].x - 60, one.lights[0].y);
+      await page.mouse.down();
+      await page.mouse.move(one.lights[0].x, one.lights[0].y, { steps: 6 });
+      await page.waitForFunction(() => document.querySelector('#sky-said').textContent === 'The small star.', null, { timeout: 2000 });
+      await page.mouse.up();
       // the way back keeps out of the picture when it is left alone, and comes back for a touch
       await page.waitForSelector('.sky.idle', { timeout: 6000 });
       await sleep(900); // (it fades)
