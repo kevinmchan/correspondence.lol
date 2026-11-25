@@ -52,6 +52,7 @@ export function mount(root, life) {
   };
   // The lobby: big tiles. Opening and joining a room each have a screen of their own (rooms.js).
   const menu = $('menu');
+  const play = $('play'); // the one wide button: a board of your own, at once
   const look = () => savedLook() ?? { avatar: '🙂', color: 0 };
   // Sent here from a room's join screen to sync an account first: go back after.
   const next = new URLSearchParams(location.search).get('next');
@@ -64,6 +65,7 @@ export function mount(root, life) {
     welcome.note.hidden = !profile.signed_out;
     me.card.hidden = none;
     menu.hidden = none;
+    play.hidden = none;
     showTabs();
     if (none) {
       rooms.hidden = true;
@@ -327,10 +329,10 @@ export function mount(root, life) {
   // page's is under it. But there are two things Penny wants, and since it
   // cannot say so, it comes up and shows them:
   //
-  //   The portal, top left: a place on the map Penny wants to take you to
+  //   The portal, at the foot of the page: a place on the map Penny wants to take you to
   //   (penny/walk.js). Until the first places have been walked Penny keeps
-  //   coming back to it: calls, walks along the edge to stand under the
-  //   portal, looks up at it and back at you. The first time in a visit, and
+  //   coming back to it: calls, walks along the edge to stand beside the
+  //   portal, looks at it and back at you. The first time in a visit, and
   //   sometimes after, Penny stops to remember the sound it is looking for,
   //   and the sound can be heard, far off.
   //
@@ -356,6 +358,12 @@ export function mount(root, life) {
   let turn = 0; // which of its wants is being shown: so that one does not start while another is going on
 
   portal.classList.toggle('calm', hasWalked());
+  // Where Penny stands to show the portal: just clear of it, on its right.
+  const beside = () => {
+    const at = portal.getBoundingClientRect();
+    const wide = pal.penny.getBoundingClientRect().width;
+    return (at.right + wide / 2 + 10) / window.innerWidth;
+  };
   showKept(root); // tags that have been found in the game are kept on this map (penny/tags.js)
   // The page is the map from far up: line its squares up with the dots behind
   // the page, and note where the portal is, for the way through it (walk.css).
@@ -428,7 +436,8 @@ export function mount(root, life) {
       await remember(mine);
     }
     if (mine !== turn) return;
-    pal.mood('hopeful').pointAt(portal);
+    pal.mood('hopeful').goTo(beside()); // (not under it: the portal is down where Penny stands, and Penny would cover it)
+    setTimeout(() => { if (mine === turn) pal.look(portal); }, 350);
     await wait(1500);
     if (mine !== turn) return;
     flare(portal, 'called');

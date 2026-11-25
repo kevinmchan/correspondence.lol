@@ -626,14 +626,12 @@ main:has(.version) { position: relative; }
 
 
 /* --- Your profile, on the home page ---------------------------------------- */
-.me { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.2rem 0.8rem; }
-.me .profile-button { width: 3rem; height: 3rem; padding: 0; background: none; }
-.me .profile-button .avatar { width: 100%; height: 100%; font-size: 1.6rem; }
-.me .who { display: flex; flex-direction: column; min-width: 0; text-align: left; }
-.me .who strong { font-family: Georgia, serif; font-size: 1.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.me .who span { font-family: system-ui, sans-serif; font-size: 0.9375rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.me .row { grid-column: 1 / -1; flex-wrap: wrap; margin-top: 0.5rem; }
-.me .row button { font-family: system-ui, sans-serif; font-size: 0.9375rem; padding: 0.5rem 1rem; }
+/* Who this device is: a face in the top right corner of the home page, where
+   the corner of a letter carries its stamp. Only the face: pressing it opens
+   the profile. */
+.me-corner { position: absolute; z-index: 1; right: calc(0.875rem + 3px); top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem)); }
+.me-corner .profile-button { display: block; width: 3rem; height: 3rem; padding: 0; background: none; }
+.me-corner .profile-button .avatar { width: 100%; height: 100%; font-size: 1.6rem; }
 dialog.account h2 { font-family: Georgia, serif; font-size: 1.35rem; color: var(--ink); margin: 0 0 0.3rem; text-transform: none; letter-spacing: 0; }
 dialog.account .card { text-align: left; display: flex; flex-direction: column; gap: 0.7rem; }
 /* a code you tap to copy */
@@ -648,7 +646,6 @@ dialog.account .code { display: block; font-size: 1.8rem; margin: 0.8rem auto 0.
 dialog.account .tip { margin: 0; font-size: 0.875rem; }
 dialog.account .row.end { margin-top: 0.8rem; }
 section.card { width: 100%; text-align: left; font-family: system-ui, sans-serif; box-sizing: border-box; }
-section.card.me { border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.9rem 1rem; }
 section.card fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
 section.card legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
 dialog.account form.card { margin-top: 0.6rem; }
@@ -759,7 +756,7 @@ button.quiet { border-radius: 0.8rem; border-width: 1.5px; font-weight: 600; }
 button.quiet.round, .top-actions .round { border-radius: 50%; }
 
 /* --- Surfaces: tiles with a lip ----------------------------------------------- */
-form.card fieldset, section.card.me, .panel, .share, .links a, dialog.sheet form.card {
+form.card fieldset, .panel, .share, .links a, dialog.sheet form.card {
   background: var(--card);
   border: 0;
   border-radius: 1.1rem;
@@ -808,6 +805,21 @@ input[aria-invalid="true"], input[aria-invalid="true"]:focus-visible { border-co
 #rooms .links li:nth-child(9n + 9) a { --tile: #cdd6dd; }
 
 /* --- The lobby's menu ---------------------------------------------------------------- */
+/* Play: one wide button at the head of the page, the colour of the seal, with
+   the mark for playing on it and no word. */
+.play-wide {
+  width: 100%; height: 4.75rem; display: grid; place-items: center;
+  border-radius: 1.2rem; text-decoration: none;
+  color: #fdf8ee; background: var(--accent);
+  box-shadow: 0 0.3rem 0 color-mix(in srgb, var(--accent) 68%, #000);
+  transition: transform 70ms ease, box-shadow 70ms ease, filter 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.play-wide[hidden] { display: none; }
+.play-wide svg { width: 2.5rem; height: 2.5rem; margin-left: 0.2rem; }
+.play-wide:hover { filter: brightness(1.05); }
+.play-wide:active { transform: translateY(0.24rem); box-shadow: 0 0.06rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
+.play-wide:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .menu { width: 100%; display: flex; flex-direction: column; gap: 0.7rem; }
 .menu-button {
   --press: var(--lip);
@@ -851,7 +863,6 @@ dialog.sheet .row.end button[type="submit"] { flex: 1; }
 @keyframes pop-in { from { transform: scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* --- The account card, room panels, game modes ----------------------------------- */
-section.card.me { padding: 0.8rem 1rem; }
 .panel { padding: 0.95rem 0.95rem 1.05rem; gap: 0.7rem; }
 .panel .links a { background: var(--paper); }
 .share { border-style: none; padding: 0.85rem 0.95rem 1rem; }
@@ -906,9 +917,6 @@ main { position: relative; z-index: 1; }
 @keyframes ghost-faint { 0% { opacity: 0; } 35% { opacity: 0.14; } 100% { opacity: 0; } }
 
 /* the whole account card opens the profile, not just the avatar in it */
-section.card.me { position: relative; cursor: pointer; transition: transform 70ms ease, box-shadow 70ms ease; -webkit-tap-highlight-color: transparent; }
-section.card.me .profile-button::after { content: ""; position: absolute; inset: 0; border-radius: 1.1rem; }
-section.card.me:active { transform: translateY(0.18rem); box-shadow: 0 0.04rem 0 var(--lip); }
 
 /* --- One page, many screens ------------------------------------------------------
    Screens are stacked in the same place (shared/nav.js). For the length of a

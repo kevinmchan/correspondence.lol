@@ -276,11 +276,12 @@ under.
 ### What Penny wants
 
 On the home page, which is the same map seen from much further up, Penny wants
-two things, and shows them by coming up and standing under them.
+two things, and shows them by coming up and standing by them.
 
-- **The portal**, top left, the one place marked on the map. Until the first
-  places have been walked Penny keeps coming back to it: it calls, walks under
-  the portal, looks up at it and back at you. The first time in a visit, and
+- **The portal**, at the foot of the page on the left, the one place marked
+  on the map. Until the first places have been walked Penny keeps coming back
+  to it: it calls, walks along to stand beside the portal, looks at it and
+  back at you. The first time in a visit, and
   sometimes after, it shuts its eyes first and what it remembers of the sound
   can be heard, a long way off: at the start that is one note, the beginning,
   which is all Penny has. Going through is a rush up through the portal, not a
@@ -476,8 +477,11 @@ one that is up is pressed in and lit.
   what is new. Each is a tile that opens the game. The number waiting sits on
   the tab. Games that are over, games you are waiting on someone else in, and
   phrases you wrote yourself are left out.
-- **Lobby**: everything else. Your account, your rooms, and the tiles for
-  opening or joining a room, playing solo, making music and Penny's Radio.
+- **Lobby**: everything else. Your rooms, and the tiles for opening or
+  joining a room, making music and Penny's Radio.
+
+Above both tabs is the one wide button of the page: play, a board of your own
+at once (`/postmarks/`). Your account is your face in the top right corner.
 
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
