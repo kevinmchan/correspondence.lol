@@ -1333,11 +1333,16 @@ async function main() {
       assert.equal(await page.locator('#radio-story').textContent(), '');
       // both heard, and the front kept: the real challenger's call for it beat the phantom's (and that pair, called
       // with one phantom, is bet on by that rule)
+      await listenToBoth(page);
+      await h.watch(); // (Penny's moods, from here on)
       await keepOne(page, 'front');
       const crossed = (await keptOn(page)).trials.at(-1);
       assert.equal(crossed.pick, 'front');
-      // Penny is as it is for any station kept (glad; thrilled for a preset), and gives the lamp no notice
-      assert.equal((await h.pal()).mood, crossed.retired ? 'thrilled' : 'glad', 'Penny made something of ×20');
+      // Penny is as it is for any station kept (glad; thrilled for a preset), and gives the lamp no notice. It is
+      // glad for a second and a half and then calm again, and on a busy machine it has been 1.5 s from the pick to
+      // word of it here, and Penny found calm: so its moods are written down in the page, and those are read.
+      const moods = await h.seen();
+      assert.deepEqual(moods, [`mood ${crossed.retired ? 'thrilled' : 'glad'}`, 'mood calm'].slice(0, moods.length || 1), 'Penny made something of ×20');
       const now = await standingOn(page);
       assert.ok(now.stake >= model.NEEDED && now.reachedAt === 13, JSON.stringify(now));
       assert.ok(Math.abs(now.stake - 1.3 ** 11 * 1.4) < 1e-9);
