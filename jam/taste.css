@@ -1,31 +1,147 @@
-/* Penny's Radio (jam/taste.js): a small portable set standing on the map; and,
-   behind it, the lab notes of the experiment it is. */
+/* Penny's Radio (jam/taste.js): a work in a gallery that keeps music. The radio
+   is the work, standing on a pale plinth under a light, with the gallery's
+   label on the plinth. It is played, without words; and it is read about, in
+   the reading, the gallery's entry for it, which the tag on its side opens. */
 
-/* --- The world ---------------------------------------------------------------------------
-   Never the white of a page. The radio stands on the map, seen from far above
-   as everywhere, at dusk: the same squares, faint, all round. */
+/* --- The gallery -------------------------------------------------------------------------
+   Never the white of a page: a room of the world, at dusk, and built of it. A
+   deep wall, of the colour old galleries are painted, with the map's squares
+   faint on it; a light from above that falls on the work; and a floor, which is
+   the map laid flat and going away from you. Penny stands at the bottom edge,
+   in front of it all, a visitor, as you are. Everything here is low and soft:
+   the squares are barely there, and nothing in the room moves but the light,
+   slowly, with the story. (--floor is how far up the screen the floor comes,
+   behind Penny; --base, where the plinth stands on it.) */
 .screen-taste main.radio-world {
-  position: relative; padding: 0; overflow: clip;
-  background: radial-gradient(120% 80% at 50% 100%, #4a3f6b 0%, #2b3550 38%, #1a2330 100%);
+  --wall: #284757; --wall-dark: #132631; --floor-far: #0c161d; --floor-near: #18252f;
+  --floor: calc(var(--pal-w) * 0.45 + env(safe-area-inset-bottom, 0px));
+  --base: calc(var(--pal-w) * 0.18 + env(safe-area-inset-bottom, 0px));
+  --square: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='4.3' y='4.3' width='91.4' height='91.4' rx='20'/%3E%3C/svg%3E");
+  position: relative; padding: 0; overflow: clip; isolation: isolate;
+  background: linear-gradient(var(--wall-dark), var(--wall) 48%, color-mix(in srgb, var(--wall) 82%, #000));
   touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
 }
-.radio-world .map-far { background: rgb(246 241 231 / 0.09); --lit-x: 50%; --lit-y: 62%; }
+:root[data-theme="dark"] .screen-taste main.radio-world { --wall: #1e3a49; --wall-dark: #0d1b23; --floor-far: #081016; --floor-near: #101b23; }
 .radio-world .penny-back { background: rgb(246 241 231 / 0.14); color: #f6f1e7; z-index: 3; }
-/* The radio keeps clear of the button at the top and of whoever is standing at the bottom,
-   and is never bigger than the room that leaves: all of it is always on the screen. */
+/* the map's squares on the wall: a column of them stands behind the work, and they are faintest away from the light */
+.radio-world .map-far {
+  z-index: -4; --pitch: 3.4rem; background: rgb(246 241 231 / 0.04);
+  --map-x: calc(50vw - 0.9rem - var(--pitch) / 2); --map-y: calc(50vh - var(--pitch) / 2); --lit-x: calc(50% - 0.9rem); --lit-y: 38%;
+}
+.gallery-room { position: absolute; inset: 0; z-index: -3; pointer-events: none; }
+/* The light. A beam from above, soft at its edges, and the wash it throws on the wall behind the work. It
+   follows the story and nothing else: cold while the one who shows how is here, warming once it has gone,
+   slowly (README, "How a place says it": cold in a hurry, warmer once slowed). It is the same however many
+   stations have been kept and whatever the experiment makes of them: the room has no opinion on the question
+   the piece asks (README, "The question Penny's Radio asks"). */
+.gallery-light {
+  --at: calc(50% - 0.9rem); /* over the work, which stands a little left of the middle (for the tag on its side) */
+  position: absolute; inset: 0; transition: opacity 2.8s ease;
+  background:
+    radial-gradient(ellipse 70% 42% at var(--at) 47%, rgb(var(--beam) / 0.3), rgb(var(--beam) / 0.08) 62%, transparent),
+    conic-gradient(from 165deg at var(--at) -12%, rgb(var(--beam) / 0.13), rgb(var(--beam) / 0.2) 15deg, rgb(var(--beam) / 0.13) 30deg, transparent 0);
+  mix-blend-mode: screen; filter: blur(12px);
+}
+.gallery-light.warm { --beam: 255 222 178; } /* (warm enough to read as warm over the blue-green wall, and the same whatever is kept) */
+.gallery-light.cold { --beam: 190 218 255; opacity: 0; }
+.radio-world[data-story="lesson"] .gallery-light.cold { opacity: 1; transition-duration: 300ms; }
+.radio-world[data-story="lesson"] .gallery-light.warm { opacity: 0; transition-duration: 300ms; }
+@media (prefers-reduced-motion: reduce) { .gallery-light { transition-duration: 0s !important; } }
+/* The floor, and a skirting board where it meets the wall. On it, the map's squares, laid flat: seen from
+   a little above, so they go away from you, small at the wall and wider at your feet. */
+.gallery-floor {
+  position: absolute; left: 0; right: 0; bottom: 0; height: var(--floor); overflow: hidden;
+  background: linear-gradient(var(--floor-far), var(--floor-near));
+  box-shadow: 0 -0.35rem 0 color-mix(in srgb, var(--wall-dark) 70%, #000), 0 -0.4rem 0 rgb(246 241 231 / 0.06);
+}
+.gallery-floor::before {
+  content: ""; position: absolute; left: -60%; right: -60%; top: 0; height: 320%;
+  background: rgb(246 241 231 / 0.07);
+  -webkit-mask: var(--square) calc(50% - 0.9rem) 0 / 3.4rem 3.4rem repeat; mask: var(--square) calc(50% - 0.9rem) 0 / 3.4rem 3.4rem repeat;
+  transform: perspective(9rem) rotateX(58deg); transform-origin: calc(50% - 0.9rem) 0;
+}
+/* (where the floor meets the wall is furthest off: the squares fade into it) */
+.gallery-floor::after { content: ""; position: absolute; inset: 0 0 auto; height: 45%; background: linear-gradient(var(--floor-far), transparent); }
+/* The floor in front of the plinth, from where it stands to your feet: the same floor, square for square (the
+   same element twice, this one cut to the part nearer than the plinth's foot, and drawn over it: it is in the
+   figure with the plinth, and above it), with the plinth's shadow along its foot. */
+.gallery-floor.near {
+  z-index: 0; pointer-events: none; clip-path: inset(calc(100% - var(--base)) 0 0);
+  background:
+    radial-gradient(ellipse 46% 0.75rem at calc(50% - 0.9rem) calc(100% - var(--base)), rgb(4 9 13 / 0.55), transparent),
+    linear-gradient(var(--floor-far), var(--floor-near));
+}
+.gallery-floor.near::after { content: none; }
+
+/* The work and its plinth keep clear of the button at the top and of whoever is standing at the bottom,
+   and are never bigger than the room that leaves: all of the set is always on the screen. How wide the work
+   is, the set and the plinth alike, is worked out once, here (--work-w): --k is how wide the set is for its
+   height, and the 1.8rem kept to its right is the room the tag on its side needs. */
 .radio-ground {
   --top: max(4.2rem, calc(env(safe-area-inset-top) + 3.8rem));
   --bottom: calc(var(--pal-w) * 0.62 + env(safe-area-inset-bottom, 0px) + 0.6rem);
   --room: calc(100vh - var(--top) - var(--bottom));
-  position: absolute; inset: 0; padding: var(--top) 1rem var(--bottom);
+  --work-w: min(100vw - 4.4rem, 23rem, calc((var(--room) - 6rem) * var(--k, 0.82)));
+  position: absolute; inset: 0; margin: 0; padding: var(--top) 1rem var(--bottom);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
 }
 @supports (height: 1dvh) { .radio-ground { --room: calc(100dvh - var(--top) - var(--bottom)); } }
-.radio-lines { position: relative; z-index: 3; min-height: 1.9rem; display: grid; justify-items: center; align-content: start; gap: 0.2rem; }
-/* While the one who shows how is on stage the words are its own: the app's line is kept for screen readers alone. */
-.radio-world[data-story="lesson"] .taste-note { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.radio-world .taste-note:empty { display: none; }
-.radio-world .taste-note { margin: 0; min-height: 1.2rem; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: #f6f1e7; opacity: 0.9; text-align: center; }
+
+/* --- The plinth, and the gallery's label on it --------------------------------------------
+   A pale box the set stands on, as wide as the set (--work-w) and centred under
+   it. Drawn as the set is drawn: a face, a top that its feet stand on, and a
+   side, and it stands on the floor, a little nearer than the wall, behind
+   Penny. It takes the room under the set that a line of words used to, and no more, so
+   the set is as big as it ever was. The label is on its face: the work's
+   title, what it is made of, and whose it is. It says what the gallery says,
+   and nothing of the tag. */
+.plinth {
+  --face: #e6e0d4; --face-low: #c2baab; --top-face: #f8f4ec; --side: #a89f8f;
+  position: relative; z-index: -1; flex: none; box-sizing: border-box;
+  width: var(--work-w); height: 1.9rem; margin: 0 1.8rem 0 0; font-size: calc(var(--work-w) / 23);
+  display: grid; grid-template-areas: "label"; justify-content: start; align-items: start; padding-left: 1.5em; /* (to the left of its face: Penny stands under the tag, on the right) */
+}
+:root[data-theme="dark"] .plinth { --face: #d2cbbe; --face-low: #9f978a; --top-face: #e9e3d8; --side: #8a8275; }
+/* its face (and its side, in shadow), from just under the set's feet on down: the floor in front of it, nearer, is drawn over its foot */
+.plinth::after {
+  content: ""; position: absolute; z-index: -2; left: 0; right: 0; top: calc(-0.5rem + 0.45em); bottom: -100vh;
+  background: linear-gradient(var(--face), var(--face) 2rem, var(--face-low) 14rem);
+  box-shadow: 0.55em -1.2em 0 var(--side);
+}
+/* its top, seen from a little above: the set's feet stand on it, and its shadow falls on it */
+.plinth::before {
+  content: ""; position: absolute; z-index: -1; left: 0; right: -0.55em; top: calc(-0.5rem - 0.75em); height: 1.2em;
+  background: linear-gradient(var(--top-face), color-mix(in srgb, var(--top-face) 88%, var(--side)));
+  clip-path: polygon(0.55em 0, 100% 0, calc(100% - 0.55em) 100%, 0 100%);
+}
+.gallery-label {
+  grid-area: label; margin-top: 0.5rem; color: #29333c; text-align: left;
+  font-family: system-ui, sans-serif; font-size: 0.6875rem; line-height: 1.35; letter-spacing: 0.015em;
+}
+.gallery-label p { margin: 0; }
+.gallery-label .label-title { margin-bottom: 0.08rem; font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 0.9375rem; letter-spacing: 0; color: #1c252d; }
+.gallery-label cite { font-style: italic; }
+
+/* The attendant's sign, hung over the label while it is here: its how over the gallery's what. One order at a
+   time, as a sign that needs no words and is the same in every building (SIGNS, in jam/taste.js); cold enamel
+   in its livery, straight-edged, on two short cords. It goes up with it when it goes. (A screen reader is
+   given the same order in words, in #dash-says.) */
+.dash-sign {
+  grid-area: label; align-self: stretch; justify-self: stretch; margin: 0.2rem -0.6rem -0.1rem; position: relative;
+  display: grid; place-items: center; border-radius: 0.12rem;
+  background: linear-gradient(#4a78b8 0 0.32rem, #eef3f8 0.32rem); color: #22303c;
+  box-shadow: 0.12rem 0.16rem 0 rgb(34 48 60 / 0.3), inset 0 0 0 0.07rem rgb(34 48 60 / 0.55);
+}
+.dash-sign::before { content: ""; position: absolute; left: 22%; right: 22%; bottom: 100%; height: 0.55rem; border: solid rgb(34 48 60 / 0.55); border-width: 0 1px; } /* its cords */
+.dash-sign:empty { display: none; }
+.dash-sign span { display: block; padding-top: 0.32rem; }
+.dash-sign svg { display: block; width: 2.5rem; height: 2.5rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .dash-sign.fed { animation: sign-hung 150ms linear; }
+  .dash-sign.taken { animation: sign-taken 260ms cubic-bezier(0.6, 0, 1, 1) both; }
+}
+@keyframes sign-hung { 0% { translate: 0 -0.5rem; } 100% { translate: 0 0; } }
+@keyframes sign-taken { 0% { translate: 0 0; opacity: 1; } 100% { translate: 0 -2.5rem; opacity: 0; } }
 
 /* --- The set ----------------------------------------------------------------------------------
    Drawn flat, and given depth the way a drawing is: its right side and its
@@ -36,8 +152,8 @@
 .radio {
   --edge: #f08a76; --needle: 50%;
   /* (in lengths that mean the same wherever they are used: this is also what its em is worked out from.
-     --k is how wide the set is for its height; the 1.8rem is the room the tag on its side needs.) */
-  --w: min(100vw - 4.4rem, 23rem, calc((var(--room) - 6rem) * var(--k, 0.82)));
+     It is the width of the work, which its plinth shares: --work-w, on .radio-ground, above.) */
+  --w: var(--work-w);
   position: relative; width: var(--w); font-size: calc(var(--w) / 23); flex: none;
   margin-top: 2.4em; margin-right: 1.8rem; margin-bottom: 1.3em; /* (its feet and its shadow are below its box) */ rotate: -1.5deg; color: #f6f1e7; cursor: pointer; outline: none;
 }
@@ -103,7 +219,7 @@
 .radio .freq { display: inline-flex; align-items: baseline; gap: 0.3em; color: var(--edge); transition: color 240ms ease; }
 .radio .freq b { font-size: 1.55em; font-weight: 800; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 0.5em color-mix(in srgb, var(--edge) 60%, transparent); }
 .radio .freq small { font-size: max(0.7em, 11px); font-weight: 800; letter-spacing: 0.09em; opacity: 0.8; }
-.radio .tag { flex: 1; min-width: 0; font-size: 0.7em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.radio .tag { flex: 1; min-width: 0; font-size: max(0.7em, 11px); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
 .radio .tag.kept { color: #f8d95a; opacity: 1; }
 /* three bars that fill as the station is listened to: at three it can be kept */
 .radio .signal { display: inline-flex; align-items: flex-end; gap: 0.16em; height: 1.1em; }
@@ -142,15 +258,15 @@
 
 /* a taller display where there is the height for it: installed on a phone, not inside Safari's bars */
 @media (min-height: 780px) and (max-width: 520px) {
-  .radio { --k: 0.7; }
+  .radio-ground { --k: 0.7; }
   .radio .display { aspect-ratio: 8 / 7; }
 }
 
 /* --- The lab's tag ---------------------------------------------------------------------------
    Riveted to the side of the set, not to its face: a small cold plate with a
    blue band and a flask on it, in the livery of the one who shows how. It is
-   in plain sight from the start and it is the way behind the radio. What is
-   pressed is a square big enough for a finger; what is seen is the plate. */
+   in plain sight from the start and it opens the reading. What is pressed
+   is a square big enough for a finger; what is seen is the plate. */
 .radio .lab-tag { position: absolute; z-index: 2; right: -1.95em; top: 7em; width: max(3.2em, 2.75rem); height: max(3.2em, 2.75rem); padding: 0; border: 0; background: none; display: grid; justify-items: end; align-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .radio .lab-plate {
   position: relative; width: 1.7em; height: 2.3em; box-sizing: border-box; display: grid; place-items: end center; padding-bottom: 0.22em;
@@ -212,47 +328,130 @@
 @keyframes taste-offbeat { 0% { box-shadow: inset 0 0 1.5rem color-mix(in srgb, var(--glow, #9ad3f7) 32%, transparent); } 100% { box-shadow: inset 0 0 1.5rem transparent; } }
 @keyframes taste-gleam { 0% { opacity: 1; transform: translateX(-140%) skewX(-12deg); } 100% { opacity: 1; transform: translateX(440%) skewX(-12deg); } }
 
-/* --- The lab notes ------------------------------------------------------------------------- */
+/* --- The reading ----------------------------------------------------------------------------
+   The gallery's entry for the work, set as a gallery sets its words: the name
+   of the place small, the title in italic, what it is made of and whose it is
+   under that, then the text, in a serif with room round it. The question the
+   piece asks comes next, set apart, before anything of how the experiment
+   stands; then, under a heading of its own so that nothing seems to answer
+   the question, where the test stands, and the figures, plain and captioned.
+   With the label, it is the one place on this screen with words to read (the
+   set's own markings are part of the drawing). It is printed on the plinth's
+   warm stone, not on the white of a page (see the sheets, below). */
 .taste-lab {
-  width: 100%; box-sizing: border-box; padding: 0.9rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.7rem;
-  border-radius: 1.1rem; background: var(--card); box-shadow: 0 0.22rem 0 var(--lip);
-  font-family: system-ui, sans-serif; text-align: left;
+  width: 100%; box-sizing: border-box; padding: 1.35rem 1.3rem 1.2rem; display: flex; flex-direction: column; gap: 0.95rem;
+  background: var(--card); color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; text-align: left;
 }
-.taste-lab h2 { margin: 0; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 62%, var(--paper)); }
-/* how far the stake has got towards twenty times itself, like a bar filling in a game */
-.taste-lab .meter { height: 1.1rem; border-radius: 0.55rem; background: color-mix(in srgb, var(--ink) 10%, var(--paper)); box-shadow: inset 0 0.14rem 0 rgb(0 0 0 / 0.1); overflow: hidden; }
-.taste-lab .meter i { display: block; height: 100%; width: calc(var(--full, 0) * 100%); min-width: 0.4rem; border-radius: inherit; background: #f8d95a; box-shadow: inset 0 -0.2rem 0 rgb(0 0 0 / 0.14); transition: width 400ms ease; }
-.taste-lab .meter.done i { background: #7cc46a; }
-.taste-lab .verdict { margin: 0; font-size: 0.9375rem; font-weight: 600; }
-.taste-lab .verdict.yes { color: #3d8a2c; }
-:root[data-theme="dark"] .taste-lab .verdict.yes { color: #9fdb8f; }
-.taste-lab dl { margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
-.taste-lab dl div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.875rem; }
+.taste-lab .what { margin: 0; font-size: 1rem; line-height: 1.55; color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
+/* the head of the entry */
+.reading .entry { display: grid; gap: 0.15rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.reading .gallery-name { margin: 0 0 0.45rem; font-family: system-ui, sans-serif; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.reading .entry h2 { margin: 0; font-family: inherit; font-size: 1.875rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.005em; color: var(--ink); }
+.reading .entry cite { font-style: italic; }
+.reading .entry h2:focus { outline: none; } /* (it is where the reading opens, so that it opens at the top: there is nothing to press there) */
+.reading .tombstone { margin: 0.35rem 0 0; font-family: system-ui, sans-serif; font-size: 0.8125rem; line-height: 1.5; color: var(--muted); }
+/* what Dot said, once Dot has said it: the audio guide's stop for this work */
+.reading .dot-told { margin: 0; display: grid; grid-template-columns: 2.5rem 1fr; column-gap: 0.8rem; row-gap: 0.3rem; align-items: start; }
+.reading .dot-told svg { grid-row: span 2; width: 2.5rem; height: 2.5rem; }
+.reading .dot-told blockquote { margin: 0.2rem 0 0; font-size: 1.25rem; font-style: italic; line-height: 1.25; color: var(--ink); }
+.reading .dot-told figcaption { font-family: system-ui, sans-serif; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+.reading .dot-told figcaption b { display: block; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+/* the question the piece asks, and the sentence of why there is a gallery at all: set apart, and left open */
+.reading .asks { margin: 0.15rem 0 0.1rem; padding: 1.05rem 0 1.15rem; border-block: 1px solid var(--line); display: grid; gap: 0.7rem; }
+.reading .asks p { margin: 0; font-size: 0.9375rem; line-height: 1.55; color: color-mix(in srgb, var(--ink) 80%, var(--card)); }
+.reading .asks .question { font-size: 1.375rem; line-height: 1.3; font-style: italic; color: var(--ink); text-wrap: balance; }
+/* Where the test stands, as a figure under its own small heading (set as "How it works" is): a plain rule
+   filling towards a mark at ×20, as far as the stake has ever got, and its caption. Neither colour of a win nor
+   of a loss: the gallery shows how far it has got, and does not cheer it. */
+.taste-lab .evidence { margin: 0.25rem 0 0; display: grid; gap: 0.55rem; }
+.taste-lab .evidence h3 { margin: 0 0 0.1rem; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; line-height: 1.4; text-transform: uppercase; color: var(--ink); }
+.taste-lab .meter { position: relative; height: 0.4rem; background: color-mix(in srgb, var(--ink) 11%, var(--card)); }
+.taste-lab .meter i { display: block; height: 100%; width: calc(var(--full, 0) * 100%); min-width: 2px; background: var(--ink); transition: width 400ms ease; }
+.taste-lab .meter::after { content: ""; position: absolute; right: 0; top: -0.3rem; bottom: -0.3rem; width: 2px; background: var(--ink); } /* ×20 */
+.taste-lab .verdict { margin: 0; font-size: 0.9375rem; line-height: 1.45; font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); } /* (the same however the test stands) */
+.taste-lab dl { margin: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.taste-lab dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.42rem 0; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
 .taste-lab dt { color: var(--muted); }
-.taste-lab dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-.taste-lab .likes { margin: 0; font-size: 0.875rem; color: var(--muted); }
+.taste-lab dd { margin: 0; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.taste-lab .likes { margin: 0; font-size: 0.9375rem; line-height: 1.5; font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
 .taste-lab .likes:empty { display: none; }
-.taste-lab details { font-size: 0.875rem; color: var(--muted); }
-.taste-lab summary { cursor: pointer; font-weight: 600; color: var(--ink); }
-.taste-lab details p { margin: 0.5rem 0 0; }
+/* The phantom, drawn and captioned: the station kept, a challenger that is heard, and its twin, made with it
+   (the bracket) and never heard (a dashed outline, its notes faint). In the reading's ink, nothing brighter. */
+.reading .phantom { margin: 0.2rem 0 0; display: grid; gap: 0.45rem; }
+.reading .phantom svg { display: block; width: 100%; height: auto; overflow: visible; }
+.reading .phantom .station rect { fill: color-mix(in srgb, var(--ink) 78%, var(--card)); }
+.reading .phantom .station .notes { fill: none; stroke: var(--card); stroke-width: 4; stroke-linecap: round; }
+.reading .phantom .station.unheard rect { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 4 4; }
+.reading .phantom .station.unheard .notes { stroke: var(--muted); opacity: 0.5; }
+.reading .phantom .bracket { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+.reading .phantom figcaption { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; font-family: system-ui, sans-serif; font-size: 0.75rem; line-height: 1.35; color: var(--muted); text-align: center; }
+.taste-lab details { font-size: 0.9375rem; line-height: 1.55; color: color-mix(in srgb, var(--ink) 80%, var(--card)); }
+.taste-lab summary { cursor: pointer; min-height: 1.75rem; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+.taste-lab details p { margin: 0.55rem 0 0; }
 
-
-/* --- Behind the radio: the experiment, in a sheet over it ---------------------------------- */
-dialog.behind { width: min(100% - 1.5rem, 30rem); max-height: calc(100% - 2rem); padding: 0; border: 0; border-radius: 1.2rem; background: transparent; overflow: auto; }
-dialog.behind::backdrop { background: rgb(20 26 32 / 0.6); }
-dialog.behind .taste-lab { box-shadow: none; }
-dialog.behind .what { margin: 0; font-size: 0.875rem; color: var(--muted); }
+/* --- The sheets, over the work -------------------------------------------------------------
+   Centred between the notch and the home bar, and clear of both. What is in a
+   sheet scrolls; its foot does not, so the way back to the radio is always in
+   reach, however far the reading has been read. They are the gallery's, and
+   belong to the room they open in: printed on the plinth's warm stone, never
+   the white of a page, and in the dark a warm charcoal; light or dark as the
+   device is. They come up slowly, the room dimming behind them, and with
+   reduced motion they are simply there. */
+dialog.behind {
+  --card: #f1ece2; --ink: #29333c; --muted: #5d6770; --line: color-mix(in srgb, var(--muted) 40%, transparent);
+  color: var(--ink);
+  top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px);
+  width: min(100% - 1.5rem, 30rem); max-height: calc(100% - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 0; border: 0; border-radius: 0.45rem; background: var(--card); overflow: hidden; box-shadow: 0 1.2rem 2.6rem rgb(0 0 0 / 0.42);
+}
+:root[data-theme="dark"] dialog.behind { --card: #2a2622; --ink: #ede4d5; --muted: #b0a593; --line: color-mix(in srgb, var(--muted) 34%, transparent); }
+dialog.behind[open] { display: flex; flex-direction: column; }
+dialog.behind::backdrop { background: rgb(12 22 29 / 0.66); }
+@media (prefers-reduced-motion: no-preference) {
+  dialog.behind[open], dialog.behind[open]::backdrop { animation: gallery-sheet-in 360ms ease-out; }
+}
+@keyframes gallery-sheet-in { from { opacity: 0; } to { opacity: 1; } }
+dialog.behind .taste-lab { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+dialog.behind .taste-lab > * { flex-shrink: 0; } /* (the reading scrolls: nothing in it is squeezed to fit) */
+dialog.behind .sheet-foot { position: relative; flex: none; display: flex; justify-content: center; padding: 0.75rem 1.3rem 0.95rem; background: var(--card); box-shadow: 0 -1px 0 var(--line); }
+dialog.behind .sheet-foot::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% + 1px); height: 1.2rem; background: linear-gradient(transparent, var(--card)); pointer-events: none; } /* (there is more above: it fades into the foot) */
 dialog.behind .go { height: 2.9rem; font-size: 1rem; }
+dialog.behind .sheet-foot .go { width: 100%; padding-inline: 1rem; justify-content: center; text-align: center; background: color-mix(in srgb, var(--ink) 11%, var(--card)); color: var(--ink); --press: color-mix(in srgb, var(--ink) 28%, var(--card)); }
 dialog.behind #taste-again { height: 2.75rem; font-size: 0.9375rem; }
 dialog.behind .taste-row { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }
 
+/* The presets: part of what is played, not of the reading, so without words. The set's five lamps, lit for
+   the stations saved; each station saved, as the radio shows a station (its picture, on a display, and its
+   place on the dial), to be opened in the music maker; and a round key to shut it. */
+dialog.presets-sheet { width: min(100% - 1.5rem, 22rem); }
+.presets-sheet .taste-lab { gap: 0.8rem; padding: 1.15rem 1.1rem 0.5rem; }
+.presets-sheet .preset-lamps { align-self: center; display: flex; gap: 0.6rem; padding: 0.6rem 0.95rem; border-radius: 0.7rem; background: #a83a26; box-shadow: inset 0 0.14rem 0 rgb(0 0 0 / 0.22); }
+.presets-sheet .preset-lamps i { width: 1.05rem; height: 1.05rem; border-radius: 50%; background: #5c1d12; box-shadow: inset 0 0.08rem 0 rgb(0 0 0 / 0.3); }
+.presets-sheet .preset-lamps i.lit { background: #f8d95a; box-shadow: 0 0 0.45rem rgb(248 217 90 / 0.8); }
+dialog.behind .preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+dialog.behind .preset-list:empty { display: none; }
+dialog.behind .preset-list a { display: flex; align-items: center; gap: 0.85rem; min-height: 3.4rem; padding: 0.35rem 0.85rem 0.35rem 0.35rem; border-radius: 0.7rem; background: color-mix(in srgb, var(--ink) 5%, var(--card)); color: var(--ink); text-decoration: none; }
+dialog.behind .preset-list .pic { flex: none; width: 3.6rem; height: 2.7rem; padding: 0.25rem; box-sizing: border-box; border-radius: 0.5rem; background: #141c23; display: grid; place-items: center; box-shadow: inset 0 0 0 0.1rem #0c1217; }
+dialog.behind .preset-list .pic svg { width: 100%; height: 100%; }
+dialog.behind .preset-list .where { flex: 1; min-width: 0; }
+dialog.behind .preset-list b { font-family: system-ui, sans-serif; font-size: 1.125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+dialog.behind .preset-list b small { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em; color: var(--muted); }
+dialog.behind .preset-list .out { flex: none; width: 1.2rem; height: 1.2rem; color: var(--muted); }
+dialog.presets-sheet .sheet-foot { box-shadow: none; padding-top: 0.35rem; }
+dialog.presets-sheet .sheet-foot::before { content: none; }
+dialog.behind .sheet-foot .shut { width: 3rem; height: 3rem; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+dialog.behind .sheet-foot .shut svg { width: 1.3rem; height: 1.3rem; }
+
 /* --- The one who shows how --------------------------------------------------------------------
    An express letter stood on end: tall, narrow, sharp-cornered, leaning the way
    it is going, cold paper striped at the edge as the mail that left Penny
-   behind was (penny/office.css). It stands in the radio's world, at the bottom
-   right, and not in Penny's layer. It never breathes or blinks, and everything
-   it does is a straight line, over almost as it starts. */
+   behind was (penny/office.css). In the gallery it is the attendant, in a
+   peaked cap: it says how a work is to be used, and never why. It stands on
+   the floor by the plinth, at the bottom right, and not in Penny's layer. It
+   never breathes or blinks, and everything it does is a straight line, over
+   almost as it starts. */
 .dash[hidden], .dot-told[hidden] { display: none; }
 .dash { position: absolute; z-index: 2; right: max(0.9rem, env(safe-area-inset-right)); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--pal-w) * 0.03); width: calc(var(--pal-w) * 0.34); pointer-events: none; }
 .dash svg { display: block; width: 100%; overflow: visible; }
@@ -269,6 +468,10 @@ dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }
 .dash .d-tick { fill: none; stroke: #22303c; stroke-width: 2.2; stroke-linecap: square; opacity: 0; }
 .dash.ticked .d-tick { opacity: 1; }
 .dash .d-code { fill: none; stroke: #22303c; stroke-width: 1.3; }
+.dash .d-crown { fill: #22303c; }
+.dash .d-band { fill: #4a78b8; }
+.dash .d-peak { fill: #0f161d; }
+.dash .d-badge { fill: #f8d95a; stroke: #22303c; stroke-width: 0.8; }
 @media (prefers-reduced-motion: no-preference) {
   .dash.arriving { animation: dash-arrive 200ms linear both; }
   .dash.leaving { animation: dash-leave 280ms cubic-bezier(0.6, 0, 1, 1) both; }
@@ -281,14 +484,8 @@ dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }
 @keyframes dash-tick { 0%, 100% { rotate: 7deg; } 50% { rotate: 13deg; } }
 @keyframes dash-no { 0%, 100% { translate: 0 0; } 25% { translate: -3px 0; } 50% { translate: 3px 0; } 75% { translate: -3px 0; } }
 
-/* What it says comes out as tape: a straight strip, capitals, one order at a time and never a reason. */
-.dash-says { margin: 0; padding: 0.22rem 0.65rem; border-radius: 0.12rem; background: #eef3f8; color: #22303c; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; box-shadow: 0.14rem 0.16rem 0 #4a78b8, inset 0 0 0 0.09rem #22303c; }
-.dash-says:empty { display: none; }
-@media (prefers-reduced-motion: no-preference) { .dash-says.fed { animation: dash-tape 200ms steps(6, end); } }
-@keyframes dash-tape { 0% { clip-path: inset(0 0 0 100%); } 100% { clip-path: inset(0); } }
-
 /* --- What Dot says ----------------------------------------------------------------------------
-   Round and plain, as Dot is: against the tape, the difference is seen before a word is read. */
+   Round and plain, as Dot is: against the attendant's sign, the difference is seen before a word is read. */
 .dot-says { position: absolute; z-index: 4; left: 0; top: 0; margin: 0; max-width: 11.5rem; box-sizing: border-box; padding: 0.55rem 0.75rem; pointer-events: none; border: 0.16rem solid #22303c; border-radius: 1.1rem; background: #f6f1e7; color: #22303c; font-family: system-ui, sans-serif; font-size: 1rem; line-height: 1.25; font-weight: 800; text-align: left; box-shadow: 0.16rem 0.2rem 0 #2aa198; }
 .dot-says:empty { display: none; }
 .dot-says::after { content: ""; position: absolute; right: -0.62rem; bottom: 0.7rem; width: 0.9rem; height: 0.9rem; background: #f6f1e7; border-right: 0.16rem solid #22303c; border-bottom: 0.16rem solid #22303c; rotate: -45deg; border-bottom-right-radius: 0.2rem; }
@@ -301,14 +498,3 @@ dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }
 @keyframes dot-says-in { 0% { scale: 0.85; opacity: 0; } 100% { scale: 1; opacity: 1; } }
 /* Penny's fingertip of light, thrown at the tag: round and warm (the villain's pointer is neither) */
 .radio-ray { position: absolute; z-index: 5; left: 0; top: 0; width: 1.6rem; height: 1.6rem; margin: -0.8rem; border-radius: 50%; box-sizing: border-box; pointer-events: none; opacity: 0; background: rgb(246 160 112 / 0.4); border: 0.12rem solid #f6a070; box-shadow: 0 0 0.7rem rgb(246 160 112 / 0.9); }
-
-/* Behind the radio, Dot's line goes with you; and the presets have a sheet of their own. */
-dialog.behind .dot-told { margin: 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.0625rem; font-weight: 800; color: var(--ink); }
-dialog.behind .dot-told svg { flex: none; width: 2.2rem; height: 2.2rem; }
-dialog.behind .preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-dialog.behind .preset-list:empty { display: none; }
-dialog.behind .preset-list a { display: flex; align-items: center; gap: 0.75rem; min-height: 3.2rem; padding: 0.3rem 0.6rem 0.3rem 0.3rem; border-radius: 0.9rem; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); text-decoration: none; }
-dialog.behind .preset-list .pic { flex: none; width: 3.4rem; height: 2.7rem; padding: 0.25rem; box-sizing: border-box; border-radius: 0.6rem; background: #22303c; display: grid; place-items: center; }
-dialog.behind .preset-list .pic svg { width: 100%; height: 100%; }
-dialog.behind .preset-list b { font-size: 1.0625rem; font-variant-numeric: tabular-nums; }
-dialog.behind .preset-list small { display: block; font-size: 0.8125rem; color: var(--muted); }

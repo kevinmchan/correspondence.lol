@@ -126,7 +126,10 @@ of uses words (the lines for screen readers aside). What Penny has is a voice,
 a closed-mouth hum that comes from its seal (`penny/penny.js`), and feelings,
 which show. Others can speak. Dot, once found, can say what Penny means, as it
 does at the radio: it translates Penny, it does not read. And the one who shows
-how the radio works uses words, but only for how.
+how the radio works gives orders, in signs, and only for how. The only words
+a visitor to the radio reads are the gallery's: its label on the plinth, and its
+reading of it, where words are the point. What is printed on the set itself
+(its name, Keep, FM, the readout) is part of the drawing.
 
 **Penny feels things hard.** Its highs are very high and its lows go all the
 way down, and both pass quickly. That intensity is what the adventure looks
@@ -151,6 +154,27 @@ is left behind for losing, whoever comes last is as welcome as whoever comes
 first, and help is allowed: a hint may be asked for in the middle of a race,
 and Penny thinks that a fine idea.
 
+**What the writing keeps coming back to: others can light up parts of us,
+above all the parts we have lost touch with.** Penny cannot say what it means;
+Dot can, and when Dot says it, something Penny had no way to reach is out in
+the light. A part of oneself can go dark for a long time (Penny, posted long
+ago and never delivered, has more of those than most) and come back lit
+because someone else noticed it, named it, or only stood beside it. The story
+shows this rather than saying it, and mostly in light: Penny's seal glows, a
+fingertip of light passes from one to another, a room's window is lit when
+somebody there is waiting on you. It is also why the radio's question matters:
+whether something that learns what you like lights a part of you up, or
+evens it out.
+
+**The look is part of the writing: soothing turns to wrestling with the
+dark.** The app begins soothing, and is meant to (CLAUDE.md, "Look and
+words"). But the calm is a place the story starts from, not where it stays:
+soothing turns, in time, to wrestling with the dark, and the change is
+written, as a scene is, never an accident of style. It is in the dark that
+the theme above matters most: what has gone dark in us is what others can
+help light. The two worlds (Seasons) are one way the turn may be seen; when
+and how it comes are not decided.
+
 **What the world is afraid of: losing music.** Taste is being averaged, more
 and more efficiently: what one person likes is worked out, set beside what
 everyone likes, and evened out, a little faster each time. The world Penny
@@ -158,7 +182,8 @@ lives in is worried that, done well enough, this leaves no music at all: only
 the middle of it. It is kin to the hurry Penny comes from, efficiency turned on
 listening. Penny's Radio is where the story comes closest to it: a radio that
 learns what you like. Who is doing the averaging, and whether the fear is
-right, are not decided, and as everywhere the story does not say it in words.
+right, are not decided, and as everywhere but the gallery's reading of the
+radio, the story does not say it in words.
 
 **The question Penny's Radio asks.** Is a radio that learns one person's taste
 a defence of that taste, or one more step in the averaging? The piece asks it
@@ -501,19 +526,57 @@ notes of different lengths, and any way to choose the chords.
 ## Penny's Radio
 
 `/jam/?taste` (`jam/taste.js`), "Penny's Radio" on the home page's menu and a
-radio at the top of the music maker, is a radio to whoever is using it, and an
-experiment behind that: can a model of what you like in a loop predict your
-choices, and can that be shown to be more than chance?
+radio at the top of the music maker, is a work in a gallery. To whoever plays
+it, it is a radio; behind that, it is an experiment: can a model of what you
+like in a loop predict your choices, and can that be shown to be more than
+chance? It is played, and it is read about. Playing it has no words in it but
+the gallery's label and the set's own markings, which are part of the drawing;
+the words to read are in the reading.
 
-**The set.** A small portable radio standing on the map: a handle, an aerial,
-a plate with its name, a dial, a display, a readout, and along the bottom a
-tuning knob, play and pause, five preset lamps and Keep, and a tag hanging
-from its right side with a flask on it. It is drawn flat and
-given depth the way a drawing is: a solid edge down its right side and along
-its underside, a shadow on the ground, a slight lean. All of it is always on
-the screen, at any size (everything on it is sized from its own width), and
-what is behind it is never the white of a page: it is the map, as everywhere,
-at dusk.
+**The gallery.** A world afraid of losing its music to the averaging of taste
+keeps a gallery for it, and the radio is one of the works there. The screen is
+a room of it, at dusk, and the room is built of the world: a deep blue-green
+wall, never the white of a page, with the map's squares faint on it; a light
+from above that falls on the work and washes the wall behind it; and a floor
+that is the map laid flat, its squares going away from you, small at the wall
+and wider at your feet. The radio stands on a pale plinth, drawn as the set is
+drawn (a face, a top its feet stand on, a side in shadow), and the plinth
+stands on the floor, a little nearer than the wall. Penny stands at the bottom
+edge in front of it, a visitor, as you are. Everything in the room is low and
+soft, and nothing in it moves but the light. The plinth takes the room under
+the set that a line of words used to, and no more, so the set is as big as it
+was on every phone; the set and the plinth are as wide as each other by one
+rule (`--work-w`).
+
+**The label.** On the face of the plinth, where it is read first, is the
+gallery's label, written as a gallery writes one: the title in italic, what it
+is made of, and whose it is.
+
+> *Penny's Radio*
+> Steel, enamel
+> Two stations, one listener
+> Anonymous loan
+
+A screen reader reads it as the work's caption. It says what the gallery says,
+and leaves out the rest: nothing on it says the radio is an experiment, who lent
+it, or what the tag on its side is.
+
+**The light.** While the one who shows how is there the light is cold, and when
+it has gone the light warms, slowly (as in every place: cold in a hurry, warmer
+once things have slowed). That is all it does. It follows the story, and not
+the learning: it is the same on the first day and after a thousand stations,
+whatever the experiment makes of them, because a light that changed with the
+learning would say something about it (closer could be read as kept, or as
+narrowed), and the room does not take a side in the question the piece asks.
+Nothing else in the room follows the experiment either.
+
+**The set.** A small portable radio: a handle, an aerial, a plate with its
+name, a dial, a display, a readout, and along the bottom a tuning knob, play
+and pause, five preset lamps and Keep, and a tag hanging from its right side
+with a flask on it. It is drawn flat and given depth the way a drawing is: a
+solid edge down its right side and along its underside, a shadow on the plinth,
+a slight lean. All of it is always on the screen, at any size (everything on it
+is sized from its own width).
 
 **Playing it.** Two stations are on the dial at a time, each a loop, each at a
 place on the dial worked out from the loop itself (so a loop is always the
@@ -526,8 +589,13 @@ changed a little, more often the first: mostly near relations of a favourite
 is the sharper test of it, and the same thing over and over to listen to. A
 station kept five times running is saved to a preset and lights a lamp, and
 two new stations take the dial, so that no early favourite sits there for
-ever. A press on the lamps opens a sheet of the presets, the latest first; a
-press on one opens it in the music maker.
+ever. A press on the lamps opens a sheet of the presets, which has no words,
+since it is part of what is played: the set's five lamps, lit as they are on
+the set, and each station saved, the latest first, as its picture on a small
+display and its place on the dial, with an arrow, the way out; a press on one
+opens it in the music maker. A screen reader is told what each is and where it
+goes, and that a station kept five times running is saved there. A round key
+at its foot shuts it.
 
 **A station is a piece, not a loop.** A loop is one bar of eight steps, and
 played round and round as it stands it is pleasant for a quarter of a minute
@@ -557,39 +625,50 @@ heard.
 
 **Somebody shows how, and never why.** The first time the radio is on,
 somebody else comes to stand by it: an express letter, a red and blue stripe
-round its edge, all hurry, the kind of post Penny was left behind by. It uses
-words, and spends them only on how: an order on a strip of tape beside it,
-"Swipe.", "Play.", "Listen.", "The other one.", "Tap twice to keep one.", given
-again every few seconds until it has been done, and "Not yet." to a station
-kept before both have been heard. It never says why, and it does not cheer:
-when a thing is done it ticks. Penny watches it from under the edge, unsure,
-and shuts its eyes and listens when you listen. When a station has been kept
-it ticks a last time, looks at you, and is gone up the side of the radio. Its
-name, Dash, is in the code only. (On a screen reader the orders name the
-buttons too: "Swipe, or press Tune.")
+round its edge, all hurry, the kind of post Penny was left behind by; in the
+gallery, the attendant, in a peaked cap. It hangs its orders over the
+gallery's label, on a sign of cold enamel in its livery, one at a time: its how
+over the gallery's what. A fingertip drawn across (swipe), the play sign, an
+ear (listen), the fingertip drawn back (the other one), a fingertip in two
+rings (tap twice to keep one), each pointed at again every few seconds until it
+has been done, and an hourglass for a station kept before both have been heard.
+Signs and not words, because the radio is played without words; and a sign
+that needs none, the same in every building, is the hurry's own way of saying
+a thing. It never says why, and it does not cheer: when a thing is done it
+ticks. Penny watches it from under the edge, unsure, and shuts its eyes and
+listens when you listen. When a station has been kept it ticks a last time,
+looks at you, and is gone up the side of the radio, and takes its sign off the
+label as it goes: the label can be read again. Its name, Dash, is in the code
+only. (A screen reader is given the orders in words, and they name the buttons
+too: "Swipe, or press Tune." The sign itself is a picture, hidden from it.)
 
 **Penny notices the tag.** The tag on the side of the set is in plain sight
-from the start, and can be pressed at any time. When the one who showed how
-has gone, Penny sees it. It goes and stands under it, looks at you, throws a
-fingertip of light at it and hums a question; the first time round it asks
-again, harder, jumping for it. Then it tries to say what it is, and cannot:
-the note sticks, and it sinks. Penny cannot speak, read or write.
+from the start, and can be pressed at any time. It is not the gallery's, and
+the label does not mention it. When the one who showed how has gone, Penny
+looks at the label, which is words, and cannot read it; then it sees the tag,
+which is a picture. It goes and stands under it, in front of the plinth and
+clear of the label, looks at you, throws a fingertip of light at it and hums a
+question; the first time round it asks again, harder, jumping for it. Then it
+tries to say what it is, and cannot: the note sticks, and it sinks. Penny
+cannot speak, read or write.
 
 **Dot says it.** If Dot has been found, Penny turns to Dot. The radio goes
 quiet; Penny looks the way the express letter went, at the tag, and back at
-Dot, and pleads; Dot nods, and says it for Penny, in a bubble, a few words at
-a time on three falling bells: "You're part of an experiment." Then the sheet
-behind the radio opens by itself, once, and not while a finger is on the
-screen. Without Dot nothing is said and nothing opens by itself: Penny waits
-under the tag, asks once more, and goes back. Whenever the tag is pressed,
-that is what Penny wanted, and it is thrilled.
+Dot, and pleads; Dot nods, and says it for Penny, as an audio guide speaks at a
+work, in a bubble, a few words at a time on three falling bells: "You're part
+of an experiment." This is where the visitor first learns that the radio is an
+experiment; the question is in the reading. Then the reading opens by itself,
+once, and not while a finger is on the screen. Without Dot nothing is said and
+nothing opens by itself: Penny waits under the tag, asks once more, and goes
+back. Whenever the tag is pressed, that is what Penny wanted, and it is
+thrilled.
 
 After that Penny only keeps time, one small hop at the top of each bar, the
 same whatever is playing: it gives no opinion of a station. It nods when one
 is kept, jumps for a preset, and shakes its head at a station kept before
 both have been heard. It hums for the tag, and otherwise only before the
 radio is on. All of this happens once on a device; "Show me how again", in the
-sheet behind the radio, plays it all again.
+reading, plays it all again.
 
 Two things are there for the experiment's sake: a station cannot be kept
 until both have been heard for a second and a half each (three bars of signal
@@ -605,11 +684,53 @@ glows in the colour of what has just sounded, harder on the beat; and at the
 top of every bar a gleam runs across it. At rest the notes twinkle. Both
 stations are lit by the same rules. With reduced motion only the bar moves.
 
-**Behind the radio.** Nothing on the face of the radio says it is an
-experiment but the tag on its side. The tag opens a sheet over it with the
-lab notes: where the test stands, the numbers, how it works, the data to copy
-out, showing how again, and starting over. Once Dot has said it, Dot's line
-is at the top of the sheet.
+**The reading.** Nothing on the face of the radio says it is an experiment but
+the tag on its side, and nothing on its label. The tag opens the reading, a
+sheet over the work: the gallery's entry for it, set as a gallery sets its
+words. (To a screen reader the tag is "Read about this radio": what pressing it
+does, and nothing of what is there.) At the top, small, the name of the place
+(The Gallery of Kept Music); the title in italic, and the label under it. Once
+Dot has said it, Dot's line, as the audio guide's stop for the work, and under
+it whose words they are:
+
+> "You're part of an experiment."
+> AUDIO GUIDE
+> Dot, for Penny, who saw it first and had no words for it.
+
+That is the moment the writing keeps coming back to (Penny, above): somebody
+else says for Penny what Penny could not, and something that was in plain sight
+is out in the light. The reading shows it in a caption and does not say what it
+means. Then what the label leaves out: "The tag on its side, in plain sight all
+along, is not the gallery's: this radio is also an experiment." And then,
+before anything of how the experiment stands, so that a visitor meets it
+without reading past the numbers, set apart between two rules, a sentence of
+why there is a gallery at all and the question the piece asks:
+
+> The gallery keeps music for a world afraid of losing it, as taste is
+> averaged ever more efficiently.
+>
+> *Is a radio that learns one person's taste a defence of that taste, or one
+> more step in the averaging?*
+
+The reading asks it and leaves it open: nothing in it answers the question or
+leans either way, and nothing after it comes back to it. Nothing right after it
+reads as a reply: under a small heading of its own, "Where the test stands",
+comes the test as a figure, whose caption says what is measured and never
+begins with a yes, a no or a "not yet", does not count down, and is set the
+same however the test stands; then the numbers; what the model thinks you go
+for; the phantom, drawn (the station you kept, a challenger that is heard, and
+its twin, made alongside it and never heard, in a dashed outline, each
+captioned: "Its twin, never heard: the phantom"); how it works, folded; and
+what the sheet is used for: copying the data out, starting over (which asks
+first), and showing how again. Going back to the radio is in a foot that does
+not scroll, so it is always in reach. The sheet keeps clear of the notch and
+the home bar. It opens at its title, with the title focused for a screen
+reader, wherever the phone would rather it opened. It is printed on the
+plinth's warm stone, never the white of a page, and in the dark theme on a warm
+charcoal, and it comes up slowly over the room (with reduced motion, it is
+simply there); the presets' sheet is the same. With the label, it is the one
+place on the screen with words to read; the set's own markings are part of the
+drawing.
 
 **The model** (`jam/taste-model.js`). A loop is turned into fifteen numbers:
 tempo, how busy each instrument is, kick, snare and hats, how much falls off
@@ -633,17 +754,56 @@ a stake reaches ×20 less than one time in twenty against a fair coin, however
 long one plays and however often one looks, so ×20 is significance at the 5%
 level with no number of picks fixed beforehand.
 
-The lab notes show where it stands after every choice: the
-stake and a bar filling towards ×20, how often the model called the pick
-right, how often habit alone would have, how often the real challenger beat
-the phantom, and what the model thinks you go for, in words. The picks are
-kept on the device and can be copied out as JSON.
+The reading shows where it stands after every choice: the stake; a plain rule
+filling towards a mark at ×20 as far as the stake has ever got, in the colour
+of neither a win nor a loss (the gallery shows how far it has got, and does not
+cheer it); how often the model called the pick right, how often habit alone
+would have, how often the real challenger beat the phantom, and what the model
+thinks you go for, in words. The picks are kept on the device and can be copied
+out as JSON.
 
 In simulation (`tests/taste.test.js`) a marked taste is found in about 160
 picks, a mild one in 200 to 400, and someone with no taste and a strong habit
 fools it about as often as the 1 in 20 allows. What it can find is limited to
 what the fifteen numbers can say. Nothing about how challengers are made
 looks at who has been winning beyond the length of the present reign.
+
+**Decided before any picks were looked at (24 November 2026).** A study of
+the test by simulation alone found it valid, including for someone who
+watches the stake and chases it, and found three changes worth making. The
+owner agreed to them before anyone's real picks had been looked at, and they
+go in with the meter on the radio's face:
+
+- **Eight phantoms, and the bet as their likelihood ratio.** Each challenger
+  is drawn nine times in the same way and eight are never heard; the stake is
+  multiplied by 0.1 + 0.9 × 9r / (r + f1 + … + f8), r and the f's being the
+  chances of the actual pick with the real challenger and with each phantom.
+  In simulation this reaches ×20 about two fifths sooner (a marked taste in
+  about 51 picks rather than 87, a mild one in about 87 rather than 148), with
+  no more than 1 in 20 for no taste.
+- **The stake carries on through "Start over".** Without this, someone with no
+  taste who starts over whenever the stake sags reaches ×20 about one time in
+  five; with it, under one in twenty.
+- **The model's fitting takes halving steps.** It could fall into a two-step
+  cycle in its first thirty picks and never learn; the fix is to the model,
+  not the bet, and is valid with any bet.
+
+The rule is not to be tuned again on anyone's real picks. Many devices, or
+many strategies, each reaching ×20 now and then, are many tests: what is found
+by exploring is to be confirmed afresh on one device, from the start.
+
+## Seasons
+
+Some features are to come for a season and go again, as seasons do in games.
+The first planned is **the two worlds**: now and then a room flickers between
+its playful self and a serious, adult, live-action one, a story split between
+animation and live action, comedy and drama. It is switched on by a wordless
+toggle, off by default, on one screen. It is not in the app yet: prototypes of
+it were made (a film splice; a seam that splits the room in two) and wait for
+their season. When it comes it keeps the rules they were built to: never more
+than three flashes a second, nothing of it for anyone who asks for reduced
+motion, and nothing moving under a finger. Outside its season the app is
+soothing (CLAUDE.md, "Look and words").
 
 ## Tags, and the night
 

@@ -497,12 +497,18 @@
   </template>
 
   <template id="screen-taste">
-    <!-- Penny's Radio: a small portable set, standing on the map. Who shows how it works, and what Penny and Dot make of it, is in jam/taste.js. -->
+    <!-- Penny's Radio: a work in a gallery that keeps music. It stands on a pale plinth under a light, with its label on the plinth; it is played, and read about.
+         Who shows how it works, and what Penny and Dot make of it, is in jam/taste.js. -->
     <main class="radio-world">
+      <!-- The room is part of the world, at dusk: the map's squares faint on its wall, a light from above that falls on the work,
+           and the floor, which is the map laid flat and going away from you. -->
       <div class="map-far" aria-hidden="true"></div>
+      <div class="gallery-room" aria-hidden="true"><i class="gallery-light cold"></i><i class="gallery-light warm"></i><i class="gallery-floor"></i></div>
       <a href="/jam/" class="penny-back" aria-label="Back to the music maker"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
       <h1 class="sr-only">Penny’s Radio</h1>
-      <div class="radio-ground">
+      <figure class="radio-ground">
+        <!-- The floor in front of the plinth, where it stands (drawn over the foot of the plinth: it is nearer). -->
+        <i class="gallery-floor near" aria-hidden="true"></i>
         <div id="taste-card" class="radio taste-card" tabindex="0" role="group">
           <span class="antenna" aria-hidden="true"><i></i></span>
           <span class="handle" aria-hidden="true"></span>
@@ -541,15 +547,25 @@
             </div>
           </div>
           <span class="feet" aria-hidden="true"></span>
-          <!-- A lab's tag, riveted to the side of the set. It is in plain sight from the start, and is the way behind the radio. -->
-          <button type="button" id="taste-behind-open" class="lab-tag" aria-label="Behind the radio" title="Behind the radio"><span class="lab-plate" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></span></button>
+          <!-- A lab's tag, riveted to the side of the set: not the gallery's, and not on its label. It is in plain sight from the start, and opens the reading.
+               (Its name says what pressing it does, and nothing of what the reading will say.) -->
+          <button type="button" id="taste-behind-open" class="lab-tag" aria-label="Read about this radio"><span class="lab-plate" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></span></button>
         </div>
-        <div class="radio-lines">
-          <p id="dash-says" class="dash-says" role="status"></p>
-          <p id="taste-note" class="taste-note" role="status"></p>
-        </div>
-      </div>
-      <!-- The one who shows how, and never why: an express letter, standing by the set until the first station is kept. -->
+        <!-- The plinth it stands on, and on its face the gallery's label: what is read first, and the radio's caption. It says what the
+             gallery says, and leaves out the tag. While the attendant is here, its sign of the moment hangs over the label (its how
+             over the gallery's what), and goes when it goes: a picture, so it is hidden from a screen reader, which has #dash-says. -->
+        <figcaption class="plinth">
+          <div class="gallery-label">
+            <p class="label-title"><cite>Penny’s Radio</cite></p>
+            <p>Steel, enamel</p>
+            <p>Two stations, one listener</p>
+            <p>Anonymous loan</p>
+          </div>
+          <span id="dash-sign" class="dash-sign" aria-hidden="true"></span>
+        </figcaption>
+      </figure>
+      <p id="taste-note" class="taste-note sr-only" role="status"></p>
+      <!-- The one who shows how, and never why: an express letter in an attendant's cap, standing by the work until the first station is kept. -->
       <div id="radio-dash" class="dash" aria-hidden="true" hidden>
         <svg viewBox="0 0 52 100">
           <ellipse class="d-shade" cx="27" cy="97" rx="15" ry="2.6"/>
@@ -558,6 +574,7 @@
             <rect class="d-paper" x="8" y="5" width="36" height="76" rx="1.2"/>
             <rect class="d-stripe" x="11.6" y="8.6" width="28.8" height="68.8"/>
             <rect class="d-stripe blue" x="11.6" y="8.6" width="28.8" height="68.8"/>
+            <g class="d-cap"><path class="d-crown" d="M11.5 5.5L13.2-1.6Q26-6 38.8-1.6L40.5 5.5z"/><rect class="d-band" x="11.6" y="2.2" width="28.8" height="3.3"/><path class="d-peak" d="M9.5 5.2h33l-3.4 3.6H12.9z"/><circle class="d-badge" cx="26" cy="-0.9" r="1.8"/></g>
             <path class="d-brow" d="M15 19.5l10-3.2"/>
             <g class="d-eyes"><rect x="15.3" y="24" width="6.4" height="2.3"/><rect x="29.3" y="24" width="6.4" height="2.3"/></g>
             <path class="d-mouth" d="M17 35h15l3-2.2"/>
@@ -567,18 +584,36 @@
           </g>
         </svg>
       </div>
+      <!-- Its orders, in words, for a screen reader: what the sign over the label shows. How, and never why. -->
+      <p id="dash-says" class="sr-only" role="status"></p>
       <!-- What Dot says, when Dot says it: an empty line until then. -->
       <p id="dot-says" class="dot-says" role="status"></p>
       <i id="radio-ray" class="radio-ray" aria-hidden="true"></i>
       <p id="radio-story" class="sr-only" role="status"></p>
-      <!-- The experiment this radio is: out of sight until asked for (the flask, top right). -->
-        <dialog id="taste-behind" class="behind" aria-label="Behind the radio">
+      <!-- The reading: the gallery's entry for the work, and what the tag on its side adds. Out of sight until the tag is pressed (or
+           Dot says it); it opens at its title. With the label, the one place on this screen where words are welcome. It asks the piece's question
+           before anything of how the experiment stands, and nothing after the question answers it. -->
+        <dialog id="taste-behind" class="behind reading" aria-labelledby="reading-title">
           <section class="taste-lab">
-          <p id="dot-told" class="dot-told" hidden><svg viewBox="13 40 40 40" aria-hidden="true"><rect x="17" y="43" width="32" height="34" rx="3" fill="#2aa198"/><rect x="19.5" y="45.5" width="27" height="29" rx="1.5" fill="none" stroke="#f6f1e7" stroke-width="1.2" stroke-dasharray="0.1 2.6" stroke-linecap="round"/><circle cx="28" cy="58" r="1.9" fill="#22303c"/><circle cx="38" cy="58" r="1.9" fill="#22303c"/><path d="M30 63.5q3 2.6 6 0" fill="none" stroke="#22303c" stroke-width="1.6" stroke-linecap="round"/></svg><span>“You’re part of an experiment.”</span></p>
-          <h2>Behind the radio</h2>
-          <p class="what">This radio is an experiment. Every station you keep is a label, and a model is learning from them what you like, to see whether it can call your next choice. Nothing here changes how the radio plays.</p>
-          <div id="lab-meter" class="meter" role="img" aria-label="How far the evidence has got"><i></i></div>
-          <p id="lab-verdict" class="verdict"></p>
+          <header class="entry">
+            <p class="gallery-name">The Gallery of Kept Music</p>
+            <h2 id="reading-title" tabindex="-1" autofocus><cite>Penny’s Radio</cite></h2>
+            <p class="tombstone">Steel, enamel<br>Two stations, one listener<br>Anonymous loan</p>
+          </header>
+          <!-- The audio guide's stop: what Dot said for Penny, once Dot has said it. -->
+          <figure id="dot-told" class="dot-told" hidden><svg viewBox="13 40 40 40" aria-hidden="true"><rect x="17" y="43" width="32" height="34" rx="3" fill="#2aa198"/><rect x="19.5" y="45.5" width="27" height="29" rx="1.5" fill="none" stroke="#f6f1e7" stroke-width="1.2" stroke-dasharray="0.1 2.6" stroke-linecap="round"/><circle cx="28" cy="58" r="1.9" fill="#22303c"/><circle cx="38" cy="58" r="1.9" fill="#22303c"/><path d="M30 63.5q3 2.6 6 0" fill="none" stroke="#22303c" stroke-width="1.6" stroke-linecap="round"/></svg><blockquote>“You’re part of an experiment.”</blockquote><figcaption><b>Audio guide</b> Dot, for Penny, who saw it first and had no words for it.</figcaption></figure>
+          <p class="what">The tag on its side, in plain sight all along, is not the gallery’s: this radio is also an experiment. From the stations you keep, a model learns what you like, to see whether it can call your next choice.</p>
+          <!-- The question the piece asks, in the exhibit's own words, and left open. -->
+          <div class="asks">
+            <p>The gallery keeps music for a world afraid of losing it, as taste is averaged ever more efficiently.</p>
+            <p class="question">Is a radio that learns one person’s taste a defence of that taste, or one more step in the averaging?</p>
+          </div>
+          <!-- Where the experiment stands, and how it works: under a heading of its own, so that nothing after the question reads as its answer. -->
+          <figure class="evidence">
+            <h3>Where the test stands</h3>
+            <div id="lab-meter" class="meter" role="img" aria-label="How far the stake has got towards ×20"><i></i></div>
+            <figcaption id="lab-verdict" class="verdict"></figcaption>
+          </figure>
           <dl>
             <div><dt>Picks</dt><dd id="lab-picks"></dd></div>
             <div><dt>Stake</dt><dd id="lab-stake"></dd></div>
@@ -587,9 +622,19 @@
             <div><dt>Beat the phantom</dt><dd id="lab-coin"></dd></div>
           </dl>
           <p id="lab-likes" class="likes"></p>
+          <!-- The phantom, drawn: the station kept, a challenger that is heard, and its twin, made with it and never heard. -->
+          <figure class="phantom">
+            <svg viewBox="0 0 300 66" aria-hidden="true">
+              <path class="bracket" d="M150 15v-6h105v6M202.5 9V3"/>
+              <g class="station kept"><rect x="20" y="18" width="70" height="44" rx="7"/><path class="notes" d="M32 48h8M46 38h8M60 30h8M74 42h4"/></g>
+              <g class="station"><rect x="115" y="18" width="70" height="44" rx="7"/><path class="notes" d="M127 42h8M141 32h8M155 46h8M169 36h4"/></g>
+              <g class="station unheard"><rect x="220" y="18" width="70" height="44" rx="7"/><path class="notes" d="M232 42h8M246 32h8M260 46h8M274 36h4"/></g>
+            </svg>
+            <figcaption><span>The station you kept<span class="sr-only">;</span></span><span>A challenger, heard<span class="sr-only">;</span></span><span>Its twin, never heard: the phantom</span></figcaption>
+          </figure>
           <details>
-            <summary>How this works</summary>
-            <p>Every station you keep is a label. A model learns from them what you go for: how fast, how busy each instrument is, how high the tune sits, and a dozen things more. From the tenth pick on it says in advance which station you will keep.</p>
+            <summary>How it works</summary>
+            <p>Every station you keep is written down. A model learns from them what you go for: how fast, how busy each instrument is, how high the tune sits, and a dozen things more. From the tenth pick on it says in advance which station you will keep. What the model thinks never changes what the radio plays.</p>
             <p>Being called right is not proof of taste: someone who always keeps the station they already had is easy to call. So each time a challenger is needed, two are made and one is thrown away unheard, the phantom. If the music made no difference to your picks, the real challenger would be no better a guide to them than the phantom. The model is asked about both, and a stake is bet on the real one.</p>
             <p>If the music made no difference, the stake would reach ×20 less than one time in twenty, however long you play and however often you look. So ×20 is significance at the 5% level, and there is no number of picks to decide beforehand.</p>
             <p>“Habit alone” is what can be called from which side of the dial a station is on, which one you already had, and which you heard first, knowing nothing about the music.</p>
@@ -599,16 +644,21 @@
             <button type="button" id="taste-reset" class="quiet">Start over</button>
           </div>
           <button type="button" id="taste-again" class="quiet">Show me how again</button>
-          <button type="button" id="taste-behind-close" class="go">Back to the radio</button>
           </section>
+          <!-- (always in reach, however far the reading has been scrolled) -->
+          <footer class="sheet-foot"><button type="button" id="taste-behind-close" class="go">Back to the radio</button></footer>
         </dialog>
-        <dialog id="taste-presets" class="behind" aria-label="Presets">
+        <!-- The presets: part of what is played, not of the reading, so without words. The five lamps, as on the set, lit for the
+             stations saved; and each station saved, as its picture and its place on the dial, to be opened in the music maker. What
+             they are and where they go is said to a screen reader. -->
+        <dialog id="taste-presets" class="behind presets-sheet" aria-labelledby="presets-title">
           <section class="taste-lab">
-            <h2>Presets</h2>
-            <p id="presets-none" class="what">A station you keep five times running is saved here.</p>
+            <h2 id="presets-title" class="sr-only">Presets</h2>
+            <div class="preset-lamps" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <p id="presets-none" class="sr-only">None yet. A station you keep five times running is saved here.</p>
             <ul id="lab-hall" class="preset-list"></ul>
-            <button type="button" id="taste-presets-close" class="go">Back to the radio</button>
           </section>
+          <footer class="sheet-foot"><button type="button" id="taste-presets-close" class="go shut" aria-label="Back to the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></footer>
         </dialog>
     </main>
   </template>

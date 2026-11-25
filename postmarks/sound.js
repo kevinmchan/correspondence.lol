@@ -87,10 +87,15 @@ export function setMusicOff(value) {
 }
 
 // The music maker has the floor: the background music fades out while it is
-// open, and comes back afterwards.
+// open, and comes back afterwards. Holds are counted, not just switched: the
+// next screen asks for quiet before the last one has gone, so going from the
+// music maker to the radio (or from one scene of the film to the next) once let
+// the screen that was leaving bring the music back over the one arriving.
+let holds = 0;
 export function holdMusic(on) {
-  held = on;
-  if (band) band.gain.setTargetAtTime(on || musicOff ? 0 : MUSIC_LEVEL, ctx.currentTime, 0.2);
+  holds = Math.max(0, holds + (on ? 1 : -1));
+  held = holds > 0;
+  if (band) band.gain.setTargetAtTime(held || musicOff ? 0 : MUSIC_LEVEL, ctx.currentTime, 0.2);
 }
 
 // The running sound engine, for something that wants to make its own sounds on
