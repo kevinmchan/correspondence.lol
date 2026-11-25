@@ -286,28 +286,40 @@
           <div class="house-floor" aria-hidden="true"></div>
           <div class="house-walls" aria-hidden="true"></div>
 
-          <!-- Setting up a game: the same room, at its desk. One for each kind of game: its board, drawn ahead, which can be
-               drawn again; for a pass phrase, the message to deliver first (room.js openDesk). Nobody is told until it starts. -->
+          <!-- Setting up a game: the same room, at its desk, the same two steps for every kind of game (room.js openDesk). First,
+               how it is played: a few cards, a picture and a line of words each (the owner's choice, 25 November 2026), and the
+               way on. Then the board it will be played on, drawn ahead, to be drawn again or taken; for a pass phrase, with
+               the message to deliver above it, or a die for one picked at random. Nobody is told until it starts. -->
           <div id="compose" class="stack" hidden>
             <h2 class="desk-head"><span id="desk-icon" class="desk-icon"></span><span id="desk-name" class="sr-only"></span></h2>
-            <p id="phrase-ask" class="desk-ask">What message would you like to deliver?</p>
-            <p id="phrase-how" class="sr-only">Leave a phrase for others to uncover, or leave it empty for a random one.</p>
-            <form id="phrase-form" class="card desk">
-              <label class="field" id="phrase-field">
-                <span class="sr-only">Your phrase</span>
-                <input type="text" id="phrase-text" maxlength="60" autocomplete="off" spellcheck="false" aria-describedby="phrase-how">
-              </label>
-              <div id="tokens" class="phrase" aria-live="polite" aria-label="How your phrase will be hidden"></div>
-              <p id="token-note" class="sr-only" aria-live="polite"></p>
-              <!-- the board it will be played on, and a die to draw another -->
-              <div class="preview">
-                <span id="preview-board" class="mini" aria-hidden="true"></span>
-                <button type="button" id="redraw" class="quiet round redraw" aria-label="Draw another board"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="8.6" cy="8.6" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.4" fill="currentColor" stroke="none"/></svg></button>
-              </div>
-              <button type="submit" class="icon-button start-phrase" aria-label="Start game"><svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4l9.8-6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
-              <p id="phrase-error" class="message bad" role="alert"></p>
-            </form>
-            <button type="button" id="phrase-back" class="quiet round" aria-label="Back to the room"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></button>
+            <div id="desk-how" class="desk-step">
+              <ul id="mode-cards" class="mode-cards"></ul>
+              <button type="button" id="desk-next" class="icon-button desk-next" aria-label="On to the board"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13.5M13 6l6 6-6 6"/></svg></button>
+            </div>
+            <div id="desk-board" class="desk-step">
+              <p id="phrase-ask" class="desk-ask">What message would you like to deliver?</p>
+              <p id="phrase-how" class="sr-only">Write a phrase for others to uncover, or throw the die for one picked at random, kept secret from you too.</p>
+              <form id="phrase-form" class="card desk">
+                <div class="phrase-row" id="phrase-field">
+                  <label class="field">
+                    <span class="sr-only">Your phrase</span>
+                    <input type="text" id="phrase-text" maxlength="60" autocomplete="off" spellcheck="false" aria-describedby="phrase-how">
+                  </label>
+                  <!-- a phrase picked at random: lit while the box is empty, which is when a random one is used -->
+                  <button type="button" id="random-phrase" class="quiet round random-phrase" aria-label="A phrase picked at random" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="8.6" cy="8.6" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+                </div>
+                <div id="tokens" class="phrase" aria-live="polite" aria-label="How your phrase will be hidden"></div>
+                <p id="token-note" class="sr-only" aria-live="polite"></p>
+                <!-- the board it will be played on, and the way to draw another -->
+                <div class="preview">
+                  <span id="preview-board" class="mini" aria-hidden="true"></span>
+                  <button type="button" id="redraw" class="quiet round redraw" aria-label="Draw another board"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5a7.5 7.5 0 0 1 13.2-3.2L19.5 8.5M19.5 4v4.5H15M19.5 14.5a7.5 7.5 0 0 1-13.2 3.2L4.5 15.5M4.5 20v-4.5H9"/></svg></button>
+                </div>
+                <button type="submit" class="icon-button start-phrase" aria-label="Start game"><svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4l9.8-6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+                <p id="phrase-error" class="message bad" role="alert"></p>
+              </form>
+            </div>
+            <button type="button" id="phrase-back" class="quiet round" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></button>
           </div>
 
           <div id="room" class="inside" hidden>

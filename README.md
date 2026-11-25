@@ -1239,14 +1239,21 @@ room are its content: names, notes, the code.
   they are open, the room under them is out of reach, and a tap anywhere else
   only puts them away. The sheets they lead to ask their question with no
   words of explanation.
-- **Setting up a game** is the same room, at its desk, for every kind of game.
-  The board it will be played on is drawn ahead, its districts in their
-  colours and nothing of where the posts are, with a die beside it that draws
-  another (for a game together or a time trial, at a size drawn again too).
-  For a pass phrase the desk asks, in words, "What message would you like to
-  deliver?" (the owner's choice), above the box; the board is drawn at the
-  size the message needs, and drawn again only when that changes. Left empty,
-  a phrase is picked at random. The play mark starts the game with one tap.
+- **Setting up a game** is the same room, at its desk, with the same two steps
+  for every kind of game (the owner, 25 November 2026). First, how it is
+  played: three cards, each a picture on a tile of its colour and a line of
+  words (the owner's choice), and an arrow on. Then the board it will be
+  played on, drawn ahead, its districts in their colours and nothing of where
+  the posts are, with a button of turning arrows beside it that draws another
+  (for a game together or a time trial, at a size drawn again too). For a
+  pass phrase this step asks, in words, "What message would you like to
+  deliver?" (the owner's choice), with the box and beside it a die: lit while
+  the box is empty, which is when a phrase picked at random is used (kept
+  secret from its starter too, who can then play); thrown with a message
+  written, it empties the box for one. The board is drawn at the size the
+  message needs, and drawn again only when that changes. The play mark starts
+  the game with one tap. Back goes back a step, and from the first, to the
+  room.
 - **A game together**, the first time it is opened on a device, shows what is
   particular to playing together in place of how to play (which is always
   under the question mark): one board for the whole room; take turns, after
