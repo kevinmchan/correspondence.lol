@@ -2254,10 +2254,17 @@ async function main() {
         const box = await page.locator('#games li').nth(n).boundingBox();
         return [box.x + box.width * across, box.y + box.height / 2];
       };
+      // (a finger put down on a card: once nothing else lies over that point, such as a sheet still going away, which
+      // on a page under load can stand a while after it is closed)
+      const onCard = async (n, across) => {
+        const at = await middle(n, across);
+        await page.waitForFunction(([x, y, i]) => document.elementFromPoint(x, y)?.closest('#games li') === document.querySelectorAll('#games li')[i], [...at, n], { timeout: 5000 });
+        return at;
+      };
       // with reduced motion, a card pressed does not move: its colour deepens and its shadow is drawn in
       await page.emulateMedia({ reducedMotion: 'reduce' });
       assert.equal((await cards())[0].breathing, false, 'and with reduced motion nothing breathes');
-      await page.mouse.move(...await middle(1));
+      await page.mouse.move(...await onCard(1));
       await page.mouse.down();
       await sleep(300);
       await settled();
@@ -2280,11 +2287,12 @@ async function main() {
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('.table.tidy').count(), 0);
       // pressed, a card goes down a little into the table, its shadow drawn in; and one tap, nowhere near its button, plays it
-      await page.mouse.move(...await middle(0));
+      await page.mouse.move(...await onCard(0));
       await page.mouse.down();
       await sleep(300);
       await settled();
       now = await cards();
+      assert.equal(now[0].pressed, true, 'pressed');
       assert.deepEqual(now[0].moved, ['0px 1.92px', '0.975'], 'it goes down a little');
       assert.equal(now[0].breathing, false, 'and holds its breath');
       assert.notEqual(now[0].shadow, rest[0].shadow, 'its shadow is drawn in');
