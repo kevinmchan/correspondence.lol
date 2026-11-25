@@ -413,7 +413,7 @@ export function mount(root, life) {
   // --- Energy ------------------------------------------------------------------------
   // Every post found is energy at once, and finishing the board entirely earns
   // as much again (shared/energy.js). The meter is everything earned, in every
-  // game: one bar, about twenty games long, with the meadow at its end, grey
+  // game: one bar, about ten games long, with the meadow at its end, grey
   // until the first bar is full (shared/meadow.js). There is no number (the
   // owner's choice), and all that is held is said only to screen readers. A
   // post found sends a spark from it to the end of the bar, which takes it in as
@@ -523,7 +523,7 @@ export function mount(root, life) {
     }
     const count = held(energy);
     // the second time the bar fills: a word of thanks, once (the owner's words, 25 November 2026)
-    const second = now.gained && energy.earned - now.gained < 2 * BAR && energy.earned >= 2 * BAR && !load(THANKS_KEY);
+    const second = now.gained && energy.earned >= 2 * BAR && !load(THANKS_KEY); // (or the first thing earned past it, if the bar was longer when it was passed)
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
