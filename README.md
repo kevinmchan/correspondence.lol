@@ -1297,8 +1297,10 @@ room are its content: names, notes, the code.
   then an ellipsis; a new name is 24 letters at most), and under it a wide
   window and a door. Where the door is goes by the room, so the street is not
   one shop over and over. They are soft as the room is: no hard edges, low
-  contrast, one soft shadow. A room with something waiting on you has its
-  window lit, glowing slowly. **Opening
+  contrast, one soft shadow. In the dark it is night on the street and each
+  shop is lit by the lantern at its door: warm round it, dark at the far
+  corners, a little pool of light on the ground no wider than the shop. A
+  room with something waiting on you has its window lit, glowing slowly. **Opening
   a room** is a plot staked out on the map, with a board planted in it to
   write the name on. **Joining one** is a grey building, its colour not yet
   known, with its mat to write the code on; the box shows the shape of a code
