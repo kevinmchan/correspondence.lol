@@ -781,7 +781,7 @@ export function mount(root, life) {
       people: online ? online.people.filter((person) => !person.left) : [],
       hearts: game.hearts,
       about: about(),
-      leave: online ? 'Back to the room' : won ? 'Play again' : 'New puzzle',
+      leave: online ? 'Back to the room' : won ? 'Continue' : 'New puzzle',
       celebrate: confetti,
       retry: retryOffer(won),
       onDone: () => {
