@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LARGEST, POST, SMALLEST, earnedOn, finish, fresh, held, most, played, read, spend } from '../shared/energy.js';
+import { BAR, LARGEST, POST, SMALLEST, bar, earnedOn, meadowEarned, finish, fresh, held, most, played, read, spend } from '../shared/energy.js';
 import { MAX_SIZE, MIN_SIZE } from '../postmarks/game.js';
 
 const at = (size, seed, found, status = 'playing') => ({ size, seed, found, status });
@@ -89,4 +89,23 @@ test('what was saved is made safe: anything broken is a fresh start, never a deb
   }
   const kept = { b: '6:2', p: 3, w: false };
   assert.deepEqual(read({ earned: 4, spent: 1, boards: ['5:1', kept, { b: 7, p: 1, w: true }, { b: '5:2', p: -1, w: false }] }), { earned: 4, spent: 1, boards: [kept] });
+});
+
+test('the bar is everything earned, about twenty games, and its first fill is the meadow', () => {
+  const average = [5, 6, 7, 8, 9].reduce((sum, size) => sum + most(size), 0) / 5;
+  assert.ok(BAR / average >= 16 && BAR / average <= 20, 'about twenty games, most of them finished');
+  let state = fresh();
+  assert.deepEqual(bar(state), { fill: 0, fills: 0 });
+  assert.equal(meadowEarned(state), false);
+  let seed = 0;
+  while (state.earned < BAR - most(9)) state = played(state, at(9, seed++, 9, 'won')).state;
+  assert.equal(meadowEarned(state), false);
+  assert.ok(bar(state).fill > 0.9 && bar(state).fill < 1);
+  state = played(state, at(9, seed++, 9, 'won')).state;
+  assert.equal(meadowEarned(state), true, 'one more game fills it');
+  assert.equal(bar(state).fills, 1);
+  assert.equal(bar(state).fill, (state.earned - BAR) / BAR, 'and it begins again from what was left over');
+  const spent = spend(state, 5).state;
+  assert.deepEqual(bar(spent), bar(state), 'spending takes nothing off the bar');
+  assert.equal(meadowEarned(spent), true, 'nor the meadow');
 });

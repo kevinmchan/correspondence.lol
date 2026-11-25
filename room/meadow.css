@@ -1,0 +1,186 @@
+/* The meadow: the reward for the first bar of energy (shared/meadow.js, shared/energy.js), worn by a room.
+
+   The same room, out of doors: its floor is grass in the map's own squares, with flowers in some of them; its
+   walls are a hedge in flower; its table is a picnic blanket, gingham in the room's colour; its chat a patch of
+   clover with a fringe of daisies. The sun is out in a corner, two tall flowers sway at the other, the shadows
+   of clouds go over, and a butterfly wanders across (in the dark: the moon, fireflies, and a firefly for the
+   butterfly).
+
+   ALL OF IT IS PAINT, as the drama is (room/worlds.css): colours, backgrounds, shadows and decorations drawn
+   outside the flow, behind everything that can be pressed. Nothing that can be pressed or typed in moves or
+   changes size; tests/browser/penny.e2e.cjs measures every box with the meadow on and off. It is the cartoon's
+   alone: the drama, through the portal, is the drama still. Nothing of it is read out, and nothing of it moves
+   for anybody who has asked for less motion. */
+
+.screen-room.meadow:not([data-world="serious"]) { background-color: #edf5df; }
+:root[data-theme="dark"] .screen-room.meadow:not([data-world="serious"]) { background-color: #18201a; }
+
+.screen-room.meadow :is(header, main):not([data-paint="serious"]) {
+  --grass: #b6e199; --grass-deep: #9bd17f; --hedge: #6dbb5a;
+  --floor: var(--grass);
+  --shade: rgb(40 80 30 / 0.14);
+  --cloth: #fffaf0; --check: color-mix(in srgb, var(--wall) 40%, transparent); --stitch: rgb(255 255 255 / 0.8);
+  --clover: #dff2cf; --clover-line: #a6d68a;
+  --daisy: #fffdf8; --daisy-heart: #f8d95a;
+  --tuft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='4.3' y='4.3' width='91.4' height='91.4' rx='20' fill='%23b6e199'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"] .screen-room.meadow :is(header, main):not([data-paint="serious"]) {
+  --grass: #36573a; --grass-deep: #2c4a31; --hedge: #3f7240;
+  --shade: rgb(0 0 0 / 0.3);
+  --cloth: #2f2b27; --check: color-mix(in srgb, var(--wall) 32%, transparent); --stitch: rgb(255 240 210 / 0.26);
+  --clover: #2c4630; --clover-line: #4c7a4a;
+  --daisy: #d8d2c2; --daisy-heart: #c9a94e;
+  --tuft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='4.3' y='4.3' width='91.4' height='91.4' rx='20' fill='%2336573a'/%3E%3C/svg%3E");
+}
+
+/* the ground all round, greener, and the path to the door a sandy one */
+.screen-room.meadow main:not([data-paint="serious"]) .plot-map.map-far { background: color-mix(in srgb, #7cc46a 30%, transparent); }
+:root[data-theme="dark"] .screen-room.meadow main:not([data-paint="serious"]) .plot-map.map-far { background: color-mix(in srgb, #4c8a3c 22%, transparent); }
+.screen-room.meadow main:not([data-paint="serious"]) .plot-path { background: color-mix(in srgb, #f0d9a0 70%, transparent); }
+:root[data-theme="dark"] .screen-room.meadow main:not([data-paint="serious"]) .plot-path { background: color-mix(in srgb, #8a7550 45%, transparent); }
+
+/* the floor, grass in the map's squares; the walls, a hedge */
+.screen-room.meadow main:not([data-paint="serious"]) .house-floor {
+  background: var(--tuft) 0 0 / var(--pitch, 2.75rem) var(--pitch, 2.75rem), var(--grass-deep);
+}
+.screen-room.meadow main:not([data-paint="serious"]) .house-walls::after { border-color: var(--hedge); }
+
+/* the tiles that start a game, stepping stones on the grass */
+.screen-room.meadow main:not([data-paint="serious"]) .house .mode {
+  background: color-mix(in oklab, var(--card) 82%, var(--grass));
+  box-shadow: 0 0.18rem 0 color-mix(in oklab, var(--grass-deep) 70%, #000 10%), inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+/* the table, a picnic blanket: gingham in the room's colour, stitched round */
+.screen-room.meadow main:not([data-paint="serious"]) .table {
+  background-color: var(--cloth);
+  background-image: linear-gradient(90deg, var(--check) 50%, transparent 0), linear-gradient(var(--check) 50%, transparent 0);
+  background-size: 1.5rem 1.5rem;
+  outline: 2px dashed var(--stitch); outline-offset: -0.4rem;
+}
+
+/* the chat, a patch of clover with a fringe of daisies along its top and foot */
+.screen-room.meadow main:not([data-paint="serious"]) .rug {
+  --rug: var(--clover);
+  box-shadow: inset 0 0 0 1px var(--clover-line);
+}
+.screen-room.meadow main:not([data-paint="serious"]) .rug::before,
+.screen-room.meadow main:not([data-paint="serious"]) .rug::after {
+  content: ""; position: absolute; left: 1.2rem; right: 1.2rem; height: 0.55rem; pointer-events: none;
+  background: radial-gradient(circle, var(--daisy) 0 30%, var(--daisy-heart) 31% 45%, transparent 46%) 0 0 / 1.1rem 0.55rem repeat-x;
+}
+.screen-room.meadow main:not([data-paint="serious"]) .rug::before { top: -0.28rem; }
+.screen-room.meadow main:not([data-paint="serious"]) .rug::after { bottom: -0.28rem; }
+
+/* --- What grows and flies there (room/index.html, .meadow-bits): behind everything, never pressed ------------- */
+.meadow-bits { display: none; }
+.screen-room.meadow main:not([data-paint="serious"]) .meadow-bits {
+  display: block; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: var(--house-r); overflow: hidden; container-type: size;
+}
+.meadow-bits > * { position: absolute; pointer-events: none; }
+/* flowers in some of the squares of the floor */
+.meadow-bits .ground {
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 300'%3E%3Cg fill='%23fffdf8'%3E%3Ccircle cx='50' cy='36' r='9'/%3E%3Ccircle cx='64' cy='50' r='9'/%3E%3Ccircle cx='50' cy='64' r='9'/%3E%3Ccircle cx='36' cy='50' r='9'/%3E%3Ccircle cx='350' cy='136' r='9'/%3E%3Ccircle cx='364' cy='150' r='9'/%3E%3Ccircle cx='350' cy='164' r='9'/%3E%3Ccircle cx='336' cy='150' r='9'/%3E%3C/g%3E%3Cg fill='%23f8c93a'%3E%3Ccircle cx='50' cy='50' r='8'/%3E%3Ccircle cx='350' cy='150' r='8'/%3E%3C/g%3E%3Cg fill='%23f08a76'%3E%3Ccircle cx='242' cy='242' r='8'/%3E%3Ccircle cx='258' cy='242' r='8'/%3E%3Ccircle cx='250' cy='256' r='8'/%3E%3C/g%3E%3Cg fill='%23f3b3e6'%3E%3Ccircle cx='442' cy='42' r='7'/%3E%3Ccircle cx='458' cy='42' r='7'/%3E%3Ccircle cx='450' cy='55' r='7'/%3E%3C/g%3E%3Cg fill='none' stroke='%2378b863' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M140 270 q4 -18 10 -24 M150 272 q0 -20 0 -28 M160 270 q-4 -18 -10 -24'/%3E%3Cpath d='M440 172 q4 -18 10 -24 M450 174 q0 -20 0 -28 M460 172 q-4 -18 -10 -24'/%3E%3Cpath d='M240 72 q4 -14 8 -18 M252 72 q-2 -14 -6 -18'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: calc(var(--pitch, 2.75rem) * 5) calc(var(--pitch, 2.75rem) * 3);
+  opacity: 0.9;
+}
+:root[data-theme="dark"] .meadow-bits .ground { opacity: 0.4; }
+/* blossoms all through the hedge: the room's colour, and white (a ring the walls' width, open at the door) */
+.meadow-bits .blooms {
+  inset: 0; border-radius: var(--house-r); box-sizing: border-box; padding: var(--wall-w);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--wall) 80%, #fff) 0 0.17rem, transparent 0.19rem) 0 0 / 1.05rem 1.05rem,
+    radial-gradient(circle, #fffdf8 0 0.12rem, #f8d95a 0.13rem 0.15rem, transparent 0.17rem) 0.52rem 0.5rem / 1.05rem 1.05rem;
+  -webkit-mask: linear-gradient(#000 0 0) 50% 100% / var(--door) calc(var(--wall-w) + 1px) no-repeat, linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) 50% 100% / var(--door) calc(var(--wall-w) + 1px) no-repeat, linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor, xor; mask-composite: exclude, exclude;
+}
+.house.writing .meadow-bits .blooms { --door: 0px; }
+:root[data-theme="dark"] .meadow-bits .blooms { opacity: 0.6; }
+/* the shadows of clouds, going over slowly (by day) */
+.meadow-bits .clouds { inset: 0; }
+.meadow-bits .clouds i { position: absolute; left: -40%; width: 70%; height: 9rem; border-radius: 50%; background: radial-gradient(closest-side, rgb(30 70 40 / 0.11), transparent); }
+.meadow-bits .clouds i:nth-child(1) { top: 8%; }
+.meadow-bits .clouds i:nth-child(2) { top: 52%; width: 55%; }
+:root[data-theme="dark"] .meadow-bits .clouds { display: none; }
+/* two tall flowers in the top left corner, swaying */
+.meadow-bits .tall { top: calc(var(--wall-w) + 0.2rem); width: 1.9rem; height: 4rem; transform-origin: 50% 100%; }
+.meadow-bits .tall.one { left: calc(var(--wall-w) + 0.3rem); }
+.meadow-bits .tall.two { left: calc(var(--wall-w) + 1.9rem); top: calc(var(--wall-w) + 1.2rem); height: 3.1rem; }
+.meadow-bits .tall svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.meadow-bits .tall .stalk { fill: none; stroke: #5d9f4b; stroke-width: 2.4; stroke-linecap: round; }
+.meadow-bits .tall .leaf { fill: #74b95f; }
+.meadow-bits .tall .petal { fill: #f08a76; }
+.meadow-bits .tall.two .petal { fill: #f3b3e6; }
+.meadow-bits .tall .heart { fill: #f8c93a; }
+:root[data-theme="dark"] .meadow-bits .tall { filter: brightness(0.72) saturate(0.85); }
+/* the sun in the top right corner, smiling; in the dark, the moon, asleep */
+.meadow-bits .sun { right: calc(var(--wall-w) + 0.45rem); top: calc(var(--wall-w) + 0.45rem); width: 2.9rem; height: 2.9rem; }
+.meadow-bits .sun::before {
+  content: ""; position: absolute; inset: -0.45rem; border-radius: 50%;
+  background: repeating-conic-gradient(rgb(255 214 77 / 0.85) 0 7deg, transparent 7deg 30deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 64%, #000 66%); mask: radial-gradient(closest-side, transparent 64%, #000 66%);
+}
+.meadow-bits .sun svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
+.meadow-bits .sun .disc { fill: #ffd84d; stroke: #f0b429; stroke-width: 2; }
+.meadow-bits .sun .cheek { fill: #f79a6b; opacity: 0.55; }
+.meadow-bits .sun .eye, .meadow-bits .sun .mouth { fill: none; stroke: #6b4a12; stroke-width: 2.4; stroke-linecap: round; }
+.meadow-bits .sun .night { display: none; }
+:root[data-theme="dark"] .meadow-bits .sun::before { background: radial-gradient(closest-side, rgb(243 227 168 / 0.2), transparent); -webkit-mask: none; mask: none; inset: -0.8rem; }
+:root[data-theme="dark"] .meadow-bits .sun .day { display: none; }
+:root[data-theme="dark"] .meadow-bits .sun .night { display: inline; }
+:root[data-theme="dark"] .meadow-bits .sun .disc { fill: #f3e3a8; stroke: #c9b46e; }
+/* a butterfly, wandering about the room; in the dark, a firefly */
+.meadow-bits .fly { left: 0; top: 0; width: 1.5rem; height: 1.3rem; translate: 62cqw 30cqh; }
+.meadow-bits .fly svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.meadow-bits .fly .wing { fill: #f3a6dc; stroke: #8f4a7c; stroke-width: 1.2; transform-box: fill-box; }
+.meadow-bits .fly .wing.l { transform-origin: 100% 50%; } .meadow-bits .fly .wing.r { transform-origin: 0% 50%; }
+.meadow-bits .fly .spot { fill: #fffdf8; }
+.meadow-bits .fly .body { fill: #3b2a3a; }
+.meadow-bits .fly .lamp { fill: #ffe27a; display: none; }
+:root[data-theme="dark"] .meadow-bits .fly .wing { fill: rgb(220 230 255 / 0.28); stroke: rgb(220 230 255 / 0.45); }
+:root[data-theme="dark"] .meadow-bits .fly .spot { display: none; }
+:root[data-theme="dark"] .meadow-bits .fly .lamp { display: inline; }
+:root[data-theme="dark"] .meadow-bits .fly svg { filter: drop-shadow(0 0 0.35rem rgb(255 220 110 / 0.95)); }
+/* fireflies along the hedge, in the dark */
+.meadow-bits .glow { display: none; inset: 0; }
+:root[data-theme="dark"] .meadow-bits .glow { display: block; }
+.meadow-bits .glow i { position: absolute; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: #ffe27a; box-shadow: 0 0 0.5rem 0.2rem rgb(255 214 90 / 0.55); opacity: 0.7; }
+.meadow-bits .glow i:nth-child(1) { left: 6%; top: 22%; } .meadow-bits .glow i:nth-child(2) { left: 90%; top: 36%; }
+.meadow-bits .glow i:nth-child(3) { left: 5%; top: 64%; } .meadow-bits .glow i:nth-child(4) { left: 91%; top: 82%; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .meadow-bits .sun::before { animation: portal-turn 40s linear infinite; }
+  :root[data-theme="dark"] .meadow-bits .sun::before { animation: none; }
+  .meadow-bits .sun svg { animation: meadow-beam 5s ease-in-out infinite; }
+  .meadow-bits .clouds i:nth-child(1) { animation: meadow-cloud 46s linear infinite; }
+  .meadow-bits .clouds i:nth-child(2) { animation: meadow-cloud 64s linear -30s infinite; }
+  .meadow-bits .tall { animation: meadow-stem 6.4s ease-in-out -1.2s infinite; }
+  .meadow-bits .tall.two { animation-duration: 7.3s; animation-delay: -2.6s; }
+  .meadow-bits .fly { animation: meadow-wander 48s ease-in-out infinite; }
+  .meadow-bits .fly .wing { animation: meadow-flap 0.7s ease-in-out infinite alternate; }
+  .meadow-bits .glow i { animation: meadow-firefly 11s ease-in-out infinite alternate; }
+  .meadow-bits .glow i:nth-child(2) { animation-duration: 13s; animation-delay: -4s; }
+  .meadow-bits .glow i:nth-child(3) { animation-duration: 9s; animation-delay: -7s; }
+  .meadow-bits .glow i:nth-child(4) { animation-duration: 15s; animation-delay: -2s; }
+}
+@keyframes meadow-beam { 0%, 100% { rotate: -4deg; } 50% { rotate: 5deg; } }
+@keyframes meadow-cloud { to { translate: 220% 0; } }
+@keyframes meadow-stem { 0%, 50%, 100% { rotate: 0deg; } 25% { rotate: 6deg; } 75% { rotate: -6deg; } }
+@keyframes meadow-flap { from { scale: 1 1; } to { scale: 0.45 1; } }
+@keyframes meadow-firefly { 0% { translate: 0 0; opacity: 0.25; } 40% { opacity: 0.9; } 100% { translate: 1.4rem -2rem; opacity: 0.35; } }
+/* (the butterfly's wandering: slow, along the edges and over the table, now and then resting) */
+@keyframes meadow-wander {
+  0% { translate: 62cqw 30cqh; }
+  12% { translate: 82cqw 14cqh; }
+  20% { translate: 80cqw 12cqh; }
+  34% { translate: 50cqw 4cqh; }
+  46% { translate: 14cqw 22cqh; }
+  54% { translate: 12cqw 24cqh; }
+  66% { translate: 8cqw 58cqh; }
+  78% { translate: 40cqw 92cqh; }
+  86% { translate: 86cqw 72cqh; }
+  100% { translate: 62cqw 30cqh; }
+}

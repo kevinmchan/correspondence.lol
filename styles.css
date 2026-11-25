@@ -820,6 +820,11 @@ input[aria-invalid="true"], input[aria-invalid="true"]:focus-visible { border-co
 .play-wide:hover { filter: brightness(1.05); }
 .play-wide:active { transform: translateY(0.24rem); box-shadow: 0 0.06rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
 .play-wide:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+/* Energy under it: one bar for everything earned, as wide as the button, with the meadow at its end (shared/meadow.js). */
+.home-energy { display: flex; align-items: center; gap: 0.8rem; width: 100%; box-sizing: border-box; margin: -0.1rem 0 1.1rem; padding: 0 0.15rem; }
+.home-energy[hidden] { display: none; }
+.home-energy .energy { flex: 1; margin: 0; }
+.home-energy .energy .bar { width: 100%; }
 .menu { width: 100%; display: flex; flex-direction: column; gap: 0.7rem; }
 .menu-button {
   --press: var(--lip);

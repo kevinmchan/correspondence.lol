@@ -14,7 +14,7 @@ import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
 import { isMusicOff, isMuted, play as sfx, setMusicOff, setMuted } from './sound.js';
 import { avatar, openProfile } from '/shared/profile.js';
-import { ENERGY_KEY, earnedOn, finish, held, most, played, read as readEnergy } from '/shared/energy.js';
+import { BAR, ENERGY_KEY, held, played, read as readEnergy } from '/shared/energy.js';
 import { watchPresence } from '/shared/push.js';
 import { claim as callPal } from '/penny/pal.js';
 import { hide as hideTag } from '/penny/tags.js';
@@ -410,22 +410,29 @@ export function mount(root, life) {
   const FX = ['fx-post', 'fx-cross', 'fx-clear', 'fx-miss', 'fx-pick', 'fx-reveal'];
 
   // Restart a one-shot animation class on an element.
-  // --- Energy, playing alone ---------------------------------------------------------
+  // --- Energy ------------------------------------------------------------------------
   // Every post found is energy at once, and finishing the board entirely earns
-  // as much again (shared/energy.js). The meter is this board: how much of all
-  // it can earn has been earned; there is no number (the owner's choice), and
-  // all that is held is said only to screen readers. A post found sends a spark
-  // from it to the end of the bar, which takes it in as it lands; a board
-  // finished sends a shower of them.
+  // as much again (shared/energy.js). The meter is everything earned, in every
+  // game: one bar, about twenty games long, with the meadow at its end, grey
+  // until the first bar is full (shared/meadow.js). There is no number (the
+  // owner's choice), and all that is held is said only to screen readers. A
+  // post found sends a spark from it to the end of the bar, which takes it in as
+  // it lands; a board finished sends a shower of them. A bar filled flares, the
+  // first time the meadow blooms in colour, and it begins again.
   let energy = readEnergy(load(ENERGY_KEY));
-  const meter = { board: null, count: 0, fill: 0 }; // what the meter shows now
+  const THANKS_KEY = 'correspondence:thanks:v1'; // the second bar's thanks, once shown
+  const THANKS = 'Speedy! Thanks for being an early tester. We\u2019re working on your prize 🤍';
+  const meter = { board: null, fill: 0 }; // what the meter shows now
   let landing = Promise.resolve(); // sparks land one after another
-  function showMeter(count, fill, gain) {
-    meter.count = count;
+  const mark = el.energy.querySelector('.meadow-mark');
+  function showMeter(count, earned, gain) {
+    const fill = (earned % BAR) / BAR;
     meter.fill = fill;
     el.energy.querySelector('.bar i').style.setProperty('--fill', String(fill));
     el.energy.classList.toggle('empty', fill === 0);
-    el.energy.setAttribute('aria-label', `Energy ${count}`); // (all that is held, for screen readers: no number on the screen)
+    el.energy.classList.toggle('meadow', earned >= BAR);
+    // (all that is held, for screen readers: no number on the screen)
+    el.energy.setAttribute('aria-label', earned >= BAR ? `Energy ${count}` : `Energy ${count}; the meadow at ${BAR}`);
     if (gain) replay(el.energy, 'gain');
   }
   // A spark from a square of the board to the meter; resolves as it lands.
@@ -473,10 +480,31 @@ export function mount(root, life) {
       flight.oncancel = () => bit.remove();
     }
   }
-  // The bar taking in what has landed.
-  function fillTo(count, fill) {
-    showMeter(count, fill, true);
-    return new Promise((done) => setTimeout(done, 650));
+  // The bar taking in what has landed, from `from` earned in all to `to`. Filling it flares it, and begins it again;
+  // the first time, the meadow at its end comes into colour.
+  const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+  async function fillTo(count, from, to) {
+    if (Math.floor(to / BAR) > Math.floor(from / BAR)) {
+      const i = el.energy.querySelector('.bar i');
+      i.style.setProperty('--fill', '1');
+      el.energy.classList.remove('empty');
+      replay(el.energy, 'gain');
+      await wait(650);
+      if (life.over) return;
+      replay(el.energy, 'full');
+      if (from < BAR) {
+        el.energy.classList.add('meadow');
+        replay(mark, 'bloom');
+        await wait(1600);
+        if (life.over) return;
+      }
+      i.style.transition = 'none'; // (and back to the start, at once)
+      showMeter(count, Math.floor(to / BAR) * BAR, false);
+      void i.offsetWidth;
+      i.style.transition = '';
+    }
+    showMeter(count, to, true);
+    await wait(650);
   }
   // `newly`: the squares just opened as posts, as buttons; `quiet`: a board just put on screen.
   // In a room: a board played together earns for every post found on it, by anyone, and for its finish; a time trial
@@ -494,31 +522,57 @@ export function mount(root, life) {
       save(ENERGY_KEY, energy);
     }
     const count = held(energy);
-    const fill = earnedOn(energy, { size: game.size, seed }).energy / most(game.size);
+    // the second time the bar fills: a word of thanks, once (the owner's words, 25 November 2026)
+    const second = now.gained && energy.earned - now.gained < 2 * BAR && energy.earned >= 2 * BAR && !load(THANKS_KEY);
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
-      landing = Promise.resolve();
-      showMeter(count, fill, false);
+      showMeter(count, energy.earned, false);
+      landing = second ? thanks() : Promise.resolve();
       return;
     }
-    const before = count - now.gained;
-    const postsFill = (earnedOn(energy, { size: game.size, seed }).energy - (now.won ? finish(game.size) : 0)) / most(game.size);
+    const before = energy.earned - now.gained;
+    const afterPosts = before + now.posts;
     const sources = newly.length ? newly : [...el.board.querySelectorAll('.cell[data-state="letter"]')].slice(-now.posts);
     landing = landing.then(async () => {
       if (now.posts) {
         await Promise.all(sources.slice(0, now.posts).map((cell, i) => spark(cell, 260 + i * 120)));
         if (life.over) return;
-        await fillTo(before + now.posts, postsFill);
+        await fillTo(count - now.gained + now.posts, before, afterPosts);
+        if (life.over) return;
       }
       if (now.won) {
         // the whole board, finished: a shower from every post on it, after the board's own moment
         const posts = [...el.board.querySelectorAll('.cell[data-state="letter"]')];
         await Promise.all(posts.map((cell, i) => spark(cell, 450 + i * 90)));
         if (life.over) return;
-        await fillTo(count, fill);
         replay(el.energy, 'full');
+        await fillTo(count, afterPosts, energy.earned);
+        if (life.over) return;
       }
+      if (second) await thanks();
+    });
+  }
+
+  // A sheet with the owner's thanks, for the second bar filled: words, by the owner's leave, and a heart to go on.
+  // Resolves when it is closed. Kept as seen at once, so it comes only the once.
+  function thanks() {
+    save(THANKS_KEY, true);
+    return new Promise((done) => {
+      const sheet = document.createElement('dialog');
+      sheet.className = 'howto thanks';
+      sheet.setAttribute('aria-labelledby', 'thanks-words');
+      sheet.innerHTML = `<svg class="thanks-meadow" viewBox="0 0 40 40" aria-hidden="true"><use href="#meadow-glimpse"/></svg>
+        <p id="thanks-words">${THANKS}</p>
+        <button type="button" class="start" aria-label="On with the game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z" fill="currentColor"/></svg></button>`;
+      const close = () => sheet.close();
+      sheet.querySelector('.start').addEventListener('click', close);
+      sheet.addEventListener('click', (event) => { if (event.target === sheet) close(); });
+      sheet.addEventListener('close', () => { sheet.remove(); done(); }, { once: true });
+      life.onEnd(() => sheet.remove());
+      document.body.append(sheet);
+      sheet.showModal();
+      sheet.querySelector('.start').focus();
     });
   }
 
