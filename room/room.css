@@ -600,7 +600,7 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 .lot form.placard input:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 /* --- The home page: your rooms, a street of them -------------------------------------------- */
-.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 1rem; }
+.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.1rem 1rem; }
 .street a {
   --shade: rgb(70 50 35 / 0.08);
   height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding: 0.2rem 0.1rem 0.3rem;
@@ -609,11 +609,27 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 :root[data-theme="dark"] .street a { --shade: rgb(0 0 0 / 0.34); }
 @media (prefers-reduced-motion: no-preference) { .street .roof { transition: translate 300ms ease; } }
 .street a:active .roof { translate: 0 0.12rem; }
-/* its name, on a plate at its door */
+/* its name, lettered on its front wall: the building is seen from a little in front of it, so below the roof's eave
+   is the wall on that side, in the roof's colour a shade deeper, and the name is part of it, pressed into it. The wall
+   is as wide as the roof and starts behind it (the roof is 149 of the drawing's 160 across, from 1; its eave is at 73
+   of 92 down, and its corners are 13 round: the margins and the padding are those parts of the width). A name too
+   long for the wall ends in an ellipsis. */
+.street .roof { position: relative; z-index: 1; }
+.street .roof .doormat { display: none; }
 .street strong {
-  position: relative; max-width: 100%; margin-top: -0.1rem; padding: 0.2rem 0.65rem 0.25rem; border-radius: 0.8rem; background: var(--card); box-shadow: 0 0.1rem 0.35rem rgb(0 0 0 / 0.12);
-  font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.25; text-align: center; overflow-wrap: anywhere;
-  color: color-mix(in oklab, var(--ink) 88%, var(--card));
+  --wall: color-mix(in oklab, color-mix(in oklab, var(--room, #9aa7b1) 62%, #efe6da) 80%, #6b5a4e);
+  --wall-ink: color-mix(in oklab, var(--wall) 38%, #2e2420);
+  position: relative; box-sizing: border-box; width: 93.1%; margin: -20% 6.25% 0 0.65%; padding: calc(8.2% + 0.3rem) 0.6rem 0.4rem;
+  border-radius: 0 0 0.75rem 0.75rem;
+  background: linear-gradient(rgb(0 0 0 / 0.07), transparent 70%), var(--wall);
+  box-shadow: 0 0.45rem 0.8rem var(--shade);
+  font-family: Georgia, serif; font-weight: 400; font-size: 1rem; line-height: 1.2; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--wall-ink); text-shadow: 0 1px 0 rgb(255 255 255 / 0.22);
+}
+:root[data-theme="dark"] .street strong {
+  --wall: color-mix(in oklab, color-mix(in oklab, var(--room, #5c6b78) 46%, #3b3331) 78%, #171312);
+  --wall-ink: color-mix(in oklab, var(--wall) 30%, #efe2cf); text-shadow: 0 -1px 0 rgb(0 0 0 / 0.3);
 }
 
 @media (prefers-reduced-motion: no-preference) {

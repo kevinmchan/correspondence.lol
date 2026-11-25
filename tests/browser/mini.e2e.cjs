@@ -58,7 +58,7 @@ const GAMES = [listed({ last_player: 1, found: 2, hearts: 2 }), listed({ mode: '
 const rooms = (games) => (name, args) => (name === 'room_get' ? roomSays(args.p_room, args.p_room === ROOM ? 'Book club' : 'Family', args.p_room === ROOM ? games : []) : undefined);
 // One room, as the server says it is, with whatever is different about it this time.
 const room = (over = {}) => (name, args) => (name === 'room_get' ? { ...roomSays(args.p_room, 'Book club', []), ...over } : undefined);
-const LONG_NAME = 'The Thursday Evening Correspondence Club'; // forty letters, which is as long as a room's name gets
+const LONG_NAME = 'The Thursday Evening Correspondence Club'; // forty letters, which is as long as a room's name can be on the server (a new one is 24 at most)
 // A game of every kind, in every state a room's table shows one in (gameStatus() in room/room.js).
 const TABLE = [
   ...GAMES,
@@ -189,6 +189,8 @@ async function states() {
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
+    // (each room's name is lettered on its front wall, a long one ending in an ellipsis; in the dark, a darker wall)
+    { name: 'home, the lobby, a street of rooms in the dark', screen: 'home', at: '/', storage: { ...STREET, 'correspondence:theme:v1': 'dark' }, ready: '#rooms .street li' },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
     { name: 'a room, empty', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room(), ready: '#no-games:not([hidden])' },
     { name: 'a room, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li' },

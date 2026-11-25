@@ -297,7 +297,7 @@ export function mount(root, life) {
     const recent = recentRooms();
     rooms.hidden = recent.length === 0;
     // Each is a building on the map, seen from above: its roof, in the colour
-    // it keeps, with its name on a plate at its door (room/room.css).
+    // it keeps, with its name lettered on its front wall (room/room.css).
     rooms.querySelector('ul').replaceChildren(...recent.map((room) => {
       const li = document.createElement('li');
       const a = document.createElement('a');

@@ -1292,7 +1292,7 @@ room are its content: names, notes, the code.
 - **Outside**, for somebody who is not in it, the roof is on. Whoever is in
   shows at the skylight, and the mat at the door is where to ask in.
 - **On the home page** your rooms are a street of roofs, each with its name on
-  a plate at its door, the last opened first. The roofs are soft as the room
+  its front wall, lettered into it (a long one ends in an ellipsis; a new name is 24 letters at most), the last opened first. The roofs are soft as the room
   is: no hard edge down a side, no shadow set off under it, no courses of
   tiles, no squares of garden, and no garden at the end of the street; the
   chimney is a shade of the roof, never a dark square at a corner. A room
