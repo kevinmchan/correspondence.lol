@@ -1979,10 +1979,23 @@ async function main() {
     }),
 
     check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page, h) => {
+      // How Penny has stood since it arrived, written down in the page: its height and its mood, each time either
+      // changes. (It arrives with its eyes over the edge and ducks half a second later, when the page has settled.
+      // That used to be asked after 2.7 s from the page having loaded; but the home page is put up some time after
+      // that, 2.4 s after on a busy machine, and Penny was then asked how it stood 0.4 s after arriving, before it
+      // had looked: still up.)
+      await page.addInitScript(() => {
+        window.__stood = [];
+        new MutationObserver(() => {
+          const it = document.querySelector('.pal');
+          const last = window.__stood.at(-1);
+          if (it && (it.dataset.height !== last?.height || it.dataset.mood !== last?.mood)) window.__stood.push({ height: it.dataset.height, mood: it.dataset.mood });
+        }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-height', 'data-mood'] });
+      });
       await page.goto(`${origin}/?home`);
-      await sleep(2700);
-      assert.equal((await h.pal()).height, 'low', 'a tile is under Penny: it ducks');
-      await h.until('hopeful', 12000); // Penny comes up to ask
+      const stood = await (await page.waitForFunction(() => window.__stood.some((one) => one.mood === 'hopeful') && window.__stood, null, { timeout: 12000 })).jsonValue(); // Penny comes up to ask
+      // a tile is under Penny: it ducks, the first thing it does, and stays down until it comes up to ask
+      assert.deepEqual(stood.slice(0, stood.findIndex((one) => one.mood === 'hopeful')), [{ height: 'peek', mood: 'calm' }, { height: 'low', mood: 'calm' }], 'a tile is under Penny: it ducks');
       await sleep(400);
       const spot = await page.evaluate(() => {
         const paper = document.querySelector('.pal-penny .paper').getBoundingClientRect();
