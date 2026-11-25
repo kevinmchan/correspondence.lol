@@ -608,19 +608,54 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 .street { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.3rem 1rem; }
 .street a {
   --shade: rgb(70 50 35 / 0.13);
-  --board: color-mix(in oklab, var(--room, #9aa7b1) 56%, #f1e6d6); --eave: color-mix(in oklab, var(--room, #9aa7b1) 30%, #f6eee2);
-  --deep: color-mix(in oklab, var(--room, #9aa7b1) 48%, #3d2e27); --face: color-mix(in oklab, var(--room, #9aa7b1) 5%, #f8f2e6);
-  --letters: color-mix(in oklab, var(--room, #9aa7b1) 30%, #33261f); --glass: #554a44; --trim: var(--eave);
-  height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 0.15rem;
+  --board: #c9d0d6; --eave: #dfe4e8; --deep: #55616b; --face: #f8f2e6; --glass: #554a44; --trim: var(--eave);
+  --letters: color-mix(in oklab, var(--deep) 85%, #000);
+  position: relative; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 0.15rem;
   color: var(--ink); text-decoration: none; -webkit-tap-highlight-color: transparent;
   filter: drop-shadow(0 0.4rem 0.6rem var(--shade));
 }
+/* (a shop's colours are chosen by hand, one set for each colour a room keeps: its board, its roof a shade paler, and
+   its door, deep) */
+.street .r0 { --board: #e5a99c; --eave: #f2cdc3; --deep: #8c4a45; }
+.street .r1 { --board: #ecd08a; --eave: #f6e6b8; --deep: #86652a; }
+.street .r2 { --board: #a9c08f; --eave: #cfdcb8; --deep: #4f6844; }
+.street .r3 { --board: #8fbdb3; --eave: #c2dcd5; --deep: #2f6660; }
+.street .r4 { --board: #9dbfd6; --eave: #c3d9e6; --deep: #3f627a; }
+.street .r5 { --board: #aaa8dc; --eave: #cfcdec; --deep: #4b4789; }
+.street .r6 { --board: #dcaed0; --eave: #eed1e6; --deep: #7d4a72; }
+/* In the dark it is night on the street, and what lights a shop is the lantern at its door: the wall is warm round it
+   and falls away to dark at the far corners, and there is a little pool of its light on the ground under the door,
+   no wider than the shop. The lantern hangs on the wall beside the door, clear of the board and of the window. */
 :root[data-theme="dark"] .street a {
-  --shade: rgb(0 0 0 / 0.36);
-  --board: color-mix(in oklab, var(--room, #5c6b78) 44%, #3b3331); --eave: color-mix(in oklab, var(--room, #5c6b78) 30%, #4a413d);
-  --deep: color-mix(in oklab, var(--room, #5c6b78) 30%, #1c1716); --face: color-mix(in oklab, var(--room, #5c6b78) 8%, #4d4540);
-  --letters: color-mix(in oklab, var(--room, #5c6b78) 22%, #f3e7d6); --glass: #1d1918; --trim: color-mix(in oklab, var(--board) 60%, var(--face));
+  --shade: rgb(0 0 0 / 0.36); --board: #6f6a66; --eave: #85807b; --deep: #2f2a28; --face: #4d4540; --glass: #1d1918;
+  --letters: #f6ecdc; --trim: color-mix(in oklab, var(--board) 55%, var(--face));
+  --warm: 255 198 112; --lx: calc(100% - 2.55rem); --ly: calc(100% - 3.05rem);
 }
+:root[data-theme="dark"] .street a.k1 { --lx: 2.55rem; }
+:root[data-theme="dark"] .street a.k2 { --lx: calc(50% + 0.95rem); }
+:root[data-theme="dark"] .street a.r0 { --board: #8f5d54; --eave: #a57267; --deep: #4a2a27; }
+:root[data-theme="dark"] .street a.r1 { --board: #8c7440; --eave: #a38a52; --deep: #4a3b1a; }
+:root[data-theme="dark"] .street a.r2 { --board: #5f7550; --eave: #758b64; --deep: #2e3d28; }
+:root[data-theme="dark"] .street a.r3 { --board: #477a72; --eave: #5c9087; --deep: #1f3f3b; }
+:root[data-theme="dark"] .street a.r4 { --board: #557690; --eave: #6a8ca6; --deep: #263c4c; }
+:root[data-theme="dark"] .street a.r5 { --board: #6663a0; --eave: #7c79b6; --deep: #2f2d5a; }
+:root[data-theme="dark"] .street a.r6 { --board: #8a5f80; --eave: #a07496; --deep: #472c41; }
+:root[data-theme="dark"] .street a::after {
+  content: ""; position: absolute; inset: 0; border-radius: 0.7rem 0.7rem 0.45rem 0.45rem; pointer-events: none;
+  background:
+    radial-gradient(circle at var(--lx) var(--ly), rgb(var(--warm) / 0.42), rgb(var(--warm) / 0.14) 2.6rem, transparent 5.2rem),
+    radial-gradient(circle at var(--lx) var(--ly), transparent 2.5rem, rgb(12 10 16 / 0.46) 8.5rem);
+}
+:root[data-theme="dark"] .street a::before {
+  content: ""; position: absolute; z-index: -1; left: 0.15rem; right: 0.15rem; bottom: -0.8rem; height: 1.6rem; pointer-events: none;
+  background: radial-gradient(2.3rem 0.8rem at var(--lx) 50%, rgb(var(--warm) / 0.34), rgb(var(--warm) / 0.1) 60%, transparent);
+}
+:root[data-theme="dark"] .shop-front::before {
+  content: ""; position: absolute; z-index: 1; right: 2.2rem; bottom: 2.75rem; width: 0.42rem; height: 0.62rem; border-radius: 0.14rem 0.14rem 0.2rem 0.2rem;
+  background: #ffe2a0; box-shadow: 0 -0.16rem 0 -0.04rem #2a211c, 0 0 0.55rem 0.18rem rgb(var(--warm) / 0.85);
+}
+:root[data-theme="dark"] .k1 .shop-front::before { right: auto; left: 2.2rem; }
+:root[data-theme="dark"] .k2 .shop-front::before { right: calc(50% - 1.16rem); }
 @media (prefers-reduced-motion: no-preference) { .street a { transition: translate 300ms ease; } }
 .street a:active { translate: 0 0.12rem; }
 .shop-roof { display: block; height: 1.4rem; margin: 0 -0.15rem; border-radius: 0.7rem 0.7rem 0.15rem 0.15rem; background: var(--eave); }
