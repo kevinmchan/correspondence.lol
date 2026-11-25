@@ -808,7 +808,7 @@ input[aria-invalid="true"], input[aria-invalid="true"]:focus-visible { border-co
 /* Play: one wide button at the head of the page, the colour of the seal, with
    the mark for playing on it and no word. */
 .play-wide {
-  width: 100%; height: 4.75rem; display: grid; place-items: center;
+  width: 100%; height: 4.75rem; margin: 0.75rem 0 1rem; /* (room round it: the page's one wide button stands on its own) */ display: grid; place-items: center;
   border-radius: 1.2rem; text-decoration: none;
   color: #fdf8ee; background: var(--accent);
   box-shadow: 0 0.3rem 0 color-mix(in srgb, var(--accent) 68%, #000);

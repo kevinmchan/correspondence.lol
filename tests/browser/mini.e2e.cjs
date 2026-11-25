@@ -160,6 +160,12 @@ async function states() {
     { name: 'home, the lobby, at its foot', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li', then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '#portal' },
     { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
     { name: 'home, the feed with nothing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
+    // (with room above and below the play button, the first thing waiting on you is still on the first screen, unscrolled)
+    { name: 'home, play with room round it, and the first thing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item',
+      then: async (page) => {
+        const below = await page.evaluate(() => document.querySelector('.feed-item').getBoundingClientRect().bottom - window.innerHeight);
+        if (below > 0) throw new Error(`the first thing waiting is ${Math.ceil(below)}px below the first screen`);
+      } },
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
