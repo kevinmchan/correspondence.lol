@@ -1252,8 +1252,8 @@ room are its content: names, notes, the code.
   secret from its starter too, who can then play); thrown with a message
   written, it empties the box for one. The board is drawn at the size the
   message needs, and drawn again only when that changes. The play mark starts
-  the game with one tap. Back goes back a step, and from the first, to the
-  room.
+  the game with one tap. Back, a round button at the desk's top left level
+  with the kind of game, goes back a step, and from the first, to the room.
 - **A game together**, the first time it is opened on a device, shows what is
   particular to playing together in place of how to play (which is always
   under the question mark): one board for the whole room; take turns, after

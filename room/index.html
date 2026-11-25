@@ -291,6 +291,8 @@
                way on. Then the board it will be played on, drawn ahead, to be drawn again or taken; for a pass phrase, with
                the message to deliver above it, or a die for one picked at random. Nobody is told until it starts. -->
           <div id="compose" class="stack" hidden>
+            <!-- the way back, a step at a time: at the desk's top left, level with the kind of game -->
+            <button type="button" id="phrase-back" class="quiet round" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></button>
             <h2 class="desk-head"><span id="desk-icon" class="desk-icon"></span><span id="desk-name" class="sr-only"></span></h2>
             <div id="desk-how" class="desk-step">
               <ul id="mode-cards" class="mode-cards"></ul>
@@ -319,7 +321,6 @@
                 <p id="phrase-error" class="message bad" role="alert"></p>
               </form>
             </div>
-            <button type="button" id="phrase-back" class="quiet round" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></button>
           </div>
 
           <div id="room" class="inside" hidden>
