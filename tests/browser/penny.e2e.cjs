@@ -1242,6 +1242,18 @@ async function main() {
       w.same(calm, await w.boxes(), 'back outside');
     }),
 
+    check('two worlds: the tiles that start a game, and what is above and beside them, keep their size in both worlds, whatever fonts the phone has', { storage: ACCOUNT, reducedMotion: 'reduce' }, async (page) => {
+      // On GitHub's machine the tiles' words wrapped onto a second line in the room and not in the drama, which set
+      // them in another type: the tile changed height under a finger. A wider face than ours is put on them here, as
+      // another phone's fonts might be; whatever the face, both worlds must wrap the words the same.
+      const w = await worldsHelpers(page);
+      await page.addStyleTag({ content: '.screen-room .house :is(h2, .mode strong, .share .code) { font-size: 1.05rem; letter-spacing: 0.2em; } .screen-room .house { --type: monospace; }' });
+      const calm = await w.boxes();
+      await page.evaluate(() => document.querySelector('.screen-room > header #worlds').click());
+      await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious', null, { timeout: 8000 });
+      w.same(calm, await w.boxes(), 'in the drama, with a wider face');
+    }),
+
     check('two worlds, with reduced motion: stepping in and out are slow cross-fades, with no seam; nothing moves inside; every box the same', { storage: ACCOUNT, reducedMotion: 'reduce' }, async (page) => {
       const w = await worldsHelpers(page, { clock: true });
       const portal = page.locator('.screen-room > header #worlds');
