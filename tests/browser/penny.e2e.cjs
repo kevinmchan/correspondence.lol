@@ -363,10 +363,21 @@ async function main() {
       await sent('mouseMoved', 350, 380, 16, true);
       await sent('mouseMoved', 40, 460, 24, true);
       await sent('mouseReleased', 40, 460, 32, false);
-      await hand.detach();
       const given = await page.evaluate(() => window.__rush);
       assert.ok(given.length === 5 && given[4] - given[0] < 40, `the rush did not reach the room as a rush: ${JSON.stringify(given.map((at) => Math.round(at - given[0])))} ms`);
       assert.equal(await kept(), 0, 'a rush left something behind');
+      // And a rush as a hand makes one: not across the room in a frame, but 10 pixels every 8 ms (1.25 a millisecond,
+      // over the 0.9 at which nothing stays), already moving as it comes down. Its beginning is a rush too: the speed
+      // used to be eased up from nothing at each press, and the first strokes of this were kept as slow ones.
+      await page.evaluate(() => { window.__rush = []; });
+      await sent('mouseMoved', 40, 520, 1000, false);
+      await sent('mousePressed', 40, 520, 1008, true);
+      for (let i = 1; i <= 30; i++) await sent('mouseMoved', 40 + i * 10, 520, 1008 + i * 8, true);
+      await sent('mouseReleased', 340, 520, 1256, false);
+      await hand.detach();
+      const swept = await page.evaluate(() => window.__rush);
+      assert.ok(swept.length >= 3 && swept.at(-1) - swept[0] < 260, `the second rush did not reach the room as a rush: ${swept.length} events over ${Math.round(swept.at(-1) - swept[0])} ms`);
+      assert.equal(await kept(), 0, 'a rush left its beginning behind');
       assert.equal(await page.locator('#slow-portal').isVisible(), false, 'the way on opened for nothing');
       assert.equal(await page.locator('.slow-tip.on').count(), 0, 'still being shown how after a touch');
       // and the same room, taken slowly
@@ -864,6 +875,11 @@ async function main() {
       assert.equal((await kept()).trials.length, 0, 'a station was kept before both had been heard');
       assert.equal(refused.orders[0]?.order, 'not-yet');
       assert.match(refused.orders[0].note, /Tune to|Stay on/, 'a screen reader is still told what to do');
+      // and the refusal stands its time out: 900 ms, whether or not the radio turned to the station not heard yet
+      // (that turn used to hang the next order 500 ms on, over the refusal). A late machine can only make it longer.
+      await page.waitForFunction(() => { const from = window.__hand.findIndex((one) => one.order === 'not-yet'); return window.__hand.slice(from + 1).some((one) => one.type === 'order' && one.order !== 'not-yet'); }, null, { timeout: 8000 });
+      const stood = await page.evaluate(() => { const from = window.__hand.findIndex((one) => one.order === 'not-yet'); return window.__hand.slice(from + 1).find((one) => one.type === 'order' && one.order !== 'not-yet').at - window.__hand[from].at; });
+      assert.ok(stood >= 880, `"Not yet" was taken down after ${Math.round(stood)} ms`);
       assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
       assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
       // listened to both: the order is to keep one, and it does not say which

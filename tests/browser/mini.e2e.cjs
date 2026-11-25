@@ -253,6 +253,19 @@ async function states() {
     { name: 'Penny’s Radio, under way', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': kept }, ready: '.radio .presets i.lit', whole: SET },
     // (the attendant's sign hangs over the gallery's label)
     { name: 'Penny’s Radio, being shown how', screen: 'taste', at: '/jam/?taste', ready: '#radio-dash:not([hidden])', settle: '#dash-sign [data-order]', whole: [...SET, '#radio-dash', '#dash-sign'] },
+    // (a station kept before both were heard: the sign says not yet, and stands 900 ms. The two taps are made in the
+    // page, a moment apart by its own clock, so that a late machine cannot stretch them into two single taps.)
+    { name: 'Penny’s Radio, a station refused', screen: 'taste', at: '/jam/?taste', ready: '#radio-dash:not([hidden])',
+      then: async (page) => {
+        await page.waitForSelector('#dash-sign [data-order]');
+        await page.evaluate(() => {
+          const card = document.querySelector('.taste-card');
+          const box = card.getBoundingClientRect();
+          const at = { clientX: box.left + box.width / 2, clientY: box.top + box.height / 2, isPrimary: true, bubbles: true, pointerId: 1 };
+          for (let tap = 0; tap < 2; tap++) for (const type of ['pointerdown', 'pointerup']) card.dispatchEvent(new PointerEvent(type, at));
+        });
+      },
+      settle: '#dash-sign [data-order="not-yet"]', whole: [...SET, '#radio-dash', '#dash-sign'] },
     // (with no Dot: Penny stands under the tag, in front of the plinth, and cannot say what it is)
     { name: 'Penny’s Radio, Penny asks about the tag', screen: 'taste', at: '/jam/?taste', storage: { 'radio:taught:v1': true, 'radio:story:v1': 'seen' }, ready: '.radio .dot',
       then: (page) => page.waitForFunction(() => document.querySelector('.radio-world').dataset.story === 'trying', null, { timeout: 15000 }), settle: '.radio-world[data-story="trying"]', wait: 15000, whole: SET },
