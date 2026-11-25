@@ -306,10 +306,31 @@ async function main() {
     }),
 
     check('scene one: every screen loops, no two turns alike; a swipe up goes on; Penny shows how to whoever waits on the first', {}, async (page) => {
+      // The scene keeps its own time, and on a busy machine this check does not keep up with it. A swipe made from
+      // here is a press, six moves and a lift, each of them a message to the browser: the two below that are not
+      // swipes up have taken 10 seconds between them, where a turn of the first loop in which nothing is shown is
+      // 3.8 s; so the third turn was 4.3 s old when it was asked after, and its letter (gone 2.8 s in) had left: 2 on
+      // the shelves, not 3. And the count of the mail "at the start" has come back 3.1 s after the scene began,
+      // which is when the first letter is gone. So what there is as a turn begins is not asked for afterwards. The
+      // page writes each turn down as it begins (which screen, which turn of its loop, the mail on the shelves,
+      // whether the square is lit), and each showing how (with the mail there was then); and that is what is read.
+      await page.addInitScript(() => {
+        window.__scene = [];
+        new MutationObserver((list) => {
+          const office = document.querySelector('.office');
+          const now = (what) => ({ what, screen: Number(office.dataset.screen), turn: Number(office.dataset.turn), left: document.querySelectorAll('.o-leaving:not(.gone)').length, lit: Boolean(document.querySelector('.o-first.lit')) });
+          for (const one of list) {
+            if (one.type === 'attributes' && one.target === office) window.__scene.push(now('turn'));
+            else if ([...one.addedNodes].some((node) => node.nodeType === 1 && node.classList.contains('o-touch'))) window.__scene.push(now('shown'));
+          }
+        }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-turn'] });
+      });
       await page.goto(`${origin}/?office`);
       await page.waitForSelector('.office[data-screen="0"]');
       const where = () => page.evaluate(() => { const it = document.querySelector('.office'); return [Number(it.dataset.screen), Number(it.dataset.turn)]; });
-      const turned = (screen, turn, timeout = 40000) => page.waitForSelector(`.office[data-screen="${screen}"][data-turn="${turn}"]`, { timeout });
+      // a turn of a loop, as it was when it began (waited for, if it has not begun yet); and the first showing how
+      const written = (what, screen, turn, timeout) => page.waitForFunction(([w, s, t]) => window.__scene.find((one) => one.what === w && one.screen === s && (t === null || one.turn === t)), [what, screen, turn], { timeout }).then((found) => found.jsonValue());
+      const turned = (screen, turn, timeout = 40000) => written('turn', screen, turn, timeout);
       const left = () => page.locator('.o-leaving:not(.gone)').count();
       const swipe = async (fromY, toY, x = 195) => {
         await page.mouse.move(x, fromY);
@@ -317,16 +338,16 @@ async function main() {
         await page.mouse.move(x, toY, { steps: 6 });
         await page.mouse.up();
       };
-      assert.equal(await left(), 5, 'the mail on the shelves at the start');
-      await page.waitForSelector('.o-touch', { state: 'attached', timeout: 9000 }); // caught waiting: shown
-      assert.equal(await left(), 4, 'one letter gone after one turn of the loop');
+      assert.equal((await turned(0, 0)).left, 5, 'the mail on the shelves at the start');
+      const shown = await written('shown', 0, null, 9000); // caught waiting: shown
+      assert.deepEqual([shown.turn, shown.left], [0, 4], 'one letter gone after one turn of the loop');
       await swipe(300, 600); // down: not the way
       await swipe(600, 590); // a tap
       await sleep(300);
       assert.equal((await where())[0], 0, 'something other than a swipe up moved it on');
       // left alone it only loops, and each turn another letter has gone
-      await turned(0, 2);
-      assert.equal(await left(), 3);
+      assert.equal((await turned(0, 1)).left, 4);
+      assert.equal((await turned(0, 2)).left, 3);
       assert.equal((await where())[0], 0, 'the scene moved on by itself');
 
       await swipe(600, 300);
@@ -345,10 +366,8 @@ async function main() {
       await page.waitForSelector('.o-map rect.near'); // it has placed the sound
       assert.equal(await page.locator('.office').getAttribute('data-pace'), 'slow');
       await swipe(600, 300);
-      await turned(3, 0, 2000);
-      assert.equal(await page.locator('.o-first.lit').count(), 0);
-      await turned(3, 1);
-      assert.equal(await page.locator('.o-first.lit').count(), 1, 'the square lit');
+      assert.equal((await turned(3, 0, 2000)).lit, false); // (lit 3.4 s into this turn: not to be asked after)
+      assert.equal((await turned(3, 1)).lit, true, 'the square lit');
       await swipe(600, 300);
       await page.waitForURL(/\?slow/, { timeout: 5000 }); // on, to scene two
     }),
