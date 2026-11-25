@@ -17,13 +17,16 @@ import { twoWorlds } from '/room/worlds.js';
 // A room is drawn as a building on the map, seen from above (room/room.css):
 // with its roof off for the people in it, and with its roof on for anybody
 // else. What is made here is what goes in it: the tokens of the people at its
-// table, and the games laid on the table as small boards.
+// table, and the games on the table as a shelf of cards, each the way into
+// its game, with a round play button at its end.
 //
-// It is a quiet room, and one thing in it is loud: what is waiting on you. A
-// game that is yours to play lies nearest, its board bright and lifted under
-// a lamp, its seal breathing; the rest lie further off, small and dim, and the
-// finished ones dimmer still. Nothing on the table is written: where a game
-// stands is said by its board, and in words to screen readers.
+// It is a quiet room, and one thing in it is loud: what is waiting on you. The
+// first game that is yours to play comes first, its card lit under a lamp, its
+// board in full colour and its play button the seal's colour, breathing; any
+// others yours to play follow, their boards in full colour and their buttons
+// seal-tinted but still; the rest lie below, quieter, and the finished ones
+// quieter still. Nothing on the table is written: where a game stands is said
+// by its card, and in words to screen readers.
 export function mount(root, life) {
 
   const $ = (id) => root.querySelector(`#${id}`);
@@ -78,6 +81,25 @@ export function mount(root, life) {
   }
 
   const CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7.5 7.5l9 9M16.5 7.5l-9 9"/></svg>';
+
+  const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4l9.8-6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+
+  // Who is in a game, as far as the room can tell: who wrote or started it, who played last, and you once you have
+  // played it; a game together is everybody's at the table.
+  function players(game) {
+    const seats = [];
+    const add = (seat) => { if (Number.isInteger(seat) && room.people[seat] && !room.people[seat].left && !seats.includes(seat)) seats.push(seat); };
+    add(game.phrase_by);
+    const line = chat?.starter(game.id);
+    if (line) add(room.people.findIndex((person) => person.name === line.who));
+    add(game.last_player);
+    if (game.mine) add(room.you);
+    if ((game.mode ?? 'coop') === 'coop') room.people.forEach((_, seat) => add(seat));
+    return seats;
+  }
+
+  // A few names as they are said: "Sam", "Sam and Ada", "Sam, Ada and you".
+  const listed = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`);
 
   const MODE_NAMES = { coop: 'Together', trial: 'Time trial', phrase: 'Pass phrase' };
 
@@ -272,32 +294,53 @@ export function mount(root, life) {
     const fromOthers = chat.add(room.messages);
     chat.onTable(new Set(room.games.map((game) => game.id)));
 
-    // each game a small board lying on the table: the nearest are yours to play
-    const laid = room.games.map((game) => ({ game, status: gameStatus(game) }))
+    // each game a card on the shelf of the table, the whole of it the way in: its board, the faces of who is in it, its
+    // kind, and a round play button at its end. What is yours to play comes first and is lit; the rest below, quieter.
+    const laid = room.games.map((game) => ({ game, status: gameStatus(game), seats: players(game) }))
       .sort((a, b) => NEAR[a.status.state] - NEAR[b.status.state]);
     // (who started each, as its line in the chat says: that line is put away while the game is on the table, so its
-    // board says it to screen readers instead)
+    // card says it to screen readers instead)
     const by = (game) => {
       const line = chat.starter(game.id);
       return line ? `, ${line.wrote ? 'written' : 'started'} by ${line.who}` : '';
     };
-    // (laid again only when something on it has changed: a seal's slow breath is not cut short by every look at the server)
-    const table = JSON.stringify(laid.map(({ game, status }) => [game.id, game.mode, game.size, game.found, status.state, status.said, by(game)]));
-    if (el.games.dataset.laid !== table) el.games.replaceChildren(...laid.map(({ game, status }) => {
+    // (laid again only when something on it has changed: a slow breath is not cut short by every look at the server)
+    const table = JSON.stringify(laid.map(({ game, status, seats }) => [game.id, game.mode, game.size, game.found, status.state, status.said, by(game),
+      seats.map((seat) => [room.people[seat].avatar, room.people[seat].color])]));
+    // (only the first game waiting on you is lit, its button breathing: the others waiting on you are as plainly yours,
+    // their buttons the seal's colour, but still, so that a full table is never several breaths at once)
+    const lit = laid.find(({ status }) => status.state === 'go')?.game;
+    // (who is in it, said in words where the chat's line has not said who started it)
+    const whoName = (seat) => (seat === room.you ? 'you' : room.people[seat].name);
+    const who = (game, seats) => (by(game) || !seats.length ? by(game) : `, with ${listed(seats.map(whoName))}`);
+    if (el.games.dataset.laid !== table) el.games.replaceChildren(...laid.map(({ game, status, seats }) => {
       const li = document.createElement('li');
       li.dataset.state = status.state;
+      if (game === lit) li.dataset.lit = '';
       const name = `${MODE_NAMES[game.mode] ?? 'Together'} ${game.size} × ${game.size}`;
       const board = miniBoard(game, status.state);
+      // between the board and the button: who is in it, and what kind of game it is
+      const about = document.createElement('span');
+      about.className = 'about';
+      about.setAttribute('aria-hidden', 'true');
+      const faces = document.createElement('span');
+      faces.className = 'faces';
+      faces.append(...seats.slice(0, 3).map((seat) => avatar(room.people[seat])));
+      about.append(faces);
       const kind = modeIcon(game.mode ?? 'coop');
       if (kind) {
         kind.setAttribute('class', 'kind');
-        board.append(kind);
+        about.append(kind);
       }
-      // the board is what is seen; over it, the way into the game, or (tidying) the way to put it away
+      const play = document.createElement('span');
+      play.className = 'play';
+      play.setAttribute('aria-hidden', 'true');
+      play.innerHTML = PLAY;
+      // the card is the way into the game; tidying, the way to put it away lies there instead
       const a = document.createElement('a');
       a.className = 'game';
       a.href = gameUrl(game.kind, game.id);
-      a.setAttribute('aria-label', `${name}${by(game)}: ${status.said.join(', ')}`);
+      a.setAttribute('aria-label', `${name}${who(game, seats)}: ${status.said.join(', ')}`);
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'delete';
@@ -305,7 +348,7 @@ export function mount(root, life) {
       remove.dataset.name = name;
       remove.setAttribute('aria-label', `Delete ${name}`);
       remove.innerHTML = CROSS;
-      li.append(board, a, remove);
+      li.append(board, about, play, a, remove);
       return li;
     }));
     el.games.dataset.laid = table;
@@ -488,6 +531,36 @@ export function mount(root, life) {
   life.on(document, 'keydown', (event) => {
     // (an Escape that closes the question sheet is for the sheet, not the table)
     if (event.key === 'Escape' && el.table.classList.contains('tidy') && !document.querySelector('dialog[open]')) tidying(false);
+  });
+
+  // A card pressed goes down into the table under the finger, and stays down long enough to be seen, however quick
+  // the tap (room/room.css). On a touch screen it waits a moment first: a finger that has come to scroll the page, not
+  // to press, leaves the shelf where it is.
+  let pressed = null;
+  const lift = () => {
+    if (!pressed) return;
+    const { li, at, wait } = pressed;
+    pressed = null;
+    clearTimeout(wait);
+    if (!at) li.dataset.pressed = ''; // (a quick tap, before it had begun to go down: it goes down all the same)
+    setTimeout(() => delete li.dataset.pressed, Math.max(0, 160 - (at ? performance.now() - at : 0)));
+  };
+  life.on(el.games, 'pointerdown', (event) => {
+    const li = event.target.closest(':is(a.game, .delete)')?.closest('li');
+    if (!li || event.button > 0) return;
+    lift();
+    const press = { li, at: 0, wait: 0 };
+    const sink = () => { li.dataset.pressed = ''; press.at = performance.now(); };
+    pressed = press;
+    if (event.pointerType === 'touch') press.wait = setTimeout(sink, 70);
+    else sink();
+  });
+  life.on(document, 'pointerup', lift);
+  life.on(document, 'pointercancel', () => {
+    if (!pressed) return;
+    clearTimeout(pressed.wait);
+    delete pressed.li.dataset.pressed;
+    pressed = null;
   });
 
   // The sheet that asks shows the board that was pressed, not its name; putting it away is tried there, and refused,

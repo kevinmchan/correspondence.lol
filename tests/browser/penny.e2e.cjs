@@ -1055,7 +1055,8 @@ async function main() {
         for (const field of document.querySelectorAll('.screen-room > :is(header, main) input')) if (field.placeholder && field.checkVisibility()) out.push(`(placeholder) ${field.placeholder}`);
         return out;
       });
-      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP']);
+      // (each game's card shows the faces of who is in it: faces are content, as the seats' are)
+      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP']);
       // yours to play first; nothing on the table is written, it is said to screen readers
       assert.deepEqual(await page.locator('#games li').evaluateAll((all) => all.map((li) => li.dataset.state)), ['go', 'won']);
       // (and who started each, which the line in the chat said, put away while the game is on the table)
@@ -1132,7 +1133,7 @@ async function main() {
       assert.equal(await shown(line1), true, 'its words are on the screen');
       const said = await line1.textContent();
       await still(); // (they come in softly)
-      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', said, 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP'], 'its words are the one thing come on the screen, after the tiles');
+      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', said, 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP'], 'its words are the one thing come on the screen, after the tiles');
       assert.deepEqual(await lies(page.locator('#modes')), tiles, 'the tiles have not moved');
       const under = await box(line1);
       const row = await box(page.locator('#modes'));
@@ -2214,6 +2215,78 @@ async function main() {
       await page.clock.resume();
     }),
 
+    // The shelf: each game on the table a wide card, the whole of it the way into its game, with its board large and a
+    // round play button at its end. Only the first game waiting on you is lit and breathes, so a full table is never
+    // several breaths at once; its button is the one red mark a game has (no seal at the board's corner). Pressed, a
+    // card goes down into the table (and with reduced motion only deepens); tidying, the whole card is the way to put it away.
+    check('the shelf: one tap anywhere on a card plays it; only the first game waiting on you is lit and breathes; a card pressed goes down; tidying, a tap anywhere on a card asks to put it away', { storage: ACCOUNT }, async (page) => {
+      await worldsHelpers(page);
+      const cards = () => page.locator('#games li').evaluateAll((all) => all.map((li) => {
+        const play = li.querySelector('.play');
+        const board = li.querySelector('.mini');
+        return {
+          state: li.dataset.state, lit: 'lit' in li.dataset,
+          breathing: play.getAnimations().some((one) => one.animationName === 'play-breathe'),
+          button: getComputedStyle(play).backgroundColor, board: Math.round(board.getBoundingClientRect().width),
+          corner: getComputedStyle(board, '::after').display,
+          pressed: 'pressed' in li.dataset, moved: [getComputedStyle(li).translate, getComputedStyle(li).scale], shadow: getComputedStyle(li).boxShadow,
+        };
+      }));
+      const rest = await cards();
+      assert.deepEqual(rest.map(({ state, lit, breathing }) => [state, lit, breathing]), [['go', true, true], ['go', false, false], ['won', false, false]], 'the first game waiting on you is lit and breathes; the other waiting on you is still');
+      assert.equal(new Set(rest.map((one) => one.button)).size, 3, `the lit button, the still seal-tinted one, and a quiet one are each their own colour (${rest.map((one) => one.button)})`);
+      assert.deepEqual(rest.filter((one) => one.state === 'go').map((one) => one.corner), ['none', 'none'], 'no seal at a board\'s corner: the play button is the seal');
+      assert.ok(rest.every((one) => one.board >= 88) && rest[0].board > rest[1].board, `the boards are large, and the lit one larger (${rest.map((one) => one.board)})`);
+      // (the card's accessible name says the game, who is in it, and where it stands)
+      assert.deepEqual(await page.locator('#games a.game').evaluateAll((all) => all.map((a) => a.getAttribute('aria-label'))), [
+        'Together 6 × 6, with Ada and you: your move, 1 of 6 posts found, 3 hearts left', 'Time trial 6 × 6, with Ada: not started, 1 finished', 'Together 6 × 6, with Ada and you: solved in 2 turns, 3 hearts left']);
+      // the whole card is the way in, or the way to put it away: no part of it is not
+      const covers = () => page.locator('#games li').evaluateAll((all) => all.map((li) => {
+        const way = [...li.querySelectorAll('a.game, .delete')].find((one) => one.checkVisibility());
+        const [a, b] = [li, way].map((one) => one.getBoundingClientRect());
+        return [a.left, a.top, a.width, a.height].map((n, i) => Math.abs(n - [b.left, b.top, b.width, b.height][i]) < 1).every(Boolean);
+      }));
+      assert.deepEqual(await covers(), [true, true, true]);
+      const middle = async (n, across = 0.45) => {
+        const box = await page.locator('#games li').nth(n).boundingBox();
+        return [box.x + box.width * across, box.y + box.height / 2];
+      };
+      // with reduced motion, a card pressed does not move: its colour deepens and its shadow is drawn in
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      assert.equal((await cards())[0].breathing, false, 'and with reduced motion nothing breathes');
+      await page.mouse.move(...await middle(1));
+      await page.mouse.down();
+      await sleep(300);
+      let now = await cards();
+      assert.equal(now[1].pressed, true);
+      assert.deepEqual(now[1].moved, ['none', 'none'], 'with reduced motion, it does not move');
+      assert.notEqual(now[1].shadow, rest[1].shadow, 'its shadow is drawn in');
+      await page.mouse.move(4, 4);
+      await page.mouse.up();
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await sleep(400);
+      assert.equal((await cards()).some((one) => one.pressed), false, 'let go, it comes back up');
+      // tidying: a tap anywhere on a card (here its board) asks to put it away
+      await page.locator('#tidy').click();
+      assert.deepEqual(await covers(), [true, true, true]);
+      await page.mouse.click(...await middle(1, 0.12));
+      await page.waitForSelector('dialog.ask[open] .picture svg');
+      await page.keyboard.press('Escape');
+      await sleep(300);
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('.table.tidy').count(), 0);
+      // pressed, a card goes down a little into the table, its shadow drawn in; and one tap, nowhere near its button, plays it
+      await page.mouse.move(...await middle(0));
+      await page.mouse.down();
+      await sleep(300);
+      now = await cards();
+      assert.deepEqual(now[0].moved, ['0px 1.92px', '0.975'], 'it goes down a little');
+      assert.equal(now[0].breathing, false, 'and holds its breath');
+      assert.notEqual(now[0].shadow, rest[0].shadow, 'its shadow is drawn in');
+      await page.mouse.up();
+      await page.waitForURL(/\/postmarks\/\?game=11111111-/, { timeout: 5000 });
+    }),
+
     // The two worlds on the quiet room: the portal is the way in and out as it was, and the drama keeps its look: every
     // game on the table a photograph in black and white, the one that is yours still nearest; the tiles steel drawers.
     check('two worlds, on the quiet room: the portal steps in and back out; inside, every game is a photograph and what is yours is still nearest; the chat, at rest, shows whole notes in either world', { storage: ACCOUNT }, async (page) => {
@@ -2261,6 +2334,35 @@ async function main() {
       assert.deepEqual(await cut(), { cut: 0, over: true }, 'back from the desk, the chat is cut between notes again');
     }),
   ]));
+
+  // The shelf on the phones it is made for, alone (it opens many windows): from one game to ten, nothing runs off the
+  // side, nothing to press is under 44 by 44 or lies over another, and no text is under 11px.
+  results.push(await check('the shelf, on a mini (in Safari and installed), a Pro and a Pro Max, with 1 to 10 games: nothing runs off the side, and everything to press is at least 44 by 44', {}, async () => {
+    const phone = require('./phone.cjs');
+    const wrong = [];
+    for (const name of ['mini-safari', 'mini-app', 'pro-app', 'max-app']) {
+      for (let count = 1; count <= 10; count++) {
+        const games = Array.from({ length: count }, (_, i) => phone.listed({
+          id: `${String(i % 10).repeat(8)}-6666-4666-8666-66666666666${i % 10}`, mode: ['coop', 'trial', 'phrase'][i % 3], size: 5 + (i % 5),
+          last_player: i % 2, status: i % 4 === 3 ? 'won' : 'playing', mine: i % 3 === 1 && i % 2 ? 'playing' : null,
+        }));
+        const { context, page, errors } = await phone.open(browser, name, { storage: phone.ACCOUNT, server: (call, args) => (call === 'room_get' ? phone.roomSays(args.p_room, 'Book club', games) : undefined) });
+        await page.goto(`${origin}/room/?id=${phone.ROOM}`);
+        await page.waitForFunction((n) => document.querySelectorAll('#games li').length === n, count, { timeout: 15000 });
+        await sleep(700);
+        const seen = await phone.measure(page);
+        const at = `${name}, ${count} ${count === 1 ? 'game' : 'games'}`;
+        if (seen.sideways) wrong.push(`${at}: the page scrolls sideways`);
+        for (const one of seen.wide) wrong.push(`${at}: sticks out: ${one.what}`);
+        for (const one of seen.press) if (one.w < 44 || one.h < 44) wrong.push(`${at}: too small to press: ${one.what} is ${one.w} by ${one.h}`);
+        for (const one of seen.overlapping) wrong.push(`${at}: overlap: ${one.a} and ${one.b}`);
+        for (const one of seen.tinyText) wrong.push(`${at}: text too small: ${one.what}`);
+        for (const one of errors) wrong.push(`${at}: ${one}`);
+        await context.close();
+      }
+    }
+    assert.deepEqual(wrong, []);
+  }));
 
   // A room, with games and a chat, opened by a member; and what is needed to watch its worlds. (`steer`: the chances
   // room/worlds.js takes can be set, one at a time, with w.steer([...]): what each is for is said where it is used.)
