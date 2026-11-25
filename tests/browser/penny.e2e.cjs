@@ -293,9 +293,13 @@ async function main() {
   });
   const valueOf = (stake) => String(Math.round(Math.min(model.NEEDED, Math.max(0, stake)) * 100) / 100); // aria-valuenow: between its ends, roughly
   // Both stations listened to, for long enough that one can be kept; and one kept (`side`: that one).
+  // (The one that is up is listened to, and then the other. It used to be "until one has been heard, then the other":
+  // but the one heard may be the one that is not up. A check that tunes away from a station and comes here has, on a
+  // busy machine, come with that station heard through already: the radio was then turned back to it, and 8 seconds
+  // went by on a station already heard.)
   const listenToBoth = async (page) => {
     if ((await page.locator('#taste-play').getAttribute('aria-pressed')) !== 'true') await page.locator('#taste-play').click();
-    await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
+    await page.waitForFunction(() => document.querySelector('.taste-card .face.tuned.heard'), null, { timeout: 8000 });
     if ((await page.locator('.taste-card .face.heard').count()) < 2) await page.locator('#taste-flip').click();
     await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
   };
