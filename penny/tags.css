@@ -32,9 +32,13 @@ main:has(> .tag-hidden) { position: relative; }
 
 /* --- Through it: a tumble -----------------------------------------------------------------
    The picture comes up out of the place the mark was, turning a whole turn as
-   it grows, and is upright exactly where the night has it. */
+   it grows, and is upright exactly where the night has it. It is a square of
+   night with a tile's corners, as what is kept on the home page is. It keeps
+   them to the end: by then all that is behind them is the night's own black.
+   (It is laid out and drawn once, at the size it ends at, and only ever
+   moved, turned and scaled after that: penny/tags.js.) */
 .tag-rise { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
-.tag-rise > div { position: absolute; background: #09090d; overflow: hidden; }
+.tag-rise > div { position: absolute; background: #09090d; overflow: hidden; border-radius: 22%; will-change: transform, opacity; }
 .tag-rise svg { display: block; width: 100%; height: 100%; }
 /* And the screen it was on falls away into that place, turning the other way
    as it goes, with the night coming up behind it. Coming back from the night

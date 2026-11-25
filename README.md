@@ -856,6 +856,17 @@ from the night leads to wherever it was gone from, and tumbles the other way:
 the screen comes turning up out of the dark, and rights itself. With reduced
 motion there is no tumble, only the one screen and then the other.
 
+The picture that tumbles in is the night's own, to the pixel: the same shapes
+drawn from the same path (`starPath` in `penny/stars.js`), the same colour, in
+the same place, which is on whole pixels. When it has landed the night's
+lights are lit under it and it is taken away, and nothing can be seen to
+change. On its way it is only moved, turned and scaled, never laid out or
+drawn again, which is what a phone can do smoothly. And the night is always
+the size of the window: it fits its picture to its own room whenever that
+changes, and a screen being left is out of the layout before the next one is
+put on the page (`shared/nav.js`), so that a screen measuring itself as it
+arrives is not as long as the one it was come to from.
+
 ### The night
 
 `/?sky` (`penny/sky.js`) is a picture, come to life. The picture came first:
@@ -892,9 +903,10 @@ lights for as long as it is looked at. What is alive is how they are there.
 - **They twinkle.** Their brightness comes and goes, the far ones' by a good
   deal and the near one's hardly, as stars' does and a planet's does not. And
   now and then one twinkles outright: its copies fall into place, it is sharp
-  and brighter for a moment (though never as bright as the picture), its
-  points draw out, and a few motes come off it, are knocked about, and are
-  lost. That is when it is heard.
+  and brighter for a moment (though never as bright as the picture), and its
+  points draw out. That is when it is heard. Nothing comes off it: the five
+  lights are all there is. (Specks that came off a light and were knocked
+  about for a second or two looked like flies round a lamp.)
 
 A light that is touched twinkles. A touch anywhere else, and the nearest one
 answers, more quietly. A finger run across them sounds each as it is reached,

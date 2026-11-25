@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  CORE, ECHO, EMBER, GHOSTS, GLINT, HALO, LIGHT, MOST, NIGHT, PHRASE, PICTURE, POINTED, REST, ROWS, SKY, STEP, TALL, TURN, WARM,
-  afloat, drift, flicker, frame, nameOf, nearness, often, outline, reading, roam, rowOf, shimmer, soundOf, sway,
+  CORE, ECHO, EMBER, GHOSTS, GLINT, HALO, LIGHT, MOST, NEEDLE, NIGHT, PHRASE, PICTURE, POINTED, REST, ROWS, SKY, STEP, TALL, TURN, WARM,
+  afloat, drift, flicker, frame, nameOf, nearness, often, outline, reading, rowOf, shimmer, soundOf, starPath, sway,
 } from '../penny/stars.js';
 
 // The night is a picture come to life. These check that the picture is the
@@ -174,26 +174,33 @@ test('a light wanders, but never far from where the picture has it', () => {
   assert.ok(often(small) < often(big));
 });
 
-test('a mote set loose is not pulled back: the longer it is left, the further it has got', () => {
-  const chance = chancesFrom(11);
-  const after = (seconds) => {
-    let squares = 0;
-    for (let n = 0; n < 4000; n++) {
-      let at = 0;
-      for (let t = 0; t < seconds; t += 1 / 30) at = roam(at, 1 / 30, 1, chance);
-      squares += at ** 2;
-    }
-    return Math.sqrt(squares / 4000);
-  };
-  const [one, four] = [after(1), after(4)];
-  assert.ok(one > 0.9 && one < 1.1, `after a second: ${one}`);
-  assert.ok(four > 1.8 && four < 2.2, `four times as long, twice as far: ${four}`);
+// The night draws its stars from one path, and the way through to the night
+// draws the same one over them: the picture that tumbles in has to be the
+// night's own to the pixel, or the stars change as the one gives way to the
+// other.
+test('a star as it is drawn: its outline and its two needles, one shape for the night and for the way through to it', () => {
+  for (const star of stars) {
+    const path = starPath(star, 472);
+    assert.equal((path.match(/Z/g) ?? []).length, 3, 'an outline and two needles');
+    const numbers = path.match(/-?\d+(?:\.\d+)?(?:e-?\d+)?/g).map(Number);
+    assert.ok(numbers.every(Number.isFinite), 'every number in it is one');
+    // it reaches exactly as far as the star does, each way, and no further
+    const points = [...path.matchAll(/[ML](-?[\d.e-]+) (-?[\d.e-]+)/g)].map(([, x, y]) => [Number(x), Number(y)]);
+    assert.ok(Math.abs(Math.max(...points.map(([x]) => Math.abs(x))) - star.a) < 1e-9, 'as wide as the star');
+    assert.ok(Math.abs(Math.max(...points.map(([, y]) => Math.abs(y))) - star.b) < 1e-9, 'as tall as the star');
+    // the needles: as thick as the picture has them, but never thinner than can be seen on the screen
+    const thick = (side) => Number(starPath(star, side).split('Z')[1].match(/h([\d.e-]+)v/)[1]); // (the upright one: how far across it goes)
+    assert.ok(Math.abs(thick(100000) - NEEDLE) < 1e-12, 'on a very big picture, as thick as the picture has it');
+    assert.ok(Math.abs(thick(400) - 0.4 / 400) < 1e-12, 'on a phone, four tenths of a pixel');
+  }
 });
 
-test('the picture fits the window, all of its lights on the screen', () => {
+test('the picture fits the window, all of its lights on the screen, and it is on whole pixels', () => {
   assert.deepEqual(frame(1024, 1024), { side: 1024, x: 0, y: 0 }, 'a square window is the picture itself');
-  for (const [width, height] of [[390, 844], [390, 664], [360, 640], [320, 568], [844, 390], [768, 1024], [1024, 768], [1440, 900], [2560, 1440]]) {
+  for (const [width, height] of [[390, 844], [390, 664], [393, 852], [393, 659], [375, 629], [375, 812], [440, 956], [360, 640], [320, 568], [844, 390], [768, 1024], [1024, 768], [1440, 900], [2560, 1440]]) {
     const { side, x, y } = frame(width, height);
+    // (a picture laid over the night's own on the way in is the same to the pixel only if both are on whole ones)
+    assert.ok([side, x, y].every(Number.isInteger), `${width}x${height}: ${side} at ${x},${y}`);
     for (const light of PICTURE) {
       const [w, h] = light.kind === 'star' ? [light.a, light.b] : [light.r, light.r];
       // (with room for how far it may wander)
