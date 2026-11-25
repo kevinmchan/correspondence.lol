@@ -600,37 +600,48 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 .lot form.placard input:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 /* --- The home page: your rooms, a street of them -------------------------------------------- */
-.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.1rem 1rem; }
+/* Each is a little shop seen from the street: a strip of roof, the board over its window in the room's colour with the
+   room's name lettered on it (two lines at most, and then an ellipsis), and under that its face: a wide window and a
+   door. The window is dark, and lit, gently, when something inside is waiting on you. Shops in a row are as tall as
+   one another: one with a one-line name has a little more wall over its window. */
+.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.3rem 1rem; }
 .street a {
-  --shade: rgb(70 50 35 / 0.08);
-  height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding: 0.2rem 0.1rem 0.3rem;
-  color: var(--ink); text-decoration: none; border-radius: 1rem; -webkit-tap-highlight-color: transparent;
+  --shade: rgb(70 50 35 / 0.13);
+  --board: color-mix(in oklab, var(--room, #9aa7b1) 56%, #f1e6d6); --eave: color-mix(in oklab, var(--room, #9aa7b1) 30%, #f6eee2);
+  --deep: color-mix(in oklab, var(--room, #9aa7b1) 48%, #3d2e27); --face: color-mix(in oklab, var(--room, #9aa7b1) 5%, #f8f2e6);
+  --letters: color-mix(in oklab, var(--room, #9aa7b1) 30%, #33261f); --glass: #554a44; --trim: var(--eave);
+  height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 0.15rem;
+  color: var(--ink); text-decoration: none; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 0.4rem 0.6rem var(--shade));
 }
-:root[data-theme="dark"] .street a { --shade: rgb(0 0 0 / 0.34); }
-@media (prefers-reduced-motion: no-preference) { .street .roof { transition: translate 300ms ease; } }
-.street a:active .roof { translate: 0 0.12rem; }
-/* its name, lettered on its front wall: the building is seen from a little in front of it, so below the roof's eave
-   is the wall on that side, in the roof's colour a shade deeper, and the name is part of it, pressed into it. The wall
-   is as wide as the roof and starts behind it (the roof is 149 of the drawing's 160 across, from 1; its eave is at 73
-   of 92 down, and its corners are 13 round: the margins and the padding are those parts of the width). A name too
-   long for the wall ends in an ellipsis. */
-.street .roof { position: relative; z-index: 1; }
-.street .roof .doormat { display: none; }
+:root[data-theme="dark"] .street a {
+  --shade: rgb(0 0 0 / 0.36);
+  --board: color-mix(in oklab, var(--room, #5c6b78) 44%, #3b3331); --eave: color-mix(in oklab, var(--room, #5c6b78) 30%, #4a413d);
+  --deep: color-mix(in oklab, var(--room, #5c6b78) 30%, #1c1716); --face: color-mix(in oklab, var(--room, #5c6b78) 8%, #4d4540);
+  --letters: color-mix(in oklab, var(--room, #5c6b78) 22%, #f3e7d6); --glass: #1d1918; --trim: color-mix(in oklab, var(--board) 60%, var(--face));
+}
+@media (prefers-reduced-motion: no-preference) { .street a { transition: translate 300ms ease; } }
+.street a:active { translate: 0 0.12rem; }
+.shop-roof { display: block; height: 1.4rem; margin: 0 -0.15rem; border-radius: 0.7rem 0.7rem 0.15rem 0.15rem; background: var(--eave); }
 .street strong {
-  --wall: color-mix(in oklab, color-mix(in oklab, var(--room, #9aa7b1) 62%, #efe6da) 80%, #6b5a4e);
-  --wall-ink: color-mix(in oklab, var(--wall) 38%, #2e2420);
-  position: relative; box-sizing: border-box; width: 93.1%; margin: -20% 6.25% 0 0.65%; padding: calc(8.2% + 0.3rem) 0.6rem 0.4rem;
-  border-radius: 0 0 0.75rem 0.75rem;
-  background: linear-gradient(rgb(0 0 0 / 0.07), transparent 70%), var(--wall);
-  box-shadow: 0 0.45rem 0.8rem var(--shade);
-  font-family: Georgia, serif; font-weight: 400; font-size: 1rem; line-height: 1.2; text-align: center;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  color: var(--wall-ink); text-shadow: 0 1px 0 rgb(255 255 255 / 0.22);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  box-sizing: content-box; max-height: 2.4em; padding: 0.42rem 0.5rem 0.45rem; background: var(--board); box-shadow: inset 0 -2px 0 rgb(60 40 30 / 0.1);
+  font-family: Georgia, serif; font-weight: 400; font-size: 0.96875rem; line-height: 1.2; letter-spacing: 0.01em; text-align: center; text-wrap: balance; overflow-wrap: anywhere;
+  color: var(--letters);
 }
-:root[data-theme="dark"] .street strong {
-  --wall: color-mix(in oklab, color-mix(in oklab, var(--room, #5c6b78) 46%, #3b3331) 78%, #171312);
-  --wall-ink: color-mix(in oklab, var(--wall) 30%, #efe2cf); text-shadow: 0 -1px 0 rgb(0 0 0 / 0.3);
-}
+.shop-front { position: relative; display: block; flex: 1 0 3.9rem; border-radius: 0 0 0.45rem 0.45rem; background: var(--face); }
+.shop-front i { position: absolute; display: block; }
+.shop-glass { left: 0.65rem; right: 2.75rem; height: 2.55rem; bottom: 0.6rem; border-radius: 0.25rem 0.25rem 0.12rem 0.12rem; background: linear-gradient(var(--glass) calc(100% - 0.55rem), color-mix(in oklab, var(--face) 86%, var(--glass)) 0); box-shadow: 0 0 0 2px var(--trim); transition: background 900ms ease; }
+.shop-door { right: 0.7rem; bottom: 0; width: 1.25rem; height: 3.35rem; border-radius: 0.2rem 0.2rem 0 0; background: var(--deep); }
+.shop-door::after { content: ""; position: absolute; inset: 0.3rem 0.25rem 42%; border-radius: 0.12rem; background: var(--glass); opacity: 0.9; }
+/* (its kind: the door at the right, at the left, or between two windows) */
+.k1 .shop-glass { left: 2.75rem; right: 0.65rem; } .k1 .shop-door { right: auto; left: 0.7rem; }
+.k2 .shop-glass { left: 0.65rem; right: 0.65rem; -webkit-mask: linear-gradient(90deg, #000 calc(50% - 1.25rem), #0000 0 calc(50% + 1.25rem), #000 0); mask: linear-gradient(90deg, #000 calc(50% - 1.25rem), #0000 0 calc(50% + 1.25rem), #000 0); }
+.k2 .shop-door { right: calc(50% - 0.625rem); border-radius: 0.625rem 0.625rem 0 0; } .k2 .shop-door::after { display: none; }
+.lit .shop-glass, .lit .shop-door::after { --glass: #f4d283; }
+.lit .shop-glass { box-shadow: 0 0 0 2px var(--trim), 0 0 0.6rem rgb(242 207 122 / 0.6); }
+@media (prefers-reduced-motion: no-preference) { .lit .shop-glass { animation: shop-breathe 5.2s ease-in-out infinite; } }
+@keyframes shop-breathe { 0%, 100% { box-shadow: 0 0 0 2px var(--trim), 0 0 0.3rem rgb(242 207 122 / 0.4); } 50% { box-shadow: 0 0 0 2px var(--trim), 0 0 0.8rem rgb(242 207 122 / 0.8); } }
 
 @media (prefers-reduced-motion: no-preference) {
   /* coming in from the map: the furniture settles, slowly, a piece after a piece */

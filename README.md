@@ -1291,12 +1291,14 @@ room are its content: names, notes, the code.
   together the bar is shorter, beside the words of the turn.
 - **Outside**, for somebody who is not in it, the roof is on. Whoever is in
   shows at the skylight, and the mat at the door is where to ask in.
-- **On the home page** your rooms are a street of roofs, each with its name on
-  its front wall, lettered into it (a long one ends in an ellipsis; a new name is 24 letters at most), the last opened first. The roofs are soft as the room
-  is: no hard edge down a side, no shadow set off under it, no courses of
-  tiles, no squares of garden, and no garden at the end of the street; the
-  chimney is a shade of the roof, never a dark square at a corner. A room
-  with something waiting on you has its window lit, glowing slowly. **Opening
+- **On the home page** your rooms are a street of little shops seen from in
+  front, the last opened first: a strip of roof, a board over the window in
+  the room's colour with the room's name lettered on it (two lines at most,
+  then an ellipsis; a new name is 24 letters at most), and under it a wide
+  window and a door. Where the door is goes by the room, so the street is not
+  one shop over and over. They are soft as the room is: no hard edges, low
+  contrast, one soft shadow. A room with something waiting on you has its
+  window lit, glowing slowly. **Opening
   a room** is a plot staked out on the map, with a board planted in it to
   write the name on. **Joining one** is a grey building, its colour not yet
   known, with its mat to write the code on; the box shows the shape of a code

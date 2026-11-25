@@ -5,7 +5,7 @@ import { gameUrl, myName, myToken, recentRooms, roomUrl } from '/shared/identity
 import { feedOf, wordsFor } from '/shared/feed.js';
 import { asCode, claim, codeInAddress, giveUpOn } from '/shared/handoff.js';
 import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
-import { roof, roomLook } from '/shared/place.js';
+import { roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
 import { BAR, ENERGY_KEY, held, read as readEnergy } from '/shared/energy.js';
@@ -296,13 +296,14 @@ export function mount(root, life) {
   function showRooms() {
     const recent = recentRooms();
     rooms.hidden = recent.length === 0;
-    // Each is a building on the map, seen from above: its roof, in the colour
-    // it keeps, with its name lettered on its front wall (room/room.css).
+    // Each is a building on the street, seen from in front: a little shop in
+    // the colour the room keeps, and the board over its window carries its name
+    // (two lines of it at most; room/room.css). Its kind is where its door is.
     rooms.querySelector('ul').replaceChildren(...recent.map((room) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
       const look = roomLook(room.id);
-      a.className = `lot-link r${look.colour}`;
+      a.className = `lot-link r${look.colour} k${look.kind}`;
       a.dataset.room = room.id;
       a.href = roomUrl(room.id);
       const name = document.createElement('strong');
@@ -315,7 +316,13 @@ export function mount(root, life) {
       waiting.className = 'sr-only waiting';
       waiting.textContent = ', something is waiting on you';
       waiting.hidden = true;
-      a.append(roof({ kind: look.kind }), name, when, waiting);
+      const top = document.createElement('span');
+      top.className = 'shop-roof';
+      const front = document.createElement('span');
+      front.className = 'shop-front';
+      front.setAttribute('aria-hidden', 'true');
+      front.innerHTML = '<i class="shop-glass"></i><i class="shop-door"></i>';
+      a.append(top, name, when, waiting, front);
       li.append(a);
       return li;
     }));

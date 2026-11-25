@@ -189,7 +189,7 @@ async function states() {
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
-    // (each room's name is lettered on its front wall, a long one ending in an ellipsis; in the dark, a darker wall)
+    // (each room is a little shop, its name on the board over its window, two lines at most; in the dark, an evening street)
     { name: 'home, the lobby, a street of rooms in the dark', screen: 'home', at: '/', storage: { ...STREET, 'correspondence:theme:v1': 'dark' }, ready: '#rooms .street li' },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
     { name: 'a room, empty', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room(), ready: '#no-games:not([hidden])' },
