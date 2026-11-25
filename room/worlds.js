@@ -283,7 +283,11 @@ export function twoWorlds(root, life, portal) {
   }
   // Whether something the page did changed what it looks like. (Every few seconds the room's poll puts back what is
   // already there: the same people, the same games. Copying the whole page again for that is all cost and no change.)
+  // (Nor is the night's hidden mark (penny/tags.js), put down and moved on its own clock once the page has settled
+  // and again after a scroll: it is no part of the room, and the copy can do without it for the length of a crossing.)
+  const night = (node) => node?.nodeType === 1 && Boolean(node.closest('.tag-hidden'));
   const real = (change) => {
+    if (night(change.target) || [...change.addedNodes, ...change.removedNodes].some(night)) return false;
     if (change.type === 'attributes') {
       return !(change.attributeName === 'data-paint' && own().includes(change.target)) && change.target.getAttribute(change.attributeName) !== change.oldValue;
     }
