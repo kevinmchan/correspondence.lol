@@ -16,6 +16,29 @@ are made.
 - Before shipping a change to the interface, run it on every phone too:
   `PHONES=all npm run e2e:mini`.
 
+## Look and words
+
+- Soothing first. The app should feel soothing: soft, low-contrast colour,
+  warm in the dark theme; generous space; soft shapes; slow, eased motion or
+  none. Nothing is urgent unless it is truly yours to do, and even that is said
+  gently. Soothing must not cost clarity: a person still sees what needs them.
+  The story may turn from soothing to wrestling with the dark (README,
+  "Penny"); that is the writing's choice, made on purpose in a scene, never a
+  screen that happens to be harsh.
+- No text descriptions, as a rule. Everything on a screen says what it is by
+  its form (an icon, a shape, a mark, a state of the drawing, a behaviour), and
+  labels are kept to the fewest. Labels, placeholders, hints and the words on
+  buttons are descriptions too; the words a screen shows are its content
+  (names, messages, a code, a phrase). What a description said stays for
+  screen readers (`aria-label`, `.sr-only`); an error is a shake and a mark,
+  with its words in `role="alert"`. Prefer taking a thing away to swapping its
+  word for a new mark.
+- The one exception the owner has given is Penny's Radio as an exhibit: its
+  label and its reading are words, set as a museum sets them. Any other place
+  where only words will do is the owner's to allow.
+- Screens changed before these rules still carry words; each is brought to
+  them when it is next worked on, not left as it is.
+
 ## Every pull request
 
 - The control (`tests/pr-control.cjs`, run by GitHub on every pull request)
@@ -29,6 +52,14 @@ are made.
 - After opening a pull request, wait for the check "New test screens and
   passing runs" to pass before merging. Merge only when the owner has said to
   deploy.
+
+## Cloud sessions
+
+- A cloud session's machine has 4 cores. Run at most two or three agents that
+  run browser suites at the same time; past that, builds crawl and timing
+  checks fail for reasons that have nothing to do with the change (#92).
+- Work in order of how near it is to deploying: finish and ship before starting
+  new explorations.
 
 ## Things that have gone wrong before
 
