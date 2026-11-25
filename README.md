@@ -1203,9 +1203,11 @@ room are its content: names, notes, the code.
   table's corner tidies it: pressed, each board can be put away with a tap,
   and the sheet that asks shows that board, not its name.
   Three tiles start a game, quiet until touched, with only the kind of game
-  drawn on each. A game started tells the whole room, so a tile takes two
-  taps: the first lifts it into its colour with a play mark on it, the second
-  starts. (Pass phrase goes first to a desk, which tells nobody.) The chat is
+  drawn on each. One tap on a tile goes to its desk, which tells nobody; the
+  game is started there, with one tap on the play mark, and then the whole
+  room is told (the owner, 25 November 2026: one tap for every kind). On the
+  shelf, the round button at the end of each card carries the kind of game in
+  place of a play mark. The chat is
   notes passed across a rug: who and when only where somebody starts to speak,
   what the room says as a soft line that leads to its game, and every note
   alike (nothing is marked as new). A game being started is not said there
@@ -1223,23 +1225,37 @@ room are its content: names, notes, the code.
   them (the owner's choice, 25 November 2026). The words are in the page's
   `role="alert"`, so a screen reader says them at once. With less motion
   asked for, nothing shakes: the words simply come. They stand until the thing
-  is tried again or what was typed is changed. They come after what was
-  tried, so that it does not move, nor anything beside it: under the tiles,
-  the desk's start, a door, the chat's box; under the name, they lie over the
-  building's top wall, above the people, and nothing in the room moves for
-  them (a tile tapped as the name was left is still there for its second
-  tap). What is asked in a sheet (leaving the room, putting a game away) is
+  is tried again, another board is drawn, or what was typed is changed. They
+  come after what was tried, so that it does not move, nor anything beside
+  it: under the desk's play mark, a door, the chat's box; under the name,
+  they lie over the building's top wall, above the people, and nothing in the
+  room moves for them. What is asked in a sheet (leaving the room, putting a game away) is
   tried with the sheet still open: refused, the sheet shakes and the words
   come in it, under the question, while its answers stay where they were
   under the finger; it can be tried again or put away. A link that leads
   nowhere is the empty plot with the words in it. The room's options, under
-  the three dots, are a pencil and a door with the way out of it; the sheets
-  they lead to ask their question with no words of explanation.
-- **Writing a pass phrase** is the same room, at its writing desk. The box has
-  no words in it; while it is empty, the start is a die (a phrase is picked at
-  random), and once a phrase is written, the play mark. A game started from
-  the die tells the room too, so the die takes two taps, as a tile does: the
-  first lifts it and brings the play mark beside it, the second starts.
+  the three dots, are a pencil and a door with the way out of it, each with
+  its word, Rename and Leave (the owner's choice, 25 November 2026); while
+  they are open, the room under them is out of reach, and a tap anywhere else
+  only puts them away. The sheets they lead to ask their question with no
+  words of explanation.
+- **Setting up a game** is the same room, at its desk, for every kind of game.
+  The board it will be played on is drawn ahead, its districts in their
+  colours and nothing of where the posts are, with a die beside it that draws
+  another (for a game together or a time trial, at a size drawn again too).
+  For a pass phrase the desk asks, in words, "What message would you like to
+  deliver?" (the owner's choice), above the box; the board is drawn at the
+  size the message needs, and drawn again only when that changes. Left empty,
+  a phrase is picked at random. The play mark starts the game with one tap.
+- **A game together**, the first time it is opened on a device, shows what is
+  particular to playing together in place of how to play (which is always
+  under the question mark): one board for the whole room; take turns, after
+  your move someone else goes next; three hearts, shared by everyone. Each is
+  a picture on a tile of its colour and a line of words (the owner's choice).
+- **Energy in a room's games**: a game together earns for every post found on
+  the room's board, by anyone, and for its finish; a time trial or a pass
+  phrase, for your own run; a phrase's author's test run, nothing. In a game
+  together the bar is shorter, beside the words of the turn.
 - **Outside**, for somebody who is not in it, the roof is on. Whoever is in
   shows at the skylight, and the mat at the door is where to ask in.
 - **On the home page** your rooms are a street of roofs, each with its name on

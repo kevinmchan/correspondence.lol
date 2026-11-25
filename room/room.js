@@ -8,7 +8,7 @@ import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js'
 import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
-import { door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
+import { boardPreview, door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
 import { twoWorlds } from '/room/worlds.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
@@ -18,11 +18,11 @@ import { twoWorlds } from '/room/worlds.js';
 // with its roof off for the people in it, and with its roof on for anybody
 // else. What is made here is what goes in it: the tokens of the people at its
 // table, and the games on the table as a shelf of cards, each the way into
-// its game, with a round play button at its end.
+// its game, with a round button at its end that carries the kind of game.
 //
 // It is a quiet room, and one thing in it is loud: what is waiting on you. The
 // first game that is yours to play comes first, its card lit under a lamp, its
-// board in full colour and its play button the seal's colour, breathing; any
+// board in full colour and its button the seal's colour, breathing; any
 // others yours to play follow, their boards in full colour and their buttons
 // seal-tinted but still; the rest lie below, quieter, and the finished ones
 // quieter still. Nothing on the table is written: where a game stands is said
@@ -40,6 +40,7 @@ export function mount(root, life) {
     games: $('games'), noGames: $('no-games'), tidy: $('tidy'), table: root.querySelector('.table'),
     modes: $('modes'), modeNote: $('mode-note'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
     phraseError: $('phrase-error'), phraseBack: $('phrase-back'), tokens: $('tokens'), tokenNote: $('token-note'), gameError: $('game-error'),
+    deskIcon: $('desk-icon'), deskName: $('desk-name'), phraseAsk: $('phrase-ask'), phraseField: $('phrase-field'), previewBoard: $('preview-board'), redraw: $('redraw'),
     chat: $('chat'), leave: $('leave'), more: $('more'), moreMenu: $('more-menu'), rename: $('rename'),
   };
 
@@ -55,7 +56,9 @@ export function mount(root, life) {
   let unread = 0;
   let timer = null;
   let watcher = null; // live updates, once we are a member
-  let composing = false; // the write-a-phrase screen is showing in place of the room
+  let composing = false; // a desk is showing in place of the room, to set up a game
+  let deskMode = null; // which kind of game the desk is setting up
+  let puzzle = null; // the board drawn for it: { size, seed, regions, solution }
   let present = false; // telling the server this room is on screen
 
   // The building keeps one of the game's colours, by its id: its walls here, its roof on the home page.
@@ -300,7 +303,7 @@ export function mount(root, life) {
     chat.onTable(new Set(room.games.map((game) => game.id)));
 
     // each game a card on the shelf of the table, the whole of it the way in: its board, the faces of who is in it, its
-    // kind, and a round play button at its end. What is yours to play comes first and is lit; the rest below, quieter.
+    // kind, on the round button at its end. What is yours to play comes first and is lit; the rest below, quieter.
     const laid = room.games.map((game) => ({ game, status: gameStatus(game), seats: players(game) }))
       .sort((a, b) => NEAR[a.status.state] - NEAR[b.status.state]);
     // (who started each, as its line in the chat says: that line is put away while the game is on the table, so its
@@ -332,15 +335,15 @@ export function mount(root, life) {
       faces.className = 'faces';
       faces.append(...seats.slice(0, 3).map((seat) => avatar(room.people[seat])));
       about.append(faces);
-      const kind = modeIcon(game.mode ?? 'coop');
-      if (kind) {
-        kind.setAttribute('class', 'kind');
-        about.append(kind);
-      }
+      // the round button at its end carries the kind of game: the way in, and what it is
       const play = document.createElement('span');
       play.className = 'play';
       play.setAttribute('aria-hidden', 'true');
-      play.innerHTML = PLAY;
+      const kind = modeIcon(game.mode ?? 'coop');
+      if (kind) {
+        kind.setAttribute('class', 'kind');
+        play.append(kind);
+      } else play.innerHTML = PLAY;
       // the card is the way into the game; tidying, the way to put it away lies there instead
       const a = document.createElement('a');
       a.className = 'game';
@@ -472,9 +475,12 @@ export function mount(root, life) {
   // --- Leaving ----------------------------------------------------------------------
   // The room's options, tucked behind the three dots at the top: things done
   // rarely (renaming) or not to be done by accident (leaving).
+  // While it is open, the room under it is out of reach (inert): it lies over the room's name, and a tap anywhere else
+  // only puts it away.
   const moreMenu = (open) => {
     el.moreMenu.hidden = !open;
     el.more.setAttribute('aria-expanded', String(open));
+    root.querySelector('main').inert = open;
   };
   el.more.addEventListener('click', () => moreMenu(el.moreMenu.hidden));
   life.on(document, 'pointerdown', (event) => {
@@ -602,65 +608,48 @@ export function mount(root, life) {
   }
 
   // --- Starting a game ----------------------------------------------------------------
-  // One tile per kind of game, with no words on it: the picture is the kind.
-  // A game started tells the whole room, so Together and Time trial take two
-  // taps: the first lifts the tile and shows a play mark on it, the second
-  // starts. (A tap anywhere else, or a while left alone, sets it down again.)
-  // Pass phrase goes to a desk for writing the phrase first, which tells
-  // nobody (left empty, a random one is used and its starter can play too).
-  let armed = null;
-  let settle = null;
-  function arm(tile) {
-    disarm();
-    oops(el.gameError, ''); // (a game that could not be started is not still said, once another is begun)
-    armed = tile;
-    tile.dataset.armed = '';
-    el.modeNote.textContent = 'Press again to start. Everyone in the room is told.';
-    settle = setTimeout(disarm, 9000);
+  // One tile per kind of game, with no words on it: the picture is the kind. One tap on a tile goes to its desk,
+  // which tells nobody: there the board it will be played on is drawn ahead, and can be drawn again with the die; a
+  // pass phrase is written there too (left empty, a random one is used and its starter can play too). The play mark
+  // starts the game, and then the whole room is told. The desk is a step in the browser's history: Back returns to
+  // the room.
+  const MODES = ['coop', 'trial', 'phrase'];
+  const seedOf = () => crypto.getRandomValues(new Uint32Array(1))[0];
+  // the size a board is drawn at: a random one for Together and Time trial; for a pass phrase, the size its words
+  // need, or (left empty for a random phrase) one of the smaller sizes, kept until the die is thrown
+  let emptySize = null;
+  function sizeFor(mode) {
+    if (mode !== 'phrase') return randomSize();
+    const written = tidyPhrase(el.phraseText.value).trim();
+    if (written) return phraseBoardSize(written);
+    emptySize ??= 5 + Math.floor(Math.random() * 3);
+    return emptySize;
   }
-  function disarm() {
-    clearTimeout(settle);
-    if (!armed) return;
-    delete armed.dataset.armed;
-    armed = null;
-    el.modeNote.textContent = '';
+  function draw(size) {
+    const seed = seedOf();
+    const made = generatePuzzle(size, seed);
+    puzzle = { size, seed, regions: made.regions, solution: made.solution };
+    el.previewBoard.replaceWith(el.previewBoard = Object.assign(boardPreview(size, made.regions), { id: 'preview-board' }));
+    el.previewBoard.dataset.size = String(size);
   }
-  life.on(document, 'pointerdown', (event) => {
-    if (armed && !event.target.closest('#modes')) disarm();
-    if (!event.target.closest('#phrase-form .start-phrase')) liftDie(false);
+  el.redraw.addEventListener('click', () => {
+    if (deskMode === 'phrase' && !tidyPhrase(el.phraseText.value).trim()) emptySize = null; // (a random phrase: its size is drawn again too)
+    draw(sizeFor(deskMode));
+    oops(el.phraseError, ''); // (a game that could not be started is not still said, once another board is drawn)
+    if (deskMode === 'phrase') previewTokens(); // (...though anything wrong with the phrase still is)
   });
-
-  // At the desk, while the box is empty, the start is a die (a phrase picked at random), and that game tells the whole
-  // room too: so, as a tile does, it takes two taps. The first lifts it and brings the play mark beside the die; the
-  // second starts. (Typing, a tap anywhere else, or a while left alone, sets it down again.)
-  let rolled = null;
-  function liftDie(on) {
-    const start = el.phraseForm.querySelector('button[type="submit"]');
-    clearTimeout(rolled);
-    if (on) {
-      start.dataset.armed = '';
-      el.tokenNote.textContent = 'Press again to start. Everyone in the room is told.';
-      rolled = setTimeout(() => liftDie(false), 9000);
-    } else if (start.hasAttribute('data-armed')) {
-      delete start.dataset.armed;
-      el.tokenNote.textContent = '';
-    }
-  }
 
   async function startGame(mode, phrase = null) {
     if (el.modes.dataset.busy) return;
     if (phrase !== null) phrase = tidyPhrase(phrase);
     if (phrase !== null && phraseProblem(phrase)) return; // already marked at the box
+    if (!puzzle) draw(sizeFor(mode));
     el.modes.dataset.busy = 'true';
     oops(el.gameError, '');
+    oops(el.phraseError, '');
     try {
-      // A written phrase gets a board with one post per word where it can; the
-      // server then splits the phrase into exactly one token per post.
-      const written = (phrase ?? '').trim();
-      const size = mode !== 'phrase' ? randomSize() : written ? phraseBoardSize(written) : 5 + Math.floor(Math.random() * 3);
-      const puzzle = generatePuzzle(size, crypto.getRandomValues(new Uint32Array(1))[0]);
       const game = await rpc('postmarks_start', {
-        p_room: roomId, p_token: myToken(), p_mode: mode, p_size: size,
+        p_room: roomId, p_token: myToken(), p_mode: mode, p_size: puzzle.size,
         p_regions: puzzle.regions, p_solution: puzzle.solution, p_phrase: mode === 'phrase' ? phrase : null,
       });
       watcher?.poke();
@@ -673,10 +662,9 @@ export function mount(root, life) {
 
   // Show the tokens the phrase turns into, as it is typed: exactly one for each
   // post on its board. Anything wrong with the phrase is said at once, the box
-  // is marked and Start is held back until it is put right. While the box is
-  // empty, Start is a die: a phrase is picked at random.
+  // is marked and Start is held back until it is put right. The board drawn
+  // ahead is drawn again only when the phrase needs another size.
   function previewTokens() {
-    liftDie(false);
     const phrase = tidyPhrase(el.phraseText.value);
     const problem = phraseProblem(phrase);
     oops(el.phraseError, problem ?? '');
@@ -684,10 +672,10 @@ export function mount(root, life) {
     const start = el.phraseForm.querySelector('button[type="submit"]');
     start.disabled = Boolean(problem);
     const random = !phrase.trim();
-    start.classList.toggle('random', random);
     start.setAttribute('aria-label', random ? 'Start game with a random phrase' : 'Start game');
-    const size = phraseBoardSize(phrase);
-    const tokens = tokenize(phrase, size);
+    const size = sizeFor('phrase');
+    if (puzzle?.size !== size) draw(size);
+    const tokens = random ? [] : tokenize(phrase, size);
     // Cards are updated in place so that typing only animates what changed.
     while (el.tokens.children.length > tokens.length) el.tokens.lastElementChild.remove();
     tokens.forEach((token, i) => {
@@ -704,48 +692,49 @@ export function mount(root, life) {
 
   el.phraseText.addEventListener('input', previewTokens);
 
-  // Pass phrase has a screen of its own for writing the phrase. It is a step in
-  // the browser's history, so Back returns to the room.
-  function showCompose(show) {
-    composing = show;
+  // The desk for a kind of game, or (null) the room again.
+  function openDesk(mode) {
+    deskMode = MODES.includes(mode) ? mode : null;
+    composing = Boolean(deskMode);
     if (room?.you !== null) render();
-    if (show) {
+    if (!deskMode) {
+      puzzle = null;
+      window.scrollTo(0, 0);
+      return;
+    }
+    el.compose.dataset.mode = deskMode;
+    el.deskIcon.replaceChildren(modeIcon(deskMode) ?? '');
+    el.deskName.textContent = MODE_NAMES[deskMode];
+    const phrase = deskMode === 'phrase';
+    el.phraseAsk.hidden = !phrase;
+    el.phraseField.hidden = !phrase;
+    el.tokens.hidden = !phrase;
+    oops(el.phraseError, '');
+    const start = el.phraseForm.querySelector('button[type="submit"]');
+    start.disabled = false;
+    start.setAttribute('aria-label', 'Start game');
+    puzzle = null;
+    if (phrase) {
       previewTokens();
       el.phraseText.focus();
-    }
-    else window.scrollTo(0, 0);
+    } else draw(sizeFor(deskMode));
   }
+  const deskInAddress = () => location.hash.slice(1);
 
-  life.on(window, 'popstate', () => showCompose(location.hash === '#phrase'));
+  life.on(window, 'popstate', () => openDesk(deskInAddress()));
   el.phraseBack.addEventListener('click', () => history.back());
 
   el.modes.addEventListener('click', (event) => {
     const tile = event.target.closest('[data-mode]');
     if (!tile) return;
-    if (tile.dataset.mode !== 'phrase') {
-      if (tile !== armed) {
-        arm(tile);
-        return;
-      }
-      disarm();
-      startGame(tile.dataset.mode);
-      return;
-    }
-    disarm();
     oops(el.gameError, '');
-    history.pushState(null, '', '#phrase');
-    showCompose(true);
+    history.pushState(null, '', `#${tile.dataset.mode}`);
+    openDesk(tile.dataset.mode);
   });
 
   el.phraseForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    const start = el.phraseForm.querySelector('button[type="submit"]');
-    if (start.classList.contains('random') && !start.hasAttribute('data-armed')) {
-      liftDie(true);
-      return;
-    }
-    liftDie(false);
-    startGame('phrase', el.phraseText.value);
+    startGame(deskMode, deskMode === 'phrase' ? el.phraseText.value : null);
   });
 
   // Share hands the code to the device's share sheet, with a line saying what
@@ -762,7 +751,7 @@ export function mount(root, life) {
   }
 
 
-  if (location.hash === '#phrase') history.replaceState(null, '', location.pathname + location.search);
+  if (MODES.includes(deskInAddress())) history.replaceState(null, '', location.pathname + location.search); // (every visit starts in the room)
   if (roomId) refresh();
   else fail('That room link doesn’t look right.');
 }

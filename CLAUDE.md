@@ -39,7 +39,10 @@ are made.
   label and its reading are words, set as a museum sets them. The second is a
   sheet that asks before something that cannot be undone ("Leave this room?",
   "Delete this game?"): its question and its buttons are words (25 November
-  2026). Any other place where only words will do is the owner's to allow.
+  2026). The others the owner has given (25 November 2026): the question
+  at a pass phrase's desk ("What message would you like to deliver?"); the
+  words Rename and Leave in a room's options; and the lines of the sheet that
+  says what is particular to a game together. Any other place where only words will do is the owner's to allow.
 - An error line takes its own room: what is below it moves down for it, and
   nothing above it moves (allowed by the owner, 25 November 2026).
 - Screens changed before these rules still carry words; each is brought to

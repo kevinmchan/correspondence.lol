@@ -1643,7 +1643,7 @@ async function main() {
 
     // The quiet room (room/room.css), and what it says (CLAUDE.md, "Look and words": the words on a screen are its
     // content, and its descriptions are kept for screen readers).
-    check('a quiet room: its words are only its content; what is yours lies nearest; one tap on a tile (or the die at the desk) starts nothing, the second starts the game; one bin tidies the table; the chat says each thing once, a game started only while that game is not on the table; what went wrong is a short line of its words beside it, with a shake, while it stands', { storage: ACCOUNT, timezoneId: 'UTC', locale: 'en-US' }, async (page, h) => {
+    check('a quiet room: its words are only its content; what is yours lies nearest; one tap on a tile goes to its desk, where the board is drawn ahead and the die draws another, and one tap on the play mark starts the game; one bin tidies the table; the chat says each thing once, a game started only while that game is not on the table; what went wrong is a short line of its words beside it, with a shake, while it stands', { storage: ACCOUNT, timezoneId: 'UTC', locale: 'en-US' }, async (page, h) => {
       const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
       const game = (over) => ({ kind: 'postmarks', mode: 'coop', size: 5, status: 'playing', hearts: 3, moves: 2, found: 1, last_player: null, phrase_by: null, finished: 0, mine: null, updated_at: '2026-11-24T10:00:00Z', ...over });
       let games = [game({ id: 'b2222222-2222-4222-8222-222222222222', mode: 'trial', size: 6, mine: 'won', finished: 2 }), game({ id: 'a1111111-1111-4111-8111-111111111111', last_player: 1 })];
@@ -1745,16 +1745,20 @@ async function main() {
       assert.equal(await title.textContent(), 'Book club');
       await page.evaluate(() => document.activeElement.blur());
       await again('Ada');
-      // a tile: one tap lifts it and starts nothing; a tap elsewhere sets it down; the second tap starts the game
+      // a tile: one tap goes to its desk, which starts nothing and tells nobody; there the board it will be played on is
+      // drawn ahead, and the die draws another; Back is the way to the room again
       await page.locator('#modes [data-mode="coop"]').click();
-      assert.equal(await page.locator('#modes [data-mode="coop"][data-armed]').count(), 1);
+      await page.waitForSelector('#compose:not([hidden]) #preview-board svg');
       await sleep(400);
       assert.equal(asked.includes('postmarks_start'), false, 'one tap started a game');
-      await page.locator('#chat input').click();
-      assert.equal(await page.locator('#modes [data-armed]').count(), 0);
-      await page.locator('#modes [data-mode="trial"]').click();
-      await sleep(400);
-      assert.equal(asked.includes('postmarks_start'), false, 'nor did one tap on another');
+      assert.equal(await page.locator('#phrase-ask').isVisible(), false, 'a game together asks for no message');
+      const drawn = () => page.locator('#preview-board svg').evaluate((svg) => svg.outerHTML);
+      const first = await drawn();
+      await page.locator('#redraw').click();
+      assert.notEqual(await drawn(), first, 'the die draws another board');
+      assert.equal(asked.includes('postmarks_start'), false, 'and starts nothing');
+      await page.locator('#phrase-back').click();
+      await page.waitForSelector('.screen-room > main #room:not([hidden])');
       // (what is shaken, from here on)
       await page.evaluate(() => {
         window.shaken = [];
@@ -1784,30 +1788,33 @@ async function main() {
       const box = (locator) => locator.evaluate((one) => one.getBoundingClientRect().toJSON());
       const tiles = await lies(page.locator('#modes'));
       await presses();
+      assert.deepEqual(await lies(page.locator('#modes')), tiles, 'back in the room, the tiles are where they were');
       await page.locator('#modes [data-mode="trial"]').click();
-      await page.waitForSelector('#game-error:not(:empty)');
-      assert.equal(asked.filter((name) => name === 'postmarks_start').length, 1, 'the second tap starts it');
-      // what went wrong (here, the server could not be reached): a short line of its words beside the tiles, said at once
-      // to screen readers too (role="alert"), and the tiles shake as they come; no mark to press for them, and nothing
-      // moves for them. It stands until a tile is touched again.
-      const line1 = page.locator('#game-error');
+      await page.waitForSelector('#compose:not([hidden]) #preview-board svg');
+      await presses();
+      const go = page.locator('#phrase-form .start-phrase');
+      const goAt = await lies(go);
+      await go.click();
+      await page.waitForSelector('#phrase-error:not(:empty)');
+      assert.equal(asked.filter((name) => name === 'postmarks_start').length, 1, 'the play mark at the desk starts it, with one tap');
+      // what went wrong (here, the server could not be reached): a short line of its words under the play mark, said at
+      // once to screen readers too (role="alert"), and the desk shakes as they come; no mark to press for them, and the
+      // play mark does not move for them.
+      const line1 = page.locator('#phrase-error');
       const shown = (words) => words.evaluate((one) => !one.closest('.sr-only') && one.checkVisibility() && one.getBoundingClientRect().width > 40);
       assert.equal(await line1.getAttribute('role'), 'alert');
       assert.match(await line1.textContent(), /reach the server/);
-      assert.deepEqual(await page.evaluate(() => window.shaken), ['modes'], 'the tiles shook');
+      assert.deepEqual(await page.evaluate(() => window.shaken), ['phrase-form'], 'the desk shook');
       assert.equal(await shown(line1), true, 'its words are on the screen');
-      const said = await line1.textContent();
-      await still(); // (they come in softly)
-      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', said, 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP'], 'its words are the one thing come on the screen, after the tiles');
-      assert.deepEqual(await lies(page.locator('#modes')), tiles, 'the tiles have not moved');
+      assert.deepEqual(await lies(go), goAt, 'the play mark has not moved');
       const under = await box(line1);
-      const row = await box(page.locator('#modes'));
-      assert.ok(under.top >= row.bottom && under.top - row.bottom < 40 && Math.abs((under.left + under.right) / 2 - (row.left + row.right) / 2) < 2, `the words are just under the tiles (${JSON.stringify([under, row])})`);
+      const mark = await box(go);
+      assert.ok(under.top >= mark.bottom && under.top - mark.bottom < 40 && Math.abs((under.left + under.right) / 2 - (mark.left + mark.right) / 2) < 2, `the words are just under the play mark (${JSON.stringify([under, mark])})`);
       assert.deepEqual(await presses(true), [], 'and nothing has come to press');
-      await page.locator('#modes [data-mode="coop"]').click();
-      assert.equal(await line1.textContent(), '', 'touched again, it is not still said');
-      assert.equal(await shown(line1), false, 'and its words are gone');
-      await page.locator('#chat input').click();
+      await page.locator('#redraw').click();
+      assert.equal(await line1.textContent(), '', 'another board drawn, it is not still said');
+      await page.locator('#phrase-back').click();
+      await page.waitForSelector('.screen-room > main #room:not([hidden])');
       // renaming the room, refused: the name is back as it was, and shakes, and the words lie under it, over the top wall
       // of the building, above the people; nothing moves for them (a tile tapped as the name was left is still where it
       // was for its second tap). Tried again, what went wrong is not still said.
@@ -1821,7 +1828,7 @@ async function main() {
       assert.equal(await page.locator('#name-error').getAttribute('role'), 'alert');
       assert.match(await page.locator('#name-error').textContent(), /reach the server/);
       assert.equal(await shown(page.locator('#name-error')), true, 'its words are on the screen');
-      assert.deepEqual(await page.evaluate(() => window.shaken), ['modes', 'room-name'], 'the name shook');
+      assert.deepEqual(await page.evaluate(() => window.shaken), ['phrase-form', 'room-name'], 'the name shook');
       assert.deepEqual([await lies(page.locator('#room-name')), await lies(page.locator('#house'))], [name, house], 'neither the name nor the building has moved');
       const slip = await box(page.locator('#name-error'));
       const sign = await box(page.locator('#room-name'));
@@ -1841,7 +1848,8 @@ async function main() {
       // leaving, refused: asked in a sheet (with no words of explanation in it), and the sheet stays, shakes, and the
       // words come in it, under the question; its answers stay where they were under the finger. Stay puts it away.
       await page.locator('#more').click();
-      assert.deepEqual(await page.locator('#more-menu button').evaluateAll((all) => all.map((one) => [one.getAttribute('aria-label'), one.textContent.trim()])), [['Rename room', ''], ['Leave room', '']], 'the room\'s options are a pencil and a door, with their words for screen readers');
+      assert.deepEqual(await page.locator('#more-menu button').evaluateAll((all) => all.map((one) => [one.getAttribute('aria-label'), one.textContent.trim()])), [['Rename room', 'Rename'], ['Leave room', 'Leave']], 'the room\'s options are a pencil and a door, each with its word');
+      assert.equal(await page.evaluate(() => document.querySelector('.screen-room > main').inert), true, 'and while they are open, the room under them is out of reach');
       await page.locator('#leave').click();
       await page.waitForSelector('dialog.ask[open]');
       assert.equal(await page.locator('dialog.ask[open] p:not([role="alert"])').count(), 0, 'nothing but the question and its answers');
@@ -1899,32 +1907,32 @@ async function main() {
       assert.deepEqual(await hidden(), [false, true, false, false, false], 'a game gone from the table: the line that it was started is back');
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('.table.tidy').count(), 0);
-      // at the desk, the box left empty, the start is a die; and it too tells the room, so it takes two taps, as a tile does
+      // at the desk for a pass phrase: what it asks, in words; the board drawn ahead, at the size the message needs, and
+      // drawn again by the die; the play mark starts it with one tap, the box left empty for a random phrase
       await page.locator('#modes [data-mode="phrase"]').click();
-      await page.waitForSelector('#compose:not([hidden])');
-      const die = page.locator('#phrase-form .start-phrase');
+      await page.waitForSelector('#compose:not([hidden]) #preview-board svg');
+      assert.equal((await page.locator('#phrase-ask').textContent()).trim(), 'What message would you like to deliver?');
+      assert.equal(await shown(page.locator('#phrase-ask')), true, 'and it is on the screen');
+      const start = page.locator('#phrase-form .start-phrase');
       const starts = () => asked.filter((name) => name === 'postmarks_start').length;
       const begun = starts();
-      assert.equal(await die.evaluate((one) => one.classList.contains('random')), true, 'the empty box\'s start is a die');
-      await die.click();
-      await sleep(400);
-      assert.equal(starts(), begun, 'one tap on the die starts nothing');
-      assert.equal(await die.getAttribute('data-armed'), '', 'it is lifted');
-      assert.equal(await page.locator('#phrase-form .start-phrase .play').isVisible(), true, 'with the play mark beside it');
-      await page.locator('#phrase-text').click();
-      assert.equal(await die.getAttribute('data-armed'), null, 'a tap elsewhere sets it down');
-      const desk = await lies(die);
-      await die.click();
-      await die.click();
+      const sized = () => page.locator('#preview-board').getAttribute('data-size');
+      assert.ok(['5', '6', '7'].includes(await sized()), 'left empty, one of the smaller boards');
+      await page.locator('#phrase-text').fill('meet me at the old post office tonight');
+      assert.equal(await sized(), String(await page.evaluate(async () => (await import('/postmarks/game.js')).phraseBoardSize('meet me at the old post office tonight'))), 'a message: the board its words need');
+      const before = await page.locator('#preview-board svg').evaluate((svg) => svg.outerHTML);
+      await page.locator('#redraw').click();
+      assert.notEqual(await page.locator('#preview-board svg').evaluate((svg) => svg.outerHTML), before, 'the die draws another');
+      assert.equal(starts(), begun, 'and starts nothing');
+      await page.locator('#phrase-text').fill('');
+      const desk = await lies(start);
+      await start.click();
       await page.waitForSelector('#phrase-error:not(:empty)');
-      assert.equal(starts(), begun + 1, 'the second tap starts the game');
+      assert.equal(starts(), begun + 1, 'one tap starts the game');
       assert.equal((await page.evaluate(() => window.shaken)).at(-1), 'phrase-form', 'and refused, the desk shook');
       assert.match(await page.locator('#phrase-error').textContent(), /reach the server/);
-      assert.equal(await shown(page.locator('#phrase-error')), true, 'and its words are under the die');
-      assert.deepEqual(await lies(die), desk, 'which has not moved');
-      const dieBox = await box(die);
-      const deskWords = await box(page.locator('#phrase-error'));
-      assert.ok(deskWords.top >= dieBox.bottom && deskWords.top - dieBox.bottom < 40, `the words are just under the die (${JSON.stringify([deskWords, dieBox])})`);
+      assert.equal(await shown(page.locator('#phrase-error')), true, 'and its words are under the play mark');
+      assert.deepEqual(await lies(start), desk, 'which has not moved');
       await page.locator('#phrase-text').fill('meet me at the old post office');
       assert.equal(await page.locator('#phrase-error').textContent(), '', 'once what was typed changes, it is not still said');
     }),
@@ -2500,6 +2508,39 @@ async function main() {
       await open(0);
       await sleep(1500);
       assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'a post found again earns nothing');
+    }),
+    // A board played together in a room: the first time, what is particular to playing together, in place of how to play
+    // (and only the first time); and energy for every post found on it, by anyone, kept for that board.
+    check('a game together: its own sheet the first time, and energy for every post found on the room\'s board', { storage: ACCOUNT }, async (page) => {
+      const { generatePuzzle } = await import('../../postmarks/game.js');
+      const size = 6;
+      const made = generatePuzzle(size, 8);
+      const cells = new Array(size * size).fill(0);
+      for (const row of [1, 4]) cells[row * size + made.solution[row]] = 2;
+      const id = '66666666-6666-4666-8666-666666666666';
+      const room = '11111111-1111-4111-8111-111111111111';
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const view = { id, room, room_name: 'Book club', you: 0, people, players: ['Sam', 'Ada'], mode: 'coop', size, regions: made.regions, cells, hearts: 3, moves: 2, status: 'playing', last: { player: 1, type: 'guess', cell: 4 * size + made.solution[4], correct: true } };
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(postmarks_get|room_get)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const asked = route.request().url().match(/rpc\/(\w+)/)[1];
+        return route.fulfill({ json: asked === 'postmarks_get' ? view : { id: room, name: 'Book club', you: 0, people, messages: [], games: [] }, headers: cors });
+      });
+      await page.goto(`${origin}/postmarks/?game=${id}`);
+      await page.waitForSelector('dialog.together[open]');
+      assert.equal(await page.locator('dialog.howto:not(.together)[open]').count(), 0, 'not how to play');
+      assert.deepEqual((await page.locator('dialog.together .card p').allTextContents()).length, 3);
+      await page.locator('dialog.together .start').click();
+      assert.equal(await page.locator('#turn').isVisible(), true, 'the words of the turn stay');
+      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2', 'two posts found on the board, one of them by Ada');
+      const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('correspondence:energy:v1')));
+      assert.deepEqual(kept.boards, [{ b: `${6}:${'66666666-6666-4666-8666-666666666666'}`, p: 2, w: false }], 'kept for the room\'s board');
+      await page.reload();
+      await page.waitForSelector('#energy:not([hidden])');
+      await sleep(800);
+      assert.equal(await page.locator('dialog.together[open]').count(), 0, 'the sheet only the first time');
+      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2', 'and the same posts earn nothing again');
     }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);
