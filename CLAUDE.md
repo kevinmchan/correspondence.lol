@@ -83,6 +83,9 @@ are made.
   separate messages, and with thirty windows open they arrived late; where the
   timing of a hand matters, ask the page what it was given (`twice`,
   `doubleTap` and the rush of scene two in `tests/browser/penny.e2e.cjs`).
+- Before a pull request, run the checks for what was changed (`ONLY=<regex>`),
+  not the whole control: GitHub runs all of it once, side by side, in about
+  the time of its longest suite.
 - The suites reach no network. The server's functions are answered by each
   check, and the live socket by `tests/browser/socket.cjs`.
 

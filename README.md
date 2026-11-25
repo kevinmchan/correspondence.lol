@@ -85,6 +85,11 @@ on the pull request:
   reason in a sentence:
   `Exception (no new test screens): …` or `Exception (failing tests): …`
 
+On GitHub the suites run side by side, each on a machine of its own, the
+browser suite as two halves (`SHARD=1/2`, `SHARD=2/2`), and a last job judges:
+the wait is the longest of them, not their sum. A pull request that changes
+only words (`.md`) is not put in a browser at all.
+
 An exception lets the pull request through and says so in the result of the
 check; it does not hide what failed. The control can be run by hand before a
 pull request is opened: `node tests/pr-control.cjs --base origin/main`.

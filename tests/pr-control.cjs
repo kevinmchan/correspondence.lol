@@ -30,6 +30,13 @@
 // An exception lets the pull request through and says so, loudly, in the
 // result. It does not hide what failed.
 //
+// On GitHub the suites are run side by side, each on a machine of its own, and
+// the browser suite as two halves (`--suite e2e` with SHARD=1/2 and 2/2); a
+// last job then judges (`--judge`), told how each went (RESULT_UNIT,
+// RESULT_E2E_1, RESULT_E2E_2, RESULT_MINI: "success" or not). The wait is the
+// longest of them, not the sum. Run by hand with neither, it runs all three
+// here, one after another, and judges.
+//
 // On GitHub this is run by .github/workflows/pr-control.yml, which hands it
 // the description (PR_BODY) and the labels (PR_LABELS, as JSON). It can be run
 // the same way by hand, before a pull request is opened, to see what it will say.
@@ -42,10 +49,15 @@ const path = require('node:path');
 const LABEL = 'test-exception';
 const RULES = { screens: 'no new test screens', tests: 'failing tests' };
 const SUITES = [
-  { name: 'the unit tests', command: ['npm', 'test'] },
-  { name: 'Penny in a browser', command: ['npm', 'run', 'e2e'] },
-  { name: 'the app on an iPhone mini', command: ['npm', 'run', 'e2e:mini'] },
+  { key: 'unit', name: 'the unit tests', command: ['npm', 'test'] },
+  { key: 'e2e', name: 'Penny in a browser', command: ['npm', 'run', 'e2e'], browser: true },
+  { key: 'mini', name: 'the app on an iPhone mini', command: ['npm', 'run', 'e2e:mini'], browser: true },
 ];
+
+// A pull request that changes only words (.md files) cannot change what a
+// browser shows: its browser suites are not run. The unit tests always are
+// (some of them read the README).
+const onlyWords = (changed) => Array.isArray(changed) && changed.length > 0 && changed.every((file) => /\.md$/i.test(file));
 const SUITE = path.join('tests', 'browser', 'mini.e2e.cjs');
 
 // The exceptions a description asks for: { screens: reason, tests: reason }.
@@ -129,9 +141,31 @@ function screensAt(ref) {
   }
 }
 
+function changedSince(base) {
+  const diff = spawnSync('git', ['diff', '--name-only', `${base}...HEAD`], { encoding: 'utf8' });
+  return diff.status === 0 ? diff.stdout.split('\n').filter(Boolean) : null;
+}
+
+function runSuite(suite) {
+  console.log(`\n=== ${suite.name}: ${suite.command.join(' ')} ===`);
+  const run = spawnSync(suite.command[0], suite.command.slice(1), { stdio: 'inherit', env: { ...process.env, REQUIRE_BROWSER: '1' } });
+  return run.status === 0;
+}
+
 function main() {
   const at = process.argv.indexOf('--base');
   const base = at > 0 ? process.argv[at + 1] : 'origin/main';
+  const changed = changedSince(base);
+  const skipBrowsers = onlyWords(changed);
+
+  // one suite, on a machine of its own
+  const one = process.argv.indexOf('--suite');
+  if (one > 0) {
+    const suite = SUITES.find((each) => each.key === process.argv[one + 1]);
+    if (!suite) { console.error(`No such suite: ${process.argv[one + 1]}. There are: ${SUITES.map((each) => each.key).join(', ')}`); process.exit(2); }
+    if (suite.browser && skipBrowsers) { console.log(`NOT RUN: ${suite.name}. Only words are changed (${changed.join(', ')}).`); process.exit(0); }
+    process.exit(runSuite(suite) ? 0 : 1);
+  }
   let labels = [];
   try { labels = JSON.parse(process.env.PR_LABELS || '[]'); } catch { labels = String(process.env.PR_LABELS).split(',').map((one) => one.trim()); }
 
@@ -144,15 +178,14 @@ function main() {
   const after = JSON.parse(listed.stdout).map((one) => one.name);
 
   // every suite is run, whatever the one before it did: all of what is wrong is wanted, not the first of it
+  // (or, judging, each was run elsewhere and how it went is told)
+  const told = { unit: [process.env.RESULT_UNIT], e2e: [process.env.RESULT_E2E_1, process.env.RESULT_E2E_2], mini: [process.env.RESULT_MINI] };
+  const judging = process.argv.includes('--judge');
   const suites = SUITES.map((suite) => {
-    console.log(`\n=== ${suite.name}: ${suite.command.join(' ')} ===`);
-    const run = spawnSync(suite.command[0], suite.command.slice(1), { stdio: 'inherit', env: { ...process.env, REQUIRE_BROWSER: '1' } });
-    return { name: suite.name, passed: run.status === 0 };
+    if (judging) return { name: suite.name, passed: told[suite.key].every((result) => result === 'success') };
+    if (suite.browser && skipBrowsers) { console.log(`\nNOT RUN: ${suite.name}. Only words are changed.`); return { name: suite.name, passed: true }; }
+    return { name: suite.name, passed: runSuite(suite) };
   });
-
-  // what it changes, from where it left the base (not known is null: then new test screens are asked for)
-  const diff = spawnSync('git', ['diff', '--name-only', `${base}...HEAD`], { encoding: 'utf8' });
-  const changed = diff.status === 0 ? diff.stdout.split('\n').filter(Boolean) : null;
 
   const result = verdict({ before, after, suites, body: process.env.PR_BODY, labels, changed });
   const heading = result.passes ? (result.exceptions.length ? 'PASSES, BY EXCEPTION' : 'PASSES') : 'DOES NOT PASS';
@@ -165,4 +198,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { LABEL, RULES, exceptionsIn, verdict, isInterface };
+module.exports = { LABEL, RULES, exceptionsIn, verdict, isInterface, onlyWords };

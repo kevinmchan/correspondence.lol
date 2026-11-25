@@ -66,6 +66,12 @@ async function main() {
   // hundreds of milliseconds late, and nearly every check that failed now and then failed of that. The rest wait
   // their turn, in the order they were written.
   const AT_ONCE = Number(process.env.AT_ONCE) || 8;
+  // SHARD=k/n: the suite split over n machines, this one taking every nth check from the kth (GitHub runs it as
+  // two halves, side by side). Counted in the order the checks are written, which is the order they are called in.
+  const part = /^(\d+)\/(\d+)$/.exec(process.env.SHARD || '');
+  const SHARD = part && Number(part[1]) >= 1 && Number(part[1]) <= Number(part[2]) ? { is: Number(part[1]), of: Number(part[2]) } : null;
+  if (process.env.SHARD && !SHARD) throw new Error(`SHARD is k/n, as in 1/2: not "${process.env.SHARD}"`);
+  let asked = 0;
   let running = 0;
   const waiting = [];
   const turn = () => (running < AT_ONCE ? (running += 1, Promise.resolve()) : new Promise((go) => waiting.push(go)));
@@ -73,6 +79,7 @@ async function main() {
 
   async function check(name, { storage = {}, viewport = PHONE, ...options }, run) {
     if (process.env.ONLY && !new RegExp(process.env.ONLY).test(name)) return null; // ONLY=regex runs the checks it names
+    if (SHARD && asked++ % SHARD.of !== SHARD.is - 1) return null; // SHARD=1/2 runs every other check: its half of them
     await turn();
     const started = Date.now();
     const context = await browser.newContext({ viewport, ...options });

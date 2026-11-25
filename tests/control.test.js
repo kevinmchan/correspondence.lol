@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { LABEL, exceptionsIn, verdict } = require('./pr-control.cjs');
+const { LABEL, exceptionsIn, verdict, onlyWords } = require('./pr-control.cjs');
 const here = (file) => new URL(file, import.meta.url);
 
 // The suite for the iPhone mini lists its own test screens (no browser needed).
@@ -28,6 +28,16 @@ test('a pull request passes the control when it adds a test screen and its runs 
   assert.equal(result.passes, true);
   assert.deepEqual(result.exceptions, []);
   assert.deepEqual(result.added, ['c']);
+});
+
+test('the browser suites are left out only when nothing but words is changed', () => {
+  assert.equal(onlyWords(['README.md']), true);
+  assert.equal(onlyWords(['README.md', 'CLAUDE.md']), true);
+  assert.equal(onlyWords(['README.md', 'jam/taste.js']), false);
+  assert.equal(onlyWords(['tests/browser/penny.e2e.cjs']), false);
+  assert.equal(onlyWords(['.github/workflows/pr-control.yml']), false);
+  assert.equal(onlyWords([]), false, 'nothing changed is not known to be words');
+  assert.equal(onlyWords(null), false, 'not known: run');
 });
 
 test('new test screens are asked only of a pull request that changes a page or a stylesheet of the app', () => {
