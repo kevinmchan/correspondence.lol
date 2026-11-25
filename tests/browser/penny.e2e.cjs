@@ -916,6 +916,15 @@ async function main() {
               for (const type of ['pointerdown', 'pointerup']) window.addEventListener(type, () => window.__hand.push({ type, at: performance.now() }), true); // (the radio times a tap as it is handled)
               new MutationObserver(() => window.__hand.push({ type: 'order', order: document.querySelector('#dash-sign [data-order]')?.dataset.order ?? '', note: document.querySelector('#taste-note').textContent, at: performance.now() }))
                 .observe(document.querySelector('#dash-sign'), { childList: true });
+              // ...and when the sign was hung and when it was taken down, to the moment: an observer is told only once
+              // the radio has finished with the tap, and that has been 5 to 141 ms after the sign went up
+              const sign = document.querySelector('#dash-sign');
+              for (const name of ['append', 'replaceChildren']) {
+                sign[name] = function (...nodes) {
+                  Element.prototype[name].apply(this, nodes);
+                  window.__hand.push({ type: 'hung', sign: this.querySelector('[data-order]')?.dataset.order ?? '', at: performance.now() });
+                };
+              }
             }
             window.__hand = [];
           });
@@ -930,7 +939,7 @@ async function main() {
           seen.orders = ups.length === 2 ? seen.hand.slice(seen.hand.indexOf(ups[1]) + 1).filter((one) => one.type === 'order') : [];
           if (answered(seen)) return seen;
           const quick = downs.length === 2 && ups.length === 2 && ups[1].at - ups[0].at < 200 && ups.every((up, i) => up.at - downs[i].at < 200);
-          assert.ok(!quick, `two quick taps on the display were not taken as a double tap (${JSON.stringify(seen.hand.filter((one) => one.type !== 'order').map((one) => Math.round(one.at - seen.hand[0].at)))} ms)`);
+          assert.ok(!quick, `two quick taps on the display were not taken as a double tap (${JSON.stringify(seen.hand.filter((one) => one.type.startsWith('pointer')).map((one) => Math.round(one.at - seen.hand[0].at)))} ms)`);
           assert.ok(tries < 8, `the machine is too slow to make a double tap on the display: ${tries} tries`);
           await sleep(1000); // at least: the slow taps are forgotten before the next two
         }
@@ -950,9 +959,12 @@ async function main() {
       assert.equal(refused.orders[0]?.order, 'not-yet');
       assert.match(refused.orders[0].note, /Tune to|Stay on/, 'a screen reader is still told what to do');
       // and the refusal stands its time out: 900 ms, whether or not the radio turned to the station not heard yet
-      // (that turn used to hang the next order 500 ms on, over the refusal). A late machine can only make it longer.
+      // (that turn used to hang the next order 500 ms on, over the refusal). A late machine can only make it longer:
+      // so long as it is timed from the sign going up to its coming down. Timed from when an observer was told of
+      // each, it has come out at 819 to 871 ms on a busy machine (where that was measured, the observer heard of "not
+      // yet" 71 and 141 ms after the tap); from the tap that was refused to the next order it was never under 903.
       await page.waitForFunction(() => { const from = window.__hand.findIndex((one) => one.order === 'not-yet'); return window.__hand.slice(from + 1).some((one) => one.type === 'order' && one.order !== 'not-yet'); }, null, { timeout: 8000 });
-      const stood = await page.evaluate(() => { const from = window.__hand.findIndex((one) => one.order === 'not-yet'); return window.__hand.slice(from + 1).find((one) => one.type === 'order' && one.order !== 'not-yet').at - window.__hand[from].at; });
+      const stood = await page.evaluate(() => { const hung = window.__hand.filter((one) => one.type === 'hung'); const from = hung.findIndex((one) => one.sign === 'not-yet'); return hung[from + 1].at - hung[from].at; });
       assert.ok(stood >= 880, `"Not yet" was taken down after ${Math.round(stood)} ms`);
       assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
       assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
