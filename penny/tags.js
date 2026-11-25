@@ -28,7 +28,7 @@
 import { go } from '/shared/nav.js';
 import { audio, isMuted, noise, tone } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
-import { PICTURE, REST, WARM, frame, outline } from './stars.js';
+import { PICTURE, REST, SKY, WARM, frame, starPath } from './stars.js';
 
 export const TAGS = [
   { name: 'night', to: '/?sky', label: 'The night' },
@@ -53,13 +53,19 @@ const SVG = 'http://www.w3.org/2000/svg';
 // them, drawn stouter than they are, or at the size of a square of the map
 // there would be nothing of them to see.
 const SMALL = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M6.2 1.8C6.2 3.8 7.65 5.8 9.1 5.8C7.65 5.8 6.2 7.8 6.2 9.8C6.2 7.8 4.75 5.8 3.3 5.8C4.75 5.8 6.2 3.8 6.2 1.8zM11.2 5.7C11.2 8.5 13.25 11.3 15.3 11.3C13.25 11.3 11.2 14.1 11.2 16.9C11.2 14.1 9.15 11.3 7.1 11.3C9.15 11.3 11.2 8.5 11.2 5.7zM17.3 10.8C17.3 14.05 19.75 17.3 22.2 17.3C19.75 17.3 17.3 20.55 17.3 23.8C17.3 20.55 14.85 17.3 12.4 17.3C14.85 17.3 17.3 14.05 17.3 10.8z"/><circle cx="15.7" cy="6.2" r="1.1"/><circle cx="6.3" cy="15.9" r="1"/></svg>';
-// The picture as it is, for the way through: every light where the night
-// will have it, and as bright and as warm as it will be at rest.
-function picture() {
+// The picture as the night has it before it wakes, for the way through:
+// every light where the night will have it, the shape it will be (the same
+// path the night draws: penny/stars.js) and the colour it will be against the
+// night's black. When the night is there underneath, taking this away is to
+// change nothing that can be seen. `side` is how big it is going to be on the
+// screen.
+function picture(side) {
   const svg = document.createElementNS(SVG, 'svg');
   svg.setAttribute('viewBox', '0 0 1 1');
   svg.setAttribute('aria-hidden', 'true');
-  const edge = outline(24);
+  // (the night adds a light's colour to its black, as light adds to dark: penny/sky.js)
+  const black = [1, 3, 5].map((at) => parseInt(SKY.slice(at, at + 2), 16));
+  svg.setAttribute('fill', `rgb(${WARM.map((part, i) => Math.min(255, Math.round(black[i] + part * REST))).join(' ')})`);
   for (const light of PICTURE) {
     const shape = document.createElementNS(SVG, light.kind === 'dot' ? 'circle' : 'path');
     if (light.kind === 'dot') {
@@ -67,10 +73,9 @@ function picture() {
       shape.setAttribute('cy', light.y);
       shape.setAttribute('r', light.r);
     } else {
-      shape.setAttribute('d', `${edge.map(([x, y], i) => `${i ? 'L' : 'M'}${(light.x + x * light.a).toFixed(5)} ${(light.y + y * light.b).toFixed(5)}`).join('')}z`);
+      shape.setAttribute('d', starPath(light, side));
+      shape.setAttribute('transform', `translate(${light.x} ${light.y})`);
     }
-    shape.setAttribute('fill', `rgb(${WARM.join(' ')})`);
-    shape.setAttribute('fill-opacity', REST);
     svg.append(shape);
   }
   return svg;
@@ -101,28 +106,47 @@ function tumble(from) {
     screen.style.setProperty('--tumble-x', `${box.left + box.width / 2 - around.left}px`);
     screen.style.setProperty('--tumble-y', `${box.top + box.height / 2 - around.top}px`);
   }
+  // Where the night will have the picture: the night is the size of the window.
   const place = frame(window.innerWidth, window.innerHeight);
   const veil = document.createElement('div');
   veil.className = 'tag-rise';
   veil.setAttribute('aria-hidden', 'true');
   // (while the picture is on its way, the night keeps its own lights dark: penny/sky.js)
   document.documentElement.classList.add('tumbling');
+  // The square is laid out once, where the picture is going to be and as big
+  // as it is going to be, and drawn once. All the way from the mark to there
+  // it is only moved, turned and scaled, and made less see-through: nothing
+  // is laid out or drawn again on the way, which is what a phone can do
+  // smoothly. (Its corners are a tile's the whole way: penny/tags.css.)
   const square = document.createElement('div');
-  square.append(picture());
+  const put = ({ x, y, side }) => Object.assign(square.style, { left: `${x}px`, top: `${y}px`, width: `${side}px`, height: `${side}px` });
+  put(place);
+  square.append(picture(place.side));
   veil.append(square);
   document.body.append(veil);
   const quiet = still();
   const took = quiet ? 1 : TUMBLE_MS;
+  const [across, down] = [box.left + box.width / 2 - (place.x + place.side / 2), box.top + box.height / 2 - (place.y + place.side / 2)];
   const grown = square.animate([
-    { left: `${box.left}px`, top: `${box.top}px`, width: `${box.width}px`, height: `${box.height}px`, borderRadius: '22%', opacity: 0.2, transform: 'rotate(0turn)' },
+    { transform: `translate(${across}px, ${down}px) rotate(0turn) scale(${box.width / place.side})`, opacity: 0.2 },
     { opacity: 1, offset: 0.2 },
-    { left: `${place.x}px`, top: `${place.y}px`, width: `${place.side}px`, height: `${place.side}px`, borderRadius: '0%', opacity: 1, transform: `rotate(${quiet ? 0 : 1}turn)` },
+    { transform: `translate(0px, 0px) rotate(${quiet ? 0 : 1}turn) scale(1)`, opacity: 1 },
   ], { duration: took, easing: 'cubic-bezier(0.55, 0, 0.3, 1)', fill: 'forwards' });
   // gone once the night has arrived under it (and in any case before long)
   let lifted = false;
   const lift = () => {
     if (lifted) return;
     lifted = true;
+    // The night is there now, and can be asked where it has the picture. That
+    // is where the square was sent, the night being the size of the window.
+    // Should it ever not be, the square is put where the night has it before
+    // it is taken away, so that what is under it is what it shows.
+    const view = document.querySelector('.screen-sky:not(.going) .sky-view');
+    if (view?.clientWidth) {
+      const [room, real] = [view.getBoundingClientRect(), frame(view.clientWidth, view.clientHeight)];
+      const landed = { x: room.left + real.x, y: room.top + real.y, side: real.side };
+      if (['x', 'y', 'side'].some((part) => Math.abs(landed[part] - place[part]) > 0.5)) put(landed);
+    }
     document.documentElement.classList.remove('tumbling'); // the night's own lights, under this one's, exactly
     requestAnimationFrame(() => {
       veil.animate([{ opacity: 1 }, { opacity: 0 }], { duration: quiet ? 1 : 360, fill: 'forwards' }).finished.catch(() => {}).then(() => veil.remove());
@@ -210,7 +234,7 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
   const ground = (element) => element === main || Boolean(element?.matches?.(GROUND));
 
   function place() {
-    if (life.over) return;
+    if (life.over || mark.classList.contains('gone')) return; // (touched, it is on its way through: nothing more is asked of the page)
     // (not until the page has settled and Penny has come up to where it stands: or it would be put down and then moved)
     if (performance.now() - since < SETTLING_MS) return;
     if (!allowed() || document.querySelector('dialog[open]')) {

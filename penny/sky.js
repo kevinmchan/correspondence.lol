@@ -18,9 +18,10 @@
 //   They glow, a little, and the glow breathes.
 //   They twinkle. Their brightness flickers, the far ones most, as stars'
 //   does and planets' does not. And now and then one twinkles outright: its
-//   copies fall into place, it is sharp and bright for a moment, its points
-//   draw out, and a few motes come off it and are lost. That is when it is
-//   heard.
+//   copies fall into place, it is sharp and bright for a moment, and its
+//   points draw out. That is when it is heard. (Nothing comes off it. Specks
+//   that did, and were knocked about for a second or two, looked like flies
+//   round a lamp.)
 //
 // A light that is touched twinkles. A touch anywhere else, and the nearest one
 // answers, more quietly. A finger held near them warms them: they stray
@@ -37,8 +38,8 @@
 import { audio, holdMusic, isMuted, noise, tone } from '/postmarks/sound.js';
 import { createChimes } from './chimes.js';
 import {
-  CORE, ECHO, EMBER, GHOSTS, GLINT, HALO, MOST, NIGHT, PICTURE, REST, SKY, STEP, TURN, WARM,
-  afloat, drift, flicker, frame, nearness, often, outline, reading, roam, shimmer, soundOf, sway,
+  CORE, ECHO, EMBER, GHOSTS, GLINT, HALO, MOST, NEEDLE, NIGHT, PICTURE, REST, SKY, STEP, TURN, WARM,
+  afloat, drift, flicker, frame, nearness, often, reading, shimmer, soundOf, starPath, sway,
 } from './stars.js';
 
 const STEP_MS = STEP * 1000;
@@ -47,9 +48,6 @@ const ECHO_MS = ECHO * STEP_MS;
 const AHEAD = 200; // sounds are written onto the engine's clock this far ahead of time
 const WAKING_MS = 2600; // how long a light takes to come alive, once it has first sounded
 const REACH = 0.22; // how far from a finger a light still feels its warmth, as a share of the picture's side
-const NEEDLE = 0.0006; // how thick the very tip of a star's point is, as a share of the picture's side
-const MOTES = 60; // how many motes at once, at most
-const LOOSE = 0.028; // how far a mote gets in a second, on the whole, as a share of the picture's side
 const FROM_KEY = 'tags:from'; // where the night was come to from (penny/tags.js)
 const NAMES = ['The small star.', 'The lower dot.', 'The middle star.', 'The upper dot.', 'The big star.'];
 
@@ -133,7 +131,6 @@ export function mount(root, life) {
     waver: [0, 0], heat: 0, flare: 0, rung: -1e9, path: null,
   }));
   const shows = []; // lights about to be seen twinkling: [{ at, light, strength, echo }]
-  const motes = []; // what comes off them when they do
   const awake = () => lights.filter((light) => light.woke != null).length;
   const say = (text) => { said.textContent = text; };
 
@@ -154,30 +151,35 @@ export function mount(root, life) {
     const depth = 0.25 + light.near;
     return [x + (light.off[0][0] + adrift[0][0] * depth) * place.side * moved(light), y + (light.off[1][0] + adrift[1][0] * depth) * place.side * moved(light)];
   };
+  // The picture is fitted to the room the night has, whenever that changes:
+  // not only when the window does. (The night once measured itself as it
+  // arrived, while the page it was come to from was still holding the screen
+  // open to its own length, and never again: it drew its picture for that
+  // length and was then squashed into the window.) Its size is asked of its
+  // own box, as it is laid out, whatever is being done to how it is shown.
   function fit() {
-    const box = main.getBoundingClientRect();
-    if (!box.width || !box.height || (Math.round(box.width) === wide && Math.round(box.height) === high)) return;
-    wide = Math.round(box.width);
-    high = Math.round(box.height);
-    dense = Math.min(window.devicePixelRatio || 1, 2);
+    const [across, down] = [main.clientWidth, main.clientHeight];
+    const sharp = Math.min(window.devicePixelRatio || 1, 2);
+    if (!across || !down || (across === wide && down === high && sharp === dense)) return;
+    wide = across;
+    high = down;
+    dense = sharp;
     view.width = Math.round(wide * dense);
     view.height = Math.round(high * dense);
     place = frame(wide, high);
-    // A star's shape, in units of the picture's side, about its own middle.
-    // In the picture the points never quite thin away to nothing: each is a
-    // needle that can be seen to its tip, so the needles are part of the shape.
-    const thin = Math.max(NEEDLE, 0.4 / place.side);
-    for (const light of lights) {
-      if (light.kind !== 'star') continue;
-      light.path = new Path2D();
-      outline().forEach(([x, y], i) => (i ? light.path.lineTo(x * light.a, y * light.b) : light.path.moveTo(x * light.a, y * light.b)));
-      light.path.closePath();
-      light.path.rect(-thin / 2, -light.b, thin, light.b * 2);
-      light.path.rect(-light.a, -thin / 2, light.a * 2, thin);
-    }
+    for (const light of lights) if (light.kind === 'star') light.path = new Path2D(starPath(light, place.side));
+    dark = false;
+    if (drawn) draw(); // (a canvas given a new size is blank: it is drawn again at once, not a frame later)
   }
+  let drawn = false; // whether there is a picture on it yet
+  let dark = false; // whether all that is on it is the night's black, as while the way through to it is still turning
   fit();
   life.on(window, 'resize', fit);
+  if (window.ResizeObserver) {
+    const watching = new ResizeObserver(fit);
+    watching.observe(main);
+    life.onEnd(() => watching.disconnect());
+  }
 
   // --- A light twinkling outright ----------------------------------------------------
   // It is heard at `at`, and seen then too; and seen again, fainter, with each echo.
@@ -450,21 +452,22 @@ export function mount(root, life) {
     }
   }
 
-  function draw(t) {
+  function draw() {
+    drawn = true;
     pen.setTransform(dense, 0, 0, dense, 0, 0);
     pen.globalCompositeOperation = 'source-over';
     pen.globalAlpha = 1;
+    // (While the way through is still turning there is nothing of the night to
+    // see. It is painted black once, and then left alone until it has landed:
+    // a phone has enough to do, turning two screens.)
+    const waiting = arriving();
+    if (waiting && dark) return;
     pen.fillStyle = SKY;
     pen.fillRect(0, 0, wide, high);
-    if (arriving()) return;
+    dark = waiting;
+    if (waiting) return;
     // light on light adds up, as light does
     pen.globalCompositeOperation = 'lighter';
-    pen.fillStyle = `rgb(${WARM.join(' ')})`;
-    for (const mote of motes) {
-      const left = 1 - (t - mote.born) / mote.lasts;
-      pen.globalAlpha = upTo1(0.34 * left ** 1.5);
-      pen.fillRect(mote.x - mote.half, mote.y - mote.half, mote.half * 2, mote.half * 2);
-    }
     for (const light of lights) drawLight(light);
     pen.globalAlpha = 1;
     pen.globalCompositeOperation = 'source-over';
@@ -492,19 +495,6 @@ export function mount(root, life) {
         main.dataset.alive = String(awake());
       }
       light.flare = Math.max(light.flare, upTo1(show.strength));
-      if (still || show.echo) continue;
-      // a few motes come off it, somewhere along its points, and are lost
-      const [hx, hy] = seen(light);
-      for (let n = Math.round((2 + 5 * light.near) * show.strength); n > 0 && motes.length < MOTES; n--) {
-        const along = (0.15 + 0.85 * Math.random()) * (Math.random() < 0.5 ? -1 : 1);
-        const upright = Math.random() < 0.5;
-        const [a, b] = light.kind === 'star' ? [light.a, light.b] : [light.r * 2, light.r * 2];
-        motes.push({
-          x: hx + (upright ? 0 : along * a) * place.side,
-          y: hy + (upright ? along * b : 0) * place.side,
-          born: t, lasts: 1800 + Math.random() * 1700, half: 0.5 + Math.random() * 0.5,
-        });
-      }
     }
 
     if (!still) {
@@ -533,18 +523,8 @@ export function mount(root, life) {
       light.waver = sway(light.waver, seconds, still ? { ...flicker(light), pace: 0.2 } : flicker(light));
       light.flare *= Math.exp(-seconds / (still ? 0.9 : 0.42 + 0.5 * light.near));
     }
-    for (let i = motes.length - 1; i >= 0; i--) {
-      const mote = motes[i];
-      if (t - mote.born >= mote.lasts) {
-        motes.splice(i, 1);
-        continue;
-      }
-      mote.x = roam(mote.x, seconds, LOOSE * place.side);
-      mote.y = roam(mote.y, seconds, LOOSE * place.side);
-    }
-
     if (still && t - lastDrawn < 48) return; // nothing moves: there is no call to draw it sixty times a second
-    draw(t);
+    draw();
     lastDrawn = t;
   }
   requestAnimationFrame(each);
