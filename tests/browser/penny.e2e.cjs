@@ -43,6 +43,7 @@ const ACCOUNT = {
   'correspondence:name:v1': 'Sam',
   'correspondence:rooms:v1': [{ id: '11111111-1111-4111-8111-111111111111', name: 'Book club', at: 1795000000000 }, { id: '22222222-2222-4222-8222-222222222222', name: 'Family', at: 1795000000000 }],
 };
+const { quietSocket } = require('./socket.cjs');
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 async function main() {
@@ -60,11 +61,30 @@ async function main() {
   });
   const copiedBy = (page) => page.evaluate(() => window.__copied ?? null);
 
+  // No more than AT_ONCE checks at a time (8, or what AT_ONCE says). They are written to run side by side, a batch
+  // at once, and a batch is some thirty windows: on a machine of four cores, a tap made here was reaching its page
+  // hundreds of milliseconds late, and nearly every check that failed now and then failed of that. The rest wait
+  // their turn, in the order they were written.
+  const AT_ONCE = Number(process.env.AT_ONCE) || 8;
+  // SHARD=k/n: the suite split over n machines, this one taking every nth check from the kth (GitHub runs it as
+  // two halves, side by side). Counted in the order the checks are written, which is the order they are called in.
+  const part = /^(\d+)\/(\d+)$/.exec(process.env.SHARD || '');
+  const SHARD = part && Number(part[1]) >= 1 && Number(part[1]) <= Number(part[2]) ? { is: Number(part[1]), of: Number(part[2]) } : null;
+  if (process.env.SHARD && !SHARD) throw new Error(`SHARD is k/n, as in 1/2: not "${process.env.SHARD}"`);
+  let asked = 0;
+  let running = 0;
+  const waiting = [];
+  const turn = () => (running < AT_ONCE ? (running += 1, Promise.resolve()) : new Promise((go) => waiting.push(go)));
+  const done = () => { const next = waiting.shift(); if (next) next(); else running -= 1; };
+
   async function check(name, { storage = {}, viewport = PHONE, ...options }, run) {
     if (process.env.ONLY && !new RegExp(process.env.ONLY).test(name)) return null; // ONLY=regex runs the checks it names
+    if (SHARD && asked++ % SHARD.of !== SHARD.is - 1) return null; // SHARD=1/2 runs every other check: its half of them
+    await turn();
     const started = Date.now();
     const context = await browser.newContext({ viewport, ...options });
     await context.route(/supabase\.co/, (route) => route.abort());
+    await quietSocket(context); // (and its live socket is answered here, not by the service)
     await context.addInitScript((store) => {
       if (sessionStorage.getItem('e2e:seeded')) return; // once a window: a reload must keep what the app has saved
       sessionStorage.setItem('e2e:seeded', '1');
@@ -84,6 +104,7 @@ async function main() {
       failure = error;
     }
     await context.close();
+    done();
     const seconds = ((Date.now() - started) / 1000).toFixed(0);
     console.log(`${failure ? 'not ok' : 'ok'} - ${name} (${seconds}s)`);
     if (failure) console.log(`  ${String(failure.stack || failure).split('\n').slice(0, 6).join('\n  ')}`);
@@ -152,6 +173,29 @@ async function main() {
       await idle();
     };
     const stored = (key) => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), key);
+    // What does not last long enough to be asked after, written down in the page as it happens, from now on: each
+    // mood Penny takes ('mood glad'), and on the map a square left ajar and shut again ('ajar', 'shut').
+    const watch = () => page.evaluate(() => {
+      window.__seen = [];
+      window.__seeing?.disconnect();
+      const board = document.querySelector('#walk-board');
+      const isAjar = () => Boolean(board?.querySelector('.cell.ajar'));
+      let ajar = isAjar();
+      window.__seeing = new MutationObserver((list) => {
+        for (const { target, attributeName, oldValue } of list) { // (in the order things happened)
+          if (attributeName === 'data-mood') {
+            if (target.dataset.mood !== oldValue) window.__seen.push(`mood ${target.dataset.mood}`);
+          } else if (isAjar() !== ajar) {
+            ajar = !ajar;
+            window.__seen.push(ajar ? 'ajar' : 'shut');
+          }
+        }
+      });
+      window.__seeing.observe(document.querySelector('.pal'), { attributes: true, attributeFilter: ['data-mood'], attributeOldValue: true });
+      if (board) window.__seeing.observe(board, { attributes: true, attributeFilter: ['class'], subtree: true });
+    });
+    // ...and what has been written down so far; or, given `last`, once that is in it
+    const seen = async (last = null, timeout = 15000) => (await page.waitForFunction((want) => (want === null || window.__seen.includes(want)) && window.__seen, last, { timeout })).jsonValue();
     // what a person could read on the screen (not what is there for screen readers only)
     const words = (selector) => page.evaluate((sel) => {
       const seen = [];
@@ -167,7 +211,7 @@ async function main() {
     const reading = () => page.locator('#taste-behind .taste-lab').evaluate((sheet) => [...sheet.querySelectorAll('p, blockquote, figcaption, dd, dt, h2, h3, summary, span, li')]
       .filter((one) => one.getClientRects().length && !one.closest('.sr-only') && [...one.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
       .map((one) => one.textContent.replace(/\s+/g, ' ').trim()));
-    return { pal, feeling, board, centre, tap, twice, open, idle, until, says, portalOpen, through, stored, words, reading };
+    return { pal, feeling, board, centre, tap, twice, open, idle, until, says, portalOpen, through, stored, watch, seen, words, reading };
   };
 
   // The question Penny's Radio asks, and what its reading is held to (README, "The question Penny's Radio asks"): it is
@@ -249,9 +293,13 @@ async function main() {
   });
   const valueOf = (stake) => String(Math.round(Math.min(model.NEEDED, Math.max(0, stake)) * 100) / 100); // aria-valuenow: between its ends, roughly
   // Both stations listened to, for long enough that one can be kept; and one kept (`side`: that one).
+  // (The one that is up is listened to, and then the other. It used to be "until one has been heard, then the other":
+  // but the one heard may be the one that is not up. A check that tunes away from a station and comes here has, on a
+  // busy machine, come with that station heard through already: the radio was then turned back to it, and 8 seconds
+  // went by on a station already heard.)
   const listenToBoth = async (page) => {
     if ((await page.locator('#taste-play').getAttribute('aria-pressed')) !== 'true') await page.locator('#taste-play').click();
-    await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
+    await page.waitForFunction(() => document.querySelector('.taste-card .face.tuned.heard'), null, { timeout: 8000 });
     if ((await page.locator('.taste-card .face.heard').count()) < 2) await page.locator('#taste-flip').click();
     await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
   };
@@ -285,10 +333,31 @@ async function main() {
     }),
 
     check('scene one: every screen loops, no two turns alike; a swipe up goes on; Penny shows how to whoever waits on the first', {}, async (page) => {
+      // The scene keeps its own time, and on a busy machine this check does not keep up with it. A swipe made from
+      // here is a press, six moves and a lift, each of them a message to the browser: the two below that are not
+      // swipes up have taken 10 seconds between them, where a turn of the first loop in which nothing is shown is
+      // 3.8 s; so the third turn was 4.3 s old when it was asked after, and its letter (gone 2.8 s in) had left: 2 on
+      // the shelves, not 3. And the count of the mail "at the start" has come back 3.1 s after the scene began,
+      // which is when the first letter is gone. So what there is as a turn begins is not asked for afterwards. The
+      // page writes each turn down as it begins (which screen, which turn of its loop, the mail on the shelves,
+      // whether the square is lit), and each showing how (with the mail there was then); and that is what is read.
+      await page.addInitScript(() => {
+        window.__scene = [];
+        new MutationObserver((list) => {
+          const office = document.querySelector('.office');
+          const now = (what) => ({ what, screen: Number(office.dataset.screen), turn: Number(office.dataset.turn), left: document.querySelectorAll('.o-leaving:not(.gone)').length, lit: Boolean(document.querySelector('.o-first.lit')) });
+          for (const one of list) {
+            if (one.type === 'attributes' && one.target === office) window.__scene.push(now('turn'));
+            else if ([...one.addedNodes].some((node) => node.nodeType === 1 && node.classList.contains('o-touch'))) window.__scene.push(now('shown'));
+          }
+        }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-turn'] });
+      });
       await page.goto(`${origin}/?office`);
       await page.waitForSelector('.office[data-screen="0"]');
       const where = () => page.evaluate(() => { const it = document.querySelector('.office'); return [Number(it.dataset.screen), Number(it.dataset.turn)]; });
-      const turned = (screen, turn, timeout = 40000) => page.waitForSelector(`.office[data-screen="${screen}"][data-turn="${turn}"]`, { timeout });
+      // a turn of a loop, as it was when it began (waited for, if it has not begun yet); and the first showing how
+      const written = (what, screen, turn, timeout) => page.waitForFunction(([w, s, t]) => window.__scene.find((one) => one.what === w && one.screen === s && (t === null || one.turn === t)), [what, screen, turn], { timeout }).then((found) => found.jsonValue());
+      const turned = (screen, turn, timeout = 40000) => written('turn', screen, turn, timeout);
       const left = () => page.locator('.o-leaving:not(.gone)').count();
       const swipe = async (fromY, toY, x = 195) => {
         await page.mouse.move(x, fromY);
@@ -296,16 +365,16 @@ async function main() {
         await page.mouse.move(x, toY, { steps: 6 });
         await page.mouse.up();
       };
-      assert.equal(await left(), 5, 'the mail on the shelves at the start');
-      await page.waitForSelector('.o-touch', { state: 'attached', timeout: 9000 }); // caught waiting: shown
-      assert.equal(await left(), 4, 'one letter gone after one turn of the loop');
+      assert.equal((await turned(0, 0)).left, 5, 'the mail on the shelves at the start');
+      const shown = await written('shown', 0, null, 9000); // caught waiting: shown
+      assert.deepEqual([shown.turn, shown.left], [0, 4], 'one letter gone after one turn of the loop');
       await swipe(300, 600); // down: not the way
       await swipe(600, 590); // a tap
       await sleep(300);
       assert.equal((await where())[0], 0, 'something other than a swipe up moved it on');
       // left alone it only loops, and each turn another letter has gone
-      await turned(0, 2);
-      assert.equal(await left(), 3);
+      assert.equal((await turned(0, 1)).left, 4);
+      assert.equal((await turned(0, 2)).left, 3);
       assert.equal((await where())[0], 0, 'the scene moved on by itself');
 
       await swipe(600, 300);
@@ -324,10 +393,8 @@ async function main() {
       await page.waitForSelector('.o-map rect.near'); // it has placed the sound
       assert.equal(await page.locator('.office').getAttribute('data-pace'), 'slow');
       await swipe(600, 300);
-      await turned(3, 0, 2000);
-      assert.equal(await page.locator('.o-first.lit').count(), 0);
-      await turned(3, 1);
-      assert.equal(await page.locator('.o-first.lit').count(), 1, 'the square lit');
+      assert.equal((await turned(3, 0, 2000)).lit, false); // (lit 3.4 s into this turn: not to be asked after)
+      assert.equal((await turned(3, 1)).lit, true, 'the square lit');
       await swipe(600, 300);
       await page.waitForURL(/\?slow/, { timeout: 5000 }); // on, to scene two
     }),
@@ -346,13 +413,38 @@ async function main() {
       await page.waitForSelector('.slow-tip.on', { timeout: 9000 }); // caught waiting: shown
       await sleep(4500);
       assert.equal(await kept(), 0, 'what Penny showed was left on the page');
-      // a rush across the room
-      await page.mouse.move(40, 300);
-      await page.mouse.down();
-      await page.mouse.move(350, 380, { steps: 1 });
-      await page.mouse.move(40, 460, { steps: 1 });
-      await page.mouse.up();
+      // A rush across the room: there and back in a fiftieth of a second. The room tells fast from slow by the times
+      // on what the hand sends it, which a screen stamps as the finger moves, however late the page gets them. Sent
+      // one by one from here they are stamped as they arrive, and on a busy machine that is late: the press and the
+      // first stroke have come 176 ms to a second apart, which is 320 pixels at a walk, and the room rightly kept
+      // it. So the rush is sent with its times on it, 8 ms from one to the next, and the page says what it was given.
+      await page.evaluate(() => {
+        window.__rush = [];
+        for (const type of ['pointerdown', 'pointermove', 'pointerup']) window.addEventListener(type, (event) => window.__rush.push(event.timeStamp), true);
+      });
+      const hand = await page.context().newCDPSession(page);
+      const began = Date.now() / 1000 - 1;
+      const sent = (type, x, y, ms, held) => hand.send('Input.dispatchMouseEvent', { type, x, y, timestamp: began + ms / 1000, button: type === 'mouseMoved' && !held ? 'none' : 'left', buttons: held ? 1 : 0, clickCount: type === 'mouseMoved' ? 0 : 1 });
+      await sent('mouseMoved', 40, 300, 0, false);
+      await sent('mousePressed', 40, 300, 8, true);
+      await sent('mouseMoved', 350, 380, 16, true);
+      await sent('mouseMoved', 40, 460, 24, true);
+      await sent('mouseReleased', 40, 460, 32, false);
+      const given = await page.evaluate(() => window.__rush);
+      assert.ok(given.length === 5 && given[4] - given[0] < 40, `the rush did not reach the room as a rush: ${JSON.stringify(given.map((at) => Math.round(at - given[0])))} ms`);
       assert.equal(await kept(), 0, 'a rush left something behind');
+      // And a rush as a hand makes one: not across the room in a frame, but 10 pixels every 8 ms (1.25 a millisecond,
+      // over the 0.9 at which nothing stays), already moving as it comes down. Its beginning is a rush too: the speed
+      // used to be eased up from nothing at each press, and the first strokes of this were kept as slow ones.
+      await page.evaluate(() => { window.__rush = []; });
+      await sent('mouseMoved', 40, 520, 1000, false);
+      await sent('mousePressed', 40, 520, 1008, true);
+      for (let i = 1; i <= 30; i++) await sent('mouseMoved', 40 + i * 10, 520, 1008 + i * 8, true);
+      await sent('mouseReleased', 340, 520, 1256, false);
+      await hand.detach();
+      const swept = await page.evaluate(() => window.__rush);
+      assert.ok(swept.length >= 3 && swept.at(-1) - swept[0] < 260, `the second rush did not reach the room as a rush: ${swept.length} events over ${Math.round(swept.at(-1) - swept[0])} ms`);
+      assert.equal(await kept(), 0, 'a rush left its beginning behind');
       assert.equal(await page.locator('#slow-portal').isVisible(), false, 'the way on opened for nothing');
       assert.equal(await page.locator('.slow-tip.on').count(), 0, 'still being shown how after a touch');
       // and the same room, taken slowly
@@ -402,13 +494,24 @@ async function main() {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
       // place 1: one tap leaves the square ajar and Penny listens, and hears the post; two taps open it
+      // (The square is ajar for 500 ms; and the second time, with Penny holding its breath, for 650. On a busy machine
+      // a tap made from here has come back, and the question after it been put, later than that: asked 684 ms after
+      // the tap landed, the square had been shut for 180. So the page writes down what a tap brings, and that is
+      // read: nothing here is asked after by the clock.)
+      await page.waitForSelector('#walk-board .cell');
+      await h.watch();
       await h.tap(0);
-      assert.equal(await page.locator('#walk-board .cell.ajar').count(), 1, 'one tap leaves the square ajar');
+      assert.deepEqual((await h.seen('shut')).filter((one) => !one.startsWith('mood')), ['ajar', 'shut'], 'one tap leaves the square ajar');
       await h.says('right here');
-      await page.waitForFunction(() => !document.querySelector('#walk-board .cell.ajar'));
+      // (No sooner: the second time, two taps 650 ms apart are still a double tap. With nothing else for the machine to
+      // do the next tap used to land 541 to 553 ms after the last, and the post was opened here and not below:
+      // `holding` and `hopeful`, which were waited for, were moods of that.)
+      await sleep(600);
+      await h.watch();
       await h.tap(0);
-      await h.until('holding');
-      await h.until('hopeful'); // nothing came: the breath is let go
+      // it has heard the post there: ajar again, it holds its breath; and nothing came: shut, and the breath is let go
+      const second = await h.seen('mood hopeful');
+      assert.deepEqual(second.slice(second.indexOf('ajar')), ['ajar', 'mood holding', 'shut', 'mood hopeful']);
       await h.open(0);
       assert.equal(await h.board(), 'L');
       assert.ok(await h.portalOpen());
@@ -801,10 +904,49 @@ async function main() {
         await page.mouse.move(x - 60, y, { steps: 4 });
         await page.mouse.up();
       };
-      const doubleTap = async () => {
-        await page.mouse.click(x, y);
-        await sleep(90);
-        await page.mouse.click(x, y);
+      // Two taps, 90 ms apart, as a person makes them: and what the radio made of them, asked of the page and not of
+      // the clock. Each press and each lift is a message to the browser, and on a busy machine they arrive late: the
+      // second tap has come 398 and 407 ms after the first, where the radio counts two taps as one for 380, and it
+      // then rightly took them for two taps and kept nothing and refused nothing. And what it does answer does not
+      // stand to be read: its "not yet" is on the sign for half a second (the radio tunes to the station not heard
+      // yet, and the order to listen to that one comes 500 ms after), which a check that looks 250 ms later, on a
+      // machine that is late, has found already gone. So the page keeps what it was given and every order hung
+      // since, with the words for a screen reader as they were then. `answered` says whether the radio took the two
+      // taps as one. Two that were quick and were not taken fail the check; two the machine stretched are made again.
+      const doubleTap = async (answered) => {
+        for (let tries = 1; ; tries++) {
+          await page.evaluate(() => {
+            if (!window.__hand) {
+              for (const type of ['pointerdown', 'pointerup']) window.addEventListener(type, () => window.__hand.push({ type, at: performance.now() }), true); // (the radio times a tap as it is handled)
+              new MutationObserver(() => window.__hand.push({ type: 'order', order: document.querySelector('#dash-sign [data-order]')?.dataset.order ?? '', note: document.querySelector('#taste-note').textContent, at: performance.now() }))
+                .observe(document.querySelector('#dash-sign'), { childList: true });
+              // ...and when the sign was hung and when it was taken down, to the moment: an observer is told only once
+              // the radio has finished with the tap, and that has been 5 to 141 ms after the sign went up
+              const sign = document.querySelector('#dash-sign');
+              for (const name of ['append', 'replaceChildren']) {
+                sign[name] = function (...nodes) {
+                  Element.prototype[name].apply(this, nodes);
+                  window.__hand.push({ type: 'hung', sign: this.querySelector('[data-order]')?.dataset.order ?? '', at: performance.now() });
+                };
+              }
+            }
+            window.__hand = [];
+          });
+          await page.mouse.click(x, y);
+          await sleep(90);
+          await page.mouse.click(x, y);
+          // (the radio answers a tap as it lands, and the order it hangs is on record in the same turn)
+          const seen = await page.evaluate(() => ({ hand: window.__hand, kept: JSON.parse(localStorage.getItem('jam:taste:v1')).trials.length }));
+          const downs = seen.hand.filter((one) => one.type === 'pointerdown');
+          const ups = seen.hand.filter((one) => one.type === 'pointerup');
+          // what was hung once the second tap had landed: the first of them is the radio's answer to it
+          seen.orders = ups.length === 2 ? seen.hand.slice(seen.hand.indexOf(ups[1]) + 1).filter((one) => one.type === 'order') : [];
+          if (answered(seen)) return seen;
+          const quick = downs.length === 2 && ups.length === 2 && ups[1].at - ups[0].at < 200 && ups.every((up, i) => up.at - downs[i].at < 200);
+          assert.ok(!quick, `two quick taps on the display were not taken as a double tap (${JSON.stringify(seen.hand.filter((one) => one.type.startsWith('pointer')).map((one) => Math.round(one.at - seen.hand[0].at)))} ms)`);
+          assert.ok(tries < 8, `the machine is too slow to make a double tap on the display: ${tries} tries`);
+          await sleep(1000); // at least: the slow taps are forgotten before the next two
+        }
       };
       const turned = () => page.evaluate(() => document.querySelector('.taste-card').classList.contains('turned'));
       const kept = () => page.evaluate(() => JSON.parse(localStorage.getItem('jam:taste:v1')));
@@ -815,25 +957,38 @@ async function main() {
       assert.equal(await turned(), !was, 'a swipe did not tune to the other station');
       await says('listen');
       // too soon: neither station has been listened to. The refusal is that one's, and has no reason in it
-      await doubleTap();
+      const refused = await doubleTap((seen) => seen.orders.some((one) => one.order === 'not-yet') || seen.kept > 0); // (refused; or, wrongly, kept)
       await sleep(250);
       assert.equal((await kept()).trials.length, 0, 'a station was kept before both had been heard');
-      assert.equal(await tape(), 'not-yet');
-      assert.match(await page.locator('#taste-note').textContent(), /Tune to|Stay on/, 'a screen reader is still told what to do');
+      assert.equal(refused.orders[0]?.order, 'not-yet');
+      assert.match(refused.orders[0].note, /Tune to|Stay on/, 'a screen reader is still told what to do');
+      // and the refusal stands its time out: 900 ms, whether or not the radio turned to the station not heard yet
+      // (that turn used to hang the next order 500 ms on, over the refusal). A late machine can only make it longer:
+      // so long as it is timed from the sign going up to its coming down. Timed from when an observer was told of
+      // each, it has come out at 819 to 871 ms on a busy machine (where that was measured, the observer heard of "not
+      // yet" 71 and 141 ms after the tap); from the tap that was refused to the next order it was never under 903.
+      await page.waitForFunction(() => { const from = window.__hand.findIndex((one) => one.order === 'not-yet'); return window.__hand.slice(from + 1).some((one) => one.type === 'order' && one.order !== 'not-yet'); }, null, { timeout: 8000 });
+      const stood = await page.evaluate(() => { const hung = window.__hand.filter((one) => one.type === 'hung'); const from = hung.findIndex((one) => one.sign === 'not-yet'); return hung[from + 1].at - hung[from].at; });
+      assert.ok(stood >= 880, `"Not yet" was taken down after ${Math.round(stood)} ms`);
       assert.equal(await page.locator('#lab-picks').isVisible(), false, 'the experiment is not on the face of the radio');
       assert.match(await page.locator('#radio-freq').textContent(), /^\d{2,3}\.\d$/, 'a station has a place on the dial');
       // listened to both: the order is to keep one, and it does not say which
+      // (Which station has been heard is asked of the radio. The refusal tunes to a station not heard yet; when the
+      // double tap had to be made again, the one that was up had been heard through by then, and the radio is now on
+      // the other: the order is to listen, there is no "the other one" to wait for, and a swipe would leave it.)
+      const onlyThisHeard = () => page.evaluate(() => Boolean(document.querySelector('.taste-card .face.tuned.heard')) && document.querySelectorAll('.taste-card .face.heard').length < 2);
       const pickOne = async () => {
         await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
-        if ((await page.locator('.taste-card .face.heard').count()) < 2) await swipe();
+        if (await onlyThisHeard()) await swipe();
         await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length === 2, null, { timeout: 8000 });
         const up = (await turned()) ? 'back' : 'front';
-        await doubleTap();
+        const had = (await kept()).trials.length;
+        await doubleTap((seen) => seen.kept > had);
         await sleep(250);
         return up;
       };
       await page.waitForFunction(() => document.querySelectorAll('.taste-card .face.heard').length >= 1, null, { timeout: 8000 });
-      if ((await page.locator('.taste-card .face.heard').count()) < 2) await says('other');
+      if (await onlyThisHeard()) await says('other');
       const first = await pickOne();
       assert.equal(await page.evaluate(() => localStorage.getItem('radio:taught:v1')), 'true', 'a station kept: that is all there was to show');
       let data = await kept();
@@ -1194,17 +1349,31 @@ async function main() {
       assert.equal(await page.locator('#radio-story').textContent(), '');
       // both heard, and the front kept: the real challenger's call for it beat the phantom's (and that pair, called
       // with one phantom, is bet on by that rule)
+      await listenToBoth(page);
+      await h.watch(); // (Penny's moods, from here on)
+      // ...and the lamp's: lit, and marked as lighting for the 3.4 s its glow takes. That mark was asked after too,
+      // four questions on from the pick: 0.07 to 2.5 s after it on a busy machine, and once, by then, it had gone.
+      await page.evaluate(() => {
+        window.__lamp = [];
+        const meter = document.querySelector('#radio-meter');
+        new MutationObserver(() => window.__lamp.push([meter.classList.contains('lit'), meter.classList.contains('lighting')])).observe(meter, { attributes: true, attributeFilter: ['class'] });
+      });
       await keepOne(page, 'front');
       const crossed = (await keptOn(page)).trials.at(-1);
       assert.equal(crossed.pick, 'front');
-      // Penny is as it is for any station kept (glad; thrilled for a preset), and gives the lamp no notice
-      assert.equal((await h.pal()).mood, crossed.retired ? 'thrilled' : 'glad', 'Penny made something of ×20');
+      // Penny is as it is for any station kept (glad; thrilled for a preset), and gives the lamp no notice. It is
+      // glad for a second and a half and then calm again, and on a busy machine it has been 1.5 s from the pick to
+      // word of it here, and Penny found calm: so its moods are written down in the page, and those are read.
+      const moods = await h.seen();
+      assert.deepEqual(moods, [`mood ${crossed.retired ? 'thrilled' : 'glad'}`, 'mood calm'].slice(0, moods.length || 1), 'Penny made something of ×20');
       const now = await standingOn(page);
       assert.ok(now.stake >= model.NEEDED && now.reachedAt === 13, JSON.stringify(now));
       assert.ok(Math.abs(now.stake - 1.3 ** 11 * 1.4) < 1e-9);
       m = await meterOf(page);
       assert.equal(m.now, valueOf(now.stake));
-      assert.deepEqual([m.lit, m.lighting], [true, true], 'the lamp comes on');
+      const lamp = await page.evaluate(() => window.__lamp); // [lit, lighting], each time the meter's classes changed
+      assert.deepEqual(lamp, [[true, true], [true, false]].slice(0, lamp.length || 1), 'the lamp comes on');
+      assert.equal(m.lit, true, 'and stays on');
       assert.match(m.text, /significant since pick 13/);
       assert.match(await page.locator('#radio-story').textContent(), /lamp on the meter has come on/, 'and a screen reader is told');
       assert.equal(await page.locator('#radio-meter .g-needle').evaluate((needle) => needle.getAnimations().length), 0, 'the needle swung');
@@ -1835,10 +2004,23 @@ async function main() {
     }),
 
     check('with an account: Penny keeps out of the way of the page', { viewport: { width: 390, height: 664 }, storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' } }, async (page, h) => {
+      // How Penny has stood since it arrived, written down in the page: its height and its mood, each time either
+      // changes. (It arrives with its eyes over the edge and ducks half a second later, when the page has settled.
+      // That used to be asked after 2.7 s from the page having loaded; but the home page is put up some time after
+      // that, 2.4 s after on a busy machine, and Penny was then asked how it stood 0.4 s after arriving, before it
+      // had looked: still up.)
+      await page.addInitScript(() => {
+        window.__stood = [];
+        new MutationObserver(() => {
+          const it = document.querySelector('.pal');
+          const last = window.__stood.at(-1);
+          if (it && (it.dataset.height !== last?.height || it.dataset.mood !== last?.mood)) window.__stood.push({ height: it.dataset.height, mood: it.dataset.mood });
+        }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-height', 'data-mood'] });
+      });
       await page.goto(`${origin}/?home`);
-      await sleep(2700);
-      assert.equal((await h.pal()).height, 'low', 'a tile is under Penny: it ducks');
-      await h.until('hopeful', 12000); // Penny comes up to ask
+      const stood = await (await page.waitForFunction(() => window.__stood.some((one) => one.mood === 'hopeful') && window.__stood, null, { timeout: 12000 })).jsonValue(); // Penny comes up to ask
+      // a tile is under Penny: it ducks, the first thing it does, and stays down until it comes up to ask
+      assert.deepEqual(stood.slice(0, stood.findIndex((one) => one.mood === 'hopeful')), [{ height: 'peek', mood: 'calm' }, { height: 'low', mood: 'calm' }], 'a tile is under Penny: it ducks');
       await sleep(400);
       const spot = await page.evaluate(() => {
         const paper = document.querySelector('.pal-penny .paper').getBoundingClientRect();

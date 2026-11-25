@@ -36,17 +36,24 @@ are made.
   owner's choice, 25 November 2026). Prefer taking a thing away to swapping
   its word for a new mark.
 - The one exception the owner has given is Penny's Radio as an exhibit: its
-  label and its reading are words, set as a museum sets them. Any other place
-  where only words will do is the owner's to allow.
+  label and its reading are words, set as a museum sets them. The second is a
+  sheet that asks before something that cannot be undone ("Leave this room?",
+  "Delete this game?"): its question and its buttons are words (25 November
+  2026). Any other place where only words will do is the owner's to allow.
+- An error line takes its own room: what is below it moves down for it, and
+  nothing above it moves (allowed by the owner, 25 November 2026).
 - Screens changed before these rules still carry words; each is brought to
   them when it is next worked on, not left as it is.
 
 ## Every pull request
 
-- The control (`tests/pr-control.cjs`, run by GitHub on every pull request)
-  wants a new test screen in the suite for the mini, and `npm test`,
-  `npm run e2e` and `npm run e2e:mini` all passing. Run it before opening one:
-  `node tests/pr-control.cjs --base origin/main`.
+- The control (`tests/pr-control.cjs`, run by GitHub once for each push to a
+  pull request) wants `npm test`, `npm run e2e` and `npm run e2e:mini` all
+  passing, and, of a pull request that changes a page or a stylesheet of the
+  app (a `.html` or `.css` file outside `tests/`), a new test screen in the
+  suite for the mini. A fix to a check or to a rule of the app goes in on its
+  passing runs alone (the owner's choice, 25 November 2026). Run it before
+  opening one: `node tests/pr-control.cjs --base origin/main`.
 - An exception is the owner's to give, never yours. If a change really has no
   test screen to add, or a run cannot pass, stop and ask the owner. Do not put
   the `test-exception` label on a pull request yourself, and do not write an
@@ -62,6 +69,25 @@ are made.
   checks fail for reasons that have nothing to do with the change (#92).
 - Work in order of how near it is to deploying: finish and ship before starting
   new explorations.
+- One session for one feature or release. A session that goes on for days is
+  summarised over and over and loses what it knew; start a new one for the
+  next piece of work.
+
+## Checks that fail now and then
+
+- Find the root cause of a check that has failed on GitHub: never call it a
+  flake, never skip it, and never just wait longer. Do not go looking for
+  failures that only appear on a machine loaded past what GitHub's is: each
+  hunt costs hours (the owner's choice, 25 November 2026).
+- `npm run e2e` runs 8 checks at a time (`AT_ONCE`). A check sends its taps as
+  separate messages, and with thirty windows open they arrived late; where the
+  timing of a hand matters, ask the page what it was given (`twice`,
+  `doubleTap` and the rush of scene two in `tests/browser/penny.e2e.cjs`).
+- Before a pull request, run the checks for what was changed (`ONLY=<regex>`),
+  not the whole control: GitHub runs all of it once, side by side, in about
+  the time of its longest suite.
+- The suites reach no network. The server's functions are answered by each
+  check, and the live socket by `tests/browser/socket.cjs`.
 
 ## Things that have gone wrong before
 

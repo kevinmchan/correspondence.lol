@@ -3,18 +3,22 @@
 # an exception is, are written at the top of tests/pr-control.cjs.
 #
 # It runs again when the description or the labels change, because that is
-# where an exception is asked for and given. It also runs on every push to a
-# branch that is not main, so that what it will say of a pull request is known
-# before there is one (there, with no description to read, there can be no
-# exception: it says what is met and what is not).
+# where an exception is asked for and given. It runs once for each push to a
+# pull request, and not on pushes to a branch besides: it used to run on both,
+# twice over for every push, eleven minutes where five and a half say as much.
+# What it will say before there is a pull request is found by running it by
+# hand: `node tests/pr-control.cjs --base origin/main`.
+#
+# The suites run side by side, each on a machine of its own, and the browser
+# suite as two halves: the wait is the longest of them, not their sum. The
+# last job judges, and is the one check a pull request has to pass. A pull
+# request that changes only words (.md) is not put in a browser at all.
 name: PR control
 
 on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, edited, labeled, unlabeled]
-  push:
-    branches-ignore: [main]
 
 permissions:
   contents: read
@@ -24,10 +28,82 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  unit:
+    name: The unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/pr-control.cjs --suite unit --base "origin/${{ github.base_ref || 'main' }}"
+
+  e2e:
+    name: Penny in a browser (${{ matrix.shard }} of 2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false # both halves are wanted, whatever the other did
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the base is needed too: what is changed is counted from it
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The app has nothing to install. The suites drive a browser, and that is all this is.
+      # The browser itself is kept from run to run; what it needs of the machine is put in each time.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium-${{ runner.os }}
+      - name: Install the browser the suites drive
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Run its half of the suite
+        env:
+          SHARD: ${{ matrix.shard }}/2
+          REQUIRE_BROWSER: '1'
+        run: node tests/pr-control.cjs --suite e2e --base "origin/${{ github.base_ref || 'main' }}"
+
+  mini:
+    name: The app on an iPhone mini
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the base is needed too: what is changed is counted from it
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The app has nothing to install. The suites drive a browser, and that is all this is.
+      # The browser itself is kept from run to run; what it needs of the machine is put in each time.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium-${{ runner.os }}
+      - name: Install the browser the suites drive
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Run the suite
+        env:
+          REQUIRE_BROWSER: '1'
+        run: node tests/pr-control.cjs --suite mini --base "origin/${{ github.base_ref || 'main' }}"
+
   control:
     name: New test screens and passing runs
+    needs: [unit, e2e, mini]
+    if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,14 +111,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # The app has nothing to install. The suites drive a browser, and that is all this is.
-      - name: Install the browser the suites drive
-        run: |
-          npm install --no-save --no-package-lock playwright@1.63.0
-          npx playwright install --with-deps chromium
       - name: New test screens and passing runs, or an exception
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
-          REQUIRE_BROWSER: '1'
-        run: node tests/pr-control.cjs --base "origin/${{ github.base_ref || 'main' }}"
+          RESULT_UNIT: ${{ needs.unit.result }}
+          RESULT_E2E_1: ${{ needs.e2e.result }}
+          RESULT_E2E_2: ${{ needs.e2e.result }}
+          RESULT_MINI: ${{ needs.mini.result }}
+        run: node tests/pr-control.cjs --judge --base "origin/${{ github.base_ref || 'main' }}"

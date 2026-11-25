@@ -796,6 +796,10 @@ export function mount(root, life) {
 
   // What the radio tells the story has happened: a swipe ('tune'), a station
   // heard through ('listen'), a station kept ('keep').
+  // The next order comes half a second after what was done, and never over a refusal: "Not yet" stands its 900 ms
+  // out. (A station kept too soon turns the radio to the one not heard yet, and that turn is something done: it used
+  // to hang the next order 500 ms on, and the refusal was gone in half its time.)
+  const soon = () => Math.max(500, (lesson.refusedUntil ?? 0) - performance.now());
   story.did = (what, saved = false) => {
     if (lesson.step !== null) {
       const bothHeard = SIDES.every((side) => heardMs[side] >= LISTEN_MS);
@@ -808,12 +812,12 @@ export function mount(root, life) {
           lesson.step = 'keep';
         }
         clearTimeout(lesson.timer);
-        lesson.timer = life.setTimeout(order, 500);
+        lesson.timer = life.setTimeout(order, soon());
       } else if (what === 'listen' && lesson.step === 'listen') {
         if (dash.on) dash.tick();
         if (bothHeard) lesson.step = 'keep';
         clearTimeout(lesson.timer);
-        lesson.timer = life.setTimeout(order, 500);
+        lesson.timer = life.setTimeout(order, soon());
       } else if (what === 'keep') {
         // The first station kept. It ticks, and is gone; nobody cheers. Its going is not a beat of a scene: whatever
         // cuts the scene (the tag, pressed at once), it still goes, and takes its sign with it. (Unless it has been
@@ -857,6 +861,7 @@ export function mount(root, life) {
       dash.say('not-yet', 'Not yet.');
       once(dashEl, 'refusing', 220);
       clearTimeout(lesson.timer);
+      lesson.refusedUntil = performance.now() + 900;
       lesson.timer = life.setTimeout(() => { dash.said = ''; order(); }, 900);
       return;
     }

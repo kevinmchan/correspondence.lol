@@ -67,6 +67,10 @@ every pull request by `.github/workflows/pr-control.yml`):
    suite for the mini: there are more after it than before, and at least one
    has a name that was not there. Renaming one, or swapping one for another, is
    not adding one.
+   This is asked only of a pull request that changes the interface (a `.html`
+   or `.css` file outside `tests/`): a fix to a check or to a rule of the app
+   has no new state to put on a phone, and goes in on its passing runs. No
+   pull request may leave fewer test screens than it found.
 2. **Passing runs.** `npm test`, `npm run e2e` and `npm run e2e:mini` all
    pass. A browser that is missing is a failure there, not a skip.
 
@@ -80,6 +84,11 @@ on the pull request:
 - a line of its own in the description for each rule it is asked for, with the
   reason in a sentence:
   `Exception (no new test screens): …` or `Exception (failing tests): …`
+
+On GitHub the suites run side by side, each on a machine of its own, the
+browser suite as two halves (`SHARD=1/2`, `SHARD=2/2`), and a last job judges:
+the wait is the longest of them, not their sum. A pull request that changes
+only words (`.md`) is not put in a browser at all.
 
 An exception lets the pull request through and says so in the result of the
 check; it does not hide what failed. The control can be run by hand before a

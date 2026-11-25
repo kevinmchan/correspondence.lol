@@ -110,14 +110,20 @@ export function mount(root, life) {
   function put(x, y, at, ghost = false) {
     pen.on = true;
     pen.ghost = ghost;
-    Object.assign(pen, { x, y, at, speed: 0, stillFor: 0 });
+    Object.assign(pen, { x, y, at, speed: 0, stillFor: 0, fresh: true });
     flower = null;
   }
   function move(x, y, at) {
     const far = Math.hypot(x - pen.x, y - pen.y);
     const took = Math.max(1, at - pen.at);
     if (far < 0.5) return;
-    pen.speed += (far / took - pen.speed) * 0.35;
+    // The speed is eased from one stroke to the next, but not up from nothing at each press: a hand that comes down
+    // already rushing is rushing from its first stroke. (Eased up from nought, the first strokes of anything under
+    // 2 pixels a millisecond were taken for slow, and a rush left its beginning behind.) That first stroke is timed
+    // over no less than a frame, so that two readings a moment apart do not make a rush of a slow hand.
+    if (pen.fresh) pen.speed = far / Math.max(8, took);
+    else pen.speed += (far / took - pen.speed) * 0.35;
+    pen.fresh = false;
     const slow = Math.max(0, Math.min(1, 1 - pen.speed / FAST)); // 1: hardly moving. 0: a rush
     const from = { x: pen.x, y: pen.y };
     pen.heading = Math.atan2(y - pen.y, x - pen.x);

@@ -18,6 +18,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const { quietSocket } = require('./socket.cjs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.txt': 'text/plain' };
@@ -117,6 +118,7 @@ async function open(browser, name, { storage = {}, server = () => undefined, red
     const answer = call ? await server(call, args) : undefined;
     return answer === undefined ? route.abort() : route.fulfill({ json: answer, headers: cors });
   });
+  await quietSocket(context); // (the live socket is answered here, not by the service)
   await context.addInitScript(({ store, installed }) => {
     if (installed) Object.defineProperty(navigator, 'standalone', { get: () => true }); // opened from the Home Screen: nothing offers to install it
     if (sessionStorage.getItem('phone:seeded')) return; // once a window: a reload must keep what the app has saved
