@@ -216,8 +216,20 @@ html:root:has(#screens > .screen-room[data-world="serious"]:not(.leaving)) body 
 .screen-room [data-paint="serious"] .mini svg:first-child { filter: grayscale(1) contrast(1.45) brightness(0.86); }
 .screen-room [data-paint="serious"] .mini[data-state="lost"] svg:first-child { filter: grayscale(1) contrast(1.2) brightness(0.55); opacity: 1; }
 .screen-room [data-paint="serious"] #games .mini .kind { background: #d9d3c4; color: var(--s-ink); box-shadow: 0 0.12rem 0.3rem rgb(0 0 0 / 0.65); }
-.screen-room [data-paint="serious"] .mini[data-state="go"]::after { background: radial-gradient(circle at 36% 32%, #93352b, #5c1711 72%); box-shadow: 0 0 0 0.1rem rgb(0 0 0 / 0.25), 0.05rem 0.15rem 0.3rem rgb(0 0 0 / 0.7); animation: none; }
 .screen-room [data-paint="serious"] .mini[data-state="won"]::after { background-color: #dcd6c8; box-shadow: 0 0.12rem 0.3rem rgb(0 0 0 / 0.65); }
+/* the shelf: each game a photograph on a manila folder laid on the walnut, with a brass button at its end; what is yours
+   first is the folder drawn out under the lamp, its button the wax seal; the others waiting on you keep a wax seal too,
+   older and duller, on folders that lie with the rest */
+.screen-room [data-paint="serious"] #games li { border-radius: 2px; background: color-mix(in oklab, var(--s-manila) 26%, #241b14); box-shadow: 0.1rem 0.35rem 0.5rem rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 240 214 / 0.08); }
+.screen-room [data-paint="serious"] #games li[data-lit] { background: color-mix(in oklab, var(--s-manila) 52%, #2a2016); box-shadow: 0.2rem 0.7rem 0.9rem rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 240 214 / 0.18); }
+.screen-room [data-paint="serious"] #games li:is([data-state="won"], [data-state="lost"]) { background: color-mix(in oklab, var(--s-manila) 16%, #1e1712); }
+.screen-room [data-paint="serious"] #games li::before { display: none; }
+.screen-room [data-paint="serious"] #games .faces .avatar { box-shadow: 0 0.1rem 0.25rem rgb(0 0 0 / 0.6); }
+.screen-room [data-paint="serious"] #games .about .kind { color: var(--s-paper); opacity: 0.7; }
+.screen-room [data-paint="serious"] #games li[data-lit] .about .kind { color: var(--s-ink); opacity: 0.8; }
+.screen-room [data-paint="serious"] #games .play { background: radial-gradient(circle at 38% 32%, #c9b68a, #7d6a43 75%); color: #1e1812; box-shadow: 0.05rem 0.2rem 0.35rem rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 245 220 / 0.4); animation: none; }
+.screen-room [data-paint="serious"] #games li[data-state="go"] .play { background: radial-gradient(circle at 38% 32%, #6f3a31, #3d1a15 75%); color: #c9b7a3; box-shadow: 0.05rem 0.2rem 0.35rem rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 220 200 / 0.12); animation: none; }
+.screen-room [data-paint="serious"] #games li[data-lit] .play { background: radial-gradient(circle at 36% 32%, #93352b, #5c1711 72%); color: #ead9c4; box-shadow: 0.05rem 0.25rem 0.4rem rgb(0 0 0 / 0.75), inset 0 1px 0 rgb(255 220 200 / 0.2); }
 .screen-room [data-paint="serious"] #games .delete { color: #a3a7ac; }
 .screen-room [data-paint="serious"] #games .delete:hover, .screen-room [data-paint="serious"] #games .delete:focus-visible { color: #d9dcdf; border-color: #a3a7ac; }
 .screen-room [data-paint="serious"] #no-games { color: #a39d90; }

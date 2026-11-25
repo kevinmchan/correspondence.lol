@@ -70,6 +70,8 @@ async function show(url, { announce }) {
   // the old screen stays where it was scrolled to while the page goes back to the top
   if (leaving) {
     leaving.root.style.marginTop = `${-window.scrollY}px`;
+    // and as wide as it was, whatever room is kept for a scrollbar once it is out of the layout (styles.css)
+    leaving.root.style.width = getComputedStyle(leaving.root).width;
     leaving.root.inert = true;
     // And it is out of the layout from here on (styles.css), before the new
     // screen is put on the page at all: a screen that measures itself as it

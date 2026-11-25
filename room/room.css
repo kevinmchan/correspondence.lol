@@ -53,6 +53,11 @@
   --wood: #ebdfcf; --on-wood: #8c7a68;
   --slab: #4a413c; /* what a game's small board is set in */
   --seal: #c8553e; --tick: #8fae84;
+  --shelf: color-mix(in oklab, var(--card) 48%, var(--wood)); --shelf-down: color-mix(in oklab, var(--card) 25%, var(--wood));
+  --shelf-quiet: color-mix(in oklab, var(--card) 28%, var(--wood));
+  --shelf-lit: var(--card); --shelf-lit-down: color-mix(in oklab, var(--card) 70%, var(--wood)); --shelf-edge: rgb(255 255 255 / 0.5);
+  --play: var(--card); --play-ink: color-mix(in oklab, var(--seal) 70%, var(--on-wood)); --play-yours: color-mix(in oklab, var(--seal) 16%, var(--card));
+  --cross: var(--card); --cross-ink: var(--ink);
   --lamp: rgb(255 196 120 / 0.34); /* the light over what is waiting on you */
   --mat: #e5d5ba; --mat-slip: #fbf6ee; --mat-ink: #4a3f35;
   --mine: 26%; /* how much of the room's colour your own notes take */
@@ -73,6 +78,10 @@
   --wood: #342c28; --on-wood: #a69383;
   --slab: #191514;
   --seal: #d8664d; --tick: #7d9c74;
+  --shelf: #3d3431; --shelf-down: #362e2b; --shelf-quiet: #39312e;
+  --shelf-lit: #4a3f3a; --shelf-lit-down: #423834; --shelf-edge: rgb(255 225 190 / 0.07);
+  --play: #4e4340; --play-ink: #e3a08c; --play-yours: color-mix(in oklab, var(--seal) 24%, #4e4340);
+  --cross: #5e524d; --cross-ink: #f3ebe0; /* (in the dark, the cross a lighter round than the card it lies on) */
   --lamp: rgb(255 196 130 / 0.15);
   --mat: #54493c; --mat-slip: #3a322b; --mat-ink: #efe4d3;
   --mine: 34%;
@@ -169,22 +178,79 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
   background: var(--wood); box-shadow: var(--soft-2);
 }
 .table:has(#tidy:not([hidden])) { padding-bottom: 3.1rem; } /* (a strip along its foot for the bin) */
-/* Yours to play first, on a line of their own, nearest; then the rest, further off. */
-#games { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.7rem 0.8rem; }
-#games:has(> [data-state="go"])::after { content: ""; order: 1; flex-basis: 100%; height: 0; }
-#games li { order: 2; position: relative; width: 2.95rem; }
-#games li[data-state="go"] { order: 0; width: 5.4rem; margin: 0.1rem 0.35rem 0.55rem; }
-/* (three or more waiting on you: each a little smaller, so that they still lie side by side) */
-#games:has(> [data-state="go"] ~ [data-state="go"] ~ [data-state="go"]) li[data-state="go"] { width: 4.3rem; margin: 0.1rem 0.15rem 0.55rem; }
+/* A shelf of games: each a soft, wide card, the whole of it the way into its game. Its board is its heart, drawn large;
+   then the faces of who is in it and its kind; and a round play button at its end that is plainly a button. The first
+   game waiting on you is lit, its button the seal's colour and breathing; the others waiting on you are as plainly yours,
+   their buttons seal-tinted and still; the rest quieter, finished ones quieter still. It is a column: more games make it
+   longer, never smaller. */
+#games { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; isolation: isolate; }
+#games li {
+  --board: min(5.75rem, 23.5vw); --ease: cubic-bezier(0.3, 0.7, 0.3, 1);
+  --rest: var(--soft-1); --down: 0 0.05rem 0.12rem rgb(70 50 35 / 0.14);
+  position: relative; display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.55rem 0.65rem 0.55rem 0.55rem; border-radius: 1.35rem;
+  background: var(--shelf); box-shadow: var(--rest);
+  transition: background-color 400ms ease, box-shadow 260ms var(--ease), translate 260ms var(--ease), scale 260ms var(--ease);
+}
+:root[data-theme="dark"] #games li { --down: 0 0.05rem 0.12rem rgb(0 0 0 / 0.35); }
+#games li > .mini { flex: none; width: var(--board); }
+#games li[data-lit] {
+  --board: min(6.5rem, 26.5vw); --rest: var(--lifted), 0 0 0 1px var(--shelf-edge); --down: 0 0.08rem 0.2rem rgb(70 45 30 / 0.22), 0 0 0 1px var(--shelf-edge);
+  padding: 0.65rem 0.75rem 0.65rem 0.65rem; margin-bottom: 0.25rem; background: var(--shelf-lit);
+}
+:root[data-theme="dark"] #games li[data-lit] { --down: 0 0.08rem 0.2rem rgb(0 0 0 / 0.45), 0 0 0 1px var(--shelf-edge); }
 /* the lamp: warm light pooled on the table round what is waiting on you */
-#games li[data-state="go"]::before {
-  content: ""; position: absolute; inset: -48%; border-radius: 50%; pointer-events: none;
+#games li[data-lit]::before {
+  content: ""; position: absolute; inset: -1.2rem -0.6rem; border-radius: 2.4rem; pointer-events: none; z-index: -1;
   background: radial-gradient(closest-side, var(--lamp), transparent);
 }
-/* the way into the game lies over its board; tidying, the way to put it away lies there instead */
-#games a.game, #games .delete { position: absolute; inset: 0; z-index: 2; border-radius: 0.7rem; -webkit-tap-highlight-color: transparent; }
+/* Pressed: the card goes down a little into the table and its shadow is drawn in under it (quickly down, slowly back
+   up); its colour deepens with it, which is all of it there is with reduced motion. */
+#games li[data-pressed] { box-shadow: var(--down); background: var(--shelf-down); transition-duration: 400ms, 120ms, 120ms, 120ms; }
+#games li[data-lit][data-pressed] { background: var(--shelf-lit-down); }
+@media (prefers-reduced-motion: no-preference) {
+  #games li[data-pressed] { translate: 0 0.12rem; scale: 0.975; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #games li, #games .play { transition: background-color 400ms ease, box-shadow 200ms ease; }
+}
+/* who is in it, and what kind of game it is (on a narrow card the kind goes under the faces) */
+#games .about { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem; }
+#games .faces { display: flex; padding-left: 0.4rem; }
+#games .faces .avatar {
+  width: 1.85rem; height: 1.85rem; font-size: 1rem; margin-left: -0.4rem;
+  background: color-mix(in oklab, var(--bg) var(--face-mix), var(--floor)); box-shadow: 0 0 0 0.14rem var(--shelf);
+}
+#games li[data-lit] .faces .avatar { box-shadow: 0 0 0 0.15rem var(--shelf-lit); }
+#games .about .kind { flex: none; width: 1.2rem; height: 1.2rem; color: var(--on-wood); stroke-width: 1.9; opacity: 0.85; }
+#games li[data-lit] .about .kind { color: var(--ink); opacity: 0.7; }
+/* the play button: round, at the card's end */
+#games .play {
+  flex: none; display: grid; place-items: center; width: 2.9rem; height: 2.9rem; border-radius: 50%;
+  background: var(--play); color: var(--play-ink); box-shadow: var(--soft-1), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  transition: background-color 400ms ease, box-shadow 260ms var(--ease), scale 260ms var(--ease);
+}
+#games .play svg { width: 1.25rem; height: 1.25rem; margin-left: 0.12rem; }
+/* ...the seal's colour on what is waiting on you: lit and breathing on the first, tinted and still on the others. (It is
+   the one red mark a game has: the board carries none.) */
+#games li[data-state="go"] .play { background: var(--play-yours); color: var(--seal); }
+#games li[data-lit] .play {
+  width: 3.3rem; height: 3.3rem; background: var(--seal); color: #fff7ef;
+  box-shadow: 0 0.35rem 0.8rem -0.2rem color-mix(in srgb, var(--seal) 60%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+#games li[data-lit] .play svg { width: 1.4rem; height: 1.4rem; }
+#games li[data-pressed] .play { box-shadow: inset 0 0.1rem 0.25rem rgb(0 0 0 / 0.2); transition-duration: 400ms, 120ms, 120ms; }
+@media (prefers-reduced-motion: no-preference) {
+  #games li[data-pressed] .play { scale: 0.94; }
+}
+/* what is over is quieter still: its button too */
+#games li:is([data-state="won"], [data-state="lost"]) { background: var(--shelf-quiet); }
+#games li:is([data-state="won"], [data-state="lost"]) .play { opacity: 0.75; }
+#games li[data-pressed]:is([data-state="won"], [data-state="lost"]) { background: var(--shelf-down); }
+/* the card is the way into the game; tidying, the way to put it away lies over the whole of it instead */
+#games a.game, #games .delete { position: absolute; inset: 0; z-index: 2; border-radius: inherit; -webkit-tap-highlight-color: transparent; }
 #games a.game:focus-visible, #games .delete:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-#games .delete { display: none; padding: 0; border: 0; background: none; color: var(--ink); }
+#games .delete { display: none; width: 100%; height: 100%; padding: 0; border: 0; background: none; color: var(--ink); } /* (a button is not stretched by its insets) */
 
 /* A game as a small board: the game's own squares, set in a slab. (A room's own: the game's how-to draws its
    pictures as small boards too, in its own stylesheet, postmarks/postmarks.css.) */
@@ -193,7 +259,6 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
   background: var(--slab); box-shadow: var(--soft-1);
   transition: filter 600ms ease, opacity 600ms ease, translate 300ms ease;
 }
-#games li:active .mini { translate: 0 0.08rem; }
 .screen-room .mini svg { display: block; width: 100%; height: auto; }
 .screen-room .mini .d0 { fill: #f08a76; } .screen-room .mini .d1 { fill: #f8d95a; } .screen-room .mini .d2 { fill: #7cc46a; } .screen-room .mini .d3 { fill: #2aa198; } .screen-room .mini .d4 { fill: #9ad3f7; }
 .screen-room .mini .d5 { fill: #736dd0; } .screen-room .mini .d6 { fill: #f3b3e6; } .screen-room .mini .d7 { fill: #b98a63; } .screen-room .mini .d8 { fill: #cdd6dd; }
@@ -202,14 +267,14 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
 :root[data-theme="dark"] .screen-room .mini .d7 { fill: #9c6f4b; } :root[data-theme="dark"] .screen-room .mini .d8 { fill: #a9b3bc; }
 .screen-room .mini .post { fill: #f6f1e7; stroke: var(--slab); stroke-width: 0.07; }
 .screen-room .mini .seal { fill: var(--seal); }
-/* Yours to play: the one board in the room in its full colours, lifted off the table. */
-#games li[data-state="go"] .mini { padding: 0.26rem; border-radius: 0.9rem; box-shadow: var(--lifted); translate: 0 -0.15rem; }
+/* Yours to play: boards in their full colours, and the first of them lifted off its card. */
+#games li[data-lit] .mini { padding: 0.24rem; border-radius: 0.8rem; box-shadow: var(--soft-2); }
 /* Everything else rests: games others are playing in colours gone soft (but still theirs: the table keeps some colour)... */
-#games li:not([data-state="go"]) .mini { filter: saturate(0.5) brightness(0.98); opacity: 0.74; background: color-mix(in oklab, var(--slab) 62%, var(--wood)); }
+#games li:not([data-state="go"]) .mini { filter: saturate(0.5) brightness(0.98); opacity: 0.86; background: color-mix(in oklab, var(--slab) 62%, var(--wood)); }
 /* (in the dark, soft colour, not mud: their colours kept at half, and their light, not dimmed on top of that) */
 :root[data-theme="dark"] #games li:not([data-state="go"]) .mini { filter: saturate(0.55) brightness(0.95); opacity: 0.9; background: var(--slab); }
 /* ...and finished ones softer still */
-#games li[data-state="won"] .mini, #games li[data-state="lost"] .mini { opacity: 0.48; }
+#games li[data-state="won"] .mini, #games li[data-state="lost"] .mini { opacity: 0.62; }
 #games li[data-state="lost"] .mini { filter: grayscale(1) brightness(0.9); }
 /* what kind of game it is: the picture from the tile that starts one, at its corner (a game together is the plain case) */
 .screen-room .mini .kind {
@@ -219,24 +284,20 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
 #games li[data-state="go"] .mini .kind { left: -0.4rem; bottom: -0.4rem; width: 1.5rem; height: 1.5rem; padding: 0.22rem; color: var(--ink); }
 :root[data-theme="dark"] .screen-room .mini .kind { background: #3d3533; color: #d9cdbf; }
 .screen-room .mini[data-kind="coop"] .kind { display: none; }
-/* where it stands: yours to play has a seal; solved is ticked; out of hearts is greyed (above) */
+/* where it stands: solved is ticked; out of hearts is greyed (above); yours to play has the seal, which is its play button */
 .screen-room .mini::after { content: ""; position: absolute; left: -0.32rem; top: -0.32rem; width: 1rem; height: 1rem; border-radius: 50%; box-sizing: border-box; display: none; }
-.screen-room .mini[data-state="go"]::after {
-  display: block; left: -0.42rem; top: -0.42rem; width: 1.3rem; height: 1.3rem; background: var(--seal);
-  box-shadow: 0 0 0 0.16rem var(--wood), 0 0 0.6rem 0.12rem color-mix(in srgb, var(--seal) 45%, transparent);
-}
 .screen-room .mini[data-state="won"]::after {
   display: block; background: var(--tick) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6.5 12.5l3.8 3.8L17.5 9' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 80% no-repeat;
   box-shadow: 0 0 0 0.14rem var(--wood);
 }
 @media (prefers-reduced-motion: no-preference) {
   /* the seal breathes: a slow glow, in and out, not a beat */
-  .screen-room .mini[data-state="go"]::after { animation: seal-breathe 5.2s ease-in-out infinite; }
-  #games li[data-state="go"]::before { animation: lamp-breathe 5.2s ease-in-out infinite; }
+  #games li[data-lit]:not([data-pressed]) .play { animation: play-breathe 5.2s ease-in-out infinite; }
+  #games li[data-lit]::before { animation: lamp-breathe 5.2s ease-in-out infinite; }
 }
-@keyframes seal-breathe {
-  0%, 100% { box-shadow: 0 0 0 0.16rem var(--wood), 0 0 0.3rem 0.04rem color-mix(in srgb, var(--seal) 30%, transparent); }
-  50% { box-shadow: 0 0 0 0.16rem var(--wood), 0 0 1.1rem 0.38rem color-mix(in srgb, var(--seal) 52%, transparent); }
+@keyframes play-breathe {
+  0%, 100% { box-shadow: 0 0.35rem 0.8rem -0.2rem color-mix(in srgb, var(--seal) 50%, transparent), 0 0 0 0 color-mix(in srgb, var(--seal) 0%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.25); }
+  50% { box-shadow: 0 0.35rem 0.8rem -0.2rem color-mix(in srgb, var(--seal) 60%, transparent), 0 0 1rem 0.3rem color-mix(in srgb, var(--seal) 30%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.25); }
 }
 @keyframes lamp-breathe { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
@@ -252,12 +313,14 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
 .table.tidy #games a.game { display: none; }
 .table.tidy #games .delete { display: block; }
 .table.tidy #games .delete svg {
-  position: absolute; right: -0.45rem; top: -0.45rem; width: 1.45rem; height: 1.45rem; padding: 0.2rem; box-sizing: border-box; border-radius: 50%;
-  background: var(--card); color: var(--ink); box-shadow: var(--soft-1);
+  position: absolute; right: 0.65rem; top: 50%; translate: 0 -50%; width: 2.9rem; height: 2.9rem; padding: 0.75rem; box-sizing: border-box; border-radius: 50%;
+  background: var(--cross); color: var(--cross-ink); box-shadow: var(--soft-1);
 }
+.table.tidy #games .play { visibility: hidden; }
+.table.tidy #games li { background: var(--shelf); box-shadow: var(--soft-1); }
+.table.tidy #games li[data-pressed] { background: var(--shelf-down); box-shadow: var(--down); }
 .table.tidy #games li .mini { filter: saturate(0.5); opacity: 0.88; translate: none; box-shadow: var(--soft-1); }
 .table.tidy #games li::before { display: none; }
-.table.tidy #games .mini::after { animation: none; }
 
 /* --- Three tiles to start a game from ------------------------------------------------------
    Quiet until touched: the same soft ground, the kind of game drawn on each.

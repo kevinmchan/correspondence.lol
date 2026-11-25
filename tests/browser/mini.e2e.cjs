@@ -68,6 +68,11 @@ const TABLE = [
   listed({ mode: 'phrase', size: 7, mine: 'lost', finished: 1 }),
   listed({ mode: 'phrase', size: 5, phrase_by: 0, finished: 2 }),
 ].map((game, i) => ({ ...game, id: `${String(i).repeat(8)}-3333-4333-8333-333333333333` }));
+// Four games waiting on you, one of each kind there is to play and a fourth, among two that are not.
+const SEVERAL = [
+  listed({ last_player: 1, found: 2 }), listed({ mode: 'trial', size: 7, mine: 'playing', finished: 1 }), listed({ mode: 'phrase', size: 6, phrase_by: 1 }),
+  listed({ size: 8, last_player: 2, found: 4, hearts: 1 }), listed({ last_player: 0, size: 6 }), listed({ mode: 'trial', size: 9, mine: 'won', finished: 3 }),
+].map((game, i) => ({ ...game, id: `${String(i + 1).repeat(8)}-5555-4555-8555-555555555555` }));
 const CROWD = [...PEOPLE, { name: 'Bartholomew', avatar: '🐙', color: 5, left: false }, { name: 'Lin', avatar: '🌵', color: 3, left: false }, { name: 'Wilhelmina Longname', avatar: '🦉', color: 6, left: false }];
 // A dozen messages from two people, short and long, with what the room itself says in between (rooms.room_view).
 const said = (id, seat, body, game = null) => ({ id, seat, body, at: new Date(Date.UTC(2026, 10, 24, 18, id)).toISOString(), game_kind: game && 'postmarks', game_id: game });
@@ -178,6 +183,13 @@ async function states() {
       then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); }, settle: '#tokens .word' },
     // The quiet room (room/room.css): what is yours to play lies nearest and lit; a tile lifts before it starts a game; the table is tidied with one bin.
     { name: 'a room, one game yours to play among the rest', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: [GAMES[3], GAMES[0], GAMES[4], listed({ mode: 'phrase', size: 7, phrase_by: 0 })], messages: TALK }), ready: '#games li[data-state="go"]' },
+    // The shelf: each game a wide card, the whole of it the way in. Only the first waiting on you is lit and breathes; the
+    // others waiting on you have still, seal-tinted buttons. A full table is eight cards long; a card pressed goes down.
+    { name: 'a room, a full table of eight on the shelf', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: TABLE.slice(0, 8), people: CROWD }), ready: '#games li[data-lit]' },
+    { name: 'a room, several games waiting on you on the shelf', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: SEVERAL, people: CROWD }), ready: '#games li[data-lit]' },
+    { name: 'a room, a game on the shelf pressed', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: SEVERAL }), ready: '#games li[data-lit]',
+      then: async (page) => { const box = await page.locator('#games li a.game').first().boundingBox(); await page.mouse.move(box.x + box.width * 0.45, box.y + box.height / 2); await page.mouse.down(); },
+      settle: '#games li[data-lit][data-pressed]' },
     { name: 'a room, a tile lifted before a game is started', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
       then: (page) => page.locator('#modes [data-mode="coop"]').click(), settle: '#modes [data-armed]' },
     { name: 'a room, tidying the table', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li',
