@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="/room/room.css">
   <link rel="stylesheet" href="/penny/sky.css">
   <link rel="stylesheet" href="/penny/tags.css">
+  <link rel="stylesheet" href="/room/worlds.css">
   <script>
     // The splash plays whenever the page is loaded on the home screen: opening
     // the app, a new tab, or a refresh. (Moving between screens inside the app
@@ -228,6 +229,8 @@
     <header class="topbar">
       <a href="/">← correspondence.lol</a>
       <div class="top-actions">
+        <!-- Two worlds (room/worlds.js): a portal, a ring of light like the home page's, into the room's other self (the same room as a drama at night), and from there the way back. Every visit starts outside. -->
+        <button type="button" id="worlds" class="portal worlds-portal" aria-label="The other world" aria-pressed="false" hidden></button>
         <div class="more-wrap">
           <button type="button" id="more" class="quiet round" aria-label="Room options" title="Room options" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu" hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor"/></svg>

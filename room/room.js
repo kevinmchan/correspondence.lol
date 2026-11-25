@@ -9,6 +9,7 @@ import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
 import { miniBoard, roof, roomClass } from '/shared/place.js';
+import { twoWorlds } from '/room/worlds.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -49,6 +50,8 @@ export function mount(root, life) {
 
   // The building keeps one of the game's colours, by its id: its walls here, its roof on the home page.
   if (roomId) root.classList.add(roomClass(roomId));
+  // A portal in the top bar, for a member: the way into the room's other world, and back (room/worlds.js).
+  const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
 
   function fail(text) {
@@ -184,6 +187,7 @@ export function mount(root, life) {
       rpc('profile_get', { p_token: myToken() }).then((profile) => {
         if (profile.signed_out) go('/', { replace: true });
       }).catch(() => {});
+      worlds.member(false);
       el.join.hidden = false;
       el.house.hidden = true;
       el.room.hidden = true;
@@ -214,6 +218,7 @@ export function mount(root, life) {
     }));
     el.profile.hidden = false;
     el.more.hidden = false;
+    worlds.member(true);
     el.profile.replaceChildren(avatar(room.people[room.you]));
     const code = `${room.code.slice(0, 3)}-${room.code.slice(3)}`;
     if (el.roomCode.dataset.code !== code) {
