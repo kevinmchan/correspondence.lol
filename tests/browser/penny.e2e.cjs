@@ -104,9 +104,41 @@ async function main() {
     };
     const tap = async (cell) => page.mouse.click(...(await centre(cell)));
     const idle = () => page.waitForFunction(() => !document.querySelector('#walk-board').classList.contains('busy'), null, { timeout: 30000 });
+    // A double tap, as a person makes one: two quick taps, 80 ms from one to the next. The machine does not always manage
+    // it. Each press and each lift is a message to the browser, and when the machine is busy they arrive late: the second
+    // tap has come 420 to 580 ms after the first where the last place allows 350, and the walk then rightly takes them for
+    // two taps (a cross, and the cross rubbed out) and opens nothing. So the page is asked what it was really given and
+    // what came of it. Two taps that were not quick are made again; two quick taps that open nothing are a failure.
+    const QUICK = 200; // ms: under every place's `twice` (350 at the least), and under the 260 at which a press is a hold
+    const twice = async (cell) => {
+      const [x, y] = await centre(cell);
+      for (let tries = 1; ; tries++) {
+        const before = await page.evaluate((n) => {
+          if (!window.__taps) {
+            for (const type of ['pointerdown', 'pointerup']) window.addEventListener(type, (event) => window.__taps.push({ type, at: event.timeStamp }), true);
+          }
+          window.__taps = [];
+          return document.querySelectorAll('#walk-board .cell')[n].dataset.state;
+        }, cell);
+        await page.mouse.click(x, y, { clickCount: 2, delay: 40 });
+        // (the walk answers a tap as it lands, so by now it has answered both)
+        const { after, busy, taps } = await page.evaluate((n) => ({
+          after: document.querySelectorAll('#walk-board .cell')[n].dataset.state,
+          busy: document.querySelector('#walk-board').classList.contains('busy'),
+          taps: window.__taps,
+        }), cell);
+        if (busy || after === 'letter' || after !== before) return; // a post found, or a cross where there was none
+        const downs = taps.filter((tap) => tap.type === 'pointerdown');
+        const ups = taps.filter((tap) => tap.type === 'pointerup');
+        const quick = downs.length === 2 && ups.length === 2 && downs[1].at - downs[0].at < QUICK && ups.every((up, i) => up.at - downs[i].at < QUICK);
+        assert.ok(!quick, `a double tap on square ${cell} opened nothing (${JSON.stringify(taps.map((tap) => Math.round(tap.at - taps[0].at)))} ms)`);
+        assert.ok(tries < 8, `the machine is too slow to make a double tap on square ${cell}: ${tries} tries`);
+        await sleep(1000); // at least: the slow taps are forgotten before the next two
+      }
+    };
     // A double tap, and then wait until Penny has finished with what it found.
     const open = async (cell) => {
-      await page.mouse.click(...(await centre(cell)), { clickCount: 2, delay: 40 });
+      await twice(cell);
       await sleep(300);
       await idle();
     };
@@ -135,7 +167,7 @@ async function main() {
     const reading = () => page.locator('#taste-behind .taste-lab').evaluate((sheet) => [...sheet.querySelectorAll('p, blockquote, figcaption, dd, dt, h2, h3, summary, span, li')]
       .filter((one) => one.getClientRects().length && !one.closest('.sr-only') && [...one.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
       .map((one) => one.textContent.replace(/\s+/g, ' ').trim()));
-    return { pal, feeling, board, centre, tap, open, idle, until, says, portalOpen, through, stored, words, reading };
+    return { pal, feeling, board, centre, tap, twice, open, idle, until, says, portalOpen, through, stored, words, reading };
   };
 
   // The question Penny's Radio asks, and what its reading is held to (README, "The question Penny's Radio asks"): it is
@@ -1819,7 +1851,7 @@ async function main() {
       // and leaving the map in the middle of something leaves nothing behind
       await page.goto(`${origin}/?walk`);
       await sleep(1500);
-      await page.mouse.click(...(await h.centre(0)), { clickCount: 2, delay: 40 });
+      await h.twice(0);
       await sleep(500);
       await page.locator('.penny-back').click();
       await sleep(6000);
