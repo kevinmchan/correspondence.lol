@@ -600,21 +600,84 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 .lot form.placard input:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
 
 /* --- The home page: your rooms, a street of them -------------------------------------------- */
-.street { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 1rem; }
+/* Each is a little shop seen from the street: a strip of roof, the board over its window in the room's colour with the
+   room's name lettered on it (two lines at most, and then an ellipsis), and under that its face: a wide window and a
+   door. The window is dark, and lit, gently, when something inside is waiting on you. Shops in a row are as tall as
+   one another: one with a one-line name has a little more wall over its window. */
+/* (over the map's faint squares, which are drawn across the whole page: a shop is solid) */
+.street { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.3rem 1rem; }
 .street a {
-  --shade: rgb(70 50 35 / 0.08);
-  height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding: 0.2rem 0.1rem 0.3rem;
-  color: var(--ink); text-decoration: none; border-radius: 1rem; -webkit-tap-highlight-color: transparent;
+  --shade: rgb(70 50 35 / 0.13);
+  --board: #c9d0d6; --eave: #dfe4e8; --deep: #55616b; --face: #f8f2e6; --glass: #554a44; --trim: var(--eave);
+  --letters: color-mix(in oklab, var(--deep) 85%, #000);
+  position: relative; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 0.15rem;
+  color: var(--ink); text-decoration: none; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 0.4rem 0.6rem var(--shade));
 }
-:root[data-theme="dark"] .street a { --shade: rgb(0 0 0 / 0.34); }
-@media (prefers-reduced-motion: no-preference) { .street .roof { transition: translate 300ms ease; } }
-.street a:active .roof { translate: 0 0.12rem; }
-/* its name, on a plate at its door */
+/* (a shop's colours are chosen by hand, one set for each colour a room keeps: its board, its roof a shade paler, and
+   its door, deep) */
+.street .r0 { --board: #e5a99c; --eave: #f2cdc3; --deep: #8c4a45; }
+.street .r1 { --board: #ecd08a; --eave: #f6e6b8; --deep: #86652a; }
+.street .r2 { --board: #a9c08f; --eave: #cfdcb8; --deep: #4f6844; }
+.street .r3 { --board: #8fbdb3; --eave: #c2dcd5; --deep: #2f6660; }
+.street .r4 { --board: #9dbfd6; --eave: #c3d9e6; --deep: #3f627a; }
+.street .r5 { --board: #aaa8dc; --eave: #cfcdec; --deep: #4b4789; }
+.street .r6 { --board: #dcaed0; --eave: #eed1e6; --deep: #7d4a72; }
+/* In the dark it is night on the street, and what lights a shop is the lantern at its door: the wall is warm round it
+   and falls away to dark at the far corners, and there is a little pool of its light on the ground under the door,
+   no wider than the shop. The lantern hangs on the wall beside the door, clear of the board and of the window. */
+:root[data-theme="dark"] .street a {
+  --shade: rgb(0 0 0 / 0.36); --board: #6f6a66; --eave: #85807b; --deep: #2f2a28; --face: #4d4540; --glass: #1d1918;
+  --letters: #f6ecdc; --trim: color-mix(in oklab, var(--board) 55%, var(--face));
+  --warm: 255 198 112; --lx: calc(100% - 2.55rem); --ly: calc(100% - 3.05rem);
+}
+:root[data-theme="dark"] .street a.k1 { --lx: 2.55rem; }
+:root[data-theme="dark"] .street a.k2 { --lx: calc(50% + 0.95rem); }
+:root[data-theme="dark"] .street a.r0 { --board: #8f5d54; --eave: #a57267; --deep: #4a2a27; }
+:root[data-theme="dark"] .street a.r1 { --board: #8c7440; --eave: #a38a52; --deep: #4a3b1a; }
+:root[data-theme="dark"] .street a.r2 { --board: #5f7550; --eave: #758b64; --deep: #2e3d28; }
+:root[data-theme="dark"] .street a.r3 { --board: #477a72; --eave: #5c9087; --deep: #1f3f3b; }
+:root[data-theme="dark"] .street a.r4 { --board: #557690; --eave: #6a8ca6; --deep: #263c4c; }
+:root[data-theme="dark"] .street a.r5 { --board: #6663a0; --eave: #7c79b6; --deep: #2f2d5a; }
+:root[data-theme="dark"] .street a.r6 { --board: #8a5f80; --eave: #a07496; --deep: #472c41; }
+:root[data-theme="dark"] .street a::after {
+  content: ""; position: absolute; inset: 0; border-radius: 0.7rem 0.7rem 0.45rem 0.45rem; pointer-events: none;
+  background:
+    radial-gradient(circle at var(--lx) var(--ly), rgb(var(--warm) / 0.42), rgb(var(--warm) / 0.14) 2.6rem, transparent 5.2rem),
+    radial-gradient(circle at var(--lx) var(--ly), transparent 2.5rem, rgb(12 10 16 / 0.46) 8.5rem);
+}
+:root[data-theme="dark"] .street a::before {
+  content: ""; position: absolute; z-index: -1; left: 0.15rem; right: 0.15rem; bottom: -0.8rem; height: 1.6rem; pointer-events: none;
+  background: radial-gradient(2.3rem 0.8rem at var(--lx) 50%, rgb(var(--warm) / 0.34), rgb(var(--warm) / 0.1) 60%, transparent);
+}
+:root[data-theme="dark"] .shop-front::before {
+  content: ""; position: absolute; z-index: 1; right: 2.2rem; bottom: 2.75rem; width: 0.42rem; height: 0.62rem; border-radius: 0.14rem 0.14rem 0.2rem 0.2rem;
+  background: #ffe2a0; box-shadow: 0 -0.16rem 0 -0.04rem #2a211c, 0 0 0.55rem 0.18rem rgb(var(--warm) / 0.85);
+}
+:root[data-theme="dark"] .k1 .shop-front::before { right: auto; left: 2.2rem; }
+:root[data-theme="dark"] .k2 .shop-front::before { right: calc(50% - 1.16rem); }
+@media (prefers-reduced-motion: no-preference) { .street a { transition: translate 300ms ease; } }
+.street a:active { translate: 0 0.12rem; }
+.shop-roof { display: block; height: 1.4rem; margin: 0 -0.15rem; border-radius: 0.7rem 0.7rem 0.15rem 0.15rem; background: var(--eave); }
 .street strong {
-  position: relative; max-width: 100%; margin-top: -0.1rem; padding: 0.2rem 0.65rem 0.25rem; border-radius: 0.8rem; background: var(--card); box-shadow: 0 0.1rem 0.35rem rgb(0 0 0 / 0.12);
-  font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.25; text-align: center; overflow-wrap: anywhere;
-  color: color-mix(in oklab, var(--ink) 88%, var(--card));
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  box-sizing: content-box; max-height: 2.4em; padding: 0.42rem 0.5rem 0.45rem; background: var(--board); box-shadow: inset 0 -2px 0 rgb(60 40 30 / 0.1);
+  font-family: Georgia, serif; font-weight: 400; font-size: 0.96875rem; line-height: 1.2; letter-spacing: 0.01em; text-align: center; text-wrap: balance; overflow-wrap: anywhere;
+  color: var(--letters);
 }
+.shop-front { position: relative; display: block; flex: 1 0 3.9rem; border-radius: 0 0 0.45rem 0.45rem; background: var(--face); }
+.shop-front i { position: absolute; display: block; }
+.shop-glass { left: 0.65rem; right: 2.75rem; height: 2.55rem; bottom: 0.6rem; border-radius: 0.25rem 0.25rem 0.12rem 0.12rem; background: linear-gradient(var(--glass) calc(100% - 0.55rem), color-mix(in oklab, var(--face) 86%, var(--glass)) 0); box-shadow: 0 0 0 2px var(--trim); transition: background 900ms ease; }
+.shop-door { right: 0.7rem; bottom: 0; width: 1.25rem; height: 3.35rem; border-radius: 0.2rem 0.2rem 0 0; background: var(--deep); }
+.shop-door::after { content: ""; position: absolute; inset: 0.3rem 0.25rem 42%; border-radius: 0.12rem; background: var(--glass); opacity: 0.9; }
+/* (its kind: the door at the right, at the left, or between two windows) */
+.k1 .shop-glass { left: 2.75rem; right: 0.65rem; } .k1 .shop-door { right: auto; left: 0.7rem; }
+.k2 .shop-glass { left: 0.65rem; right: 0.65rem; -webkit-mask: linear-gradient(90deg, #000 calc(50% - 1.25rem), #0000 0 calc(50% + 1.25rem), #000 0); mask: linear-gradient(90deg, #000 calc(50% - 1.25rem), #0000 0 calc(50% + 1.25rem), #000 0); }
+.k2 .shop-door { right: calc(50% - 0.625rem); border-radius: 0.625rem 0.625rem 0 0; } .k2 .shop-door::after { display: none; }
+.lit .shop-glass, .lit .shop-door::after { --glass: #f4d283; }
+.lit .shop-glass { box-shadow: 0 0 0 2px var(--trim), 0 0 0.6rem rgb(242 207 122 / 0.6); }
+@media (prefers-reduced-motion: no-preference) { .lit .shop-glass { animation: shop-breathe 5.2s ease-in-out infinite; } }
+@keyframes shop-breathe { 0%, 100% { box-shadow: 0 0 0 2px var(--trim), 0 0 0.3rem rgb(242 207 122 / 0.4); } 50% { box-shadow: 0 0 0 2px var(--trim), 0 0 0.8rem rgb(242 207 122 / 0.8); } }
 
 @media (prefers-reduced-motion: no-preference) {
   /* coming in from the map: the furniture settles, slowly, a piece after a piece */
