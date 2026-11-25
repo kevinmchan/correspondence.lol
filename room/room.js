@@ -9,6 +9,7 @@ import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
 import { boardPreview, door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
+import { modeCards } from '/postmarks/howto.js';
 import { twoWorlds } from '/room/worlds.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
@@ -41,6 +42,7 @@ export function mount(root, life) {
     modes: $('modes'), modeNote: $('mode-note'), compose: $('compose'), phraseForm: $('phrase-form'), phraseText: $('phrase-text'),
     phraseError: $('phrase-error'), phraseBack: $('phrase-back'), tokens: $('tokens'), tokenNote: $('token-note'), gameError: $('game-error'),
     deskIcon: $('desk-icon'), deskName: $('desk-name'), phraseAsk: $('phrase-ask'), phraseField: $('phrase-field'), previewBoard: $('preview-board'), redraw: $('redraw'),
+    deskHow: $('desk-how'), deskBoard: $('desk-board'), modeCards: $('mode-cards'), deskNext: $('desk-next'), randomPhrase: $('random-phrase'),
     chat: $('chat'), leave: $('leave'), more: $('more'), moreMenu: $('more-menu'), rename: $('rename'),
   };
 
@@ -609,10 +611,11 @@ export function mount(root, life) {
 
   // --- Starting a game ----------------------------------------------------------------
   // One tile per kind of game, with no words on it: the picture is the kind. One tap on a tile goes to its desk,
-  // which tells nobody: there the board it will be played on is drawn ahead, and can be drawn again with the die; a
-  // pass phrase is written there too (left empty, a random one is used and its starter can play too). The play mark
-  // starts the game, and then the whole room is told. The desk is a step in the browser's history: Back returns to
-  // the room.
+  // which tells nobody, and which has the same two steps for every kind of game. First, how it is played: a few
+  // cards, and the way on. Then the board it will be played on, drawn ahead, to be drawn again or taken; for a pass
+  // phrase, with the message above it, or the die lit for one picked at random (kept secret from its starter too, who
+  // can then play). The play mark starts the game, and then the whole room is told. Each step is a step in the
+  // browser's history: Back goes back a step, and from the first, to the room.
   const MODES = ['coop', 'trial', 'phrase'];
   const seedOf = () => crypto.getRandomValues(new Uint32Array(1))[0];
   // the size a board is drawn at: a random one for Together and Time trial; for a pass phrase, the size its words
@@ -633,7 +636,6 @@ export function mount(root, life) {
     el.previewBoard.dataset.size = String(size);
   }
   el.redraw.addEventListener('click', () => {
-    if (deskMode === 'phrase' && !tidyPhrase(el.phraseText.value).trim()) emptySize = null; // (a random phrase: its size is drawn again too)
     draw(sizeFor(deskMode));
     oops(el.phraseError, ''); // (a game that could not be started is not still said, once another board is drawn)
     if (deskMode === 'phrase') previewTokens(); // (...though anything wrong with the phrase still is)
@@ -673,6 +675,8 @@ export function mount(root, life) {
     start.disabled = Boolean(problem);
     const random = !phrase.trim();
     start.setAttribute('aria-label', random ? 'Start game with a random phrase' : 'Start game');
+    el.randomPhrase.setAttribute('aria-pressed', String(random)); // (the die is lit while a random phrase is what will be used)
+    el.phraseForm.classList.toggle('random', random);
     const size = sizeFor('phrase');
     if (puzzle?.size !== size) draw(size);
     const tokens = random ? [] : tokenize(phrase, size);
@@ -691,9 +695,18 @@ export function mount(root, life) {
   }
 
   el.phraseText.addEventListener('input', previewTokens);
+  // The die beside the box: a phrase picked at random. The box is emptied for it, and its board drawn again at one of
+  // the smaller sizes (a random phrase is short).
+  el.randomPhrase.addEventListener('click', () => {
+    el.phraseText.value = '';
+    emptySize = null;
+    puzzle = null;
+    previewTokens();
+  });
 
-  // The desk for a kind of game, or (null) the room again.
-  function openDesk(mode) {
+  // The desk for a kind of game at one of its steps ('how' or 'board'), or (no mode) the room again.
+  function openDesk(mode, step = 'how') {
+    const was = deskMode;
     deskMode = MODES.includes(mode) ? mode : null;
     composing = Boolean(deskMode);
     if (room?.you !== null) render();
@@ -703,8 +716,23 @@ export function mount(root, life) {
       return;
     }
     el.compose.dataset.mode = deskMode;
+    el.compose.dataset.step = step;
     el.deskIcon.replaceChildren(modeIcon(deskMode) ?? '');
     el.deskName.textContent = MODE_NAMES[deskMode];
+    el.deskHow.hidden = step !== 'how';
+    el.deskBoard.hidden = step !== 'board';
+    el.phraseBack.setAttribute('aria-label', step === 'how' ? 'Back to the room' : 'Back to how it is played');
+    if (step === 'how') {
+      modeCards(deskMode, el.modeCards);
+      if (was !== deskMode) { // (another kind of game: its board is drawn afresh, and no message is left over)
+        puzzle = null;
+        el.phraseText.value = '';
+        emptySize = null;
+      }
+      window.scrollTo(0, 0);
+      el.deskNext.focus({ preventScroll: true });
+      return;
+    }
     const phrase = deskMode === 'phrase';
     el.phraseAsk.hidden = !phrase;
     el.phraseField.hidden = !phrase;
@@ -713,15 +741,23 @@ export function mount(root, life) {
     const start = el.phraseForm.querySelector('button[type="submit"]');
     start.disabled = false;
     start.setAttribute('aria-label', 'Start game');
-    puzzle = null;
     if (phrase) {
       previewTokens();
       el.phraseText.focus();
-    } else draw(sizeFor(deskMode));
+    } else if (!puzzle) draw(sizeFor(deskMode));
   }
-  const deskInAddress = () => location.hash.slice(1);
+  // where the desk is, in the address: #coop, #coop-board, and so on
+  const deskInAddress = () => {
+    const [mode, step] = location.hash.slice(1).split('-');
+    return MODES.includes(mode) ? { mode, step: step === 'board' ? 'board' : 'how' } : { mode: null, step: 'how' };
+  };
 
-  life.on(window, 'popstate', () => openDesk(deskInAddress()));
+  el.deskNext.addEventListener('click', () => {
+    history.pushState(null, '', `#${deskMode}-board`);
+    openDesk(deskMode, 'board');
+  });
+
+  life.on(window, 'popstate', () => { const at = deskInAddress(); openDesk(at.mode, at.step); });
   el.phraseBack.addEventListener('click', () => history.back());
 
   el.modes.addEventListener('click', (event) => {
@@ -751,7 +787,7 @@ export function mount(root, life) {
   }
 
 
-  if (MODES.includes(deskInAddress())) history.replaceState(null, '', location.pathname + location.search); // (every visit starts in the room)
+  if (deskInAddress().mode) history.replaceState(null, '', location.pathname + location.search); // (every visit starts in the room)
   if (roomId) refresh();
   else fail('That room link doesn’t look right.');
 }

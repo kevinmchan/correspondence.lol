@@ -202,7 +202,7 @@ async function states() {
     { name: 'a room, the chat in the other world', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES.slice(0, 2), messages: TALK }), ready: '.chat-log li',
       then: async (page) => { await page.locator('.screen-room > header #worlds').click(); await page.waitForSelector('.screen-room[data-world="serious"]:not([data-passage])', { timeout: 8000 }); await page.locator('.screen-room > main #chat').scrollIntoViewIfNeeded(); }, settle: '.screen-room[data-world="serious"]' },
     { name: 'a room, writing a pass phrase', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
-      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); }, settle: '#tokens .word' },
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#desk-next').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); }, settle: '#tokens .word' },
     // The quiet room (room/room.css): what is yours to play lies nearest and lit; the table is tidied with one bin.
     { name: 'a room, one game yours to play among the rest', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: [GAMES[3], GAMES[0], GAMES[4], listed({ mode: 'phrase', size: 7, phrase_by: 0 })], messages: TALK }), ready: '#games li[data-state="go"]' },
     // The shelf: each game a wide card, the whole of it the way in. Only the first waiting on you is lit and breathes; the
@@ -212,28 +212,40 @@ async function states() {
     { name: 'a room, a game on the shelf pressed', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: SEVERAL }), ready: '#games li[data-lit]',
       then: async (page) => { const box = await page.locator('#games li a.game').first().boundingBox(); await page.mouse.move(box.x + box.width * 0.45, box.y + box.height / 2); await page.mouse.down(); },
       settle: '#games li[data-lit][data-pressed]' },
-    // A tile goes, with one tap, to its desk: the board it will be played on, drawn ahead, a die to draw another, and the play mark.
+    // A tile goes, with one tap, to its desk, the same two steps for every kind of game: how it is played, and then the board
+    // it will be played on, drawn ahead, with the way to draw another, and the play mark.
     { name: 'a room, at its desk for a game together', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
-      then: (page) => page.locator('#modes [data-mode="coop"]').click(), settle: '#compose:not([hidden]) #preview-board svg' },
+      then: (page) => page.locator('#modes [data-mode="coop"]').click(), settle: '#desk-how:not([hidden]) .mode-cards li' },
+    { name: 'a room, at its desk for a time trial, how it is played', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: (page) => page.locator('#modes [data-mode="trial"]').click(), settle: '#desk-how:not([hidden]) .mode-cards li' },
+    { name: 'a room, at its desk for a pass phrase, how it is played', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: (page) => page.locator('#modes [data-mode="phrase"]').click(), settle: '#desk-how:not([hidden]) .mode-cards li' },
+    { name: 'a room, at its desk for a game together, the board', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#modes [data-mode="coop"]').click(); await page.locator('#desk-next').click(); }, settle: '#desk-board:not([hidden]) #preview-board svg' },
     { name: 'a room, at its desk for a time trial, the biggest board drawn', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
       then: async (page) => { // (the die thrown until the biggest board is drawn)
         await page.locator('#modes [data-mode="trial"]').click();
+        await page.locator('#desk-next').click();
         for (let i = 0; i < 80 && (await page.locator('#preview-board').getAttribute('data-size')) !== '9'; i++) await page.locator('#redraw').click();
       }, settle: '#compose:not([hidden]) #preview-board[data-size="9"] svg' },
     { name: 'a room, at its desk, the board drawn again', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
-      then: async (page) => { await page.locator('#modes [data-mode="coop"]').click(); await page.locator('#redraw').click(); }, settle: '#compose:not([hidden]) #preview-board svg' },
+      then: async (page) => { await page.locator('#modes [data-mode="coop"]').click(); await page.locator('#desk-next').click(); await page.locator('#redraw').click(); }, settle: '#compose:not([hidden]) #preview-board svg' },
     { name: 'a room, tidying the table', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li',
       then: (page) => page.locator('#tidy').click(), settle: '.table.tidy' },
-    // (with no phrase written, a phrase is picked at random: what it asks, the box, and the board drawn ahead)
+    // (with no phrase written, a phrase is picked at random: what it asks, the box, the die lit, and the board drawn ahead;
+    // and a phrase written, then the die thrown: the box emptied for one picked at random)
     { name: 'a room, writing a pass phrase, left empty for a random one', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
-      then: (page) => page.locator('#modes [data-mode="phrase"]').click(), settle: '#compose:not([hidden]) #preview-board svg' },
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#desk-next').click(); }, settle: '#random-phrase[aria-pressed="true"]' },
+    { name: 'a room, writing a pass phrase, the die thrown for a random one', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#desk-next').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); await page.locator('#random-phrase').click(); },
+      settle: '#random-phrase[aria-pressed="true"]' },
     // What went wrong (here: nobody at the server) is a short line of its words beside what was tried, for as long as it
     // stands, and what was tried shakes as they come; what was asked in a sheet is tried there, and the sheet shakes and
     // has the words in it.
     { name: 'a room, a game that could not be started', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
-      then: async (page) => { await page.locator('#modes [data-mode="trial"]').click(); await page.locator('#phrase-form .start-phrase').click(); }, settle: '#phrase-error:not(:empty)' },
+      then: async (page) => { await page.locator('#modes [data-mode="trial"]').click(); await page.locator('#desk-next').click(); await page.locator('#phrase-form .start-phrase').click(); }, settle: '#phrase-error:not(:empty)' },
     { name: 'a room, at its desk, a game that could not be started', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
-      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); await page.locator('#phrase-form .start-phrase').click(); },
+      then: async (page) => { await page.locator('#modes [data-mode="phrase"]').click(); await page.locator('#desk-next').click(); await page.locator('#phrase-text').fill('meet me at the old post office'); await page.locator('#phrase-form .start-phrase').click(); },
       settle: '#phrase-error:not(:empty)' },
     { name: 'a room, asked whether to put a game away (the board, not its name)', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
       then: async (page) => { await page.locator('#tidy').click(); await page.locator('#games .delete').first().click(); }, settle: 'dialog.ask[open] .picture svg' },

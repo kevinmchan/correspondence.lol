@@ -1745,10 +1745,15 @@ async function main() {
       assert.equal(await title.textContent(), 'Book club');
       await page.evaluate(() => document.activeElement.blur());
       await again('Ada');
-      // a tile: one tap goes to its desk, which starts nothing and tells nobody; there the board it will be played on is
-      // drawn ahead, and the die draws another; Back is the way to the room again
+      // a tile: one tap goes to its desk, which starts nothing and tells nobody. Its first step is how the game is
+      // played, a few cards; the way on is the board it will be played on, drawn ahead, and the way to draw another.
+      // Back goes back a step, and from the first, to the room.
       await page.locator('#modes [data-mode="coop"]').click();
-      await page.waitForSelector('#compose:not([hidden]) #preview-board svg');
+      await page.waitForSelector('#desk-how:not([hidden]) .mode-cards li');
+      assert.equal(await page.locator('#desk-how .mode-cards li').count(), 3, 'how a game together is played, on three cards');
+      assert.equal(await page.locator('#desk-board').isVisible(), false, 'and the board not yet');
+      await page.locator('#desk-next').click();
+      await page.waitForSelector('#desk-board:not([hidden]) #preview-board svg');
       await sleep(400);
       assert.equal(asked.includes('postmarks_start'), false, 'one tap started a game');
       assert.equal(await page.locator('#phrase-ask').isVisible(), false, 'a game together asks for no message');
@@ -1757,6 +1762,8 @@ async function main() {
       await page.locator('#redraw').click();
       assert.notEqual(await drawn(), first, 'the die draws another board');
       assert.equal(asked.includes('postmarks_start'), false, 'and starts nothing');
+      await page.locator('#phrase-back').click();
+      await page.waitForSelector('#desk-how:not([hidden]) .mode-cards li');
       await page.locator('#phrase-back').click();
       await page.waitForSelector('.screen-room > main #room:not([hidden])');
       // (what is shaken, from here on)
@@ -1790,7 +1797,8 @@ async function main() {
       await presses();
       assert.deepEqual(await lies(page.locator('#modes')), tiles, 'back in the room, the tiles are where they were');
       await page.locator('#modes [data-mode="trial"]').click();
-      await page.waitForSelector('#compose:not([hidden]) #preview-board svg');
+      await page.locator('#desk-next').click();
+      await page.waitForSelector('#desk-board:not([hidden]) #preview-board svg');
       await presses();
       const go = page.locator('#phrase-form .start-phrase');
       const goAt = await lies(go);
@@ -1813,6 +1821,7 @@ async function main() {
       assert.deepEqual(await presses(true), [], 'and nothing has come to press');
       await page.locator('#redraw').click();
       assert.equal(await line1.textContent(), '', 'another board drawn, it is not still said');
+      await page.locator('#phrase-back').click();
       await page.locator('#phrase-back').click();
       await page.waitForSelector('.screen-room > main #room:not([hidden])');
       // renaming the room, refused: the name is back as it was, and shakes, and the words lie under it, over the top wall
@@ -1910,7 +1919,9 @@ async function main() {
       // at the desk for a pass phrase: what it asks, in words; the board drawn ahead, at the size the message needs, and
       // drawn again by the die; the play mark starts it with one tap, the box left empty for a random phrase
       await page.locator('#modes [data-mode="phrase"]').click();
-      await page.waitForSelector('#compose:not([hidden]) #preview-board svg');
+      await page.waitForSelector('#desk-how:not([hidden]) .mode-cards li');
+      await page.locator('#desk-next').click();
+      await page.waitForSelector('#desk-board:not([hidden]) #preview-board svg');
       assert.equal((await page.locator('#phrase-ask').textContent()).trim(), 'What message would you like to deliver?');
       assert.equal(await shown(page.locator('#phrase-ask')), true, 'and it is on the screen');
       const start = page.locator('#phrase-form .start-phrase');
@@ -1924,7 +1935,14 @@ async function main() {
       await page.locator('#redraw').click();
       assert.notEqual(await page.locator('#preview-board svg').evaluate((svg) => svg.outerHTML), before, 'the die draws another');
       assert.equal(starts(), begun, 'and starts nothing');
-      await page.locator('#phrase-text').fill('');
+      // the die beside the box: lit while the box is empty, which is when a phrase picked at random is used; thrown with
+      // a phrase written, it empties the box for one
+      assert.equal(await page.locator('#random-phrase').getAttribute('aria-pressed'), 'false', 'a message written: the die is not lit');
+      await page.locator('#random-phrase').click();
+      assert.equal(await page.locator('#phrase-text').inputValue(), '', 'thrown, the box is emptied');
+      assert.equal(await page.locator('#random-phrase').getAttribute('aria-pressed'), 'true', 'and the die is lit');
+      assert.ok(['5', '6', '7'].includes(await sized()), 'a random phrase: one of the smaller boards');
+      assert.equal(starts(), begun, 'and nothing has started');
       const desk = await lies(start);
       await start.click();
       await page.waitForSelector('#phrase-error:not(:empty)');
