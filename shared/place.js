@@ -173,6 +173,20 @@ function posts(size, rand) {
   return Array.from({ length: size }, (_, i) => (i * 2 + 1) % size);
 }
 
+// A board as it will be played, drawn ahead at the desk where a game is set
+// up: its own districts, in their colours, and nothing of where the posts are.
+export function boardPreview(size, regions) {
+  const holder = document.createElement('span');
+  holder.className = 'mini';
+  holder.setAttribute('aria-hidden', 'true');
+  const svg = draw('svg', { viewBox: `0 0 ${size} ${size}` });
+  regions.forEach((district, cell) => {
+    svg.append(draw('rect', { x: (cell % size) + 0.06, y: Math.floor(cell / size) + 0.06, width: 0.88, height: 0.88, rx: 0.2, class: `d${district}` }));
+  });
+  holder.append(svg);
+  return holder;
+}
+
 // A game as it lies on the room's table: its board, in the game's own district
 // colours, with the posts found so far on it. `state` is where it stands for
 // whoever is looking: 'go' (theirs to play), 'wait', 'won' or 'lost'.

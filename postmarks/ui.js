@@ -8,7 +8,7 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
-import { openHowTo } from './howto.js';
+import { openHowTo, openTogether } from './howto.js';
 import { COLOUR_NAMES, findHint } from './hint.js';
 import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
@@ -479,18 +479,22 @@ export function mount(root, life) {
     return new Promise((done) => setTimeout(done, 650));
   }
   // `newly`: the squares just opened as posts, as buttons; `quiet`: a board just put on screen.
+  // In a room: a board played together earns for every post found on it, by anyone, and for its finish; a time trial
+  // or a pass phrase, for your own run. Not a phrase's author's test run, which counts for nothing.
+  const earning = () => Boolean(game) && game.status !== 'waiting' && !(online && (online.practice || online.author === online.you));
   function tallyEnergy(newly, quiet) {
-    el.energy.hidden = Boolean(online);
-    el.turn.hidden = !online; // (playing alone, the meter is in its place)
-    if (online || !game) return;
-    const board = `${game.size}:${game.seed}`;
-    const now = played(energy, { size: game.size, seed: game.seed, status: game.status, found: lettersFound(game) });
+    el.energy.hidden = !earning();
+    el.turn.hidden = !online; // (playing alone, the meter is in its place; in a room, beside the words of the turn)
+    if (!earning()) return;
+    const seed = online ? online.id : game.seed;
+    const board = `${game.size}:${seed}`;
+    const now = played(energy, { size: game.size, seed, status: game.status, found: lettersFound(game) });
     if (now.gained) {
       energy = now.state;
       save(ENERGY_KEY, energy);
     }
     const count = held(energy);
-    const fill = earnedOn(energy, game).energy / most(game.size);
+    const fill = earnedOn(energy, { size: game.size, seed }).energy / most(game.size);
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
@@ -499,7 +503,7 @@ export function mount(root, life) {
       return;
     }
     const before = count - now.gained;
-    const postsFill = (earnedOn(energy, game).energy - (now.won ? finish(game.size) : 0)) / most(game.size);
+    const postsFill = (earnedOn(energy, { size: game.size, seed }).energy - (now.won ? finish(game.size) : 0)) / most(game.size);
     const sources = newly.length ? newly : [...el.board.querySelectorAll('.cell[data-state="letter"]')].slice(-now.posts);
     landing = landing.then(async () => {
       if (now.posts) {
@@ -907,7 +911,7 @@ export function mount(root, life) {
         }
         // the board has its moment first; and playing alone, its energy has landed on the meter
         const moment = new Promise((done) => setTimeout(done, settle + (letter ? 2600 : 1700)));
-        Promise.all([moment, online ? null : landing.then(() => new Promise((done) => setTimeout(done, 500)))]).then(() => { if (!life.over) finale(); });
+        Promise.all([moment, landing.then(() => new Promise((done) => setTimeout(done, 500)))]).then(() => { if (!life.over) finale(); });
       } else if (!quiet && seen.status === 'playing' && game.status === 'lost') {
         sfx('lose', { delay: 450 });
         setTimeout(finale, 1900);
@@ -1366,7 +1370,9 @@ export function mount(root, life) {
       if (load(HOWTO_KEY) === online.id) return;
       save(HOWTO_KEY, online.id);
     }
-    if (game.status === 'playing') openHowTo(giveFeedback);
+    if (game.status !== 'playing') return;
+    if (online?.mode === 'coop') openTogether(); // (a board for the whole room: what is particular to that)
+    else openHowTo(giveFeedback);
   }
 
   const giveFeedback = () => openFeedback(about());

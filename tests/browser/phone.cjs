@@ -155,7 +155,7 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
       return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${classes}${label ? ` "${label}"` : ''}`;
     };
     const seen = (el) => {
-      if (el.closest('template, .screen.leaving') || (skip && el.closest(skip))) return false;
+      if (el.closest('template, .screen.leaving, [inert]') || (skip && el.closest(skip))) return false; // (inert: out of reach, as under a sheet)
       const box = el.getBoundingClientRect();
       if (box.width < 1 || box.height < 1) return false;
       for (let up = el; up; up = up.parentElement) {
