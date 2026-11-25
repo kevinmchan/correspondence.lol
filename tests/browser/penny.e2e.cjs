@@ -2254,9 +2254,10 @@ async function main() {
         const box = await page.locator('#games li').nth(n).boundingBox();
         return [box.x + box.width * across, box.y + box.height / 2];
       };
-      // (a finger put down on a card: once nothing else lies over that point, such as a sheet still going away, which
-      // on a page under load can stand a while after it is closed)
+      // (a finger put down on a card: on the screen, where nothing else lies over that point; with the phone's own
+      // fonts the page can be long enough that the sheet, going, leaves it scrolled from where it was)
       const onCard = async (n, across) => {
+        await page.locator('#games li').nth(n).scrollIntoViewIfNeeded(); // (out of the window, a point is on nothing)
         const at = await middle(n, across);
         await page.waitForFunction(([x, y, i]) => document.elementFromPoint(x, y)?.closest('#games li') === document.querySelectorAll('#games li')[i], [...at, n], { timeout: 5000 });
         return at;
