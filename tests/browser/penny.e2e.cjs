@@ -1989,9 +1989,13 @@ async function main() {
       }),
       // what a screen reader is told of the room (but for whether the portal is pressed, which pressing it changes, and
       // what is typed in the message field, which the checks type)
-      hear: async () => (await page.locator('.screen-room').ariaSnapshot())
-        .replace(/(button "The other world")(?: \[pressed\])?/, '$1')
-        .replace(/( *)- textbox "Message"[^\n]*\n(?:\1 +[^\n]*\n)*/, (all, indent) => `${indent}- textbox "Message"\n`),
+      // (nor the night's hidden mark, put down on its own clock: penny/tags.js)
+      hear: async () => {
+        const marks = await page.evaluate(() => [...document.querySelectorAll('.screen-room .tag-hidden')].map((mark) => `- button "${mark.getAttribute('aria-label')}"`));
+        return (await page.locator('.screen-room').ariaSnapshot()).split('\n').filter((line) => !marks.some((mark) => line.trimStart().startsWith(mark))).join('\n')
+          .replace(/(button "The other world")(?: \[pressed\])?/, '$1')
+          .replace(/( *)- textbox "Message"[^\n]*\n(?:\1 +[^\n]*\n)*/, (all, indent) => `${indent}- textbox "Message"\n`);
+      },
       live: () => page.evaluate(() => [...document.querySelectorAll('.screen-room [aria-live], .screen-room [role="log"], .screen-room [role="alert"], .screen-room [role="status"]')].filter((one) => !one.closest('[aria-hidden="true"]')).length),
       // every change of world from now on, with when it was (and which way through the portal anybody was going)
       watch: () => page.evaluate(() => {
@@ -2018,6 +2022,9 @@ async function main() {
       // where everything that can be pressed, typed in or scrolled is on the page (not in the copy of it)
       boxes: () => page.evaluate(() => [...document.querySelectorAll('.screen-room > :is(header, main)')]
         .flatMap((part) => [...part.querySelectorAll('a[href], button, input, textarea, select, [tabindex], .chat-log')])
+        // (not the night's hidden mark: penny/tags.js puts it down on its own clock, once a screen has settled and
+        // again after a scroll, wherever there is room, and holds it to the phone's rules in its own checks)
+        .filter((el) => !el.closest('.tag-hidden'))
         .filter((el) => el.getClientRects().length)
         .map((el) => {
           const r = el.getBoundingClientRect();
