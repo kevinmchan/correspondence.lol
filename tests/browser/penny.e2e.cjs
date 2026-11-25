@@ -1161,6 +1161,13 @@ async function main() {
       const sign = await box(page.locator('#room-name'));
       const seats = await box(page.locator('#members'));
       assert.ok(slip.top >= sign.bottom && slip.top - sign.bottom < 12 && slip.bottom <= seats.top && Math.abs((slip.left + slip.right) / 2 - (sign.left + sign.right) / 2) < 2, `the words lie just under the name, above the people (${JSON.stringify([slip, sign, seats])})`);
+      // (whatever face the phone sets them in: a narrower phone, or wider letters, wrap them onto a second line, and they
+      // must still lie above the people)
+      const wide = await page.addStyleTag({ content: '#name-error { letter-spacing: 0.14em; }' });
+      const wrapped = await box(page.locator('#name-error'));
+      assert.ok(wrapped.height > slip.height * 1.4, `with wider letters, the words take two lines (${JSON.stringify([slip, wrapped])})`);
+      assert.ok(wrapped.top === slip.top && wrapped.bottom <= seats.top, `and still lie above the people (${JSON.stringify([wrapped, seats])})`);
+      await wide.evaluate((style) => style.remove());
       await page.locator('#room-name button.rename').click();
       assert.equal(await page.locator('#name-error').textContent(), '', 'tried again, it is not still said');
       await page.locator('#room-name input').press('Escape');

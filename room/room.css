@@ -301,10 +301,11 @@ h1.sign form.rename input { width: min(19rem, 72vw); min-height: 2.75rem; }
 @keyframes oops-words { from { opacity: 0; } to { opacity: 1; } }
 /* ...under the name over the building (room.js editName): a slip hung from the name over the building's top wall,
    above the people, and nothing moves for it: neither the name, nor anything in the room (a tile tapped as the name
-   was left would otherwise be somewhere else for its second tap) */
+   was left would otherwise be somewhere else for its second tap). Two lines of it fit there, whatever face the phone
+   sets it in: a narrow phone, or wider letters, wrap it, and it must still not lie over the people */
 .plot > #name-error.oops {
   position: absolute; z-index: 2; top: -0.7rem; left: 50%; translate: -50% 0; width: max-content; max-width: min(calc(100% - 0.5rem), 24rem);
-  margin: 0; padding: 0.45rem 0.7rem; font-size: 0.875rem; box-shadow: var(--soft-1);
+  margin: 0; padding: 0.3rem 0.7rem; font-size: 0.8125rem; line-height: 1.2; box-shadow: var(--soft-1);
 }
 /* ...where a room was looked for and is not there (a link that leads nowhere): in the middle of the empty plot */
 .plot > .message.bad.oops { margin: 2.4rem auto 0.7rem; }
