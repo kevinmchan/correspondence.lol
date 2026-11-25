@@ -1,3 +1,4 @@
+import { wearing } from '/shared/meadow.js';
 import { ask, tell } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
@@ -65,6 +66,8 @@ export function mount(root, life) {
 
   // The building keeps one of the game's colours, by its id: its walls here, its roof on the home page.
   if (roomId) root.classList.add(roomClass(roomId));
+  // The meadow, once the first bar of energy has earned it, unless it has been taken off (shared/meadow.js, room/meadow.css).
+  root.classList.toggle('meadow', wearing());
   // A portal in the top bar, for a member: the way into the room's other world, and back (room/worlds.js).
   const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));

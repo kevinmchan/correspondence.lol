@@ -8,6 +8,8 @@ import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { roof, roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
+import { BAR, ENERGY_KEY, held, read as readEnergy } from '/shared/energy.js';
+import { earned as meadowOwned, wear, wearing } from '/shared/meadow.js';
 import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
 import { playMail, remembered } from '/penny/mail.js';
@@ -53,6 +55,31 @@ export function mount(root, life) {
   // The lobby: big tiles. Opening and joining a room each have a screen of their own (rooms.js).
   const menu = $('menu');
   const play = $('play'); // the one wide button: a board of your own, at once
+  // Under it, energy: one bar for everything earned in every game, and the meadow at its end (shared/meadow.js).
+  const energyRow = $('home-energy');
+  const meadowMark = $('meadow');
+  function showEnergy() {
+    const state = readEnergy(load(ENERGY_KEY));
+    const mine = meadowOwned();
+    const fill = (state.earned % BAR) / BAR;
+    const bar = $('home-bar');
+    bar.querySelector('.bar i').style.setProperty('--fill', String(fill));
+    bar.classList.toggle('empty', fill === 0);
+    bar.setAttribute('aria-label', mine ? `Energy ${held(state)}` : `Energy ${held(state)}; the meadow at ${BAR}`);
+    meadowMark.disabled = !mine;
+    meadowMark.setAttribute('aria-pressed', String(mine && wearing()));
+    meadowMark.setAttribute('aria-label', mine ? 'The meadow, in rooms' : 'The meadow, when the bar is full');
+  }
+  meadowMark.addEventListener('click', () => {
+    if (meadowMark.disabled) return;
+    wear(!wearing());
+    showEnergy();
+    if (wearing()) {
+      meadowMark.classList.remove('bloom');
+      void meadowMark.offsetWidth;
+      meadowMark.classList.add('bloom');
+    }
+  });
   const look = () => savedLook() ?? { avatar: '🙂', color: 0 };
   // Sent here from a room's join screen to sync an account first: go back after.
   const next = new URLSearchParams(location.search).get('next');
@@ -66,6 +93,8 @@ export function mount(root, life) {
     me.card.hidden = none;
     menu.hidden = none;
     play.hidden = none;
+    energyRow.hidden = none;
+    if (!none) showEnergy();
     showTabs();
     if (none) {
       rooms.hidden = true;

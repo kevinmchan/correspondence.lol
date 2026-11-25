@@ -9,9 +9,9 @@ A static, no-build progressive web app served from the repository root at
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
-| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`) |
+| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
-| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`) |
+| `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
 | `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
@@ -238,18 +238,40 @@ hints.** Dot is a friend met on the way, not the one being looked for.
 **The solo campaign runs on energy, earned by work (the owner, 25 November
 2026).** Penny earns energy by completing work, and the work is how Penny meets
 new characters. What the energy is spent on is not decided yet. How it is
-earned and shown has begun (the owner, 25 November 2026): in a game played
-alone, every post found is energy at once, and finishing the board entirely
-earns as much again (`shared/energy.js`). Where the words of the turn were, a
-bar for the board (how much of all it can earn has been earned), with a
-current running through it and a spark flickering at the end it has reached;
-no mark beside it and no number (the owner, 25 November 2026: "no electric
-icon, just an animated, electrified bar"; and then no count). What is held in
-all is said only to screen readers. A post found sends a spark from itself to
-the end of the bar, which throws off sparkles as it lands, and the bar takes
-it in; a
-board finished sends a shower from every post on it, and the sheet at the end
-waits until it has landed. A bigger board earns more; a faster one no more;
+earned and shown has begun (the owner, 25 November 2026): in every game,
+alone or in a room, every post found is energy at once, and finishing the board
+entirely earns as much again (`shared/energy.js`). **The bar is a stat of the
+whole app, not of one game** (the owner, 25 November 2026): one bar for
+everything earned, which about twenty games fill (`BAR`, 240: boards are drawn
+at sizes 5 to 9, so a game finished earns 14 on average). It is under the play
+button on the home page, and in a game where the words of the turn were (in a
+room, beside them), with a current running through it and a spark flickering
+at the end it has reached; no mark on it and no number (the owner: "no
+electric icon, just an animated, electrified bar"; and then no count). What is
+held in all is said only to screen readers. A post found sends a spark from
+itself to the end of the bar, which throws off sparkles as it lands, and the
+bar takes it in; a board finished sends a shower from every post on it, and
+the sheet at the end waits until it has landed.
+
+**The meadow is what the first bar is for** (the owner, 25 November 2026:
+"while we figure out and build out the game play dynamics, let the meadow-y
+skin be the reward"). At the end of the bar is a round glimpse of it, sun on
+grass and a daisy, grey and faint until the bar is full. The moment it fills,
+the bar flares, the glimpse blooms into colour, and the bar begins again from
+what was left over. From then on every room wears the meadow
+(`shared/meadow.js`, `room/meadow.css`): grass in the map's squares with
+flowers in some of them, a hedge in flower for walls, the table a picnic
+blanket in gingham of the room's colour, the chat a patch of clover with a
+fringe of daisies, the tiles that start a game stepping stones, the sun out in
+a corner and two tall flowers swaying in the other, the shadows of clouds going
+over and a butterfly wandering about (in the dark: the moon asleep, fireflies,
+and a firefly for the butterfly). It is paint only, as the drama is: nothing
+that can be pressed moves or changes size, and the drama through the portal is
+the drama still. On the home page the glimpse is then a toggle (pressed, with a
+soft ring of light): it takes the meadow off and puts it back on, and the
+choice is kept on the device. What later bars are for is not decided.
+
+A bigger board earns more; a faster one no more;
 hints are free; a board played again earns only for what it has not earned
 before. It is held to two things unless the owner says
 otherwise: it is earned by care and never bought, waited out or nagged for

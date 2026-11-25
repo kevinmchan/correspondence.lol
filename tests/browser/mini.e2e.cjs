@@ -73,6 +73,7 @@ const SEVERAL = [
   listed({ last_player: 1, found: 2 }), listed({ mode: 'trial', size: 7, mine: 'playing', finished: 1 }), listed({ mode: 'phrase', size: 6, phrase_by: 1 }),
   listed({ size: 8, last_player: 2, found: 4, hearts: 1 }), listed({ last_player: 0, size: 6 }), listed({ mode: 'trial', size: 9, mine: 'won', finished: 3 }),
 ].map((game, i) => ({ ...game, id: `${String(i + 1).repeat(8)}-5555-4555-8555-555555555555` }));
+const ENERGY = (earned) => ({ 'correspondence:energy:v1': { earned, spent: 0, boards: [] } }); // energy earned in all, in other games
 const CROWD = [...PEOPLE, { name: 'Bartholomew', avatar: '🐙', color: 5, left: false }, { name: 'Lin', avatar: '🌵', color: 3, left: false }, { name: 'Wilhelmina Longname', avatar: '🦉', color: 6, left: false }];
 // A dozen messages from two people, short and long, with what the room itself says in between (rooms.room_view).
 const said = (id, seat, body, game = null) => ({ id, seat, body, at: new Date(Date.UTC(2026, 10, 24, 18, id)).toISOString(), game_kind: game && 'postmarks', game_id: game });
@@ -180,6 +181,11 @@ async function states() {
         const below = await page.evaluate(() => document.querySelector('.feed-item').getBoundingClientRect().bottom - window.innerHeight);
         if (below > 0) throw new Error(`the first thing waiting is ${Math.ceil(below)}px below the first screen`);
       } },
+    // Energy, everything earned in every game: one bar under the play button, and the meadow at its end (shared/meadow.js).
+    { name: 'home, energy part way to the meadow', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(130) }, ready: '#home-energy:not([hidden]) #meadow[disabled]' },
+    { name: 'home, the meadow earned and worn', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(300) }, ready: '#meadow[aria-pressed="true"]:not([disabled])' },
+    { name: 'home, the meadow taken off', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(300) }, ready: '#meadow[aria-pressed="true"]',
+      then: (page) => page.locator('#meadow').click(), settle: '#meadow[aria-pressed="false"]:not([disabled])' },
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
@@ -261,6 +267,13 @@ async function states() {
     { name: 'a room, that could not be left', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ games: GAMES }), ready: '#games li',
       then: async (page) => { await page.locator('#more').click(); await page.locator('#leave').click(); await page.locator('dialog.ask[open] button.yes').click(); },
       settle: 'dialog.ask[open] [role="alert"]:not(:empty)' },
+    // The meadow, worn by a room (room/meadow.css): paint only, behind everything.
+    { name: 'a room, in the meadow', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games li' },
+    { name: 'a room, in the meadow, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '.screen-room.meadow #games li' },
+    { name: 'a room, in the meadow, at its desk', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: room({ games: GAMES }), ready: '.screen-room.meadow #games li',
+      then: (page) => page.locator('#modes [data-mode="coop"]').click(), settle: '#desk-how:not([hidden]) .mode-cards li' },
+    { name: 'a room, in the meadow, through the portal to the drama', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: rooms(GAMES), ready: '.screen-room.meadow #games li',
+      then: (page) => page.locator('.screen-room > header #worlds').click(), settle: '.screen-room[data-world="serious"]:not([data-passage])' },
     { name: 'a room, a link that leads nowhere', screen: 'room', at: '/room/?id=not-a-room', storage: ACCOUNT, ready: '#room-error:not(:empty)' },
     { name: 'opening a room, it went wrong', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room',
       then: async (page) => { await page.locator('#room-name').fill('Tuesday club'); await page.locator('#create-room button[type="submit"]').click(); },
@@ -283,6 +296,7 @@ async function states() {
       small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
     // A board played together: the first time, what is particular to playing together, in place of how to play; and its
     // energy, a shorter bar beside the words of the turn.
+    { name: 'the game, energy, the meadow still to come', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 7, seed: 12, players: ['You'] }), 2), ...ENERGY(90) }, ready: '#energy:not([hidden]):not(.meadow)', whole: ['#board', '#tools', '#energy'] },
     { name: 'the game, together, what is particular to it', screen: 'game', at: `/postmarks/?game=${TOGETHER_ID}`, storage: ACCOUNT, server: together, ready: 'dialog.together[open]' },
     { name: 'the game, together, energy beside the turn', screen: 'game', at: `/postmarks/?game=${TOGETHER_ID}`, storage: { ...ACCOUNT, 'postmarks:howto:v1': TOGETHER_ID }, server: together, ready: '#energy:not([hidden])' },
     { name: 'the game, how to play', screen: 'game', at: '/postmarks/', ready: 'dialog.howto[open]' },

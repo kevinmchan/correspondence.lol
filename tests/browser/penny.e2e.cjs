@@ -2487,11 +2487,15 @@ async function main() {
     // hearts of a game won alone, the faces of one won together. (Neither ever
     // did. The rule for it could match nothing, and counted on a number the
     // hearts were never given.)
-    // Energy, playing alone (shared/energy.js): every post found is kept at once and fills the bar, a spark flying
-    // from the post to the end of the bar; no number is shown, and what is held is said to screen readers; finishing the board adds as much again; the same board played again adds
-    // nothing for what it has already earned.
-    check('energy: each post found fills the bar, and finishing the board fills the rest; no number on the screen', { storage: { 'postmarks:howto:v1': true, 'correspondence:energy:v1': { earned: 10, spent: 0, boards: [] } } }, async (page) => {
+    // Energy (shared/energy.js): every post found is kept at once and fills the bar, a spark flying from the post to
+    // the end of the bar; no number is shown, and what is held is said to screen readers; finishing the board adds as
+    // much again; the same board played again adds nothing for what it has already earned. The bar is everything
+    // earned, in every game (BAR, about twenty games); the first time it is full, the meadow at its end blooms in
+    // colour (shared/meadow.js), and the bar begins again from what was left over.
+    check('energy: each post found adds to one bar for every game, finishing adds more, and a full bar is the meadow; no number on the screen', { storage: { 'postmarks:howto:v1': true, 'correspondence:energy:v1': { earned: 232, spent: 0, boards: [] } } }, async (page) => {
       const { newGame } = await import('../../postmarks/game.js');
+      const { BAR } = await import('../../shared/energy.js');
+      assert.equal(BAR, 240, 'this check is written for a bar of 240');
       const game = newGame({ size: 5, seed: 4, players: ['You'] });
       await page.goto(`${origin}/`);
       await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
@@ -2499,33 +2503,78 @@ async function main() {
       await page.waitForSelector('#energy:not([hidden])');
       await page.evaluate(() => document.querySelector('dialog[open]')?.close());
       const reads = () => page.evaluate(() => ({
-        count: Number(document.querySelector('#energy').getAttribute('aria-label').replace(/\D/g, '')),
+        count: Number(document.querySelector('#energy').getAttribute('aria-label').match(/\d+/)[0]),
         fill: Number(document.querySelector('#energy .bar i').style.getPropertyValue('--fill')),
         kept: JSON.parse(localStorage.getItem('correspondence:energy:v1')).earned,
         sparks: document.querySelectorAll('.energy-spark').length,
+        meadow: document.querySelector('#energy').classList.contains('meadow'),
       }));
-      assert.deepEqual(await reads(), { count: 10, fill: 0, kept: 10, sparks: 0 }, 'what was earned before, and nothing yet on this board');
+      assert.deepEqual(await reads(), { count: 232, fill: 232 / 240, kept: 232, sparks: 0, meadow: false }, 'all that was earned before, in other games');
+      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 232; the meadow at 240');
       assert.equal(await page.locator('#turn').isVisible(), false, 'the bar is where the words of the turn were');
       assert.equal((await page.locator('#energy').innerText()).trim(), '', 'and nothing on it is written');
       const open = (row) => page.locator(`#board .cell[data-cell="${row * game.size + game.solution[row]}"]`).dblclick();
       await open(0);
       await page.waitForFunction(() => document.querySelector('.energy-spark'), null, { timeout: 2000 });
-      assert.equal((await reads()).kept, 11, 'kept at once, before the spark has landed');
-      await page.waitForFunction(() => document.querySelector('#energy').getAttribute('aria-label') === 'Energy 11' && !document.querySelector('.energy-spark'), null, { timeout: 4000 });
-      assert.equal((await reads()).fill, 0.1, 'one post of five: a tenth of all the board can earn');
+      assert.equal((await reads()).kept, 233, 'kept at once, before the spark has landed');
+      await page.waitForFunction(() => document.querySelector('#energy').getAttribute('aria-label').startsWith('Energy 233') && !document.querySelector('.energy-spark'), null, { timeout: 4000 });
+      assert.equal((await reads()).fill, 233 / 240, 'one post: one more on the bar');
       for (let row = 1; row < game.size; row++) { await open(row); await sleep(300); }
-      await page.waitForFunction(() => document.querySelector('#energy').getAttribute('aria-label') === 'Energy 20', null, { timeout: 12000 });
-      assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'five posts, and five more for finishing');
+      await page.waitForSelector('#energy .meadow-mark.bloom', { timeout: 12000 });
+      await page.waitForFunction(() => document.querySelector('#energy').getAttribute('aria-label') === 'Energy 242', null, { timeout: 12000 });
+      assert.deepEqual(await reads(), { count: 242, fill: 2 / 240, kept: 242, sparks: 0, meadow: true }, 'five posts and five for finishing: the bar filled, the meadow is in colour, and the bar begins again');
       await page.waitForSelector('dialog.finale[open]', { timeout: 6000 });
       // the same board again: nothing more
       await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
       await page.reload();
       await page.waitForSelector('#energy:not([hidden])');
       await page.evaluate(() => document.querySelector('dialog[open]')?.close());
-      assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'the board shows all it has earned');
+      assert.deepEqual(await reads(), { count: 242, fill: 2 / 240, kept: 242, sparks: 0, meadow: true }, 'the bar as it was left');
       await open(0);
       await sleep(1500);
-      assert.deepEqual(await reads(), { count: 20, fill: 1, kept: 20, sparks: 0 }, 'a post found again earns nothing');
+      assert.deepEqual(await reads(), { count: 242, fill: 2 / 240, kept: 242, sparks: 0, meadow: true }, 'a post found again earns nothing');
+    }),
+    // At home, under the play button, the same bar; the meadow at its end grey until it is earned, then a toggle that a
+    // room follows: worn from the moment it is earned, taken off and put back on, and kept on the device.
+    check('the meadow: grey at the end of the bar until it is earned; then worn by every room, and taken off and put back at home', { storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', 'correspondence:energy:v1': { earned: 100, spent: 0, boards: [] } } }, async (page) => {
+      const room = '11111111-1111-4111-8111-111111111111';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => (route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: cors })
+        : route.fulfill({ json: { id: room, name: 'Book club', code: 'K7M2QP', you: 0, members: ['Sam'], people: [{ name: 'Sam', avatar: '🦊', color: 1, left: false }], messages: [], games: [] }, headers: cors })));
+      await page.goto(`${origin}/`);
+      await page.waitForSelector('#home-energy:not([hidden])');
+      assert.equal(await page.locator('#meadow').isDisabled(), true, 'not yet earned');
+      assert.equal(await page.locator('#home-bar').getAttribute('aria-label'), 'Energy 100; the meadow at 240');
+      assert.equal(Number(await page.locator('#home-bar .bar i').evaluate((i) => i.style.getPropertyValue('--fill'))), 100 / 240);
+      assert.equal((await page.locator('#home-energy').innerText()).trim(), '', 'nothing written');
+      await page.goto(`${origin}/room/?id=${room}`);
+      await page.waitForSelector('#house:not([hidden])');
+      assert.equal(await page.locator('.screen-room').evaluate((r) => r.classList.contains('meadow')), false, 'a room as it always was');
+      const boxes = () => page.evaluate(() => [...document.querySelectorAll('.screen-room > :is(header, main) :is(button, a, input, textarea, h1, h2, .table, .rug, .seat)')]
+        .filter((one) => one.getClientRects().length).map((one) => { const r = one.getBoundingClientRect(); return `${one.id || one.className} ${r.x.toFixed(1)},${r.y.toFixed(1)} ${r.width.toFixed(1)}x${r.height.toFixed(1)}`; }));
+      await sleep(1200); // (the furniture settles as the room opens)
+      const plain = await boxes();
+      assert.ok(plain.length > 8, 'the room is all there to measure');
+      await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 250, spent: 0, boards: [] })));
+      await page.goto(`${origin}/room/?id=${room}`);
+      await page.waitForSelector('#house:not([hidden])');
+      assert.equal(await page.locator('.screen-room').evaluate((r) => r.classList.contains('meadow')), true, 'earned: the room wears the meadow');
+      assert.equal(await page.locator('.meadow-bits .sun').isVisible(), true, 'the sun is out');
+      await sleep(1200);
+      assert.deepEqual(await boxes(), plain, 'paint only: everything there is to press, and all that would move it, in the same place and the same size');
+      await page.goto(`${origin}/`);
+      await page.waitForSelector('#meadow[aria-pressed="true"]:not([disabled])');
+      assert.equal(Number(await page.locator('#home-bar .bar i').evaluate((i) => i.style.getPropertyValue('--fill'))), 10 / 240, 'and the bar begins again');
+      await page.locator('#meadow').click();
+      assert.equal(await page.locator('#meadow').getAttribute('aria-pressed'), 'false', 'taken off');
+      await page.goto(`${origin}/room/?id=${room}`);
+      await page.waitForSelector('#house:not([hidden])');
+      assert.equal(await page.locator('.screen-room').evaluate((r) => r.classList.contains('meadow')), false, 'and the room is as it was');
+      assert.equal(await page.locator('.meadow-bits').isVisible(), false, 'nothing of the meadow there');
+      await page.goto(`${origin}/`);
+      await page.locator('#meadow').click();
+      assert.equal(await page.evaluate(() => localStorage.getItem('correspondence:meadow:v1')), null, 'put back on');
     }),
     // A board played together in a room: the first time, what is particular to playing together, in place of how to play
     // (and only the first time); and energy for every post found on it, by anyone, kept for that board.
@@ -2551,14 +2600,14 @@ async function main() {
       assert.deepEqual((await page.locator('dialog.together .card p').allTextContents()).length, 3);
       await page.locator('dialog.together .start').click();
       assert.equal(await page.locator('#turn').isVisible(), true, 'the words of the turn stay');
-      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2', 'two posts found on the board, one of them by Ada');
+      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2; the meadow at 240', 'two posts found on the board, one of them by Ada');
       const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('correspondence:energy:v1')));
       assert.deepEqual(kept.boards, [{ b: `${6}:${'66666666-6666-4666-8666-666666666666'}`, p: 2, w: false }], 'kept for the room\'s board');
       await page.reload();
       await page.waitForSelector('#energy:not([hidden])');
       await sleep(800);
       assert.equal(await page.locator('dialog.together[open]').count(), 0, 'the sheet only the first time');
-      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2', 'and the same posts earn nothing again');
+      assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2; the meadow at 240', 'and the same posts earn nothing again');
     }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);
