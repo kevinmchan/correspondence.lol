@@ -46,7 +46,7 @@
 // station kept is a label; what is measured about a loop, the model, and the
 // test of whether the model can really tell are in jam/taste-model.js. The
 // reading asks the question the piece asks before it shows any of that, and
-// leaves it open (the doc "Penny's story", "The question Penny's Radio asks"): nothing on this
+// leaves it open (README, "The question Penny's Radio asks"): nothing on this
 // screen answers it.
 //
 // One thing of the experiment's is on the face of the set, without a word: a
@@ -1135,7 +1135,7 @@ export function mount(root, life) {
     el.meter.setAttribute('aria-label', `The furthest the stake has got: ${times(Math.max(now.best, 1))}, of the ×${NEEDED} that is significant`);
     // Its caption says what is measured, and never answers anything: no "yes", no "not yet", nothing that waits for a
     // result as if it must come, and nothing that counts down. Set the same however it stands: no state is given more
-    // weight than another (the doc "Penny's story", "The question Penny's Radio asks").
+    // weight than another (README, "The question Penny's Radio asks").
     el.meter.classList.toggle('done', now.significant);
     if (now.significant) { // (it may have got there before the experiment was started over: once reached, it stays so)
       const where = now.reachedAt ? `at choice ${now.reachedAt}` : now.reached?.pick ? `at choice ${now.reached.pick}, before it was started over` : 'before it was started over';

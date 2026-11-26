@@ -239,8 +239,8 @@ is, how a place says it, and the shape of the adventure. Read it before
 writing anything Penny is in, and write changes to the story there, not here;
 this README keeps how Penny's part of the app is built. A comment in the code
 that cites this README for "Penny", "How a place says it", "The question
-Penny's Radio asks" or the shape of "The adventure" means that part of the
-doc.
+Penny's Radio asks" (in the doc now "The question Liv Radio asks") or the
+shape of "The adventure" means that part of the doc.
 
 In one line, for when the doc cannot be reached: the story is about rejecting
 a scarcity mindset, as Penny, left behind by a world in a hurry, slowly finds
@@ -562,7 +562,7 @@ how fast it goes:
 
 Everything is drawn twice, once each side of the middle of the screen, as ink
 goes through a letter folded while it is wet. The room keeps to the rules in
-"How a place says it" (the doc "Penny's story"): the clock on the wall goes at the speed of your hand,
+"How a place says it": the clock on the wall goes at the speed of your hand,
 its hand red in a rush and pale at rest. Penny watches the finger, winces at
 a rush and warms to anything slow, and hums a note for a slow line now and
 then, higher the higher up the screen it is. The arrow keys draw too, at a
@@ -1307,7 +1307,7 @@ and a finger held near them warms them: they stray further, twinkle oftener
 and turn towards the colour of an ember for as long as it is there. The keys 1 to 5 are the five lights, and
 the space bar is each of them in turn.
 
-**How it is heard.** These are the two columns of "How a place says it" (the doc "Penny's story"), as
+**How it is heard.** These are the two columns of "How a place says it", as
 sound (`penny/chimes.js`).
 
 - **Up and down is pitch**, on the five notes the rest of the app keeps to,
