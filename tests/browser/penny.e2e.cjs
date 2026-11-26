@@ -3652,7 +3652,7 @@ async function main() {
       // them in another type: the tile changed height under a finger. A wider face than ours is put on them here, as
       // another phone's fonts might be; whatever the face, both worlds must wrap the words the same.
       const w = await worldsHelpers(page);
-      await page.addStyleTag({ content: '.screen-room .house :is(h2, .mode strong, .share .code) { font-size: 1.05rem; letter-spacing: 0.2em; } .screen-room .house { --type: monospace; }' });
+      await page.addStyleTag({ content: '.screen-room .house :is(h2, .mode strong, .share .code) { font-size: 1.05rem; letter-spacing: 0.2em; } .screen-room .house { --font-typewriter: monospace; }' });
       const calm = await w.boxes();
       await page.evaluate(() => document.querySelector('.screen-room > header #worlds').click());
       await page.waitForFunction(() => document.querySelector('.screen-room').dataset.world === 'serious', null, { timeout: 8000 });

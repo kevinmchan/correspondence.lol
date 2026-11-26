@@ -135,6 +135,32 @@ iPhone's screen gives, not Safari's own engine.
 A new screen, or a new state of one, gets a test screen in the suite in the
 same change that adds it.
 
+## Type
+
+Every word in the app is set from a few tokens at the top of `styles.css`
+(#136). **Use a step; don't add a size.** `tests/type.test.js` fails on a raw
+font, size, weight, line height or tracking anywhere else.
+
+| | Tokens |
+| --- | --- |
+| Faces | `--font-letter` (Georgia: what is said, written as a letter; the page's own face), `--font-text` (the system's sans: what the app itself says, its labels and buttons), `--font-mono` (codes to type in), `--font-typewriter` (the room's other world) |
+| Sizes | `--text-fine` 11, `--text-caption` 13, `--text-small` 15, `--text-body` 17, `--text-lead` 20, `--text-title` 24, `--text-large` 30, `--text-display` 38 (px at the phone's 16px rem) |
+| Weights | `--weight-regular` 400, `--weight-medium` 600, `--weight-bold` 700 |
+| Line heights | `--leading-none` 1 (one line in a box of its own), `--leading-tight` 1.2, `--leading-snug` 1.35, `--leading-loose` 1.5 (lines to read) |
+| Tracking | `--track-tight`, `--track-open`, `--track-label` (small capitals), `--track-wide`, `--track-widest` |
+
+- The steps go up by about a sixth at the small end, and by about a quarter at
+  the large. Eleven is the least the phone suite allows; every field is at
+  `--text-body`, as no field may be under 16px.
+- The same thing is the same step everywhere: every sheet's title is
+  `--text-lead`; a page's title (`h1`) grows with the screen between two steps,
+  with `clamp()`.
+- Sizes are in rem, so they follow the reader's own settings.
+- Type that is part of a drawing keeps its own value and is marked
+  `/* drawn */` just before it: an emoji in an avatar's circle, a glyph on a
+  button, a heart, the small boards, the *z*s of a sleeping cone, and Liv
+  Radio and its plinth, which are drawn in em and scale with the work.
+
 ## The control on pull requests
 
 Nothing goes into `main` without two things (`tests/pr-control.cjs`, run on

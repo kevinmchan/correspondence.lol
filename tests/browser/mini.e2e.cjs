@@ -244,6 +244,9 @@ async function states() {
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
     // (each room is a little shop, its name on the board over its window, two lines at most; in the dark, an evening street)
     { name: 'home, the lobby, a street of rooms in the dark', screen: 'home', at: '/', storage: { ...STREET, 'correspondence:theme:v1': 'dark' }, ready: '#rooms .street li' },
+    // (the type is set in rem from one scale, so that it follows the reader's own size: here a step larger than the phone's 16px, #136)
+    { name: 'home, the lobby, its words a size larger, as a reader may set them', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li',
+      init: () => { addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '18px'; }); } },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
     { name: 'a room, empty', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room(), ready: '#no-games:not([hidden])' },
     { name: 'a room, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li' },

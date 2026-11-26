@@ -48,7 +48,7 @@
 }
 @keyframes pad-hit { 0% { transform: scale(1); } 35% { transform: scale(1.16); } 100% { transform: scale(1); } }
 
-.jam-hint { margin: 0; min-height: 1.3rem; font-family: system-ui, sans-serif; font-size: 0.9375rem; color: var(--muted); }
+.jam-hint { margin: 0; min-height: 1.3rem; font-family: var(--font-text); font-size: var(--text-small); color: var(--muted); }
 
 /* --- Layers: one instrument each ----------------------------------------------------- */
 .jam-layers { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
@@ -62,8 +62,8 @@
 .layer:active { transform: translateY(0.16rem); box-shadow: 0 0.04rem 0 var(--lip); }
 .layer .tile { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border-radius: 26%; background: var(--c); color: #22303c; box-shadow: inset 0 -0.2rem 0 rgb(0 0 0 / 0.16); opacity: 0.55; transition: opacity 120ms ease; }
 .layer .tile svg { width: 62%; height: 62%; }
-.layer .name { font-family: system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
-.layer .count { position: absolute; top: 0.3rem; right: 0.4rem; font-family: system-ui, sans-serif; font-size: 0.6875rem; font-weight: 700; color: var(--muted); }
+.layer .name { font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-medium); color: var(--muted); }
+.layer .count { position: absolute; top: 0.3rem; right: 0.4rem; font-family: var(--font-text); font-size: var(--text-fine); font-weight: var(--weight-bold); color: var(--muted); }
 .layer[aria-checked="true"] { box-shadow: 0 0.2rem 0 var(--c), inset 0 0 0 2px var(--c); }
 .layer[aria-checked="true"] .tile { opacity: 1; }
 .layer[aria-checked="true"] .name { color: var(--ink); }
@@ -72,11 +72,11 @@
 .jam-controls { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0.6rem; }
 .jam-controls .side { display: flex; align-items: center; gap: 0.5rem; }
 .jam-controls .side:last-child { justify-content: flex-end; }
-.jam-controls button.quiet { height: 2.9rem; min-width: 2.9rem; padding: 0 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.9375rem; }
+.jam-controls button.quiet { height: 2.9rem; min-width: 2.9rem; padding: 0 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: var(--text-small); }
 .jam-controls button.quiet svg { width: 1.2rem; height: 1.2rem; }
 /* (the tempo is kept narrow, its unit under its number, so that the two sides weigh the same and the dice sit dead centre) */
-.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 2.9rem; padding: 0 0.35rem; flex-direction: column; gap: 0; line-height: 1.05; }
-.jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
+.jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 2.9rem; padding: 0 0.35rem; flex-direction: column; gap: 0; line-height: var(--leading-none); }
+.jam-controls #jam-tempo::after { content: "bpm"; font-weight: var(--weight-regular); font-size: var(--text-fine); color: var(--muted); }
 /* Play, lit: for a beat that has just arrived by a link, until it is played (jam.js). A ring in the
    accent, and a soft light round it that comes and goes slowly; with reduced motion, the ring alone. */
 .jam-controls #jam-play.lit { color: var(--accent); box-shadow: 0 0.2rem 0 var(--accent), inset 0 0 0 2px var(--accent), 0 0 0 0.3rem color-mix(in srgb, var(--accent) 22%, transparent); }
@@ -149,11 +149,11 @@
 /* --- Keeping a beat, and passing one on ------------------------------------------------ */
 /* (Save and Share are two round buttons at the top right of the page, where the game keeps its own.) */
 .screen-jam .top-actions button:disabled { opacity: 0.4; }
-.jam-note { margin: 0; min-height: 1.2rem; font-family: system-ui, sans-serif; font-size: 0.875rem; color: var(--muted); }
+.jam-note { margin: 0; min-height: 1.2rem; font-family: var(--font-text); font-size: var(--text-small); color: var(--muted); }
 .jam-saved { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
 .jam-saved h2 {
   margin: 0; padding-left: 0.3rem; text-align: left;
-  font-family: system-ui, sans-serif; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: var(--track-label); text-transform: uppercase;
   color: color-mix(in srgb, var(--ink) 62%, var(--paper));
 }
 .jam-saved ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -172,7 +172,7 @@
 .jam-saved .open svg { width: 100%; height: 100%; }
 .jam-saved input[type="text"] {
   flex: 1; min-width: 0; min-height: 2.75rem; padding: 0.45rem 0.5rem; border-color: transparent; background: transparent; box-shadow: none;
-  font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink);
+  font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--ink);
 }
 .jam-saved input[type="text"]:hover { border-color: color-mix(in srgb, var(--ink) 14%, var(--paper)); }
 .jam-saved input[type="text"]:focus-visible { border-color: var(--accent); background: var(--paper); }
@@ -184,7 +184,7 @@
    anything but its own sound. */
 .jam-controls #jam-mic.quiet { padding: 0; }
 #jam-mic[aria-pressed="true"] { box-shadow: 0 0.2rem 0 var(--c), inset 0 0 0 2px var(--c); }
-.layer .name { max-width: 100%; overflow-wrap: anywhere; text-align: center; line-height: 1.15; }
+.layer .name { max-width: 100%; overflow-wrap: anywhere; text-align: center; line-height: var(--leading-tight); }
 
 /* The drawer comes up from the bottom, and is as tall however much is in it: the list scrolls inside. */
 dialog.jam-drawer {
@@ -201,13 +201,13 @@ dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
 @keyframes drawer-up { from { translate: 0 100%; } to { translate: 0 0; } }
 .jam-drawer header { flex: none; display: flex; align-items: center; justify-content: space-between; }
 .jam-drawer header button.quiet { width: 2.75rem; height: 2.75rem; }
-.jam-drawer h2 { margin: 0; padding-left: 0.3rem; font-family: Georgia, serif; font-size: 1.4rem; font-weight: 400; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.jam-drawer h2 { margin: 0; padding-left: 0.3rem; font-family: var(--font-letter); font-size: var(--text-lead); font-weight: var(--weight-regular); color: var(--ink); text-transform: none; letter-spacing: 0; }
 /* Record: while it listens it shows a square to stop it, and a ring in the instrument's colour goes once round it in
    the time it listens for. */
 .jam-drawer .record {
   position: relative; flex: none; height: 3.2rem; padding: 0 1rem; border: 0; border-radius: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
   background: var(--card); color: var(--ink); box-shadow: 0 0.22rem 0 var(--lip);
-  font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 700;
+  font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-bold);
   transition: transform 70ms ease, box-shadow 70ms ease; -webkit-tap-highlight-color: transparent;
 }
 .jam-drawer .record:active { transform: translateY(0.16rem); box-shadow: 0 0.06rem 0 var(--lip); }
@@ -239,10 +239,10 @@ dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
 .jam-sounds .tile[aria-pressed="true"] { opacity: 1; }
 .jam-sounds .tile:active { transform: translateY(0.12rem); }
 .jam-sounds .tile svg { width: 62%; height: 62%; }
-.jam-sounds .own { flex: 1; padding-left: 0.5rem; text-align: left; font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 600; color: var(--muted); }
+.jam-sounds .own { flex: 1; padding-left: 0.5rem; text-align: left; font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--muted); }
 .jam-sounds input[type="text"] {
   flex: 1; min-width: 0; min-height: 2.75rem; padding: 0.45rem 0.5rem; border-color: transparent; background: transparent; box-shadow: none;
-  font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink);
+  font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--ink);
 }
 .jam-sounds input[type="text"]:hover { border-color: color-mix(in srgb, var(--ink) 14%, var(--paper)); }
 .jam-sounds input[type="text"]:focus-visible { border-color: var(--accent); background: var(--paper); }

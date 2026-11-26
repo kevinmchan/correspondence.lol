@@ -5,6 +5,37 @@
   --accent: #c8442e;
   --line: color-mix(in srgb, var(--muted) 45%, transparent);
   color-scheme: light;
+
+  /* Type: every word in the app is set from these (the README, "Type").
+     Use a step; don't add a size. Type that is part of a drawing is marked drawn. */
+  --font-letter: Georgia, "Iowan Old Style", "Times New Roman", serif; /* what is said, written as a letter */
+  --font-text: system-ui, sans-serif;                                 /* what the app itself says */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;        /* codes to type in */
+  --font-typewriter: "American Typewriter", "Courier New", Courier, "Liberation Mono", ui-monospace, monospace; /* the room's other world */
+
+  --text-fine: 0.6875rem;    /* 11: the least there is (a time, a version) */
+  --text-caption: 0.8125rem; /* 13: a label */
+  --text-small: 0.9375rem;   /* 15: a button, a hint, a message */
+  --text-body: 1.0625rem;    /* 17: reading, and every field */
+  --text-lead: 1.25rem;      /* 20: a sheet's title, a line said up front */
+  --text-title: 1.5rem;      /* 24: a page's title */
+  --text-large: 1.875rem;    /* 30: a moment */
+  --text-display: 2.375rem;  /* 38 */
+
+  --weight-regular: 400;
+  --weight-medium: 600;
+  --weight-bold: 700;
+
+  --leading-none: 1;     /* one line in a box of its own */
+  --leading-tight: 1.2;  /* titles, labels */
+  --leading-snug: 1.35;  /* short lines */
+  --leading-loose: 1.5;  /* lines to read */
+
+  --track-tight: -0.01em;
+  --track-open: 0.02em;
+  --track-label: 0.09em; /* small capitals */
+  --track-wide: 0.15em;
+  --track-widest: 0.24em;
 }
 
 /* dark theme (set on <html> by the page; see the profile menu) */
@@ -25,7 +56,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  font-family: var(--font-letter);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -57,20 +88,20 @@ svg.mark { border-radius: 0; overflow: visible; }
 
 h1 {
   margin: 0;
-  font-size: clamp(1.75rem, 7vw, 3rem);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-size: clamp(var(--text-large), 7vw, var(--text-display));
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--track-tight);
   overflow-wrap: anywhere;
 }
 
-.page h1 { font-size: clamp(1.6rem, 6vw, 2.25rem); }
+.page h1 { font-size: clamp(var(--text-title), 6vw, var(--text-large)); }
 h1 span { color: var(--accent); }
 
 h2 {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 400;
+  font-family: var(--font-text);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-regular);
   color: var(--muted);
   text-align: left;
 }
@@ -79,7 +110,7 @@ h2 {
   margin: 0;
   color: var(--muted);
   font-style: italic;
-  font-size: 1.125rem;
+  font-size: var(--text-body);
 }
 
 a { color: inherit; }
@@ -106,8 +137,8 @@ button.quiet {
   color: var(--muted);
   border: 1px solid var(--line);
   padding: 0.45rem 1rem;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-family: var(--font-text);
+  font-size: var(--text-small);
 }
 
 /* --- Layout helpers ------------------------------------------------------ */
@@ -130,8 +161,8 @@ button.quiet {
   min-height: 2.75rem;
   /* (the link in it reaches half a rem above its own text, to be easy to press: the bar keeps that much clear of the notch as well) */
   padding: max(0.75rem, calc(env(safe-area-inset-top) + 0.5rem)) 1rem 0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-family: var(--font-text);
+  font-size: var(--text-small);
 }
 
 .topbar a { color: var(--muted); text-decoration: none; }
@@ -143,7 +174,7 @@ button.quiet {
   flex-direction: column;
   gap: 0.6rem;
   text-align: left;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-text);
   border: 1px solid var(--line);
   border-radius: 0.75rem;
   padding: 0.75rem 0.9rem 0.9rem;
@@ -151,15 +182,15 @@ button.quiet {
 
 .hint, .message, .status {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-family: var(--font-text);
+  font-size: var(--text-small);
   color: var(--muted);
 }
 
-.message { color: var(--ink); font-size: 1rem; }
+.message { color: var(--ink); font-size: var(--text-body); }
 .message.bad { color: var(--accent); }
 .message:empty { display: none; }
-.status { min-height: 1.25rem; font-size: 0.8125rem; }
+.status { min-height: 1.25rem; font-size: var(--text-caption); }
 
 /* --- Forms --------------------------------------------------------------- */
 
@@ -169,7 +200,7 @@ form.card {
   flex-direction: column;
   gap: 1rem;
   text-align: left;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-text);
 }
 
 form.card fieldset {
@@ -183,7 +214,7 @@ form.card fieldset {
 }
 
 form.card legend, .field > span {
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
   color: var(--muted);
   padding: 0 0.25rem;
 }
@@ -192,8 +223,8 @@ form.card legend, .field > span {
 
 input[type="text"], input[type="email"], select {
   font: inherit;
-  font-family: system-ui, sans-serif;
-  font-size: 1rem;
+  font-family: var(--font-text);
+  font-size: var(--text-body);
   color: var(--ink);
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   border: 1px solid var(--line);
@@ -224,8 +255,8 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
 }
 
 .links a:hover, .links a:focus-visible { border-color: var(--accent); }
-.links strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.125rem; overflow-wrap: anywhere; }
-.links span { font-family: system-ui, sans-serif; font-size: 0.8125rem; color: var(--muted); }
+.links strong { font-family: var(--font-letter); font-weight: var(--weight-regular); font-size: var(--text-body); overflow-wrap: anywhere; }
+.links span { font-family: var(--font-text); font-size: var(--text-caption); color: var(--muted); }
 .links .go { color: var(--accent); }
 
 /* --- Invitation link ------------------------------------------------------ */
@@ -236,8 +267,8 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
   flex-direction: column;
   gap: 0.35rem;
   text-align: left;
-  font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-family: var(--font-text);
+  font-size: var(--text-caption);
   color: var(--muted);
   border: 1px dashed var(--line);
   border-radius: 0.75rem;
@@ -245,12 +276,12 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
 }
 
 .share div { display: flex; gap: 0.5rem; }
-.share button { padding: 0.5rem 1rem; font-size: 0.9375rem; }
+.share button { padding: 0.5rem 1rem; font-size: var(--text-small); }
 .share input { min-width: 4rem; }
 
 /* --- Chat ----------------------------------------------------------------- */
 
-.chat { display: flex; flex-direction: column; gap: 0.5rem; font-family: system-ui, sans-serif; }
+.chat { display: flex; flex-direction: column; gap: 0.5rem; font-family: var(--font-text); }
 
 .chat-log {
   list-style: none;
@@ -265,10 +296,10 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
   text-align: left;
 }
 
-.chat-log li { max-width: 85%; align-self: flex-start; font-size: 0.9375rem; }
+.chat-log li { max-width: 85%; align-self: flex-start; font-size: var(--text-small); }
 .chat-log li.mine { align-self: flex-end; text-align: right; }
-.chat-log .who { font-size: 0.75rem; color: var(--muted); }
-.chat-log time { font-size: 0.6875rem; color: var(--muted); }
+.chat-log .who { font-size: var(--text-caption); color: var(--muted); }
+.chat-log time { font-size: var(--text-fine); color: var(--muted); }
 
 .chat-log p {
   margin: 0.1rem 0 0;
@@ -286,12 +317,12 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
   align-self: center;
   max-width: 100%;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   color: var(--muted);
 }
 
 .chat form { display: flex; gap: 0.5rem; }
-.chat form button { padding: 0.5rem 1rem; font-size: 0.9375rem; }
+.chat form button { padding: 0.5rem 1rem; font-size: var(--text-small); }
 
 .row { display: flex; gap: 0.5rem; }
 
@@ -319,13 +350,13 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
   height: 1.75em;
   border-radius: 50%;
   background: var(--bg);
-  font-size: 0.9em;
-  line-height: 1;
+  /* drawn */ font-size: 0.9em;
+  line-height: var(--leading-none);
   font-style: normal;
   vertical-align: middle;
 }
 
-.avatar.big { width: 4.5rem; height: 4.5rem; font-size: 2.4rem; }
+.avatar.big { width: 4.5rem; height: 4.5rem; /* drawn */ font-size: 2.4rem; }
 
 .people {
   list-style: none;
@@ -336,8 +367,8 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.4rem;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-family: var(--font-text);
+  font-size: var(--text-small);
 }
 
 .people li {
@@ -356,13 +387,13 @@ input[type="text"]:focus-visible, input[type="email"]:focus-visible, select:focu
   padding: 0;
   background: none;
   border-radius: 50%;
-  font-size: 1.25rem;
+  /* drawn */ font-size: 1.25rem;
   box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--line);
 }
 
 .profile-button:hover { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--accent); }
 /* in the bar at the top of a room or a game it is the size of the buttons beside it */
-.top-actions .profile-button .avatar { width: 2.75rem; height: 2.75rem; font-size: 1.45rem; }
+.top-actions .profile-button .avatar { width: 2.75rem; height: 2.75rem; /* drawn */ font-size: 1.45rem; }
 
 dialog.profile {
   width: min(22rem, calc(100vw - 2rem));
@@ -389,8 +420,8 @@ dialog.profile form { margin-top: 0.9rem; }
   place-items: center;
   border-radius: 50%;
   background: none;
-  font-size: 1.35rem;
-  line-height: 1;
+  /* drawn */ font-size: 1.35rem;
+  line-height: var(--leading-none);
 }
 
 .picker.colours button { background: var(--bg); }
@@ -398,9 +429,9 @@ dialog.profile form { margin-top: 0.9rem; }
 .picker.avatars button[aria-checked="true"] { background: color-mix(in srgb, var(--ink) 10%, transparent); }
 
 .row.end { justify-content: flex-end; }
-.row.end button { font-family: system-ui, sans-serif; font-size: 0.9375rem; padding: 0.55rem 1.2rem; }
+.row.end button { font-family: var(--font-text); font-size: var(--text-small); padding: 0.55rem 1.2rem; }
 
-.chat-log .avatar { font-size: 0.8em; }
+.chat-log .avatar { /* drawn */ font-size: 0.8em; }
 
 /* --- Install guide --------------------------------------------------------- */
 
@@ -412,12 +443,12 @@ dialog.install {
   background: var(--paper);
   color: var(--ink);
   box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.35);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-text);
   text-align: center;
 }
 
 dialog.install::backdrop { background: rgb(20 26 32 / 0.6); }
-dialog.install h2 { font-family: Georgia, serif; font-size: 1.35rem; color: var(--ink); text-align: center; margin: 0.8rem 0 0.3rem; }
+dialog.install h2 { font-family: var(--font-letter); font-size: var(--text-lead); color: var(--ink); text-align: center; margin: 0.8rem 0 0.3rem; }
 dialog.install .hint { margin-bottom: 0.9rem; }
 
 dialog.install .device { height: 8.5rem; max-width: 100%; }
@@ -447,8 +478,8 @@ dialog.install .steps li {
   padding: 0.55rem 0.7rem;
   border-radius: 0.8rem;
   background: color-mix(in srgb, var(--ink) 6%, transparent);
-  font-size: 0.9375rem;
-  line-height: 1.3;
+  font-size: var(--text-small);
+  line-height: var(--leading-snug);
 }
 
 dialog.install .steps li::before {
@@ -461,8 +492,8 @@ dialog.install .steps li::before {
   place-items: center;
   background: var(--ink);
   color: var(--paper);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
 }
 
 dialog.install .icon { flex: none; width: 1.6rem; height: 1.6rem; color: var(--accent); }
@@ -483,8 +514,8 @@ dialog.install .icon svg { width: 100%; height: 100%; display: block; }
   align-items: center;
   gap: 0.75rem;
   text-align: left;
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-family: var(--font-text);
+  font-size: var(--text-small);
   color: var(--ink);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-radius: 0.75rem;
@@ -492,7 +523,7 @@ dialog.install .icon svg { width: 100%; height: 100%; display: block; }
 }
 
 .notify p { margin: 0; flex: 1; }
-.notify button { flex: none; padding: 0.5rem 1rem; font-size: 0.9375rem; }
+.notify button { flex: none; padding: 0.5rem 1rem; font-size: var(--text-small); }
 
 /* --- Install banner ---------------------------------------------------------- */
 
@@ -503,9 +534,9 @@ dialog.install .icon svg { width: 100%; height: 100%; display: block; }
   padding: max(0.6rem, env(safe-area-inset-top)) max(0.8rem, env(safe-area-inset-right)) 0.6rem max(0.8rem, env(safe-area-inset-left));
   background: var(--ink);
   color: var(--paper);
-  font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
-  line-height: 1.3;
+  font-family: var(--font-text);
+  font-size: var(--text-small);
+  line-height: var(--leading-snug);
   text-align: left;
 }
 
@@ -518,8 +549,8 @@ dialog.install .icon svg { width: 100%; height: 100%; display: block; }
   color: var(--ink);
   padding: 0.45rem 1rem;
   min-height: 2.75rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
 }
 
 .install-banner button:focus-visible { outline-color: var(--paper); }
@@ -538,8 +569,8 @@ main:has(.version) { position: relative; }
   left: max(1rem, env(safe-area-inset-left));
   bottom: max(0.5rem, env(safe-area-inset-bottom));
   margin: 0;
-  font-family: system-ui, sans-serif;
-  font-size: 0.6875rem;
+  font-family: var(--font-text);
+  font-size: var(--text-fine);
   color: var(--muted);
   opacity: 0.8;
 }
@@ -559,16 +590,16 @@ main:has(.version) { position: relative; }
   border: 1.5px solid transparent;
   color: var(--ink);
   text-align: center;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-text);
 }
 
 .mode:hover, .mode:focus-visible { border-color: var(--accent); }
 .mode .icon { width: 1.75rem; height: 1.75rem; color: var(--muted); }
 .mode:hover .icon, .mode:focus-visible .icon { color: var(--accent); }
-.mode strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.0625rem; }
+.mode strong { font-family: var(--font-letter); font-weight: var(--weight-regular); font-size: var(--text-body); }
 .modes[data-busy] .mode { opacity: 0.6; cursor: progress; }
 
-#compose .lede { font-size: 1.35rem; font-style: normal; color: var(--ink); }
+#compose .lede { font-size: var(--text-lead); font-style: normal; color: var(--ink); }
 #no-games + h2, #games + h2, .panel h2 + .modes { margin-top: 0.1rem; }
 
 
@@ -581,7 +612,7 @@ main:has(.version) { position: relative; }
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.4rem;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-text);
 }
 
 .phrase .word {
@@ -589,15 +620,15 @@ main:has(.version) { position: relative; }
   border-radius: 0.55rem;
   background: var(--ink);
   color: var(--paper);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-label);
 }
 
 .phrase .word.hidden {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
   color: var(--muted);
-  letter-spacing: 0.18em;
+  letter-spacing: var(--track-wide);
   box-shadow: inset 0 0 0 1.5px var(--line);
 }
 
@@ -614,7 +645,7 @@ main:has(.version) { position: relative; }
 .phrase .word.join { border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; margin-left: calc(-0.4rem + 2px); }
 
 #tokens { min-height: 2.2rem; }
-#token-note { min-height: 1.1rem; font-size: 0.8125rem; text-align: center; }
+#token-note { min-height: 1.1rem; font-size: var(--text-caption); text-align: center; }
 
 /* --- A game in the room's list, with its delete button -------------------------- */
 
@@ -631,49 +662,49 @@ main:has(.version) { position: relative; }
    the profile. */
 .me-corner { position: absolute; z-index: 1; right: calc(0.875rem + 3px); top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem)); }
 .me-corner .profile-button { display: block; width: 3rem; height: 3rem; padding: 0; background: none; }
-.me-corner .profile-button .avatar { width: 100%; height: 100%; font-size: 1.6rem; }
-dialog.account h2 { font-family: Georgia, serif; font-size: 1.35rem; color: var(--ink); margin: 0 0 0.3rem; text-transform: none; letter-spacing: 0; }
+.me-corner .profile-button .avatar { width: 100%; height: 100%; /* drawn */ font-size: 1.6rem; }
+dialog.account h2 { font-family: var(--font-letter); font-size: var(--text-lead); color: var(--ink); margin: 0 0 0.3rem; text-transform: none; letter-spacing: 0; }
 dialog.account .card { text-align: left; display: flex; flex-direction: column; gap: 0.7rem; }
 /* a code you tap to copy */
 button.code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.08em; font-weight: 600;
+  font-family: var(--font-mono); letter-spacing: var(--track-label); font-weight: var(--weight-medium);
   color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent);
   border: 1px dashed var(--line); border-radius: 0.75rem; padding: 0.5rem 1rem; min-height: 2.75rem; cursor: pointer;
 }
 button.code:hover { border-color: var(--accent); }
-button.code.copied { color: var(--accent); border-style: solid; border-color: var(--accent); letter-spacing: 0.02em; }
-dialog.account .code { display: block; font-size: 1.8rem; margin: 0.8rem auto 0.3rem; min-width: 12rem; }
-dialog.account .tip { margin: 0; font-size: 0.875rem; }
+button.code.copied { color: var(--accent); border-style: solid; border-color: var(--accent); letter-spacing: var(--track-open); }
+dialog.account .code { display: block; font-size: var(--text-large); margin: 0.8rem auto 0.3rem; min-width: 12rem; }
+dialog.account .tip { margin: 0; font-size: var(--text-small); }
 dialog.account .row.end { margin-top: 0.8rem; }
-section.card { width: 100%; text-align: left; font-family: system-ui, sans-serif; box-sizing: border-box; }
+section.card { width: 100%; text-align: left; font-family: var(--font-text); box-sizing: border-box; }
 section.card fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
-section.card legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
+section.card legend { font-size: var(--text-caption); color: var(--muted); padding: 0 0.25rem; }
 dialog.account form.card { margin-top: 0.6rem; }
 
 /* --- No profile yet: the three ways to get one ------------------------------ */
 #welcome { width: 100%; gap: 1rem; }
 #welcome .hint { margin: 0; }
-div.card.plain { width: 100%; text-align: left; font-family: system-ui, sans-serif; }
+div.card.plain { width: 100%; text-align: left; font-family: var(--font-text); }
 div.card.plain fieldset { display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.75rem 1rem 1rem; margin: 0; }
-div.card.plain legend { font-size: 0.8125rem; color: var(--muted); padding: 0 0.25rem; }
+div.card.plain legend { font-size: var(--text-caption); color: var(--muted); padding: 0 0.25rem; }
 
 /* --- Room codes -------------------------------------------------------------- */
 .share > span { display: block; }
-.share .code { font-size: 1.35rem; flex: 1; }
-input.code-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.25rem; letter-spacing: 0.12em; text-transform: uppercase; }
-input.code-input::placeholder { letter-spacing: 0.12em; opacity: 0.45; }
+.share .code { font-size: var(--text-lead); flex: 1; }
+input.code-input { font-family: var(--font-mono); font-size: var(--text-lead); letter-spacing: var(--track-wide); text-transform: uppercase; }
+input.code-input::placeholder { letter-spacing: var(--track-wide); opacity: 0.45; }
 
 /* the account code, asked for from the profile editor */
-dialog.profile .sync { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); display: flex; flex-direction: column; align-items: center; gap: 0.4rem; font-family: system-ui, sans-serif; font-size: 0.875rem; color: var(--muted); }
-dialog.profile .sync .link { min-height: 2.75rem; background: none; padding: 0.2rem 0.4rem; color: var(--ink); font-size: 0.9375rem; text-decoration: underline; text-underline-offset: 0.2em; }
-dialog.profile .sync .code { font-size: 1.5rem; }
+dialog.profile .sync { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); display: flex; flex-direction: column; align-items: center; gap: 0.4rem; font-family: var(--font-text); font-size: var(--text-small); color: var(--muted); }
+dialog.profile .sync .link { min-height: 2.75rem; background: none; padding: 0.2rem 0.4rem; color: var(--ink); font-size: var(--text-small); text-decoration: underline; text-underline-offset: 0.2em; }
+dialog.profile .sync .code { font-size: var(--text-title); }
 dialog.profile .sync p { margin: 0; }
 dialog.profile .sync[hidden] { display: none; }
 /* starting the story over: quieter than the rest, at the very foot */
-dialog.profile .story-again .link { color: var(--muted); font-size: 0.875rem; }
+dialog.profile .story-again .link { color: var(--muted); font-size: var(--text-small); }
 
 /* a switch in the profile menu */
-.setting { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); font-family: system-ui, sans-serif; font-size: 1rem; color: var(--ink); text-align: left; cursor: pointer; }
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); font-family: var(--font-text); font-size: var(--text-body); color: var(--ink); text-align: left; cursor: pointer; }
 .setting input { appearance: none; -webkit-appearance: none; flex: none; width: 2.9rem; height: 1.7rem; margin: 0; border-radius: 1rem; background: color-mix(in srgb, var(--muted) 45%, transparent); position: relative; cursor: pointer; transition: background-color 150ms ease; }
 .setting input::after { content: ""; position: absolute; top: 0.2rem; left: 0.2rem; width: 1.3rem; height: 1.3rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); transition: transform 150ms ease; }
 .setting input:checked { background: var(--accent); }
@@ -684,7 +715,7 @@ dialog.profile .story-again .link { color: var(--muted); font-size: 0.875rem; }
 h1 button.rename { font: inherit; color: inherit; letter-spacing: inherit; background: none; padding: 0 0.2em; min-height: 2.75rem; border-radius: 0.4rem; overflow-wrap: anywhere; text-decoration: underline dotted color-mix(in srgb, var(--muted) 60%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 0.18em; cursor: text; }
 h1 button.rename:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
 h1 form.rename { display: flex; justify-content: center; }
-h1 form.rename input { font-family: Georgia, serif; font-size: inherit; text-align: center; width: 100%; max-width: 22rem; padding: 0.1em 0.3em; }
+h1 form.rename input { font-family: var(--font-letter); font-size: inherit; text-align: center; width: 100%; max-width: 22rem; padding: 0.1em 0.3em; }
 
 /* several switches together in the profile menu: one rule above the group, not each */
 .settings .setting + .setting { border-top: 0; padding-top: 0; margin-top: 0.7rem; }
@@ -740,9 +771,9 @@ body {
 form.card button[type="submit"], .row.end button:not(.quiet), .chat form button, .notify button,
 .install-banner button, button.go, .menu-button, .mode {
   border-radius: 0.95rem;
-  font-family: system-ui, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-family: var(--font-text);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--track-open);
   box-shadow: 0 0.24rem 0 var(--press, color-mix(in srgb, var(--ink) 62%, #000));
   transform: translateY(0);
   transition: transform 70ms ease, box-shadow 70ms ease, filter 120ms ease;
@@ -753,11 +784,11 @@ form.card button[type="submit"]:active, .row.end button:not(.quiet):active, .cha
   transform: translateY(0.2rem);
   box-shadow: 0 0.04rem 0 var(--press, color-mix(in srgb, var(--ink) 62%, #000));
 }
-form.card button[type="submit"] { padding: 0.85rem 1.4rem; font-size: 1.0625rem; }
+form.card button[type="submit"] { padding: 0.85rem 1.4rem; font-size: var(--text-body); }
 button.go { --press: color-mix(in srgb, var(--accent) 68%, #000); }
 button.go:disabled { box-shadow: 0 0.24rem 0 color-mix(in srgb, var(--muted) 30%, var(--paper)); }
 .install-banner button { --press: color-mix(in srgb, var(--paper) 62%, #000); }
-button.quiet { border-radius: 0.8rem; border-width: 1.5px; font-weight: 600; }
+button.quiet { border-radius: 0.8rem; border-width: 1.5px; font-weight: var(--weight-medium); }
 button.quiet.round, .top-actions .round { border-radius: 50%; }
 
 /* --- Surfaces: tiles with a lip ----------------------------------------------- */
@@ -770,7 +801,7 @@ form.card fieldset, .panel, .share, .links a, dialog.sheet form.card {
 form.card fieldset { padding: 1rem 1rem 1.15rem; gap: 0.75rem; }
 form.card legend, .panel > h2, #rooms > h2 {
   float: none; padding: 0; margin: 0 0 0.1rem;
-  font-family: system-ui, sans-serif; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: var(--track-label); text-transform: uppercase;
   color: color-mix(in srgb, var(--ink) 62%, var(--paper));
 }
 form.card legend { display: contents; }
@@ -781,19 +812,19 @@ input[type="text"], input[type="email"], select, .feedback textarea {
   border-radius: 0.85rem;
   background: var(--paper);
   padding: 0.7rem 0.8rem;
-  font-size: 1.0625rem;
+  font-size: var(--text-body);
   box-shadow: inset 0 0.14rem 0 color-mix(in srgb, var(--ink) 7%, transparent);
 }
 input[type="text"]:focus-visible, input[type="email"]:focus-visible { border-color: var(--accent); outline: none; }
 /* something is wrong with what is typed, said in the message under it */
 input[aria-invalid="true"], input[aria-invalid="true"]:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.field > span { font-weight: 600; font-size: 0.8125rem; }
+.field > span { font-weight: var(--weight-medium); font-size: var(--text-caption); }
 
 /* --- Lists: each room or game is a tile to press -------------------------------- */
 .links a { padding: 0.85rem 1rem; transition: transform 70ms ease, box-shadow 70ms ease; -webkit-tap-highlight-color: transparent; }
 .links a:hover, .links a:focus-visible { border-color: transparent; box-shadow: 0 0.22rem 0 color-mix(in srgb, var(--accent) 55%, var(--paper)); }
 .links a:active { transform: translateY(0.18rem); box-shadow: 0 0.04rem 0 var(--lip); }
-.links strong { font-size: 1.1875rem; }
+.links strong { font-size: var(--text-lead); }
 #rooms .links a { padding-left: 3.5rem; position: relative; }
 #rooms .links a::before { /* a little door-tile in the room's place in the palette */
   content: ""; position: absolute; left: 0.85rem; top: 50%; width: 1.9rem; height: 1.9rem; margin-top: -1.05rem; border-radius: 26%;
@@ -842,8 +873,8 @@ input[aria-invalid="true"], input[aria-invalid="true"]:focus-visible { border-co
 }
 .menu-button .tile svg { width: 58%; height: 58%; }
 .menu-button .words { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.menu-button strong { font-family: Georgia, serif; font-weight: 400; font-size: 1.3rem; line-height: 1.15; }
-.menu-button small { font-family: system-ui, sans-serif; font-weight: 400; font-size: 0.8125rem; letter-spacing: 0; color: var(--muted); }
+.menu-button strong { font-family: var(--font-letter); font-weight: var(--weight-regular); font-size: var(--text-lead); line-height: var(--leading-tight); }
+.menu-button small { font-family: var(--font-text); font-weight: var(--weight-regular); font-size: var(--text-caption); letter-spacing: 0; color: var(--muted); }
 .menu-button:hover .tile, .menu-button:focus-visible .tile { filter: brightness(1.06); }
 @media (prefers-reduced-motion: no-preference) {
   .menu-button:hover .tile svg { animation: nod 500ms ease; }
@@ -883,7 +914,7 @@ dialog.sheet .row.end button[type="submit"] { flex: 1; }
 .modes .mode:nth-child(2) .icon { color: #2aa198; }
 .modes .mode:nth-child(3) .icon { color: #736dd0; }
 .people li { background: var(--card); box-shadow: 0 0.14rem 0 var(--lip); border-color: transparent; }
-.lede { font-size: 1.0625rem; }
+.lede { font-size: var(--text-body); }
 
 /* --- Movements Penny and Dot share, wherever they are drawn (penny/pal.css, penny/story.css) --- */
 @keyframes breathe { 0%, 100% { transform: none; } 50% { transform: scale(1.015, 0.972); } }
@@ -956,7 +987,7 @@ html, body { overflow-x: clip; }
 /* a choice of a few in the profile menu (light, dark, or whatever the device says) */
 .setting.choice { cursor: default; }
 .segments { display: inline-flex; padding: 0.18rem; gap: 0.15rem; border-radius: 0.8rem; background: color-mix(in srgb, var(--muted) 22%, transparent); }
-.segments button { min-height: 2.75rem; padding: 0.38rem 0.75rem; border-radius: 0.62rem; background: none; color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; }
+.segments button { min-height: 2.75rem; padding: 0.38rem 0.75rem; border-radius: 0.62rem; background: none; color: var(--muted); font-family: var(--font-text); font-size: var(--text-small); font-weight: var(--weight-medium); }
 .segments button[aria-checked="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.18); }
 
 /* --- A small menu that drops from a button in the top bar ------------------------- */
@@ -970,10 +1001,10 @@ html, body { overflow-x: clip; }
   display: flex; flex-direction: column; gap: 0.1rem; border-radius: 0.9rem; background: var(--paper);
   border: 1px solid var(--line); box-shadow: 0 0.6rem 1.8rem rgb(0 0 0 / 0.28);
 }
-.pop-menu button { background: none; color: var(--ink); text-align: left; padding: 0.65rem 0.8rem; border-radius: 0.6rem; font-family: system-ui, sans-serif; font-size: 1rem; }
+.pop-menu button { background: none; color: var(--ink); text-align: left; padding: 0.65rem 0.8rem; border-radius: 0.6rem; font-family: var(--font-text); font-size: var(--text-body); }
 .pop-menu button:hover, .pop-menu button:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .pop-menu button.danger { color: var(--accent); }
-.pop-menu .message { padding: 0.2rem 0.8rem 0.4rem; font-size: 0.875rem; }
+.pop-menu .message { padding: 0.2rem 0.8rem 0.4rem; font-size: var(--text-small); }
 @media (prefers-reduced-motion: no-preference) { .pop-menu:not([hidden]) { animation: pop-in 160ms cubic-bezier(0.2, 1.1, 0.3, 1); transform-origin: top right; } }
 
 dialog.profile:focus { outline: none; }
@@ -988,10 +1019,10 @@ dialog.ask {
   background: var(--paper); color: var(--ink); text-align: center; box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.4);
 }
 dialog.ask::backdrop { background: rgb(20 26 32 / 0.6); }
-dialog.ask h2 { margin: 0; font-family: Georgia, serif; font-size: 1.4rem; font-weight: 400; line-height: 1.2; color: var(--ink); text-align: center; text-transform: none; letter-spacing: 0; overflow-wrap: anywhere; }
-dialog.ask p { margin: 0.5rem 0 0; font-family: system-ui, sans-serif; font-size: 1rem; color: var(--muted); }
+dialog.ask h2 { margin: 0; font-family: var(--font-letter); font-size: var(--text-lead); font-weight: var(--weight-regular); line-height: var(--leading-tight); color: var(--ink); text-align: center; text-transform: none; letter-spacing: 0; overflow-wrap: anywhere; }
+dialog.ask p { margin: 0.5rem 0 0; font-family: var(--font-text); font-size: var(--text-body); color: var(--muted); }
 dialog.ask .buttons { display: flex; gap: 0.6rem; margin-top: 1.3rem; }
-dialog.ask .buttons button { flex: 1; min-height: 3rem; padding: 0.6rem 0.8rem; border-radius: 0.95rem; font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 700; }
+dialog.ask .buttons button { flex: 1; min-height: 3rem; padding: 0.6rem 0.8rem; border-radius: 0.95rem; font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-bold); }
 dialog.ask .buttons .yes { box-shadow: 0 0.24rem 0 color-mix(in srgb, var(--ink) 62%, #000); transition: transform 70ms ease, box-shadow 70ms ease; }
 dialog.ask .buttons .yes:active { transform: translateY(0.2rem); box-shadow: 0 0.04rem 0 color-mix(in srgb, var(--ink) 62%, #000); }
 dialog.ask .buttons .yes.danger { background: var(--accent); color: #fff; box-shadow: 0 0.24rem 0 color-mix(in srgb, var(--accent) 68%, #000); }
@@ -1006,7 +1037,7 @@ dialog.ask .buttons .yes.danger:active { box-shadow: 0 0.04rem 0 color-mix(in sr
    stands clear of any background colour, its own included. */
 .avatar { box-shadow: inset 0 -0.12em 0 rgb(0 0 0 / 0.12); }
 .avatar .face {
-  display: block; line-height: 1;
+  display: block; line-height: var(--leading-none);
   text-shadow:
     0.055em 0 0 #fff, -0.055em 0 0 #fff, 0 0.055em 0 #fff, 0 -0.055em 0 #fff,
     0.04em 0.04em 0 #fff, -0.04em 0.04em 0 #fff, 0.04em -0.04em 0 #fff, -0.04em -0.04em 0 #fff,
@@ -1039,7 +1070,7 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
   position: relative; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
   padding: 0.75rem 0.6rem; border: 0; border-radius: 0.95rem;
   background: var(--card); color: color-mix(in srgb, var(--ink) 62%, var(--paper));
-  font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  font-family: var(--font-text); font-size: var(--text-small); font-weight: var(--weight-bold); letter-spacing: var(--track-label); text-transform: uppercase;
   box-shadow: 0 0.24rem 0 var(--lip);
   transition: transform 70ms ease, box-shadow 70ms ease, background-color 120ms ease;
   -webkit-tap-highlight-color: transparent; cursor: pointer;
@@ -1055,7 +1086,7 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 .tab .pip {
   position: absolute; top: -0.45rem; right: -0.3rem; min-width: 1.5rem; height: 1.5rem; padding: 0 0.3rem; box-sizing: border-box;
   display: grid; place-items: center; border-radius: 0.75rem;
-  background: var(--accent); color: #fff; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0;
+  background: var(--accent); color: #fff; font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: 0;
   box-shadow: 0 0 0 2px var(--paper), 0 0.14rem 0 2px color-mix(in srgb, var(--accent) 62%, #000);
 }
 
@@ -1074,15 +1105,15 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
   background: var(--tile); color: #22303c; box-shadow: inset 0 -0.22rem 0 rgb(0 0 0 / 0.16);
 }
 .feed-item .tile svg { width: 58%; height: 58%; }
-.feed-item .tile .avatar { width: 2.2rem; height: 2.2rem; font-size: 1.3rem; }
-.feed-item .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; font-family: system-ui, sans-serif; }
+.feed-item .tile .avatar { width: 2.2rem; height: 2.2rem; /* drawn */ font-size: 1.3rem; }
+.feed-item .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; font-family: var(--font-text); }
 .feed-item em {
-  align-self: flex-start; font-style: normal; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  align-self: flex-start; font-style: normal; font-size: var(--text-fine); font-weight: var(--weight-bold); letter-spacing: var(--track-label); text-transform: uppercase;
   padding: 0.08rem 0.4rem; border-radius: 0.4rem; background: color-mix(in srgb, var(--tile) 45%, var(--card)); color: #22303c;
 }
 :root[data-theme="dark"] .feed-item em { background: color-mix(in srgb, var(--tile) 70%, #000); color: #fff; }
-.feed-item strong { font-size: 1.0625rem; font-weight: 700; overflow-wrap: anywhere; }
-.feed-item .words > span { font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+.feed-item strong { font-size: var(--text-body); font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+.feed-item .words > span { font-size: var(--text-caption); color: var(--muted); overflow-wrap: anywhere; }
 .feed-item .play {
   flex: none; width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border-radius: 50%;
   background: var(--accent); color: #fff; box-shadow: 0 0.18rem 0 color-mix(in srgb, var(--accent) 68%, #000);
@@ -1091,11 +1122,11 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 .feed-empty {
   width: 100%; box-sizing: border-box; padding: 1.6rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
   border-radius: 1.1rem; border: 2px dashed color-mix(in srgb, var(--ink) 16%, var(--paper));
-  font-family: system-ui, sans-serif; color: var(--muted); text-align: center;
+  font-family: var(--font-text); color: var(--muted); text-align: center;
 }
 .feed-empty svg { width: 2.2rem; height: 2.2rem; opacity: 0.6; }
-.feed-empty strong { font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 62%, var(--paper)); }
-.feed-empty span { font-size: 0.875rem; }
+.feed-empty strong { font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: var(--track-label); text-transform: uppercase; color: color-mix(in srgb, var(--ink) 62%, var(--paper)); }
+.feed-empty span { font-size: var(--text-small); }
 @media (prefers-reduced-motion: no-preference) {
   /* whatever is waiting arrives one after another, and a move bobs to be noticed */
   .feed li { animation: arrive 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
@@ -1132,7 +1163,7 @@ main:has(> .building) { position: relative; }
 .building { display: grid; grid-template-columns: 2.4rem 1fr; align-items: center; gap: 0.15rem; }
 .building svg { display: block; width: 100%; height: 3.4rem; overflow: visible; }
 .building-words {
-  font: italic 0.6875rem/1.15 Georgia, "Iowan Old Style", serif;
+  font-style: italic; font-family: var(--font-letter); font-size: var(--text-fine); line-height: var(--leading-tight);
   color: var(--muted); text-align: left; padding-right: 0.2rem;
 }
 .building .cone { transform-box: fill-box; transform-origin: center bottom; }
@@ -1141,12 +1172,12 @@ main:has(> .building) { position: relative; }
 .building .cone-eyes { stroke: var(--stamp); stroke-width: 3.6; fill: none; stroke-linecap: round; }
 .building .cone-cheeks { stroke: #f3b7a6; stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
 .building .cone-foot { fill: var(--ink); opacity: 0.8; }
-.building .z { font: italic 13px Georgia, serif; fill: var(--muted); opacity: 0; }
+.building .z { /* drawn */ font: italic 13px Georgia, serif; fill: var(--muted); opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .building .cone { animation: cone-breathe 5s ease-in-out infinite; }
   .building .z { animation: cone-z 6s ease-out infinite; }
-  .building .z.two { animation-delay: 2s; font-size: 10px; }
-  .building .z.three { animation-delay: 4s; font-size: 8px; }
+  .building .z.two { animation-delay: 2s; /* drawn */ font-size: 10px; }
+  .building .z.three { animation-delay: 4s; /* drawn */ font-size: 8px; }
 }
 @keyframes cone-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.04, 0.96); } }
 @keyframes cone-z { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translate(10px, -22px); } }
