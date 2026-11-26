@@ -494,7 +494,7 @@ async function main() {
       assert.notEqual((await pal()).height, 'gone', 'and Penny is at home again');
     }),
 
-    check('play, for somebody new: the first places come first, every time until they have been walked; whoever has played already gets a board', { storage: ACCOUNT }, async (page) => {
+    check('play: the first places come first for everybody, every time until they have been walked, whatever has been played already; then a board, and the walk is the portal\'s', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 5, spent: 0, boards: [] } } }, async (page) => {
       const store = (values) => page.evaluate((all) => { for (const [key, value] of Object.entries(all)) localStorage.setItem(key, JSON.stringify(value)); }, values);
       const home = async () => {
         await page.goto(`${origin}/`);
@@ -517,16 +517,13 @@ async function main() {
       await page.locator('#play').click();
       await page.waitForURL(/\/postmarks\/$/);
       await page.waitForSelector('#board .cell');
-      // and nobody who has played before is sent back to learn: a board of their own once, or something earned in a room
-      await page.evaluate(() => localStorage.removeItem('penny:walked:v1'));
+      // and from then on the walk is reached by the portal
       await home();
-      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/', 'a board has been played on this device');
-      await page.evaluate(() => localStorage.removeItem('postmarks:howto-solo:v1'));
-      await home();
-      assert.equal(await page.locator('#play').getAttribute('href'), '/?walk', '(new again, with both taken away)');
-      await store({ 'correspondence:energy:v1': { earned: 5, spent: 0, boards: [] } });
-      await home();
-      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/', 'something has been earned in a room');
+      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/');
+      await page.waitForFunction(() => !document.querySelector('#splash')); // (what the app opens under has cleared)
+      await page.locator('#portal').click({ force: true });
+      await page.waitForURL(/\?walk/);
+      await page.waitForSelector('#walk-board .cell');
     }),
     check('the first quarter, start to finish, by touch', {}, async (page, h) => {
       await page.goto(`${origin}/?walk`);
