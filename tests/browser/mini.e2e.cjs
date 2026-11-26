@@ -209,7 +209,7 @@ async function states() {
       whole: ['#join .house', '#join-form'] },
     // (somebody sent the link of a game: its board lies lit on the table, and theirs is a name already)
     { name: 'a room, at its door, asked to a game', screen: 'room', at: `/room/?id=${ROOM}&game=33333333-3333-4333-8333-333333333333`, storage: { 'correspondence:name:v1': 'Kit' }, server: room({ you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-table.lit .mini',
-      whole: ['#join .house', '#join-form', '#join-sign-in'] },
+      whole: ['#join .house', '#join-form'] },
     // The room's two worlds (room/worlds.js): stepping through the portal in its top bar, and the room on the other side,
     // the drama, whole or split by a seam where the cartoon breaks back through (the first time 7 to 11 s after stepping in).
     { name: 'a room, stepping through the portal', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li',

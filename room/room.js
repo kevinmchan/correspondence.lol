@@ -238,7 +238,6 @@ export function mount(root, life) {
         el.joinName.value = myName();
         joining(false); // (the door: a name is there now)
       }
-      $('join-sign-in').href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
       // The room as it is inside: whoever is in at the head of its table, each with their name, and on the table a board
       // (the game somebody was asked to, under a lamp; or else one at rest, which is what the room is for).
       // (Laid again only when who is there has changed: the door is looked at every few seconds.)

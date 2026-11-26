@@ -1310,8 +1310,9 @@ room are its content: names, notes, the code.
   way in. The face is their profile's, or the one last chosen on the device;
   for somebody new it is picked there, never one already at the table, and
   it is theirs from then on. In the dark a low pool of warm light lies under
-  the door, as under the doors on the street. Under the mat, on the path, is
-  the way to bring an account from another device.
+  the door, as under the doors on the street. (There is no way to bring an
+  account from another device here: that is on the home page. The owner's
+  choice, 26 November 2026.)
 - **On the home page** your rooms are a street of little shops seen from in
   front, the last opened first: a strip of roof, a board over the window in
   the room's colour with the room's name lettered on it (two lines at most,

@@ -591,7 +591,6 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 /* (in the dark it is night, and the door is lit as the doors on the street are: a low pool of warm light on the ground under it) */
 :root[data-theme="dark"] .peek .yard::before { content: ""; position: absolute; left: 50%; top: -0.6rem; width: var(--door); height: 5.5rem; translate: -50% 0; z-index: -1; background: radial-gradient(50% 50% at 50% 40%, rgb(255 196 130 / 0.16), transparent); }
 #join.outside { padding-bottom: 0.4rem; }
-#join > .sync { margin: 0; }
 .outside form.mat { box-sizing: border-box; width: min(100% - 3rem, 18.5rem); max-width: none; margin-top: -1.1rem; padding: 1rem 1rem 0.9rem; gap: 0.75rem; align-items: center; text-align: center; }
 .outside form.mat fieldset { width: 100%; min-width: 0; padding: 0; gap: 0.75rem; align-items: center; background: none; box-shadow: none; border-radius: 0; }
 .outside form.mat .field { align-self: stretch; }
@@ -600,8 +599,6 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 .outside form.mat input:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
 .outside form.mat input::placeholder { color: color-mix(in oklab, var(--mat-ink) 45%, var(--mat-slip)); opacity: 1; }
 .outside input.code-input { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.08em; }
-.outside .sync { width: 2.75rem; height: 2.75rem; margin: -0.35rem 0 -0.45rem; display: grid; place-items: center; border-radius: 50%; color: var(--mat-ink); opacity: 0.7; }
-.outside .sync svg { width: 1.2rem; height: 1.2rem; }
 
 /* --- Opening a room: a plot, staked out ---------------------------------------------------- */
 .lot { position: relative; margin: 1.2rem 0 1.5rem; padding: 2.6rem 1.1rem 2.9rem; border-radius: var(--house-r); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
