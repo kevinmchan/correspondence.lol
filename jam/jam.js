@@ -35,8 +35,9 @@
 // every button to be seen, and where that is nowhere it goes under the edge
 // until there is room again.
 //
-// Sounds of your own. The microphone, beside the bin, opens a drawer of sounds
-// for the instrument that is chosen: the instrument itself, and every sound
+// The drawer of sounds. The drawer, beside the bin, opens on the sounds there
+// are for the instrument that is chosen: the instrument itself, the other
+// three (bells can be played in the bass's place, and so on), and every sound
 // that has been recorded, each with a name that can be changed. Recording
 // makes a new one each time and never takes the place of another
 // (jam/mic.js). Pressing one in the drawer puts it in that instrument's place
@@ -45,8 +46,8 @@
 // while the microphone listens. The sounds belong to the profile, like the
 // saved beats: they are kept on the server and a copy on the device, so every
 // device of the same account has the same drawer. Which sound is in which
-// instrument's place is the device's own; and a beat that is saved or shared
-// is its notes, played for anybody else by the instruments themselves.
+// instrument's place is the device's own; a beat that is saved is its notes,
+// and one that is shared takes what is on the deck with it.
 //
 // The sound comes from the app's one sound engine (postmarks/sound.js), on its
 // clock, so the loop keeps exact time however busy the screen is.
@@ -70,7 +71,13 @@ const SLOTS_KEY = 'jam:slots:v1'; // which recorded sound each instrument plays 
 const MOST_SOUNDS = 24;
 const GONE_KEY = 'jam:gone:v1'; // beats deleted here that the server has still to be told of
 const MOST = 30;
-const nameOf = (kind, row, own) => (!own && kind.notes?.[row]) || `Note ${ROWS - row} of ${ROWS}`; // (own: it plays a recorded sound)
+// What a row of an instrument's part is called. (`voice`: what is played in its place, if not itself: a recorded
+// sound, whose rows are heights of it, or another instrument, whose rows are that one's.)
+const nameOf = (kind, row, voice) => ((voice ? voice.lent : kind)?.notes?.[row]) || `Note ${ROWS - row} of ${ROWS}`;
+// One of the four instruments in another place of the deck: what is kept for that place ('kind:2' is the bass),
+// and what the loop is given to play there.
+const LENT = LAYERS.map((kind) => ({ lent: kind, name: kind.name }));
+const lentBy = (id) => LENT[/^kind:([0-3])$/.exec(id ?? '')?.[1]] ?? null;
 const SHARE = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg>';
 const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
 
@@ -94,8 +101,9 @@ export function mount(root, life) {
   let layer = 0;
   let playing = false;
   // The sounds recorded ({ id, name, rate, pcm, hz }), and the deck: for each of its eight places the sound that is
-  // in it, or null. The first four places are the instruments', and one with no sound in it plays the instrument;
-  // the other four are there only while a sound (or a part written for one) is in them.
+  // in it (a recorded one's id, or 'kind:0' to 'kind:3' for one of the four instruments), or null. The first four
+  // places are the instruments', and one with no sound in it plays the instrument; the other four are there only
+  // while a sound (or a part written for one) is in them.
   let made = [];
   let slots = DECK.map((_, index) => load(SLOTS_KEY)?.[index] ?? null);
   const voices = DECK.map(() => null);
@@ -209,11 +217,14 @@ export function mount(root, life) {
       button.hidden = !onDeck(index);
       button.setAttribute('aria-checked', String(index === layer));
       button.querySelector('.count').textContent = sets[index].size || '';
-      // (an instrument that plays your own sound wears the microphone)
-      const own = Boolean(voices[index]);
-      if (button.dataset.own !== String(own)) {
+      // (a place that plays your own sound wears the microphone; one that plays another instrument, that instrument's mark)
+      const lent = voices[index]?.lent ?? null;
+      const own = Boolean(voices[index]) && !lent;
+      const wears = own ? 'own' : lent ? lent.name : '';
+      if (button.dataset.wears !== wears) {
+        button.dataset.wears = wears;
         button.dataset.own = own;
-        button.querySelector('svg').innerHTML = own ? MIC : DECK[index].icon;
+        button.querySelector('svg').innerHTML = own ? MIC : (lent ?? DECK[index]).icon;
         button.querySelector('.sr-only').textContent = own ? ', your sound' : '';
       }
       button.querySelector('.name').textContent = voices[index]?.name ?? (DECK[index].extra ? 'Empty' : DECK[index].name);
@@ -376,7 +387,7 @@ export function mount(root, life) {
   // --- Sounds of your own: the drawer, and the microphone -----------------------------------
   // Which sound each instrument plays: worked out again whenever the sounds or the choices change.
   function fit() {
-    slots.forEach((id, index) => { voices[index] = made.find((one) => one.id === id) ?? null; });
+    slots.forEach((id, index) => { voices[index] = made.find((one) => one.id === id) ?? lentBy(id); });
     save(SLOTS_KEY, slots);
     render();
     showSounds();
@@ -419,24 +430,27 @@ export function mount(root, life) {
     showSaved();
     if (!playing) sound(layer, 3);
   }
-  // The drawer: the instrument itself, then every sound recorded, newest first.
+  // The drawer: the instrument itself (or, for a place that is no instrument's, nothing), then the other
+  // instruments, then every sound recorded, newest first. `one` is a recorded sound; or else `id` is what is kept
+  // for the place (null for its own) and `plays` the instrument that is, if any.
   function showSounds() {
     const kind = DECK[layer];
     el.drawer.style.setProperty('--c', kind.colour);
-    const row = (one) => {
+    const row = ({ one = null, id = one?.id ?? null, plays = null }) => {
       const li = document.createElement('li');
       const tile = document.createElement('button');
       tile.type = 'button';
       tile.className = 'tile';
-      tile.setAttribute('aria-pressed', String((one?.id ?? null) === slots[layer]));
-      tile.setAttribute('aria-label', one ? `Play ${one.name} here` : kind.extra ? 'Take this place off the deck' : `Play ${kind.name} here`);
-      tile.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${one ? MIC : kind.extra ? '<path d="M7 12h10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' : kind.icon}</svg>`;
-      tile.addEventListener('click', () => swap(one?.id ?? null));
+      tile.setAttribute('aria-pressed', String(id === slots[layer]));
+      tile.setAttribute('aria-label', one ? `Play ${one.name} here` : plays ? `Play ${plays.name} here` : 'Take this place off the deck');
+      tile.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${one ? MIC : plays ? plays.icon : '<path d="M7 12h10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'}</svg>`;
+      if (plays) tile.style.setProperty('--c', plays.colour); // (an instrument is known by its colour, whose place it is in)
+      tile.addEventListener('click', () => swap(id));
       li.append(tile);
       if (!one) {
         const own = document.createElement('span');
         own.className = 'own';
-        own.textContent = kind.extra ? 'None' : kind.name;
+        own.textContent = plays ? plays.name : 'None';
         li.append(own);
         return li;
       }
@@ -471,7 +485,11 @@ export function mount(root, life) {
       li.append(name, bin);
       return li;
     };
-    el.sounds.replaceChildren(row(null), ...[...made].reverse().map(row));
+    el.sounds.replaceChildren(
+      row({ plays: kind.extra ? null : kind }),
+      ...LAYERS.map((plays, index) => ({ plays, id: `kind:${index}` })).filter((each) => each.plays !== kind).map(row),
+      ...[...made].reverse().map((one) => row({ one })),
+    );
   }
   const openDrawer = () => {
     oops(el.micError, '');
@@ -624,7 +642,9 @@ export function mount(root, life) {
   }
   const linkTo = (code) => `${location.origin}/jam/?b=${code}`;
   // Sharing hands over a link with the beat written into it. If there are recorded sounds on the deck, a copy of
-  // them is left on the server for whoever opens the link (share_put), and the link says where.
+  // them is left on the server for whoever opens the link (share_put), and the link says where. And if any place
+  // plays another of the instruments, the link says which, a letter for each place of the deck (o=--1-----: the
+  // keys, in the bass's place).
   async function share(code, name) {
     let url = linkTo(code);
     const deck = slots.map((id) => (made.some((one) => one.id === id) ? id : null));
@@ -639,6 +659,8 @@ export function mount(root, life) {
         without = true;
       }
     }
+    const lent = slots.map((id) => (lentBy(id) ? id.slice(-1) : '-')).join('');
+    if (/\d/.test(lent)) url += `&o=${lent}`;
     const told = without ? 'Shared without your sounds.' : '';
     try {
       if (navigator.share) {
@@ -736,12 +758,19 @@ export function mount(root, life) {
   // over whatever has been made of it since.
   const given = new URLSearchParams(location.search).get('b');
   const arrived = new URLSearchParams(location.search).get('s');
+  const arrivedWith = new URLSearchParams(location.search).get('o');
   if (given !== null) {
     const beat = decode(given);
     history.replaceState(null, '', '/jam/');
     if (beat && !isEmpty(beat)) {
       adopt(beat);
       say('A beat that was shared with you. Press play, and make it yours.');
+      // The instruments that were in other places of its deck, if any were: the deck is as it was shared.
+      const lent = arrivedWith;
+      if (/^[0-3-]{8}$/.test(lent ?? '')) {
+        slots = [...lent].map((letter, index) => (letter === '-' || Number(letter) === index ? null : `kind:${letter}`));
+        fit();
+      }
       // Its sounds, if it was shared with any: they go in the drawer, and on the deck where they were.
       const theirs = arrived;
       if (/^[0-9a-f]{20}$/.test(theirs ?? '')) {
@@ -753,7 +782,7 @@ export function mount(root, life) {
             return;
           }
           if (life.over || !Array.isArray(given$) || given$.length === 0) return;
-          slots = slots.map(() => null);
+          slots = slots.map((id) => (lentBy(id) ? id : null)); // (the instruments it came with stay where they are)
           for (const one of given$) {
             const pcm = unpack(one.pcm);
             if (!pcm || !(one.slot >= 0 && one.slot < DECK.length)) continue;

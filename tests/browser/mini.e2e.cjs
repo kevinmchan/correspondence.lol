@@ -168,7 +168,7 @@ async function states() {
       await page.waitForSelector('#jam-record.hearing');
       await sleep(600);
       await page.locator('#jam-record').click();
-      await page.waitForSelector(`.jam-sounds li:nth-child(${n + 1})`);
+      await page.waitForSelector(`.jam-sounds li:nth-child(${n + 4})`); // (after the four instruments)
     }
     await page.locator('.jam-sounds input').first().fill('WWWWWWWWWWWW');
     await page.locator('.jam-sounds input').first().press('Enter');
@@ -185,7 +185,7 @@ async function states() {
         await page.waitForSelector('.jam-sounds input');
         await page.locator('.jam-sounds input').fill('WWWWWWWWWWWW');
         await page.locator('.jam-sounds input').press('Enter');
-      } else await page.locator('.jam-sounds .tile').nth(1).click();
+      } else await page.locator('.jam-sounds .tile').nth(n % 2 ? 5 : 2).click(); // (the same sound again; or one of the instruments, the keys)
       await page.locator('#jam-drawer-close').click();
       await page.locator('.jam-board .pad').nth(n).click(); // (a note for it, so its light is on the board)
     }
@@ -364,10 +364,13 @@ async function states() {
     // button on the board, wearing the longest name there can be; a sound being deleted; and a microphone refused.
     { name: 'the music maker, the drawer of sounds, empty', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: drawer, settle: 'dialog#jam-drawer[open]' },
     { name: 'the music maker, the microphone listening', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('#jam-record').click(); }, settle: '#jam-record.hearing' },
-    { name: 'the music maker, the drawer with sounds recorded', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: recorded, settle: '.jam-sounds li:nth-child(4)' },
+    { name: 'the music maker, the drawer with sounds recorded', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: recorded, settle: '.jam-sounds li:nth-child(7)' },
     { name: 'the music maker, an instrument playing a recorded sound', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('#jam-drawer-close').click(); },
       settle: '#jam-mic[aria-pressed="true"]', small: [PADS] },
     { name: 'the music maker, a sound being deleted', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('.jam-sounds button.quiet').first().click(); }, settle: 'dialog.ask[open]' },
+    // (one of the four instruments in another's place: the bells' button wears the drums' mark and name, and the drawer's button is lit)
+    { name: 'the music maker, an instrument playing another instrument', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('.jam-sounds .tile').nth(3).click(); await page.locator('#jam-drawer-close').click(); },
+      settle: '.layer[data-wears="Drums"]', small: [PADS] },
     // (the deck: a place being added to it, with nothing chosen yet; and all eight places taken, the last with the longest name)
     { name: 'the music maker, a place being added to the deck', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: (page) => page.locator('.layer.more').click(), settle: 'dialog#jam-drawer[open]' },
     { name: 'the music maker, a deck of eight', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: eight, settle: '.layer.more[hidden]', small: [PADS] },

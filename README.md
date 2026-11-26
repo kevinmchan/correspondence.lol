@@ -597,9 +597,14 @@ when the screen opens, when the app is come back to, and after anything is
 saved, renamed or deleted. A beat saved offline is sent when it can be; one
 deleted on another device goes from this one too.
 
-**Sounds of your own.** The microphone, beside the bin, opens a drawer of
-sounds for the instrument that is chosen: the instrument itself, and every
-sound that has been recorded, newest first. Record, at the top of the drawer,
+**The drawer of sounds.** The drawer, beside the bin (drawn as a drawer: it
+was a microphone until v1.1.81), opens on the sounds there are for the
+instrument that is chosen: the instrument itself, the other three
+instruments, and every sound that has been recorded, newest first. Any of
+the four instruments can be played in any place: the keys where the bass is,
+the drums in a fifth place. It sounds there as it does in its own place, the
+place's button wears its mark and its name, and the rows are its rows (kept
+for the place as `kind:0` to `kind:3`, in `jam:slots:v1`). Record, at the top of the drawer,
 makes a new sound each time and never takes the place of another
 (`jam/mic.js`): it listens for three seconds at most, or until it is pressed
 again, and the loop is quiet meanwhile. The new sound is called "Sound 1" (2,
@@ -607,7 +612,7 @@ again, and the loop is quiet meanwhile. The new sound is called "Sound 1" (2,
 fewer; and it can be deleted. Pressing a sound in the drawer swaps it into the
 chosen instrument's place, and pressing the instrument itself swaps that back.
 The instrument's button on the board then wears the microphone and the
-sound's name, and the microphone beside the bin is lit in its colour. The same
+sound's name, and the drawer beside the bin is lit in its colour. The same
 sound can be in more than one instrument's place.
 
 What was heard is cut to the sound itself, a second and a half at most, and
@@ -621,13 +626,19 @@ or hears nothing, says so under Record.
 
 **The deck holds up to eight.** The four instruments are always on it, and
 beside them there is room for four sounds more. "Add", at the end of the deck,
-opens the drawer for a new place: a sound pressed or recorded there becomes a
+opens the drawer for a new place: a sound pressed or recorded there, or one
+of the four instruments, becomes a
 button of its own, in a colour of its own, with its own part on the board
 (in tune with the chords if the sound has a note, seven heights of it if it
 has none). In the drawer for such a place the first row is "None", which
 takes the place off the deck and its part with it. A beat with a part for
 any of those four is written the long way, 76 characters instead of 39
 (`jam/beat.js`); one without is written as it always was.
+
+**A shared beat brings the deck with it.** Where a place plays another of
+the instruments, the link says so after the beat, a letter for each of the
+eight places (`&o=--1-----`: the keys, where the bass is), and whoever opens
+it has the deck as it was shared.
 
 **A shared beat brings the deck's sounds with it.** When there are recorded
 sounds on the deck, sharing leaves a copy of them on the server (`share_put`,

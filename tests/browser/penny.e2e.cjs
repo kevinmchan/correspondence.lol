@@ -871,12 +871,24 @@ async function main() {
       // a note laid down, so the loop is playing
       await page.locator('.jam-board .pad').nth(48).click();
       await page.waitForSelector('#jam-play.playing');
-      // the drawer: at first only the instrument itself, which is the one in its place
+      // the drawer: at first the instrument itself, which is the one in its place, and the other three
       await mic.click();
       await page.waitForSelector('dialog#jam-drawer[open]');
-      assert.equal(await page.locator('.jam-sounds li').count(), 1);
-      assert.equal(await page.locator('.jam-sounds .own').innerText(), 'Bells');
-      assert.deepEqual(await pressed(), [true]);
+      assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.deepEqual(await pressed(), [true, false, false, false]);
+      // another instrument in the bells' place: the button wears its mark and its name, the rows are its rows, and the
+      // drawer's own button is lit; and then the bells themselves again
+      await page.locator('.jam-sounds .tile').nth(3).click();
+      assert.deepEqual(await pressed(), [false, false, false, true]);
+      assert.deepEqual(await layers(), ['Drums', 'Keys', 'Bass', 'Drums']);
+      assert.equal(await page.locator('.layer').first().getAttribute('data-own'), 'false', 'an instrument is not a sound of your own');
+      assert.equal(await page.locator('.layer').first().locator('svg').innerHTML(), await page.locator('.layer').nth(3).locator('svg').innerHTML(), 'the drums\' mark');
+      assert.match(await page.locator('.jam-board .pad').nth(48).getAttribute('aria-label'), /^Kick/, 'the rows are the drums\' rows');
+      assert.equal(await mic.getAttribute('aria-pressed'), 'true');
+      assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('jam:slots:v1')).slice(0, 4)), ['kind:3', null, null, null]);
+      await page.locator('.jam-sounds .tile').first().click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.equal(await mic.getAttribute('aria-pressed'), 'false');
       // recording: the loop stops to listen and goes on afterwards, and the new sound is in the bells' place
       await page.locator('#jam-record').click();
       await page.waitForSelector('#jam-record.hearing');
@@ -887,7 +899,7 @@ async function main() {
       await page.waitForSelector('.jam-sounds input');
       await page.waitForSelector('#jam-play.playing');
       assert.deepEqual(await names(), ['Sound 1']);
-      assert.deepEqual(await pressed(), [false, true]);
+      assert.deepEqual(await pressed(), [false, false, false, false, true]);
       assert.deepEqual(await layers(), ['Sound 1', 'Keys', 'Bass', 'Drums']);
       const [sound] = await kept();
       assert.ok(Math.abs(12 * Math.log2(sound.hz / 220)) < 0.5, `a hum at 220 hertz, heard as ${sound.hz}`);
@@ -902,15 +914,15 @@ async function main() {
       await record();
       await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 2);
       assert.deepEqual(await names(), ['Sound 2', 'Sound 1'], 'the newest first');
-      assert.deepEqual(await pressed(), [false, true, false]);
+      assert.deepEqual(await pressed(), [false, false, false, false, true, false]);
       // named: the name is on the instrument's button too
       await page.locator('.jam-sounds input').first().fill('Hum');
       await page.locator('.jam-sounds input').first().press('Enter');
       assert.deepEqual(await layers(), ['Hum', 'Keys', 'Bass', 'Drums']);
       assert.match(await page.locator('.layer').first().innerText(), /your sound/);
       // swapped: the other sound, and then the bells themselves
-      await page.locator('.jam-sounds .tile').nth(2).click();
-      assert.deepEqual(await pressed(), [false, false, true]);
+      await page.locator('.jam-sounds .tile').nth(5).click();
+      assert.deepEqual(await pressed(), [false, false, false, false, false, true]);
       assert.deepEqual(await layers(), ['Sound 1', 'Keys', 'Bass', 'Drums']);
       await page.locator('.jam-sounds .tile').first().click();
       assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
@@ -919,9 +931,9 @@ async function main() {
       await page.locator('#jam-drawer-close').click();
       await page.locator('.layer').nth(3).click();
       await mic.click();
-      assert.equal(await page.locator('.jam-sounds .own').innerText(), 'Drums');
+      assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['Drums', 'Bells', 'Keys', 'Bass'], 'its own first');
       assert.deepEqual(await names(), ['Hum', 'Sound 1']);
-      await page.locator('.jam-sounds .tile').nth(1).click();
+      await page.locator('.jam-sounds .tile').nth(4).click();
       assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Hum']);
       await page.locator('#jam-drawer-close').click();
       assert.equal(await mic.getAttribute('aria-pressed'), 'true');
@@ -1057,7 +1069,7 @@ async function main() {
       // a place added and nothing put in it: it is not kept
       await more.click();
       await page.waitForSelector('dialog#jam-drawer[open]');
-      assert.equal(await page.locator('.jam-sounds .own').innerText(), 'None');
+      assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['None', 'Bells', 'Keys', 'Bass', 'Drums']);
       await page.locator('#jam-drawer-close').click();
       assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
       // a sound recorded into a new place: a fifth button, with a part of its own
@@ -1073,7 +1085,7 @@ async function main() {
       // up to eight, and then there is nowhere to add
       for (let n = 6; n <= 8; n++) {
         await more.click();
-        await page.locator('.jam-sounds .tile').nth(1).click(); // the same sound again will do
+        await page.locator('.jam-sounds .tile').nth(5).click(); // the same sound again will do
         await page.locator('#jam-drawer-close').click();
         assert.equal((await layers()).length, n);
       }
@@ -1085,19 +1097,25 @@ async function main() {
       await page.waitForSelector('dialog#jam-drawer', { state: 'hidden' });
       assert.equal((await layers()).length, 7);
       assert.equal(await more.isVisible(), true);
-      // saved, and shared: the link has the beat in it, the long way, and says where its sounds are
+      // one of the instruments in another's place: the keys, where the bass is
+      await page.locator('.layer').nth(2).click();
+      await page.locator('#jam-mic').click();
+      await page.locator('.jam-sounds .tile').nth(2).click();
+      await page.locator('#jam-drawer-close').click();
+      assert.deepEqual((await layers()).slice(0, 4), ['Bells', 'Keys', 'Keys', 'Drums']);
+      // saved, and shared: the link has the beat in it, the long way, and says where its sounds are, and which instrument is in another's place
       await page.locator('#jam-save').click();
       await page.locator('.jam-saved button[aria-label^="Share"]').first().click();
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
       const link = await page.evaluate(() => navigator.clipboard.readText());
-      assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{76}&s=a{19}1$/);
+      assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{76}&s=a{19}1&o=--1-----$/);
       assert.deepEqual(shares.get('aaaaaaaaaaaaaaaaaaa1').map((one) => one.slot), [4, 5, 6]);
       // somebody else opens it (this browser, with nothing of the sharer's on it): the beat, and its sounds on the deck and in the drawer
       there.clear();
       await page.evaluate(() => new Promise((done) => { localStorage.clear(); indexedDB.deleteDatabase('jam').onsuccess = done; }));
       await page.goto(link);
       await page.waitForFunction(() => document.querySelectorAll('.layer:not([hidden]):not(.more)').length === 7, null, { timeout: 8000 });
-      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums', 'Sound 1', 'Sound 1', 'Sound 1']);
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Keys', 'Drums', 'Sound 1', 'Sound 1', 'Sound 1'], 'the deck as it was shared');
       assert.equal(new URL(page.url()).search, '', 'the address goes back to plain');
       await page.locator('.layer').nth(4).click();
       assert.equal(await page.locator('.jam-board .pad.on').count(), 1, 'the part written for the sound');
@@ -1132,7 +1150,7 @@ async function main() {
       assert.equal(await error.isVisible(), false, 'trying again takes the old error away');
       await record.click();
       await page.waitForFunction(() => document.querySelector('#jam-mic-error').textContent === 'Nothing was heard.');
-      assert.equal(await page.locator('.jam-sounds li').count(), 1, 'only the instrument itself');
+      assert.equal(await page.locator('.jam-sounds input').count(), 0, 'nothing recorded: only the instruments');
       assert.equal(await page.locator('.layer[data-own="true"]').count(), 0);
     }),
 
