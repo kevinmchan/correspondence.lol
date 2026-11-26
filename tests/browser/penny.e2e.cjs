@@ -2706,6 +2706,39 @@ async function main() {
       assert.equal(await page.locator('dialog.howto[open]').count(), 0, 'no sheet over the board: not the same cards again, nor how to play');
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('postmarks:howto:v1'))), id, 'the game is kept as shown');
     }),
+    // A board lost together is left as it lies: its end offers the way back to the room, and no second go at the same
+    // board (which started a new game for the whole room, and showed its starter the cards of a game together again).
+    check('a game together, lost: no second go at the same board, only the way back to the room', { storage: ACCOUNT }, async (page) => {
+      const { generatePuzzle } = await import('../../postmarks/game.js');
+      const size = 6;
+      const made = generatePuzzle(size, 8);
+      const id = '88888888-8888-4888-8888-888888888888';
+      const room = '11111111-1111-4111-8111-111111111111';
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const view = { id, room, room_name: 'Book club', you: 0, people, players: ['Sam', 'Ada'], mode: 'coop', size, regions: made.regions, cells: new Array(size * size).fill(0), hearts: 1, moves: 2, status: 'playing', last: { player: 1, type: 'guess', cell: 0, correct: false } };
+      const wrong = made.solution[2] === 0 ? 2 * size + 1 : 2 * size; // (a square in the third row with no post in it)
+      const lost = { ...view, solution: made.solution, hearts: 0, moves: 3, status: 'lost', last: { player: 0, type: 'guess', cell: wrong, correct: false } };
+      let moved = false;
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      const asked = [];
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(\w+)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const name = route.request().url().match(/rpc\/(\w+)/)[1];
+        asked.push(name);
+        if (name === 'room_get') return route.fulfill({ json: { id: room, name: 'Book club', you: 0, people, messages: [], games: [] }, headers: cors });
+        return route.fulfill({ json: (moved ||= name === 'postmarks_play') ? lost : view, headers: cors }); // (the last heart goes with the move)
+      });
+      await page.goto(`${origin}/postmarks/?game=${id}`);
+      await page.waitForSelector('dialog.together[open]');
+      await page.locator('dialog.together .start').click();
+      await page.locator(`#board .cell[data-cell="${wrong}"]`).dblclick();
+      await page.locator('#submit:not([disabled])').click();
+      await page.waitForSelector('dialog.finale.lost[open]', { timeout: 15000 });
+      assert.equal(await page.locator('dialog.finale h2').textContent(), 'Out of hearts');
+      assert.equal(await page.locator('dialog.finale button.again').count(), 0, 'no second go at the board');
+      assert.deepEqual(await page.locator('dialog.finale .buttons .quiet').allTextContents(), ['Back to the room']);
+      assert.equal(asked.includes('postmarks_start'), false, 'and nothing was started');
+    }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('#jam-play');
