@@ -167,3 +167,29 @@
 .jam-saved input[type="text"]:focus-visible { border-color: var(--accent); background: var(--paper); }
 .jam-saved button.quiet { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; }
 .jam-saved button.quiet svg { width: 1.15rem; height: 1.15rem; }
+
+/* --- A sound of your own ------------------------------------------------------------------ */
+/* The microphone, beside the bin. Lit in the instrument's colour when that instrument plays your sound; while it
+   listens it shows a square to stop it, and a ring in that colour goes once round it in the time it listens for. */
+.jam-controls #jam-mic.quiet { position: relative; padding: 0; }
+#jam-mic .stop { display: none; }
+#jam-mic.hearing .stop { display: block; }
+#jam-mic.hearing .mic { display: none; }
+#jam-mic[aria-pressed="true"] { box-shadow: 0 0.2rem 0 var(--c), inset 0 0 0 2px var(--c); }
+@property --mic-turn { syntax: "<angle>"; inherits: false; initial-value: 360deg; }
+#jam-mic.hearing::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px; pointer-events: none;
+  background: conic-gradient(var(--c) var(--mic-turn), transparent 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+@media (prefers-reduced-motion: no-preference) {
+  #jam-mic.hearing::before { animation: mic-ring 3s linear both; } /* (3s: MOST_HEARD in jam/sample.js) */
+}
+@keyframes mic-ring { from { --mic-turn: 0deg; } to { --mic-turn: 360deg; } }
+/* What went wrong with it is said where the page's notes are, in place of one, and (being taller than a note, in its
+   soft box) reaches a little into the space above and below: so nothing moves for it. The page is centred, and a line
+   with room of its own would push what is above it up. */
+.jam .message.bad.jam-mic-error { margin: -0.583rem auto; }
+.jam-mic-error:not(:empty) + .jam-note { display: none; }

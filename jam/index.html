@@ -563,11 +563,17 @@
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
           </button>
           <div class="side">
+            <!-- A sound of your own, in place of the instrument that is chosen (jam/mic.js). -->
+            <button type="button" id="jam-mic" class="quiet" aria-label="Record a sound" aria-pressed="false">
+              <svg class="mic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/></svg>
+              <svg class="stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.4" fill="currentColor"/></svg>
+            </button>
             <button type="button" id="jam-clear" class="quiet" aria-label="Clear this instrument" title="Clear this instrument">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7M10.3 10.5v5M13.7 10.5v5"/></svg>
             </button>
           </div>
         </div>
+        <p id="jam-mic-error" class="message bad jam-mic-error" role="alert"></p>
         <p id="jam-note" class="jam-note" role="status"></p>
         <section id="jam-saved" class="jam-saved" aria-label="Your beats" hidden>
           <h2>Your beats</h2>

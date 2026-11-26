@@ -71,6 +71,8 @@ const PRECACHE = [
   '/jam/beat.js',
   '/jam/engine.js',
   '/jam/make.js',
+  '/jam/sample.js',
+  '/jam/mic.js',
   '/jam/form.js',
   '/jam/taste.js',
   '/jam/taste-model.js',

@@ -31,6 +31,13 @@
 // round to the start, and a step to one side and back with each bar. Dot, if
 // Dot has been found, hops to the bells. It does not hum: the music is yours.
 //
+// An instrument can be given a sound of your own. The microphone, beside the
+// bin, hears a few seconds for the instrument that is chosen (jam/mic.js); what
+// it heard is then what that instrument plays, at the pitch of each row, in
+// tune with the chords if it has a note (jam/sample.js). The loop is quiet
+// while it listens. The sounds stay on this device: a beat that is saved or
+// shared is its notes, and is played elsewhere by the instruments themselves.
+//
 // The sound comes from the app's one sound engine (postmarks/sound.js), on its
 // clock, so the loop keeps exact time however busy the screen is.
 
@@ -43,18 +50,22 @@ import { go } from '/shared/nav.js';
 import { decode, encode, isEmpty } from './beat.js';
 import { claim as callPal } from '/penny/pal.js';
 import { hasDot } from '/penny/penny.js';
+import { oops } from '/shared/place.js';
+import { choose } from '/shared/ask.js';
+import { SILENT, keepSound, listen, sounds } from './mic.js';
 
 const SAVE_KEY = 'jam:v1'; // the beat on the board
 const SAVED_KEY = 'jam:saved:v1'; // the beats kept: [{ name, code, at, auto, synced }]
 const GONE_KEY = 'jam:gone:v1'; // beats deleted here that the server has still to be told of
 const MOST = 30;
-const nameOf = (kind, row) => kind.notes?.[row] ?? `Note ${ROWS - row} of ${ROWS}`;
+const nameOf = (kind, row, own) => (!own && kind.notes?.[row]) || `Note ${ROWS - row} of ${ROWS}`; // (own: it plays a recorded sound)
+const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
 
 const empty = () => LAYERS.map(() => []);
 
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
-  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), save: $('jam-save'), share: $('jam-share'), note: $('jam-note'), saved: $('jam-saved') };
+  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), mic: $('jam-mic'), micError: $('jam-mic-error'), save: $('jam-save'), share: $('jam-share'), note: $('jam-note'), saved: $('jam-saved') };
   document.title = 'Loops · correspondence.lol';
 
   // --- What has been made: for each layer, the tiles that hold a note -----------
@@ -69,6 +80,9 @@ export function mount(root, life) {
   const keep = () => save(SAVE_KEY, { v: 1, tempo, notes: sets.map((set) => [...set]) });
   let layer = 0;
   let playing = false;
+  // the sounds recorded to be played in place of the instruments: for each, { rate, pcm, hz } or null
+  const voices = LAYERS.map(() => null);
+  let hearing = null; // while the microphone is listening: { stop }
 
   // --- Penny, who dances -----------------------------------------------------------------
   const pal = callPal(life, { x: 0.74, height: 'low', mood: 'calm', dot: hasDot() });
@@ -129,7 +143,7 @@ export function mount(root, life) {
     button.className = 'layer';
     button.setAttribute('role', 'radio');
     button.style.setProperty('--c', kind.colour);
-    button.innerHTML = `<span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true">${kind.icon}</svg></span><span class="name">${kind.name}</span><span class="count"></span>`;
+    button.innerHTML = `<span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"></svg></span><span class="name">${kind.name}</span><span class="sr-only"></span><span class="count"></span>`;
     button.addEventListener('click', () => {
       layer = index;
       render();
@@ -144,7 +158,7 @@ export function mount(root, life) {
       const on = sets[layer].has(key);
       pad.classList.toggle('on', on);
       const row = Number(pad.dataset.row);
-      pad.setAttribute('aria-label', `${nameOf(LAYERS[layer], row)}, step ${Number(pad.dataset.step) + 1}${on ? ', on' : ''}`);
+      pad.setAttribute('aria-label', `${nameOf(LAYERS[layer], row, voices[layer])}, step ${Number(pad.dataset.step) + 1}${on ? ', on' : ''}`);
       pad.setAttribute('aria-pressed', String(on));
       for (let other = 0; other < LAYERS.length; other++) {
         pad.children[other].hidden = other === layer || !sets[other].has(key);
@@ -153,7 +167,20 @@ export function mount(root, life) {
     [...el.layers.children].forEach((button, index) => {
       button.setAttribute('aria-checked', String(index === layer));
       button.querySelector('.count').textContent = sets[index].size || '';
+      // (an instrument that plays your own sound wears the microphone)
+      const own = Boolean(voices[index]);
+      if (button.dataset.own !== String(own)) {
+        button.dataset.own = own;
+        button.querySelector('svg').innerHTML = own ? MIC : LAYERS[index].icon;
+        button.querySelector('.sr-only').textContent = own ? ', your sound' : '';
+      }
     });
+    el.mic.style.setProperty('--c', LAYERS[layer].colour);
+    el.mic.classList.toggle('hearing', Boolean(hearing));
+    el.mic.setAttribute('aria-pressed', String(Boolean(voices[layer])));
+    const micSays = hearing ? 'Stop recording' : voices[layer] ? `${LAYERS[layer].name}: your sound` : `Record a sound for ${LAYERS[layer].name.toLowerCase()}`;
+    el.mic.setAttribute('aria-label', micSays);
+    el.mic.title = micSays;
     const any = sets.some((set) => set.size > 0);
     el.hint.hidden = any;
     el.clear.disabled = sets[layer].size === 0;
@@ -167,9 +194,9 @@ export function mount(root, life) {
   }
 
   // --- Sound: the board, played round and round (jam/engine.js) -----------------------
-  const loop = createLoop(life, () => (playing ? { tempo, sets } : null));
+  const loop = createLoop(life, () => (playing ? { tempo, sets, voices } : null));
   let heard = 0; // the chord being heard now
-  const sound = (layerIndex, row) => loop.tap(layerIndex, row);
+  const sound = (layerIndex, row) => loop.tap(layerIndex, row, voices);
 
   // --- Sight: the step being heard lights up, and its notes jump -----------------------
   let shown = -1;
@@ -305,11 +332,69 @@ export function mount(root, life) {
     if (!playing) setPlaying(true);
   });
 
+  // --- A sound of your own, from the microphone ---------------------------------------------
+  // The microphone hears for the instrument that is chosen. The loop is quiet
+  // meanwhile (it would be heard too, and an iPhone turns everything down
+  // while it listens), and goes on afterwards with the new sound in it.
+  sounds(LAYERS.length).then((kept) => {
+    if (life.over) return;
+    kept.forEach((one, index) => { voices[index] ??= one; });
+    render();
+  });
+  let asking = false; // the phone is asking whether the microphone may be used
+  async function record() {
+    const index = layer;
+    const was = playing;
+    oops(el.micError, '');
+    if (playing) setPlaying(false);
+    asking = true;
+    try {
+      hearing = await listen();
+    } catch (failure) {
+      oops(el.micError, failure.message, { shake: el.mic });
+      if (was) setPlaying(true);
+      return;
+    } finally {
+      asking = false;
+    }
+    if (life.over) return hearing.stop();
+    render();
+    const one = await hearing.heard;
+    hearing = null;
+    if (life.over) return;
+    if (one) {
+      voices[index] = one;
+      keepSound(index, one);
+      life.setTimeout(() => { if (!playing) sound(index, 3); }, 250); // heard back, once the phone has let go of the microphone
+    } else {
+      oops(el.micError, SILENT, { shake: el.mic });
+    }
+    render();
+    if (was) setPlaying(true);
+  }
+  el.mic.addEventListener('click', async () => {
+    if (hearing) return hearing.stop();
+    if (asking) return;
+    if (!voices[layer]) return record();
+    const index = layer;
+    const kind = LAYERS[index];
+    const wanted = await choose(`${kind.name}: your sound`, { options: [{ label: `Back to ${kind.name.toLowerCase()}`, value: 'back' }, { label: 'Record again', value: 'again', primary: true }] });
+    if (life.over || index !== layer) return;
+    if (wanted === 'again') return record();
+    if (wanted !== 'back') return;
+    voices[index] = null;
+    keepSound(index, null);
+    oops(el.micError, '');
+    render();
+  });
+  life.onEnd(() => hearing?.stop());
+
   // --- Keeping a beat, and passing one on ------------------------------------------------
   const now = () => ({ tempo, notes: sets.map((set) => [...set]) });
   const kept$ = () => (Array.isArray(load(SAVED_KEY)) ? load(SAVED_KEY).filter((beat) => beat && decode(beat.code)) : []);
   let noteTimer = 0;
   function say(text) {
+    oops(el.micError, ''); // (they share a line, and this is the newer)
     el.note.textContent = text;
     clearTimeout(noteTimer);
     noteTimer = life.setTimeout(() => { el.note.textContent = ''; }, 4000);

@@ -156,6 +156,10 @@ async function states() {
   assert.ok(stands(meters.underWay).stake > 1 && stands(meters.sunk).stake < 1 && stands(meters.reached).stake >= 20 && !stands(meters.underWay).significant, 'the meters are not where they should be');
   assert.ok(meters.carried.carried > 1 && meters.carried.trials.length === 3 && meters.carried.restarts.length === 1, 'the meter after starting over');
   assert.ok(meters.litCarried.carried < 20 && meters.litCarried.restarts[0].peak >= 20 && standing(meters.litCarried.trials, meters.litCarried.carried, meters.litCarried.restarts).significant, 'the meter lit after starting over below ×20');
+  // a microphone that hears a hum, and one that may not be used; and a sound recorded with the first
+  const { fakeMic } = require('./mic.cjs');
+  const [HUM, REFUSED] = [new Function(`(${fakeMic})('hum')`), new Function(`(${fakeMic})('refused')`)];
+  const recorded = async (page) => { await page.locator('#jam-mic').click(); await page.waitForSelector('#jam-mic.hearing'); await sleep(700); await page.locator('#jam-mic').click(); };
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   const NIGHT = { 'tags:found:v1': ['night'] }; // somebody who has found the night
   // The night, once the way through to it is over: the only screen there is, with nothing left over it; and its picture drawn for the size it is shown at.
@@ -321,6 +325,13 @@ async function states() {
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
     { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li', small: [PADS] },
+    // A sound of your own, from the microphone (tests/browser/mic.cjs stands in for it): while it listens; once an
+    // instrument plays it; asked what to do with it; and a microphone that is refused, with its line under the controls.
+    { name: 'the music maker, the microphone listening', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: (page) => page.locator('#jam-mic').click(), settle: '#jam-mic.hearing', small: [PADS] },
+    { name: 'the music maker, an instrument playing your sound', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: recorded, settle: '#jam-mic[aria-pressed="true"]:not(.hearing)', small: [PADS] },
+    { name: 'the music maker, your sound asked about', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad',
+      then: async (page) => { await recorded(page); await page.waitForSelector('#jam-mic[aria-pressed="true"]:not(.hearing)'); await page.locator('#jam-mic').click(); }, settle: 'dialog.ask[open]' },
+    { name: 'the music maker, the microphone refused', screen: 'jam', at: '/jam/', init: REFUSED, ready: '.jam-board .pad', then: (page) => page.locator('#jam-mic').click(), settle: '#jam-mic-error.oops:not(:empty)', small: [PADS] },
     // Penny's Radio: a work in a gallery, played and read about. Its story is told once; these are its stills.
     // (told: nobody comes to show how, and nothing opens by itself.)
     { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', whole: SET },
