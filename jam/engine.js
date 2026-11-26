@@ -74,16 +74,18 @@ export const LAYERS = [
 ];
 
 // The deck: the four instruments, and four places more that are no
-// instrument's. Each of those plays a recorded sound or nothing, has a colour
-// of its own, and a part on the board like any instrument.
+// instrument's. Each of those plays a recorded sound, one of the four
+// instruments, or nothing; has a colour of its own, and a part on the board
+// like any instrument.
 const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
 export const DECK = [...LAYERS, ...['#e79ac6', '#9bc873', '#74b4e6', '#d2a679'].map((colour) => ({ name: 'Sound', colour, icon: MIC, base: 261.63, tuned: true, extra: true, play() {} }))];
 
 // --- The loop -----------------------------------------------------------------------
 // read(): what should be sounding now, { tempo, sets, long, voices } (sets:
 // for each instrument, the tiles that hold a note), or null for silence.
-// `voices`, if given, is for each instrument a sound recorded to be played in
-// its place ({ rate, pcm, hz }: jam/sample.js), or null for its own. It is asked
+// `voices`, if given, is for each instrument what is played in its place: a
+// sound recorded ({ rate, pcm, hz }: jam/sample.js), another of the four
+// instruments ({ lent: one of LAYERS }), or null for its own. It is asked
 // afresh for every step, so what is played can change under it at any time.
 // `long` plays the loop in its long form (jam/form.js): otherwise it is played
 // as it is written, round and round, through the four chords.
@@ -140,6 +142,7 @@ export function createLoop(life, read) {
     const kind = DECK[index];
     const voice = voices?.[index];
     if (!voice) return kind.play(row, at, into(kind), chord, hard);
+    if (voice.lent) return voice.lent.play(row, at, into(voice.lent), chord, hard); // (another instrument, as it sounds in its own place)
     const { ctx } = audio();
     let buffer = ready.get(voice);
     if (!buffer) {

@@ -170,8 +170,8 @@
 .jam-saved button.quiet svg { width: 1.15rem; height: 1.15rem; }
 
 /* --- Sounds of your own ------------------------------------------------------------------- */
-/* The microphone, beside the bin, opens the drawer. Lit in the instrument's colour when that instrument plays a
-   recorded sound. */
+/* The drawer, beside the bin, opens the drawer of sounds. Lit in the instrument's colour when that instrument plays
+   anything but its own sound. */
 .jam-controls #jam-mic.quiet { padding: 0; }
 #jam-mic[aria-pressed="true"] { box-shadow: 0 0.2rem 0 var(--c), inset 0 0 0 2px var(--c); }
 .layer .name { max-width: 100%; overflow-wrap: anywhere; text-align: center; line-height: 1.15; }
