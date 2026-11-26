@@ -2601,8 +2601,12 @@ async function main() {
       assert.equal(await page.evaluate(() => [...document.querySelectorAll('.screen-room > main [data-ff="tile"], .screen-room > main [data-ff="board"]')].some((one) => one.dataset.ffMood === 'sleep')), false, 'the third bar full: awake');
       assert.equal(await page.locator('.screen-room > main .mode[data-ff] .ff-eye').first().isVisible(), true, 'eyes open');
       await page.waitForSelector('.screen-room > main .mode[data-ff][data-ff-seen]');
-      // (awake, the picture of a board may be in the middle of a hop or a wave: it is a picture, and the link over it, which is what is pressed, stays)
-      assert.deepEqual((await boxes()).filter((one) => !one.startsWith('mini ') && !empty.includes(one)), [], 'nor awake: everything there is to press where it was');
+      // (awake, the picture of a board sways and may be in the middle of a hop, and the people walk about the lawn: neither is pressed, and the link over a board, which is, stays)
+      assert.deepEqual((await boxes()).filter((one) => !/^(mini|seat)\b/.test(one) && !empty.includes(one)), [], 'nor awake: everything there is to press where it was');
+      assert.equal(await page.locator('.screen-room').getAttribute('data-ff-awake'), '', 'a breeze, and people walking');
+      await page.waitForFunction(() => [...document.querySelectorAll('.screen-room > main #members .seat')].some((seat) => seat.style.translate && seat.style.translate !== '0px 0px'), null, { timeout: 15000 });
+      assert.ok(await page.locator('.screen-room > header #worlds[data-ff="portal"]').count(), 'and the portal is a caterpillar curled into a ring');
+      assert.ok(await page.locator('.screen-room > main h1.sign[data-ff="sign"] > .ff-back').count(), 'and a field mouse holds the name up');
       assert.equal(await page.evaluate(() => [...document.querySelectorAll('.ff')].every((layer) => getComputedStyle(layer).pointerEvents === 'none' && layer.closest('[aria-hidden="true"]'))), true, 'their bodies cannot be pressed, and are not read out');
       assert.equal(await page.locator('.screen-room').getAttribute('data-ff-current'), null, 'the current has done its work');
       await having(720, true);

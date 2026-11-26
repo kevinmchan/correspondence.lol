@@ -1,5 +1,6 @@
 import { folk as meadowFolk, wearing } from '/shared/meadow.js';
 import { troupe } from '/room/folk.js';
+import { roam } from '/room/roam.js';
 import { ask, tell } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
@@ -90,17 +91,23 @@ export function mount(root, life) {
       ['code', `${here}.house .share .code`, { key: () => 'code' }],
       ['bell', `${here}.house .notify:not([hidden])`, { face: (notify) => notify.querySelector('.bell'), key: () => 'bell' }],
       ['sign', ':scope > header h1.sign:not(.sr-only), :scope > main h1.sign:not(.sr-only)', { key: () => 'sign' }],
+      ['portal', ':scope > header #worlds:not([hidden])', { key: () => 'portal' }],
       ['note', `${here}.rug .chat-log li:not(.note) > p`],
       ['token', `${here}#members .seat`, { face: (seat) => seat.querySelector('.avatar'), key: (seat) => `seat:${seat.dataset.seat}` }],
     ].filter(([kind]) => meadow.kinds.includes(kind));
     const typing = () => Boolean(document.activeElement?.matches?.('input:not([type="checkbox"]):not([type="radio"]), textarea'));
     const meadowSeen = () => root.dataset.world === 'playful' && !root.querySelector(':scope > .worlds-copy');
     const folk = troupe({ root, life, calm: typing, ...(meadow.awake ? {} : { still: true }), sights: () => [...root.querySelectorAll(`${here}#members .seat .avatar`)] });
+    // (awake, and with motion allowed: the people walk about the lawn, room/roam.js; and what is pressed sways, room/folk.css)
+    const lively = meadow.awake && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const people = lively ? roam({ root, life, calm: typing }) : null;
+    if (lively) root.setAttribute('data-ff-awake', '');
     let due = false;
     const recast = () => {
       due = false;
       if (life.over || !meadowSeen()) return;
       folk.scan(CAST);
+      people?.measure();
       // (not yet awake: every one of them asleep, eyes shut, where it is)
       if (!meadow.awake) {
         // (and the current that goes through them takes them in the order they stand on the page: room/folk.css)
@@ -119,9 +126,13 @@ export function mount(root, life) {
     });
     drawn.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'data-world'] });
     life.onEnd(() => drawn.disconnect());
+    if (people) life.on(window, 'resize', () => people.measure());
     const beat = (now) => {
       if (life.over) return;
-      if (meadowSeen()) folk.tick(now);
+      if (meadowSeen()) {
+        folk.tick(now);
+        people?.step(now);
+      }
       requestAnimationFrame(beat);
     };
     if (meadow.awake) requestAnimationFrame(beat);

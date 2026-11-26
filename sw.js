@@ -59,6 +59,7 @@ const PRECACHE = [
   '/room/meadow.css',
   '/room/folk.css',
   '/room/folk.js',
+  '/room/roam.js',
   '/shared/meadow.js',
   '/shared/place.js',
   '/postmarks/',

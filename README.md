@@ -9,7 +9,7 @@ A static, no-build progressive web app served from the repository root at
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
-| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) |
+| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
@@ -291,7 +291,8 @@ of its own (`folkOf` in `shared/energy.js`, `room/folk.js`).
   the notes of the chat, a little bird on the send button, feet under the
   people's tokens; the games' own boards are little cartoons of the old
   rubber-hose kind (pie-cut eyes over the top edge, a white glove, big
-  shoes), and a field mouse holds up the room's name. Nobody is woken. They
+  shoes), a field mouse holds up the room's name, and the portal is a
+  caterpillar curled into a ring. Nobody is woken. They
   were here before Penny was.
 - *The third bar: more energy, and wonder.* They open their eyes, all of
   them, and from then on the meadow is alive: they blink and breathe and look
@@ -308,9 +309,15 @@ Penny, and whether any of them knows anything of the sound, is not written.
 Like the meadow they are paint: drawn round the things of the room in layers
 that cannot be pressed, so that nothing that can be pressed moves or changes
 size; they are not in the night through the portal; and taking the meadow off
-on the home page takes them with it. Not brought over from the first sketches
-of this world: people walking about, and the things to press drifting on a
-leash. The moment of each stage (the bar filling, in a game) has no scene of
+on the home page takes them with it. Awake, three more things happen (not with reduced motion). The people walk
+about: each token leaves its place at the head of the table and wanders the
+strip of lawn between the hedge and the table, a few steps and a rest, on the
+feet it was found to have, keeping clear of the others, and goes back to its
+place while anything is typed (`room/roam.js`). A breeze crosses the meadow:
+what is on a thing to press, its mark and its body, sways a very little, each
+in its own time, while its own box and plate stay where they are; with a
+finger near, it is still. And the portal is a caterpillar curled into a ring
+(it is not there in the night). The moment of each stage (the bar filling, in a game) has no scene of
 its own yet: the room is simply different the next time it is opened.
 
 The fourth time the bar fills, a sheet over the game says, in the owner's

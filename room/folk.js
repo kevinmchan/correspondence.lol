@@ -441,6 +441,9 @@ export function troupe({ root, life, calm = () => false, sights = () => [], stil
         const it = face(el);
         if (!it) continue;
         now.add(it);
+        // (a thing whose inside the place has written afresh has lost its body: it is given it again, and carries on)
+        const had = folk.get(it);
+        if (had && had.front && had.front.parentNode !== it) undress(had);
         if (!folk.has(it)) fresh.push([it, kind, el, key ? key(el) : null]);
       }
     }

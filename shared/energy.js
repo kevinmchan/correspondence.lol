@@ -48,7 +48,7 @@ export const meadowEarned = (state) => state.earned >= BAR;
 // The meadow's folk (shared/meadow.js, room/folk.js): the things of a room, alive. There are three stages, a bar
 // each. The first bar filled is the meadow, and nothing in it has a body. The second is the discovery: energy runs
 // through everything, and the things to press were alive all along, and asleep. The third wakes them.
-export const FOLK = ['tile', 'code', 'bell', 'note', 'send', 'token', 'board', 'sign'];
+export const FOLK = ['tile', 'code', 'bell', 'note', 'send', 'token', 'board', 'sign', 'portal'];
 export function folkOf(state) {
   const fills = Math.floor(state.earned / BAR);
   return { kinds: fills >= 2 ? FOLK : [], awake: fills >= 3 };

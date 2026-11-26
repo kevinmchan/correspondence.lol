@@ -275,3 +275,18 @@ li.mine > p > .ff-note .ff-wing { fill: #f9c784; stroke: #c98d32; }
   0%, 22%, 100% { filter: drop-shadow(0 0 0 rgb(255 214 110 / 0)); }
   9% { filter: drop-shadow(0 0 0.32rem rgb(255 214 110 / 0.95)) drop-shadow(0 0 0.1rem rgb(255 244 200 / 0.9)); }
 }
+
+/* The field mouse holds the room's name up from behind it. The name is not a board any more, with nothing painted
+   behind it for the mouse to be behind: it is drawn at the name's own level, over the top of it. */
+.ff-back.ff-sign { z-index: 0; }
+
+/* Awake (data-ff-awake on the room: shared/meadow.js), a breeze crosses the meadow: what is on a thing to press, its
+   mark and its body together, sways a very little, slowly, each in its own time. The thing's own box and its plate
+   stay where they are, so what is pressed has not moved; and with a finger near it, or anything being typed, what is
+   on it is still. A game's small board sways whole: it is a picture, and the link over it is what is pressed. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-ff-awake] :is(.mode, .code)[data-ff][data-ff-seen]:not([data-ff-attend]) > * { animation: ff-breeze 6.4s ease-in-out var(--ff-age, 0s) infinite; }
+  [data-ff-awake] #games .mini[data-ff][data-ff-seen]:not([data-ff-attend]) { animation: ff-breeze 7.2s ease-in-out var(--ff-age, 0s) infinite; }
+}
+[data-ff-still] [data-ff] > * { animation: none !important; }
+@keyframes ff-breeze { 0%, 100% { translate: 0 0; rotate: 0deg; } 30% { translate: 0.09rem -0.06rem; rotate: 0.9deg; } 65% { translate: -0.09rem 0.03rem; rotate: -0.9deg; } }
