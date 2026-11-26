@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the map from higher up at `/?map` and the places beyond the fifth (`map.js`, `map.css`, `beyond.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the world seen from above at `/?map`, what stands in it and the places beyond the fifth (`map.js`, `map.css`, `world.js`, `beyond.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -294,7 +294,7 @@ built is only how the map opens.
 
 **The map from higher up** (`/?map`, `penny/map.js`). The walk shows one place
 at a time; this is the same map from further off, so that several can be seen
-at once. From the fifth place on, the places are a network and not a line
+at once, and it is a world to go about in (below). From the fifth place on, the places are a network and not a line
 (`penny/beyond.js`): the fifth leads to two at once, to be walked in either
 order, and the two lead on to one that waits for both. A place says what it
 is by its form, never by a word, a lock or a number:
@@ -323,12 +323,27 @@ enough to finish it. What is found in it is energy by the game's own count: a
 post, one; the place finished, as much again; walked a second time, nothing
 more. Its portal, and its way back, lead out to the map from higher up.
 
+**The map is a world** (the owner, 26 November 2026: "a world that has
+buildings and artifacts and landmarks and portals and characters roaming";
+`penny/world.js` sets it out, `penny/map.js` draws it). The page scrolls, the
+way on is up, and it opens on the frontier, or on whatever was last gone into
+from it. Everything is on the one grid of squares, seen from above, and is
+made of what the app already has, set down where it belongs:
+
+| | |
+| --- | --- |
+| Landmarks | The Dead Letter Office at the foot of the map, where it began: a long flat roof with its clock, the hand at the pace of a real second hand (the film, `/?office`). The gallery, with Penny's Radio on its plinth (`/jam/?taste`). The bandstand (the music maker, `/jam/`). |
+| Buildings | Your rooms, each a roof in the colour the room keeps, either side of the office and in streets below it; up to eleven. A touch goes to the room. Its name is said to a screen reader and not written. |
+| Artifacts | What has been found, lying where it was found: a piece of the sound beside the portal of each place that gave one up; the night, once found (`/?sky`). |
+| Portals | The ring each walked place opened, on the square above it; and the one out of the office. |
+| Characters | The mail you have found. Every post opened on the walk was somebody's, and it is out now: a small letter with a face, in the colour of the square it was found in, going about near its place a step at a time, in no hurry. They keep to the streets (never on a place, never in a building, never two on a square), are not pressed, and have nothing to say yet. |
+
 Open, for the owner: whether energy should light the map at all; whether the
 walk should end on this map and not in a solo game; what each place beyond is
 there to show, and who is met there; the hour of the day beyond the fifth
-place (it stays evening); and how the map moves once there is more of it than
-one screen holds (it does not move yet: what is shown is the last of the
-first five and the places beyond).
+place (it stays evening); whether the mail that was found is who should be
+going about, and what a touch on one should do; whether a room should show
+its name here; and what else stands in the world.
 
 ### Where Penny is
 
@@ -485,8 +500,7 @@ and Dot come out with you. (Until the places beyond were begun it led to a
 real solo game.)
 
 The places can be walked again afterwards: the home page's portal, now
-quieter, opens on the map from higher up, the fifth place is on it, and the
-walk's two tiles go back from there.
+quieter, opens on the map from higher up, and each of them is on it.
 Dot is beside Penny from the start then, and is not found a second time: that
 last post is somebody's ordinary mail. Nothing already heard is lost.
 

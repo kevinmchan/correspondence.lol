@@ -670,6 +670,57 @@ async function main() {
       assert.deepEqual(await states(), { west: 'walked', east: 'walked', north: 'lit' });
     }),
 
+    check('the world, seen from above: it opens on the frontier and scrolls; the office, the gallery and the bandstand lead where they should; a room is a roof that leads to it; a piece of the sound lies where it was found; the mail found is out and going about, and keeps to the streets; and it opens again on what was last gone into', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 2, 'penny:place:v1': 4, 'penny:beyond:v1': { walked: ['west'], charge: {} }, 'tags:found:v1': ['night'], 'correspondence:rooms:v1': [{ id: '11111111-1111-4111-8111-111111111111', name: 'Book club', at: 1795000000000 }] } }, async (page, h) => {
+      const onMap = async () => { await page.waitForURL(/\?map/); await page.waitForSelector('.screen-map:not(.entering):not(.opening) .far-place, .screen-map.opening .far-place'); await sleep(900); };
+      const inView = (selector) => page.evaluate((sel) => { const at = document.querySelector(sel).getBoundingClientRect(); return at.top >= 0 && at.bottom <= innerHeight; }, selector);
+      await page.goto(`${origin}/?map`);
+      await onMap();
+      assert.deepEqual(await h.words('main.far'), [], 'no words in the world');
+      assert.ok(await inView('.far-place[data-id="east"]'), 'it opens on the frontier: the place that is lit');
+      assert.ok(await page.evaluate(() => document.scrollingElement.scrollHeight > innerHeight * 1.2 && document.scrollingElement.scrollWidth <= innerWidth), 'the world is longer than the window, and no wider');
+      // what stands in it
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('a.far-site')].map((site) => [site.dataset.id, site.getAttribute('href'), site.getAttribute('aria-label')])), [
+        ['11111111-1111-4111-8111-111111111111', '/room/?id=11111111-1111-4111-8111-111111111111', 'Book club'],
+        ['office', '/?office', 'The Dead Letter Office'], ['gallery', '/jam/?taste', 'The gallery: Penny’s Radio'], ['bandstand', '/jam/', 'The bandstand: the music maker'], ['night', '/?sky', 'The night'],
+      ]);
+      assert.equal(await page.locator('.far-piece').count(), 2, 'two notes heard: two pieces lying on the map');
+      // the mail found: the first five gave up thirteen, the place walked beyond five more; none on a place or a building
+      assert.equal(await page.locator('.far-letter').count(), 18);
+      const astray = () => page.evaluate(() => {
+        const solid = [...document.querySelectorAll('.far-place:not([hidden]), a.far-site')].map((one) => one.getBoundingClientRect());
+        return [...document.querySelectorAll('.far-letter')].filter((letter) => {
+          const at = letter.getBoundingClientRect();
+          const [x, y] = [at.left + at.width / 2, at.top + at.height / 2];
+          return solid.some((box) => x > box.left && x < box.right && y > box.top && y < box.bottom);
+        }).length;
+      });
+      const where = () => page.evaluate(() => [...document.querySelectorAll('.far-letter')].map((letter) => `${letter.style.left} ${letter.style.top}`).join());
+      const before = await where();
+      assert.equal(await astray(), 0);
+      await sleep(5000);
+      assert.notEqual(await where(), before, 'nobody has moved');
+      await sleep(1600); // (whoever is in the middle of a step finishes it)
+      assert.equal(await astray(), 0, 'a letter has wandered onto a place or into a building');
+      // down the map to where it began, and in
+      await page.locator('.far-office').scrollIntoViewIfNeeded();
+      await page.locator('.far-office').click();
+      await page.waitForURL(/\?office/);
+      await page.goBack();
+      await onMap();
+      assert.ok(await inView('.far-office'), 'it opens again on what was last gone into');
+      // the gallery
+      await page.locator('.far-gallery').click();
+      await page.waitForURL(/\/jam\/\?taste/);
+      await page.goBack();
+      await onMap();
+      assert.ok(await inView('.far-gallery'));
+      // one of the first five can be walked again from here
+      await page.locator('.far-place[data-id="2"]').click();
+      await page.waitForURL(/at=2/);
+      await page.waitForSelector('.screen-walk:not(.entering) #walk-board .cell:nth-child(16)');
+      assert.equal(await page.evaluate(() => document.querySelector('.walk').dataset.hour), '2');
+    }),
+
     check('the map from higher up, with part of what a place wants: some of its squares take colour and it is not lit; with reduced motion and by keyboard', { reducedMotion: 'reduce', storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:beyond:v1': { walked: ['west', 'east'], charge: {} }, 'correspondence:energy:v1': { earned: 8, spent: 0, boards: [] } } }, async (page, h) => {
       await page.goto(`${origin}/?map`);
       await page.waitForSelector('.far-place[data-id="north"].can');
