@@ -36,10 +36,10 @@ export const POST = 1; // each post found
 export const finish = (size) => (sized(size) ? size * POST : 0); // a board finished: its posts' worth again
 export const most = (size) => (sized(size) ? size * POST + finish(size) : 0); // all a board can earn
 
-// One bar: about twenty games. Boards are drawn at sizes 5 to 9, so a game
-// finished earns 14 on average and one lost about half its posts; most are
-// finished. Twenty games of that are about 240.
-export const BAR = 240;
+// One bar: about five games, for now (the owner, 26 November 2026: "for now, make each stage 5 games long"; it was
+// about twenty, 240). Boards are drawn at sizes 5 to 9, so a game finished earns 14 on average and one lost about
+// half its posts; most are finished. Five games of that are about 70.
+export const BAR = 70;
 // How full the bar is (0 up to, not reaching, 1), and how many times it has
 // been filled. Earned, not held: spending later takes nothing off it.
 export const bar = (state) => ({ fill: (state.earned % BAR) / BAR, fills: Math.floor(state.earned / BAR) });

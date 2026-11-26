@@ -242,7 +242,9 @@ earned and shown has begun (the owner, 25 November 2026): in every game,
 alone or in a room, every post found is energy at once, and finishing the board
 entirely earns as much again (`shared/energy.js`). **The bar is a stat of the
 whole app, not of one game** (the owner, 25 November 2026): one bar for
-everything earned, which about twenty games fill (`BAR`, 240: boards are drawn
+everything earned, which about five games fill, for now (`BAR`, 70; the owner,
+26 November 2026: "for now, make each stage 5 games long"; it was about
+twenty, 240: boards are drawn
 at sizes 5 to 9, so a game finished earns 14 on average). It is under the play
 button on the home page, and in a game where the words of the turn were (in a
 room, beside them), with a current running through it and a spark flickering
@@ -271,8 +273,8 @@ the drama still. On the home page the glimpse is then a toggle (pressed, with a
 soft ring of light): it takes the meadow off and puts it back on, and the
 choice is kept on the device.
 
-**The meadow comes alive in three stages, a bar each** (the owner, 26
-November 2026: "First, there are no characters for the buttons. Then Penny
+**The meadow comes alive in three stages, a bar each** ("one bar per
+stage"; the owner, 26 November 2026: "First, there are no characters for the buttons. Then Penny
 discovers there's an energy flowing through everything and the buttons are
 actually alive but they are asleep. More energy and wonder brings them alive
 in the next stage."). This is the first stretch of the campaign with a shape

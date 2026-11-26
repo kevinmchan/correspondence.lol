@@ -182,9 +182,9 @@ async function states() {
         if (below > 0) throw new Error(`the first thing waiting is ${Math.ceil(below)}px below the first screen`);
       } },
     // Energy, everything earned in every game: one bar under the play button, and the meadow at its end (shared/meadow.js).
-    { name: 'home, energy part way to the meadow', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(130) }, ready: '#home-energy:not([hidden]) #meadow[disabled]' },
-    { name: 'home, the meadow earned and worn', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(300) }, ready: '#meadow[aria-pressed="true"]:not([disabled])' },
-    { name: 'home, the meadow taken off', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(300) }, ready: '#meadow[aria-pressed="true"]',
+    { name: 'home, energy part way to the meadow', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(40) }, ready: '#home-energy:not([hidden]) #meadow[disabled]' },
+    { name: 'home, the meadow earned and worn', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(90) }, ready: '#meadow[aria-pressed="true"]:not([disabled])' },
+    { name: 'home, the meadow taken off', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(90) }, ready: '#meadow[aria-pressed="true"]',
       then: (page) => page.locator('#meadow').click(), settle: '#meadow[aria-pressed="false"]:not([disabled])' },
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
@@ -270,15 +270,15 @@ async function states() {
       then: async (page) => { await page.locator('#more').click(); await page.locator('#leave').click(); await page.locator('dialog.ask[open] button.yes').click(); },
       settle: 'dialog.ask[open] [role="alert"]:not(:empty)' },
     // The meadow, worn by a room (room/meadow.css): paint only, behind everything.
-    { name: 'a room, in the meadow', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games li' },
+    { name: 'a room, in the meadow', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(90) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games li' },
     // (the second bar filled: the things of the room are found to be alive, and asleep, a current going through them; the third: awake. room/folk.js)
-    { name: 'a room, in the meadow, its folk found, asleep', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(500) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games .mini[data-ff="board"][data-ff-mood="sleep"]' },
-    { name: 'a room, in the meadow come alive', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(730) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games .mini[data-ff="board"]' },
-    { name: 'a room, in the meadow come alive, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(730) }, server: room({ name: LONG_NAME, games: TABLE, people: CROWD, messages: TALK }), ready: '.screen-room.meadow #games .mini[data-ff="board"]' },
-    { name: 'a room, in the meadow, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '.screen-room.meadow #games li' },
-    { name: 'a room, in the meadow, at its desk', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: room({ games: GAMES }), ready: '.screen-room.meadow #games li',
+    { name: 'a room, in the meadow, its folk found, asleep', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(150) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games .mini[data-ff="board"][data-ff-mood="sleep"]' },
+    { name: 'a room, in the meadow come alive', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(215) }, server: room({ games: GAMES.slice(0, 3), messages: TALK }), ready: '.screen-room.meadow #games .mini[data-ff="board"]' },
+    { name: 'a room, in the meadow come alive, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(215) }, server: room({ name: LONG_NAME, games: TABLE, people: CROWD, messages: TALK }), ready: '.screen-room.meadow #games .mini[data-ff="board"]' },
+    { name: 'a room, in the meadow, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(90) }, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '.screen-room.meadow #games li' },
+    { name: 'a room, in the meadow, at its desk', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(90) }, server: room({ games: GAMES }), ready: '.screen-room.meadow #games li',
       then: (page) => page.locator('#modes [data-mode="coop"]').click(), settle: '#desk-how:not([hidden]) .mode-cards li' },
-    { name: 'a room, in the meadow, through the portal to the drama', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(300) }, server: rooms(GAMES), ready: '.screen-room.meadow #games li',
+    { name: 'a room, in the meadow, through the portal to the drama', screen: 'room', at: `/room/?id=${ROOM}`, storage: { ...ACCOUNT, ...ENERGY(90) }, server: rooms(GAMES), ready: '.screen-room.meadow #games li',
       then: (page) => page.locator('.screen-room > header #worlds').click(), settle: '.screen-room[data-world="serious"]:not([data-passage])' },
     { name: 'a room, a link that leads nowhere', screen: 'room', at: '/room/?id=not-a-room', storage: ACCOUNT, ready: '#room-error:not(:empty)' },
     { name: 'opening a room, it went wrong', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room',
@@ -302,8 +302,8 @@ async function states() {
       small: [['^button\\.cell', 'nine squares across a screen 375 wide: with no gaps at all each could be 41', 34]] },
     // A board played together: the first time, what is particular to playing together, in place of how to play; and its
     // energy, a shorter bar beside the words of the turn.
-    { name: 'the game, energy, the meadow still to come', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 7, seed: 12, players: ['You'] }), 2), ...ENERGY(90) }, ready: '#energy:not([hidden]):not(.meadow)', whole: ['#board', '#tools', '#energy'] },
-    { name: 'the game, the fourth bar filled, the thanks', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 5, seed: 11, players: ['You'] }), 4), 'correspondence:energy:v1': { earned: 955, spent: 0, boards: [{ b: '5:11', p: 4, w: false }] } }, ready: '#energy:not([hidden])',
+    { name: 'the game, energy, the meadow still to come', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 7, seed: 12, players: ['You'] }), 2), ...ENERGY(40) }, ready: '#energy:not([hidden]):not(.meadow)', whole: ['#board', '#tools', '#energy'] },
+    { name: 'the game, the fourth bar filled, the thanks', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 5, seed: 11, players: ['You'] }), 4), 'correspondence:energy:v1': { earned: 275, spent: 0, boards: [{ b: '5:11', p: 4, w: false }] } }, ready: '#energy:not([hidden])',
       then: async (page) => { const game = await page.evaluate(() => JSON.parse(localStorage.getItem('postmarks:solo:v1'))); await page.locator(`#board .cell[data-cell="${4 * game.size + game.solution[4]}"]`).dblclick(); }, settle: 'dialog.thanks[open]', wait: 15000 },
     { name: 'the game, together, what is particular to it', screen: 'game', at: `/postmarks/?game=${TOGETHER_ID}`, storage: ACCOUNT, server: together, ready: 'dialog.together[open]' },
     { name: 'the game, together, energy beside the turn', screen: 'game', at: `/postmarks/?game=${TOGETHER_ID}`, storage: { ...ACCOUNT, 'postmarks:howto:v1': TOGETHER_ID }, server: together, ready: '#energy:not([hidden])' },
