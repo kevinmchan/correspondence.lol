@@ -1679,7 +1679,7 @@ async function main() {
       await page.waitForSelector('#games li');
       await sleep(900); // (the furniture settles)
       // What can be read on the screen, exactly: names, notes, the code. No labels, no headings, no words on buttons, no
-      // placeholders, nothing written on the table; and the line that a game was started is on the table instead. (Faces
+      // placeholders but the one in the box a message is written in (asked for by the owner, 26 November 2026), nothing written on the table; and the line that a game was started is on the table instead. (Faces
       // are emoji: people's faces are content too. The time shows where somebody starts to speak.) A regression guard on
       // the rule: a word that only describes, put back on the room, fails here.
       const seen = () => page.evaluate(() => {
@@ -1695,7 +1695,7 @@ async function main() {
         return out;
       });
       // (each game's card shows the faces of who is in it: faces are content, as the seats' are)
-      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP']);
+      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP', '(placeholder) message…']);
       // yours to play first; nothing on the table is written, it is said to screen readers
       assert.deepEqual(await page.locator('#games li').evaluateAll((all) => all.map((li) => li.dataset.state)), ['go', 'won']);
       // (and who started each, which the line in the chat said, put away while the game is on the table)
