@@ -149,7 +149,7 @@ function fromSave() {
 
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
-  document.title = 'Penny’s Radio · correspondence.lol';
+  document.title = 'Liv Radio · correspondence.lol';
   const el = {
     card: $('taste-card'), note: $('taste-note'), flip: $('taste-flip'), pick: $('taste-pick'), play: $('taste-play'),
     freq: $('radio-freq'), tag: $('radio-tag'), signal: $('radio-signal'), behind: $('taste-behind'), reading: root.querySelector('#taste-behind .taste-lab'),

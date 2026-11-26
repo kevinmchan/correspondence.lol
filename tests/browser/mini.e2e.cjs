@@ -425,6 +425,8 @@ async function states() {
     // Penny's Radio: a work in a gallery, played and read about. Its story is told once; these are its stills.
     // (told: nobody comes to show how, and nothing opens by itself.)
     { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', whole: SET },
+    // (the cone from the home page's stamp, asleep on the floor by the work: all of it in the room, and under nothing to press)
+    { name: 'Liv Radio, the cone in the room', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.gallery-cone svg', whole: [...SET, '.gallery-cone'] },
     // (arriving with twelve stations kept, two of them presets: the room is the same as on the first day)
     { name: 'Penny’s Radio, under way', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': kept }, ready: '.radio .presets i.lit', whole: SET },
     // (the attendant's sign hangs over the gallery's label)

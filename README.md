@@ -562,7 +562,7 @@ one that is up is pressed in and lit.
   the tab. Games that are over, games you are waiting on someone else in, and
   phrases you wrote yourself are left out.
 - **Lobby**: everything else. Your rooms, and the tiles for opening or
-  joining a room, making music and Penny's Radio.
+  joining a room, Liv Radio (making music) and Museum (the radio).
 
 Above both tabs is the one wide button of the page: play, a board of your own
 at once (`/postmarks/`). Your account is your face in the top right corner.
@@ -721,9 +721,9 @@ What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, any way to choose the chords, and a deck that
 is saved with each beat.
 
-## Penny's Radio
+## Liv Radio
 
-`/jam/?taste` (`jam/taste.js`), "Penny's Radio" on the home page's menu and a
+`/jam/?taste` (`jam/taste.js`), "Museum" on the home page's menu and a
 radio at the top of the music maker, is a work in a gallery. To whoever plays
 it, it is a radio; behind that, it is an experiment: can a model of what you
 like in a loop predict your choices, and can that be shown to be more than
@@ -750,7 +750,7 @@ rule (`--work-w`).
 gallery's label, written as a gallery writes one: the title in italic, what it
 is made of, and whose it is.
 
-> *Penny's Radio*
+> *Liv Radio*
 > Steel, enamel
 > Two stations, one listener
 > Anonymous loan
