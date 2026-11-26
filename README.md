@@ -272,6 +272,38 @@ a defence of that taste, or one more step in the averaging? The piece asks it
 and does not answer it. Nothing in it tilts the question either way: not the
 exhibit's words, not the meter, not Penny.
 
+**Two paths, side by side** (the owner, 26 November 2026). The story runs at
+two sizes at once, and the same question runs through both: is technology an
+aid, or does it take something away?
+
+- *The large path: the earth.* In the owner's words: "the user is trying to
+  fight back against environmental issues but faces contradictions in their
+  values and their use of technology in trying to interrogate and solve for
+  these same issues". The tools used to see the harm, and to try to mend it,
+  are part of it.
+- *The small path: belonging.* "The user is trying to understand belonging;
+  again a theme of trying to understand technology's role as aid versus
+  detractor shows up."
+
+Where they may meet what is already written (a reading, not decided):
+
+- The hurry Penny comes from, and the averaging of taste, are efficiency
+  turned on the post and on listening; the large path is the same efficiency
+  turned on the earth.
+- Energy. Penny earns it by work, and the meadow wakes by it, while the earth
+  is what pays for energy. That is a contradiction of the large path's kind,
+  there to be held rather than solved.
+- Penny was posted and never delivered: a letter that did not arrive belongs
+  nowhere yet. Dot, the rooms, a window lit because somebody is waiting on you,
+  and the "others" who light up what has gone dark are the small path. The
+  radio's question (does it light a part of you up, or even it out?) is the
+  small path's form of aid or detractor.
+- Whether "the user" of each path is Penny, the one playing beside Penny, or
+  both, is not decided.
+
+As with the radio, neither path answers its question, and both are carried
+by the places, not said in words.
+
 ### How a place says it
 
 The theme is carried by the surroundings, not by anything Penny does to camera.
