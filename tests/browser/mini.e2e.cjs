@@ -355,6 +355,10 @@ async function states() {
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
     { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li', small: [PADS] },
+    // (scrolled to its foot, where the last beat lies along the edge Penny stands on: each beat's own share button is
+    // the only one there is, and Penny goes under the edge for it: jam/jam.js)
+    { name: 'the music maker, at the foot of its saved beats', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li',
+      then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '.pal[data-height="gone"]', small: [PADS] },
     // Sounds of your own (tests/browser/mic.cjs stands in for the microphone): the drawer with only the instrument in
     // it; while it listens; with sounds recorded and named, one of them in the instrument's place; that instrument's
     // button on the board, wearing the longest name there can be; a sound being deleted; and a microphone refused.

@@ -566,12 +566,20 @@ on a snare or a clap, a hop on the beat itself where no drum marks it, a nod
 for a note that falls between, a jump when the four chords come round to the
 start, and a step to one side and back with each bar. Dot, once found, hops
 to the bells. Penny does not hum here: the music is yours. When the loop stops,
-so does it. As everywhere, it ducks down where something that can be pressed
-is under it.
+so does it. This page is longer than the window, and is scrolled under it,
+so here it looks again whenever the page moves or the list of beats grows:
+it comes only as far up as leaves every button to be seen (never more than
+half of one behind it, anywhere along the step it takes), and where there is
+no such place, as when the last saved beat lies along the bottom edge, it
+goes under the edge until there is room again (`clear()` in `penny/pal.js`).
+And on every screen a tap that lands on Penny where something of the page's
+can be pressed goes to that.
 
 **Saving and sharing a beat.** Save keeps the beat on the board under a name
 that can be changed by tapping it; each saved beat shows as a small picture of
-its board, and a tap on that puts it back on the board. Share hands over a
+its board, and a tap on that puts it back on the board. Each saved beat has
+its own share button, and that is the only one: a beat is saved, and then
+shared (there was a second at the top of the page until v1.1.80). Share hands over a
 link (through the phone's share sheet, or copied where there is none) with
 the whole beat written into it: 39 characters after `/jam/?b=`
 (`jam/beat.js`), so a link never stops working. Whoever opens it finds the

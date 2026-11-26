@@ -762,8 +762,10 @@ async function main() {
       await page.locator('.jam-saved input').press('Enter');
       assert.equal((await stored('jam:saved:v1'))[0].name, 'Morning');
       // shared: here that is a link on the clipboard, with the whole beat in it
+      // (from the beat itself, in the list: there is no other button for it)
       await page.evaluate(() => { delete Navigator.prototype.share; });
-      await page.locator('#jam-share').click();
+      assert.equal(await page.locator('#jam-share').count(), 0, 'a second way to share, at the top of the page');
+      await page.locator('.jam-saved button[aria-label="Share Morning"]').click();
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
       const link = await copiedBy(page);
       assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{39}$/);
@@ -787,6 +789,51 @@ async function main() {
       await page.locator('dialog.ask button.yes').click();
       await page.waitForFunction(() => document.querySelectorAll('.jam-saved li').length === 1);
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat']);
+    }),
+
+    check('the music maker: Penny never hides a button of a saved beat, wherever the page is scrolled to, and a tap on Penny over something to press goes to it', {}, async (page) => {
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      // three beats, saved: the list is under the board, and the last of them at the very foot of the page
+      // (the first note sets the loop going, and Penny dancing, which is when it comes furthest up: there is room for it here)
+      await page.locator('.jam-board .pad').nth(0).click();
+      await page.waitForSelector('#jam-play.playing');
+      await page.waitForFunction(() => document.querySelector('.pal').dataset.height !== 'gone');
+      await page.locator('#jam-save').click();
+      for (const pad of [9, 18]) {
+        await page.locator('.jam-board .pad').nth(pad).click();
+        await page.locator('#jam-save').click();
+      }
+      await page.waitForFunction(() => document.querySelectorAll('.jam-saved li').length === 3);
+      // What of the list's buttons is in the window and is not what a finger there would find; and how Penny stands.
+      const hidden = () => page.evaluate(() => [...document.querySelectorAll('.jam-saved button')].filter((button) => {
+        const box = button.getBoundingClientRect();
+        const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+        if (y < 0 || y > window.innerHeight) return false;
+        const found = document.elementFromPoint(x, y);
+        return found !== button && !button.contains(found);
+      }).map((button) => button.getAttribute('aria-label')));
+      const height = () => page.evaluate(() => document.querySelector('.pal').dataset.height);
+      const foot = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+      assert.ok(foot > 0, 'the page is no longer than the window: there is nothing to scroll under Penny');
+      // all the way down, and then back up a little at a time: every button there is to see is there to press
+      for (const to of [foot, foot - 30, foot - 60, foot - 90, foot - 120, foot / 2]) {
+        await page.evaluate((y) => window.scrollTo(0, y), to);
+        await sleep(700); // (Penny looks again, and moves)
+        assert.deepEqual(await hidden(), [], `scrolled to ${Math.round(to)} of ${foot}, with Penny at "${await height()}"`);
+      }
+      // at the very foot the last beat lies along the edge Penny stands on: it has gone under
+      await page.evaluate((y) => window.scrollTo(0, y), foot);
+      await sleep(700);
+      assert.equal(await height(), 'gone', 'Penny is standing on the last beat');
+      // A tap that lands on Penny where something of the page's can be pressed goes to that: here, the tempo.
+      const tempo = page.locator('#jam-tempo');
+      const was = await tempo.innerText();
+      await tempo.evaluate((button) => {
+        const box = button.getBoundingClientRect();
+        document.querySelector('.pal-penny .paper').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 }));
+      });
+      assert.notEqual(await tempo.innerText(), was, 'a tap on Penny over the tempo did not reach it');
     }),
 
     check('the music maker: sounds recorded from the microphone go in a drawer, each a new one with a name, and one pressed there is what the instrument plays, in tune', {}, async (page) => {
@@ -1038,8 +1085,9 @@ async function main() {
       await page.waitForSelector('dialog#jam-drawer', { state: 'hidden' });
       assert.equal((await layers()).length, 7);
       assert.equal(await more.isVisible(), true);
-      // shared: the link has the beat in it, the long way, and says where its sounds are
-      await page.locator('#jam-share').click();
+      // saved, and shared: the link has the beat in it, the long way, and says where its sounds are
+      await page.locator('#jam-save').click();
+      await page.locator('.jam-saved button[aria-label^="Share"]').first().click();
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
       const link = await page.evaluate(() => navigator.clipboard.readText());
       assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{76}&s=a{19}1$/);
@@ -1074,6 +1122,8 @@ async function main() {
       await record.click();
       await page.waitForFunction(() => document.querySelector('#jam-mic-error').textContent === 'The microphone is not allowed.');
       assert.equal(await error.getAttribute('role'), 'alert');
+      // (where it is once its shake is over: measured in the middle of that, as it was on a busy machine, it is a hair to one side)
+      await record.evaluate((button) => Promise.all(button.getAnimations().map((shake) => shake.finished)));
       assert.deepEqual(await record.boundingBox(), above, 'what is above the error moved');
       // one that hears nothing
       await page.evaluate(`(${fakeMic})('silent')`);

@@ -20,7 +20,7 @@
 // list is kept on the server (beats_get, beats_put, beats_drop) and a copy of
 // it on the device, so that it is there at once and when offline, and every
 // device of the same account has the same list. Each has a name that can be
-// changed. Sharing one hands over a link with the
+// changed, and its own button to share it. Sharing one hands over a link with the
 // whole beat written into it (jam/beat.js): whoever opens it finds it on their
 // own board, ready to play and to change, and nothing of theirs is lost by it.
 //
@@ -30,6 +30,10 @@
 // snare or a clap, a nod for a note on the beat, a jump when the chords come
 // round to the start, and a step to one side and back with each bar. Dot, if
 // Dot has been found, hops to the bells. It does not hum: the music is yours.
+// And it never hides anything there is to press: as the page is scrolled
+// under it, and as the list of beats grows, it comes only as far up as leaves
+// every button to be seen, and where that is nowhere it goes under the edge
+// until there is room again.
 //
 // Sounds of your own. The microphone, beside the bin, opens a drawer of sounds
 // for the instrument that is chosen: the instrument itself, and every sound
@@ -67,13 +71,14 @@ const MOST_SOUNDS = 24;
 const GONE_KEY = 'jam:gone:v1'; // beats deleted here that the server has still to be told of
 const MOST = 30;
 const nameOf = (kind, row, own) => (!own && kind.notes?.[row]) || `Note ${ROWS - row} of ${ROWS}`; // (own: it plays a recorded sound)
+const SHARE = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg>';
 const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
 
 const empty = () => DECK.map(() => []);
 
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
-  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), mic: $('jam-mic'), micError: $('jam-mic-error'), drawer: $('jam-drawer'), record: $('jam-record'), sounds: $('jam-sounds'), save: $('jam-save'), share: $('jam-share'), note: $('jam-note'), saved: $('jam-saved') };
+  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), mic: $('jam-mic'), micError: $('jam-mic-error'), drawer: $('jam-drawer'), record: $('jam-record'), sounds: $('jam-sounds'), save: $('jam-save'), note: $('jam-note'), saved: $('jam-saved') };
   document.title = 'Loops · correspondence.lol';
 
   // --- What has been made: for each layer, the tiles that hold a note -----------
@@ -100,8 +105,20 @@ export function mount(root, life) {
   let hearing = null; // while the microphone is listening: { stop }
 
   // --- Penny, who dances -----------------------------------------------------------------
-  const pal = callPal(life, { x: 0.74, height: 'low', mood: 'calm', dot: hasDot() });
-  life.setTimeout(() => { if (!playing) pal.settle('peek'); }, 600);
+  const [HOME, SIDE] = [0.74, 0.07]; // where it stands along the edge, and how far it steps to either side
+  const pal = callPal(life, { x: HOME, height: 'gone', mood: 'calm', dot: hasDot() }); // (it comes up once the page is laid out, where there is room)
+  // It comes right up to dance, and otherwise waits with its eyes over the edge; lower where either would hide
+  // something there is to press, and under the edge where there is no room for it at all. (It steps a little to
+  // either side with each bar: nothing is hidden anywhere along that.)
+  const stand = () => pal.clear(playing ? ['up', 'peek', 'low'] : ['peek', 'low'], [HOME - SIDE, HOME + SIDE]);
+  let standing = 0;
+  const standAgain = () => { // (once, when the page has been laid out again)
+    cancelAnimationFrame(standing);
+    standing = requestAnimationFrame(stand);
+  };
+  life.onEnd(() => cancelAnimationFrame(standing));
+  life.setTimeout(stand, 600);
+  for (const type of ['scroll', 'resize']) life.on(window, type, standAgain, { passive: true });
   const DRUMS = LAYERS.findIndex((kind) => kind.name === 'Drums');
   const BELLS = LAYERS.findIndex((kind) => kind.name === 'Bells');
   const has = (index, step, row) => sets[index].has(keyOf(step, row));
@@ -112,7 +129,7 @@ export function mount(root, life) {
     const kick = has(DRUMS, step, 6) || has(DRUMS, step, 5);
     const snare = has(DRUMS, step, 4) || has(DRUMS, step, 3);
     if (step === 0) {
-      pal.goTo(0.74 + (chord % 2 ? -0.07 : 0.07)); // a step to one side with each bar, and back with the next
+      pal.goTo(HOME + (chord % 2 ? -SIDE : SIDE)); // a step to one side with each bar, and back with the next
       if (chord === 0) pal.gesture('jump'); // the chords have come round
     }
     if (step === 0 && chord === 0) { /* the jump is the move */ }
@@ -209,12 +226,12 @@ export function mount(root, life) {
     el.hint.hidden = any;
     el.clear.disabled = sets[layer].size === 0;
     el.save.disabled = !any;
-    el.share.disabled = !any;
     el.tempo.textContent = `${TEMPOS[tempo]}`;
     el.tempo.setAttribute('aria-label', `Tempo, ${TEMPOS[tempo]} bpm`); // (what is written on it, and what it is: both said)
     el.play.setAttribute('aria-pressed', String(playing));
     el.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
     el.play.classList.toggle('playing', playing);
+    standAgain(); // (what is under Penny may have moved)
   }
 
   // --- Sound: the board, played round and round (jam/engine.js) -----------------------
@@ -257,9 +274,9 @@ export function mount(root, life) {
     if (on) {
       loop.rewind();
       heard = 0;
-      pal.rise().mood('dancing').look(null);
+      pal.mood('dancing').look(null);
     } else {
-      pal.mood('calm').goTo(0.74).settle('peek'); // the music has stopped: so has it
+      pal.mood('calm').goTo(HOME); // the music has stopped: so has it
     }
     render();
   }
@@ -662,6 +679,7 @@ export function mount(root, life) {
         const to = name.value.trim() || one.name;
         name.value = to;
         save(SAVED_KEY, kept$().map((each) => (each.code === one.code ? { ...each, name: to, auto: false, synced: false } : each)));
+        for (const [button, does] of [[open, 'Play'], [send, 'Share'], [bin, 'Delete']]) button.setAttribute('aria-label', `${does} ${to}`); // (said by its new name)
         sync();
       });
       name.addEventListener('keydown', (event) => { if (event.key === 'Enter') name.blur(); });
@@ -669,7 +687,7 @@ export function mount(root, life) {
       send.type = 'button';
       send.className = 'quiet';
       send.setAttribute('aria-label', `Share ${one.name}`);
-      send.innerHTML = el.share.querySelector('svg').outerHTML;
+      send.innerHTML = SHARE;
       send.addEventListener('click', () => share(one.code, kept$().find((each) => each.code === one.code)?.name));
       const bin = document.createElement('button');
       bin.type = 'button';
@@ -687,6 +705,7 @@ export function mount(root, life) {
       li.append(open, name, send, bin);
       return li;
     }));
+    standAgain(); // (the list may have grown under Penny)
   }
   $('jam-lab').addEventListener('click', () => go('/jam/?taste')); // the radio (jam/taste.js)
   el.save.addEventListener('click', () => {
@@ -707,9 +726,6 @@ export function mount(root, life) {
     say(`Saved as “Beat ${n}”. Tap its name to change it.`);
     showSaved();
     sync();
-  });
-  el.share.addEventListener('click', () => {
-    if (!isEmpty(now())) share(encode(now()));
   });
   // (which of the saved beats is on the board is marked: kept up to date as the board changes)
   el.board.addEventListener('pointerup', () => life.setTimeout(showSaved, 0));
