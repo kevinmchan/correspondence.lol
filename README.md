@@ -9,7 +9,7 @@ A static, no-build progressive web app served from the repository root at
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
 | `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
-| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`) |
+| `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
@@ -58,7 +58,7 @@ asked first. It forgets everything the story and its walkthroughs keep on the
 device (how far the story has got, the first places walked, Dot found, the
 pieces of the sound heard, the night found in the game, the radio shown and
 its story told, the first game's how-to) and energy with what it brought (the
-meadow, and the thanks on the second bar; the owner: "reset the energy too"),
+meadow, and the thanks on the fourth bar; the owner: "reset the energy too"),
 and opens the app afresh, so play begins at the beginning. What was made
 stays: games, rooms, beats, what the radio has learnt of your taste, and
 settings (`penny/penny.js`, `forgetStory()`).
@@ -314,7 +314,9 @@ earned and shown has begun (the owner, 25 November 2026): in every game,
 alone or in a room, every post found is energy at once, and finishing the board
 entirely earns as much again (`shared/energy.js`). **The bar is a stat of the
 whole app, not of one game** (the owner, 25 November 2026): one bar for
-everything earned, which about ten games fill (`BAR`, 140; twenty at first: boards are drawn
+everything earned, which about five games fill, for now (`BAR`, 70; the owner,
+26 November 2026: "for now, make each stage 5 games long"; twenty at first,
+then ten: boards are drawn
 at sizes 5 to 9, so a game finished earns 14 on average). It is under the play
 button on the home page, and in a game where the words of the turn were (in a
 room, beside them), with a current running through it and a spark flickering
@@ -341,11 +343,64 @@ and a firefly for the butterfly). It is paint only, as the drama is: nothing
 that can be pressed moves or changes size, and the drama through the portal is
 the drama still. On the home page the glimpse is then a toggle (pressed, with a
 soft ring of light): it takes the meadow off and puts it back on, and the
-choice is kept on the device. The second time the bar fills, a sheet over
-the game says, in the owner's words, "Speedy! Thanks for being an early
-tester. We're working on your prize 🤍", with the meadow over it and a heart
-to go on; once, and before the sheet at the end of the game. What later bars
-are for is not decided.
+choice is kept on the device.
+
+**The meadow comes alive in three stages, a bar each** ("one bar per
+stage"; the owner, 26 November 2026: "First, there are no characters for the buttons. Then Penny
+discovers there's an energy flowing through everything and the buttons are
+actually alive but they are asleep. More energy and wonder brings them alive
+in the next stage."). This is the first stretch of the campaign with a shape
+of its own (`folkOf` in `shared/energy.js`, `room/folk.js`).
+
+- *The first bar: a meadow, and things in it.* The work brings Penny
+  somewhere. The map's squares are grass and the rooms stand in a meadow: a
+  sun, tall flowers, a butterfly. The things to press are things: tiles, a
+  button, a code on a mat.
+- *The second bar: the discovery.* Penny finds that the energy it has been
+  earning is not only its own: it runs through everything. A soft light goes
+  through the things of the room one after another, and by that light they
+  are seen for what they were all along: alive, and asleep. A tile that
+  starts a game is a flower with its eyes shut; there is a hedgehog curled
+  under the room's code, a bluebell where the bell is, butterflies at rest on
+  the notes of the chat, a little bird on the send button, feet under the
+  people's tokens; the games' own boards are little cartoons of the old
+  rubber-hose kind (pie-cut eyes over the top edge, a white glove, big
+  shoes), a field mouse holds up the room's name, and the portal is a
+  caterpillar curled into a ring. Nobody is woken. They
+  were here before Penny was.
+- *The third bar: more energy, and wonder.* They open their eyes, all of
+  them, and from then on the meadow is alive: they blink and breathe and look
+  about, glance at each other and at whoever comes by, fidget each in its own
+  way, stop and look at a finger that comes near (and never dodge it), and
+  are glad of a press. The game that waits on you waves. While anything is
+  typed they hold still and watch. The current has done its work and is not
+  seen again. With reduced motion they are drawn awake and at rest.
+
+What wakes them is the energy and Penny's wonder at them together: attention
+is what the story is about, and here it is what brings a thing to life. They
+are the first of the "others" of the theme above. What each of them is to
+Penny, and whether any of them knows anything of the sound, is not written.
+Like the meadow they are paint: drawn round the things of the room in layers
+that cannot be pressed, so that nothing that can be pressed moves or changes
+size; they are not in the night through the portal; and taking the meadow off
+on the home page takes them with it. Awake, three more things happen (not with reduced motion). The people walk
+about: each token leaves its place at the head of the table and wanders the
+strip of lawn between the hedge and the table, a few steps and a rest, on the
+feet it was found to have, keeping clear of the others, and goes back to its
+place while anything is typed (`room/roam.js`). A breeze crosses the meadow:
+what is on a thing to press, its mark and its body, sways a very little, each
+in its own time, while its own box and plate stay where they are; with a
+finger near, it is still. And the portal is a caterpillar curled into a ring
+(it is not there in the night). The moment of each stage (the bar filling, in a game) has no scene of
+its own yet: the room is simply different the next time it is opened.
+
+The fourth time the bar fills, a sheet over the game says, in the owner's
+words, "Speedy! Thanks for being an early tester. We're working on your
+prize 🤍", with the meadow over it and a heart to go on; once, and before the
+sheet at the end of the game. (The owner gave these words for the second bar,
+25 November 2026, before the bars after the first had rewards of their own;
+they have moved to the first bar that has none, where they are still true.)
+What later bars are for is not decided.
 
 A bigger board earns more; a faster one no more;
 hints are free; a board played again earns only for what it has not earned

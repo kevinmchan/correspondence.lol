@@ -412,14 +412,14 @@ export function mount(root, life) {
   // --- Energy ------------------------------------------------------------------------
   // Every post found is energy at once, and finishing the board entirely earns
   // as much again (shared/energy.js). The meter is everything earned, in every
-  // game: one bar, about ten games long, with the meadow at its end, grey
+  // game: one bar, about five games long, for now, with the meadow at its end, grey
   // until the first bar is full (shared/meadow.js). There is no number (the
   // owner's choice), and all that is held is said only to screen readers. A
   // post found sends a spark from it to the end of the bar, which takes it in as
   // it lands; a board finished sends a shower of them. A bar filled flares, the
   // first time the meadow blooms in colour, and it begins again.
   let energy = readEnergy(load(ENERGY_KEY));
-  const THANKS_KEY = 'correspondence:thanks:v1'; // the second bar's thanks, once shown
+  const THANKS_KEY = 'correspondence:thanks:v1'; // the fourth bar's thanks, once shown
   const THANKS = 'Speedy! Thanks for being an early tester. We\u2019re working on your prize 🤍';
   const meter = { board: null, fill: 0 }; // what the meter shows now
   let landing = Promise.resolve(); // sparks land one after another
@@ -521,8 +521,10 @@ export function mount(root, life) {
       save(ENERGY_KEY, energy);
     }
     const count = held(energy);
-    // the second time the bar fills: a word of thanks, once (the owner's words, 25 November 2026)
-    const second = now.gained && energy.earned >= 2 * BAR && !load(THANKS_KEY); // (or the first thing earned past it, if the bar was longer when it was passed)
+    // the fourth time the bar fills (the first three are the meadow and its folk, found and then woken:
+    // shared/meadow.js): a word of thanks, once (the owner's words, 25 November 2026, first said on the second, before
+    // that had a reward)
+    const second = now.gained && energy.earned >= 4 * BAR && !load(THANKS_KEY); // (or the first thing earned past it, if the bar was longer when it was passed)
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
@@ -553,7 +555,7 @@ export function mount(root, life) {
     });
   }
 
-  // A sheet with the owner's thanks, for the second bar filled: words, by the owner's leave, and a heart to go on.
+  // A sheet with the owner's thanks, for the fourth bar filled: words, by the owner's leave, and a heart to go on.
   // Resolves when it is closed. Kept as seen at once, so it comes only the once.
   function thanks() {
     save(THANKS_KEY, true);

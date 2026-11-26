@@ -16,7 +16,7 @@
 //     time passing, not from coming back.
 //   - The bar is everything earned, not one game (the owner, 25 November
 //     2026: "a global stat, not something that lasts for one game"): about
-//     ten games fill it. The first time it is full, the meadow is yours: a
+//     five games fill it, for now. The first time it is full, the meadow is yours: a
 //     room can wear it (shared/meadow.js). What later fills are for is not
 //     decided; the bar begins again from what was left over.
 // And one of its own: a board earns once. The same board played again (it can
@@ -36,15 +36,23 @@ export const POST = 1; // each post found
 export const finish = (size) => (sized(size) ? size * POST : 0); // a board finished: its posts' worth again
 export const most = (size) => (sized(size) ? size * POST + finish(size) : 0); // all a board can earn
 
-// One bar: about ten games (the owner, 25 November 2026; twenty at first). Boards are drawn at sizes 5 to 9, so a game
-// finished earns 14 on average and one lost about half its posts; most are
-// finished. Ten games of that are about 140.
-export const BAR = 140;
+// One bar: about five games, for now (the owner, 26 November 2026: "for now, make each stage 5 games long"; it was
+// about twenty at first, then ten). Boards are drawn at sizes 5 to 9, so a game finished earns 14 on average and one
+// lost about half its posts; most are finished. Five games of that are about 70.
+export const BAR = 70;
 // How full the bar is (0 up to, not reaching, 1), and how many times it has
 // been filled. Earned, not held: spending later takes nothing off it.
 export const bar = (state) => ({ fill: (state.earned % BAR) / BAR, fills: Math.floor(state.earned / BAR) });
 // The meadow: the reward for the first bar.
 export const meadowEarned = (state) => state.earned >= BAR;
+// The meadow's folk (shared/meadow.js, room/folk.js): the things of a room, alive. There are three stages, a bar
+// each. The first bar filled is the meadow, and nothing in it has a body. The second is the discovery: energy runs
+// through everything, and the things to press were alive all along, and asleep. The third wakes them.
+export const FOLK = ['tile', 'code', 'bell', 'note', 'send', 'token', 'board', 'sign', 'portal'];
+export function folkOf(state) {
+  const fills = Math.floor(state.earned / BAR);
+  return { kinds: fills >= 2 ? FOLK : [], awake: fills >= 3 };
+}
 
 export const fresh = () => ({ earned: 0, spent: 0, boards: [] });
 

@@ -1,4 +1,6 @@
-import { wearing } from '/shared/meadow.js';
+import { folk as meadowFolk, wearing } from '/shared/meadow.js';
+import { troupe } from '/room/folk.js';
+import { roam } from '/room/roam.js';
 import { ask, tell } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
@@ -75,6 +77,72 @@ export function mount(root, life) {
   let myLook = savedLook();
   const picked = !myLook; // (nobody's choice yet: it may be picked again, so as not to be a face already in the room)
   paint(el.joinYou, myLook ??= randomLook());
+
+  // The meadow's folk (room/folk.js, shared/meadow.js). In the meadow of the first bar the things of a room are things.
+  // With the second bar filled it is found that energy runs through all of them and that they were alive all along,
+  // asleep: a tile that starts a game is a flower, the code a hedgehog, the bell a bluebell, a note a butterfly, the
+  // send button a bird, the people's tokens have feet, a game's board is a little cartoon with gloves and big shoes,
+  // and the name is held up by a field mouse; a current goes through them, one after another. The third bar wakes
+  // them. They are drawn on the page itself and only while it is the meadow that is seen: not in the night through
+  // the portal, nor while a passage is under way (room/worlds.js copies the page then, and would copy every blink).
+  const meadow = meadowFolk();
+  if (meadow.kinds.length) {
+    const here = ':scope > main ';
+    const CAST = [
+      ['board', `${here}#games > li`, { face: (li) => li.querySelector('.mini'), key: (li) => `board:${li.querySelector('a.game')?.getAttribute('href')}` }],
+      ['tile', `${here}.house .mode`, { key: (tile) => `tile:${tile.dataset.mode}` }],
+      ['send', `${here}.rug .chat form button[type="submit"]`, { key: () => 'send' }],
+      ['code', `${here}.house .share .code`, { key: () => 'code' }],
+      ['bell', `${here}.house .notify:not([hidden])`, { face: (notify) => notify.querySelector('.bell'), key: () => 'bell' }],
+      ['sign', ':scope > header h1.sign:not(.sr-only), :scope > main h1.sign:not(.sr-only)', { key: () => 'sign' }],
+      ['portal', ':scope > header #worlds:not([hidden])', { key: () => 'portal' }],
+      ['note', `${here}.rug .chat-log li:not(.note) > p`],
+      ['token', `${here}#members .seat`, { face: (seat) => seat.querySelector('.avatar'), key: (seat) => `seat:${seat.dataset.seat}` }],
+    ].filter(([kind]) => meadow.kinds.includes(kind));
+    const typing = () => Boolean(document.activeElement?.matches?.('input:not([type="checkbox"]):not([type="radio"]), textarea'));
+    const meadowSeen = () => root.dataset.world === 'playful' && !root.querySelector(':scope > .worlds-copy');
+    const folk = troupe({ root, life, calm: typing, ...(meadow.awake ? {} : { still: true }), sights: () => [...root.querySelectorAll(`${here}#members .seat .avatar`)] });
+    // (awake, and with motion allowed: the people walk about the lawn, room/roam.js; and what is pressed sways, room/folk.css)
+    const lively = meadow.awake && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const people = lively ? roam({ root, life, calm: typing }) : null;
+    if (lively) root.setAttribute('data-ff-awake', '');
+    let due = false;
+    const recast = () => {
+      due = false;
+      if (life.over || !meadowSeen()) return;
+      folk.scan(CAST);
+      people?.measure();
+      // (not yet awake: every one of them asleep, eyes shut, where it is)
+      if (!meadow.awake) {
+        // (and the current that goes through them takes them in the order they stand on the page: room/folk.css)
+        [...root.querySelectorAll(':scope > :is(header, main) [data-ff]')].forEach((face, i) => {
+          face.dataset.ffMood = 'sleep';
+          face.style.setProperty('--ff-i', i);
+        });
+      }
+    };
+    // (whenever the room draws something afresh; the folk's own layers going in and out do not count)
+    const own = (node) => node.nodeType === 1 && node.classList.contains('ff');
+    const drawn = new MutationObserver((changes) => {
+      if (due || changes.every((change) => [...change.addedNodes, ...change.removedNodes].every(own))) return;
+      due = true;
+      requestAnimationFrame(recast);
+    });
+    drawn.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'data-world'] });
+    life.onEnd(() => drawn.disconnect());
+    if (people) life.on(window, 'resize', () => people.measure());
+    const beat = (now) => {
+      if (life.over) return;
+      if (meadowSeen()) {
+        folk.tick(now);
+        people?.step(now);
+      }
+      requestAnimationFrame(beat);
+    };
+    if (meadow.awake) requestAnimationFrame(beat);
+    else root.setAttribute('data-ff-current', '');
+    recast();
+  }
 
   // A link that leads nowhere (or a room that could not be reached the first time): the empty plot, with what went wrong
   // in a short line of words in the middle of it; the arrow at the top is the way home. (The name over it is said to
