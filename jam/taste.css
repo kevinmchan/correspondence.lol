@@ -98,7 +98,7 @@
 .plinth {
   --face: #e6e0d4; --face-low: #c2baab; --top-face: #f8f4ec; --side: #a89f8f;
   position: relative; z-index: -1; flex: none; box-sizing: border-box;
-  width: var(--work-w); height: 1.9rem; margin: 0 1.8rem 0 0; font-size: calc(var(--work-w) / 23);
+  width: var(--work-w); height: 1.9rem; margin: 0 1.8rem 0 0; /* drawn */ font-size: calc(var(--work-w) / 23);
   display: grid; grid-template-areas: "label"; justify-content: start; align-items: start; padding-left: 1.5em; /* (to the left of its face: Penny stands under the tag, on the right) */
 }
 :root[data-theme="dark"] .plinth { --face: #d2cbbe; --face-low: #9f978a; --top-face: #e9e3d8; --side: #8a8275; }
@@ -116,10 +116,10 @@
 }
 .gallery-label {
   grid-area: label; margin-top: 0.5rem; color: #29333c; text-align: left;
-  font-family: system-ui, sans-serif; font-size: 0.6875rem; line-height: 1.35; letter-spacing: 0.015em;
+  font-family: var(--font-text); font-size: var(--text-fine); line-height: var(--leading-snug); letter-spacing: var(--track-open);
 }
 .gallery-label p { margin: 0; }
-.gallery-label .label-title { margin-bottom: 0.08rem; font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-size: 0.9375rem; letter-spacing: 0; color: #1c252d; }
+.gallery-label .label-title { margin-bottom: 0.08rem; font-family: var(--font-letter); font-size: var(--text-small); letter-spacing: 0; color: #1c252d; }
 .gallery-label cite { font-style: italic; }
 
 /* The attendant's sign, hung over the label while it is here: its how over the gallery's what. One order at a
@@ -154,7 +154,7 @@
   /* (in lengths that mean the same wherever they are used: this is also what its em is worked out from.
      It is the width of the work, which its plinth shares: --work-w, on .radio-ground, above.) */
   --w: var(--work-w);
-  position: relative; width: var(--w); font-size: calc(var(--w) / 23); flex: none;
+  position: relative; width: var(--w); /* drawn */ font-size: calc(var(--w) / 23); flex: none;
   margin-top: 2.4em; margin-right: 1.8rem; margin-bottom: 1.3em; /* (its feet and its shadow are below its box) */ rotate: -1.5deg; color: #f6f1e7; cursor: pointer; outline: none;
 }
 .radio:focus-visible .body { box-shadow: 0.55em 0.6em 0 #7a2c1e, 0 0 0 0.2em #f8d95a; }
@@ -175,7 +175,7 @@
 
 .radio .top-row { display: flex; align-items: center; gap: 0.7em; }
 /* its name, on a plate */
-.radio .plate { padding: 0.18em 0.6em; border-radius: 0.35em; background: #f8d95a; color: #22303c; font-family: system-ui, sans-serif; font-size: max(0.82em, 11px); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.16); }
+.radio .plate { padding: 0.18em 0.6em; border-radius: 0.35em; background: #f8d95a; color: #22303c; font-family: var(--font-text); /* drawn */ font-size: max(0.82em, 11px); /* drawn */ font-weight: 800; /* drawn */ letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 -0.14em 0 rgb(0 0 0 / 0.16); }
 /* the speaker: rows of holes; and set into its end, the meter (below) */
 .radio .speaker { position: relative; flex: 1; min-width: 0; height: 1.5em; display: flex; justify-content: flex-end; align-items: center; }
 /* (the holes end under the bezel, so that the lamp beside it sits on plain enamel, not on top of them) */
@@ -285,11 +285,11 @@
 @keyframes reticle-twice { 0% { opacity: 0.95; } 25% { opacity: 0; } 50% { opacity: 0.95; } 75%, 100% { opacity: 0; } }
 
 /* the readout: the station, what it is to you, and how well it has been heard */
-.radio .readout { display: flex; align-items: center; gap: 0.6em; padding: 0.25em 0.6em; border-radius: 0.5em; background: #22303c; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.3); font-family: system-ui, sans-serif; }
+.radio .readout { display: flex; align-items: center; gap: 0.6em; padding: 0.25em 0.6em; border-radius: 0.5em; background: #22303c; box-shadow: inset 0 0.14em 0 rgb(0 0 0 / 0.3); font-family: var(--font-text); }
 .radio .freq { display: inline-flex; align-items: baseline; gap: 0.3em; color: var(--edge); transition: color 240ms ease; }
-.radio .freq b { font-size: 1.55em; font-weight: 800; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 0.5em color-mix(in srgb, var(--edge) 60%, transparent); }
-.radio .freq small { font-size: max(0.7em, 11px); font-weight: 800; letter-spacing: 0.09em; opacity: 0.8; }
-.radio .tag { flex: 1; min-width: 0; font-size: max(0.7em, 11px); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.radio .freq b { /* drawn */ font-size: 1.55em; /* drawn */ font-weight: 800; /* drawn */ letter-spacing: 0.02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 0.5em color-mix(in srgb, var(--edge) 60%, transparent); }
+.radio .freq small { /* drawn */ font-size: max(0.7em, 11px); /* drawn */ font-weight: 800; /* drawn */ letter-spacing: 0.09em; opacity: 0.8; }
+.radio .tag { flex: 1; min-width: 0; /* drawn */ font-size: max(0.7em, 11px); /* drawn */ font-weight: 800; /* drawn */ letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
 .radio .tag.kept { color: #f8d95a; opacity: 1; }
 /* three bars that fill as the station is listened to: at three it can be kept */
 .radio .signal { display: inline-flex; align-items: flex-end; gap: 0.16em; height: 1.1em; }
@@ -316,7 +316,7 @@
 .radio .power:active, .radio .keep:active { translate: 0.1em 0.14em; }
 .radio .keep {
   flex: none; height: 2.9em; min-height: 44px; padding: 0 1em !important; border-radius: 0.9em; background: #f8d95a; color: #22303c;
-  font-family: system-ui, sans-serif !important; font-size: 0.95em !important; font-weight: 800 !important; letter-spacing: 0.06em; text-transform: uppercase;
+  font-family: var(--font-text) !important; /* drawn */ font-size: 0.95em !important; /* drawn */ font-weight: 800 !important; /* drawn */ letter-spacing: 0.06em; text-transform: uppercase;
   box-shadow: 0.2em 0.26em 0 #a8851c, inset 0 -0.2em 0 rgb(0 0 0 / 0.12);
 }
 .radio .keep:active { box-shadow: 0.08em 0.1em 0 #a8851c, inset 0 -0.2em 0 rgb(0 0 0 / 0.12); }
@@ -411,41 +411,41 @@
 .taste-lab {
   width: 100%; box-sizing: border-box; padding: 1.35rem 1.3rem 1.2rem; display: flex; flex-direction: column; gap: 0.95rem;
   background: var(--card); color: var(--ink);
-  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; text-align: left;
+  font-family: var(--font-letter); text-align: left;
 }
-.taste-lab .what { margin: 0; font-size: 1rem; line-height: 1.55; color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
+.taste-lab .what { margin: 0; font-size: var(--text-body); line-height: var(--leading-loose); color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
 /* the head of the entry */
 .reading .entry { display: grid; gap: 0.15rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
-.reading .gallery-name { margin: 0 0 0.45rem; font-family: system-ui, sans-serif; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
-.reading .entry h2 { margin: 0; font-family: inherit; font-size: 1.875rem; font-weight: 400; line-height: 1.1; letter-spacing: -0.005em; color: var(--ink); }
+.reading .gallery-name { margin: 0 0 0.45rem; font-family: var(--font-text); font-size: var(--text-fine); font-weight: var(--weight-bold); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--muted); }
+.reading .entry h2 { margin: 0; font-family: inherit; font-size: var(--text-large); font-weight: var(--weight-regular); line-height: var(--leading-tight); letter-spacing: var(--track-tight); color: var(--ink); }
 .reading .entry cite { font-style: italic; }
 .reading .entry h2:focus { outline: none; } /* (it is where the reading opens, so that it opens at the top: there is nothing to press there) */
-.reading .tombstone { margin: 0.35rem 0 0; font-family: system-ui, sans-serif; font-size: 0.8125rem; line-height: 1.5; color: var(--muted); }
+.reading .tombstone { margin: 0.35rem 0 0; font-family: var(--font-text); font-size: var(--text-caption); line-height: var(--leading-loose); color: var(--muted); }
 /* what Dot said, once Dot has said it: the audio guide's stop for this work */
 .reading .dot-told { margin: 0; display: grid; grid-template-columns: 2.5rem 1fr; column-gap: 0.8rem; row-gap: 0.3rem; align-items: start; }
 .reading .dot-told svg { grid-row: span 2; width: 2.5rem; height: 2.5rem; }
-.reading .dot-told blockquote { margin: 0.2rem 0 0; font-size: 1.25rem; font-style: italic; line-height: 1.25; color: var(--ink); }
-.reading .dot-told figcaption { font-family: system-ui, sans-serif; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
-.reading .dot-told figcaption b { display: block; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.reading .dot-told blockquote { margin: 0.2rem 0 0; font-size: var(--text-lead); font-style: italic; line-height: var(--leading-tight); color: var(--ink); }
+.reading .dot-told figcaption { font-family: var(--font-text); font-size: var(--text-caption); line-height: var(--leading-snug); color: var(--muted); }
+.reading .dot-told figcaption b { display: block; font-size: var(--text-fine); font-weight: var(--weight-medium); letter-spacing: var(--track-label); text-transform: uppercase; }
 /* the question the piece asks, and the sentence of why there is a gallery at all: set apart, and left open */
 .reading .asks { margin: 0.15rem 0 0.1rem; padding: 1.05rem 0 1.15rem; border-block: 1px solid var(--line); display: grid; gap: 0.7rem; }
-.reading .asks p { margin: 0; font-size: 0.9375rem; line-height: 1.55; color: color-mix(in srgb, var(--ink) 80%, var(--card)); }
-.reading .asks .question { font-size: 1.375rem; line-height: 1.3; font-style: italic; color: var(--ink); text-wrap: balance; }
+.reading .asks p { margin: 0; font-size: var(--text-small); line-height: var(--leading-loose); color: color-mix(in srgb, var(--ink) 80%, var(--card)); }
+.reading .asks .question { font-size: var(--text-lead); line-height: var(--leading-snug); font-style: italic; color: var(--ink); text-wrap: balance; }
 /* Where the test stands, as a figure under its own small heading (set as "How it works" is): a plain rule
    filling towards a mark at ×20, as far as the stake has ever got, and its caption. Neither colour of a win nor
    of a loss: the gallery shows how far it has got, and does not cheer it. */
 .taste-lab .evidence { margin: 0.25rem 0 0; display: grid; gap: 0.55rem; }
-.taste-lab .evidence h3 { margin: 0 0 0.1rem; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; line-height: 1.4; text-transform: uppercase; color: var(--ink); }
+.taste-lab .evidence h3 { margin: 0 0 0.1rem; font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: var(--track-wide); line-height: var(--leading-snug); text-transform: uppercase; color: var(--ink); }
 .taste-lab .meter { position: relative; height: 0.4rem; background: color-mix(in srgb, var(--ink) 11%, var(--card)); }
 .taste-lab .meter i { display: block; height: 100%; width: calc(var(--full, 0) * 100%); min-width: 2px; background: var(--ink); transition: width 400ms ease; }
 .taste-lab .meter::after { content: ""; position: absolute; right: 0; top: -0.3rem; bottom: -0.3rem; width: 2px; background: var(--ink); } /* ×20 */
-.taste-lab .verdict { margin: 0; font-size: 0.9375rem; line-height: 1.45; font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); } /* (the same however the test stands) */
+.taste-lab .verdict { margin: 0; font-size: var(--text-small); line-height: var(--leading-loose); font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); } /* (the same however the test stands) */
 .taste-lab dl { margin: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
-.taste-lab dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.42rem 0; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
+.taste-lab dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.42rem 0; border-bottom: 1px solid var(--line); font-size: var(--text-small); }
 .taste-lab dl div[hidden] { display: none; }
 .taste-lab dt { color: var(--muted); }
-.taste-lab dd { margin: 0; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.taste-lab .likes { margin: 0; font-size: 0.9375rem; line-height: 1.5; font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
+.taste-lab dd { margin: 0; font-family: var(--font-text); font-size: var(--text-small); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.taste-lab .likes { margin: 0; font-size: var(--text-small); line-height: var(--leading-loose); font-style: italic; color: color-mix(in srgb, var(--ink) 86%, var(--card)); }
 .taste-lab .likes:empty { display: none; }
 /* The phantom, drawn and captioned: the station kept, a challenger that is heard, and its twin, made with it
    (the bracket) and never heard (a dashed outline, its notes faint). In the reading's ink, nothing brighter. */
@@ -457,9 +457,9 @@
 .reading .phantom .station.unheard.behind rect { opacity: 0.6; } /* (eight of them, stacked: those behind are fainter) */
 .reading .phantom .station.unheard .notes { stroke: var(--muted); opacity: 0.5; }
 .reading .phantom .bracket { fill: none; stroke: var(--muted); stroke-width: 1.4; }
-.reading .phantom figcaption { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; font-family: system-ui, sans-serif; font-size: 0.75rem; line-height: 1.35; color: var(--muted); text-align: center; }
-.taste-lab details { font-size: 0.9375rem; line-height: 1.55; color: color-mix(in srgb, var(--ink) 80%, var(--card)); }
-.taste-lab summary { cursor: pointer; min-height: 1.75rem; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+.reading .phantom figcaption { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; font-family: var(--font-text); font-size: var(--text-caption); line-height: var(--leading-snug); color: var(--muted); text-align: center; }
+.taste-lab details { font-size: var(--text-small); line-height: var(--leading-loose); color: color-mix(in srgb, var(--ink) 80%, var(--card)); }
+.taste-lab summary { cursor: pointer; min-height: 1.75rem; font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--ink); }
 .taste-lab details p { margin: 0.55rem 0 0; }
 
 /* --- The sheets, over the work -------------------------------------------------------------
@@ -488,11 +488,11 @@ dialog.behind .taste-lab { flex: 1 1 auto; min-height: 0; overflow: auto; oversc
 dialog.behind .taste-lab > * { flex-shrink: 0; } /* (the reading scrolls: nothing in it is squeezed to fit) */
 dialog.behind .sheet-foot { position: relative; flex: none; display: flex; justify-content: center; padding: 0.75rem 1.3rem 0.95rem; background: var(--card); box-shadow: 0 -1px 0 var(--line); }
 dialog.behind .sheet-foot::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% + 1px); height: 1.2rem; background: linear-gradient(transparent, var(--card)); pointer-events: none; } /* (there is more above: it fades into the foot) */
-dialog.behind .go { height: 2.9rem; font-size: 1rem; }
+dialog.behind .go { height: 2.9rem; font-size: var(--text-body); }
 dialog.behind .sheet-foot .go { width: 100%; padding-inline: 1rem; justify-content: center; text-align: center; background: color-mix(in srgb, var(--ink) 11%, var(--card)); color: var(--ink); --press: color-mix(in srgb, var(--ink) 28%, var(--card)); }
-dialog.behind #taste-again { height: 2.75rem; font-size: 0.9375rem; }
+dialog.behind #taste-again { height: 2.75rem; font-size: var(--text-small); }
 dialog.behind .taste-row { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: 0.9375rem; }
+dialog.behind .taste-row button.quiet { height: 2.9rem; font-size: var(--text-small); }
 
 /* The presets: part of what is played, not of the reading, so without words. The set's five lamps, lit for
    the stations saved; each station saved, as the radio shows a station (its picture, on a display, and its
@@ -508,8 +508,8 @@ dialog.behind .preset-list a { display: flex; align-items: center; gap: 0.85rem;
 dialog.behind .preset-list .pic { flex: none; width: 3.6rem; height: 2.7rem; padding: 0.25rem; box-sizing: border-box; border-radius: 0.5rem; background: #141c23; display: grid; place-items: center; box-shadow: inset 0 0 0 0.1rem #0c1217; }
 dialog.behind .preset-list .pic svg { width: 100%; height: 100%; }
 dialog.behind .preset-list .where { flex: 1; min-width: 0; }
-dialog.behind .preset-list b { font-family: system-ui, sans-serif; font-size: 1.125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-dialog.behind .preset-list b small { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em; color: var(--muted); }
+dialog.behind .preset-list b { font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+dialog.behind .preset-list b small { font-size: var(--text-caption); font-weight: var(--weight-bold); letter-spacing: var(--track-label); color: var(--muted); }
 dialog.behind .preset-list .out { flex: none; width: 1.2rem; height: 1.2rem; color: var(--muted); }
 dialog.presets-sheet .sheet-foot { box-shadow: none; padding-top: 0.35rem; }
 dialog.presets-sheet .sheet-foot::before { content: none; }
@@ -577,7 +577,7 @@ dialog.behind .sheet-foot .shut svg { width: 1.3rem; height: 1.3rem; }
 .gallery-cone .c-eyes { stroke: #4a2f27; stroke-width: 3.6; fill: none; stroke-linecap: round; }
 .gallery-cone .c-cheeks { stroke: #f6c3b3; stroke-width: 6; stroke-linecap: round; opacity: 0.8; }
 .gallery-cone .c-foot { fill: #3b4954; }
-.gallery-cone .z { font: italic 13px Georgia, serif; fill: rgb(246 241 231 / 0.75); opacity: 0; }
+.gallery-cone .z { /* drawn */ font: italic 13px Georgia, serif; fill: rgb(246 241 231 / 0.75); opacity: 0; }
 :root[data-theme="dark"] .gallery-cone .c-body { fill: #d07a60; }
 @media (prefers-reduced-motion: no-preference) {
   .gallery-cone .c-walk { animation: cone-stroll 48s ease-in-out infinite; }
@@ -585,8 +585,8 @@ dialog.behind .sheet-foot .shut svg { width: 1.3rem; height: 1.3rem; }
   .gallery-cone .c-cone { animation: cone-breathe 5s ease-in-out infinite; }
   .gallery-cone .c-zs { animation: cone-dozing 48s linear infinite; }
   .gallery-cone .z { animation: cone-z 6s ease-out infinite; }
-  .gallery-cone .z.two { animation-delay: 2s; font-size: 10px; }
-  .gallery-cone .z.three { animation-delay: 4s; font-size: 8px; }
+  .gallery-cone .z.two { animation-delay: 2s; /* drawn */ font-size: 10px; }
+  .gallery-cone .z.three { animation-delay: 4s; /* drawn */ font-size: 8px; }
 }
 /* (a stroll is half a figure's width along the floor, and back: never as far as whoever stands at the left) */
 @keyframes cone-stroll {
@@ -602,7 +602,7 @@ dialog.behind .sheet-foot .shut svg { width: 1.3rem; height: 1.3rem; }
 
 /* --- What Dot says ----------------------------------------------------------------------------
    Round and plain, as Dot is: against the attendant's sign, the difference is seen before a word is read. */
-.dot-says { position: absolute; z-index: 4; left: 0; top: 0; margin: 0; max-width: 11.5rem; box-sizing: border-box; padding: 0.55rem 0.75rem; pointer-events: none; border: 0.16rem solid #22303c; border-radius: 1.1rem; background: #f6f1e7; color: #22303c; font-family: system-ui, sans-serif; font-size: 1rem; line-height: 1.25; font-weight: 800; text-align: left; box-shadow: 0.16rem 0.2rem 0 #2aa198; }
+.dot-says { position: absolute; z-index: 4; left: 0; top: 0; margin: 0; max-width: 11.5rem; box-sizing: border-box; padding: 0.55rem 0.75rem; pointer-events: none; border: 0.16rem solid #22303c; border-radius: 1.1rem; background: #f6f1e7; color: #22303c; font-family: var(--font-text); font-size: var(--text-body); line-height: var(--leading-tight); font-weight: var(--weight-bold); text-align: left; box-shadow: 0.16rem 0.2rem 0 #2aa198; }
 .dot-says:empty { display: none; }
 .dot-says::after { content: ""; position: absolute; right: -0.62rem; bottom: 0.7rem; width: 0.9rem; height: 0.9rem; background: #f6f1e7; border-right: 0.16rem solid #22303c; border-bottom: 0.16rem solid #22303c; rotate: -45deg; border-bottom-right-radius: 0.2rem; }
 .dot-says span { opacity: 0; }

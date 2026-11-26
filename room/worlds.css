@@ -99,7 +99,7 @@ html:root:has(#screens > .screen-room[data-world="serious"]:not(.leaving)) body 
 
 /* --- Held in both worlds: the labels that change face ----------------------------------
    (their line heights, measured as they were, so that the other face cannot move them) */
-.house h2 { line-height: 1.25; }
+.house h2 { line-height: var(--leading-tight); }
 
 /* --- The serious world: its stock ----------------------------------------------------- */
 .screen-room {
@@ -110,7 +110,6 @@ html:root:has(#screens > .screen-room[data-world="serious"]:not(.leaving)) body 
   --mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 0 0 0 1.25'/%3E%3C/filter%3E%3Crect width='360' height='360' filter='url(%23m)'/%3E%3C/svg%3E");
   --woodgrain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='240'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .19' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.8 0 0 0 1.05'/%3E%3C/filter%3E%3Crect width='420' height='240' filter='url(%23w)'/%3E%3C/svg%3E");
   --boards: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='420'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.19 .004' numOctaves='3' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.8 0 0 0 1.05'/%3E%3C/filter%3E%3Crect width='240' height='420' filter='url(%23b)'/%3E%3C/svg%3E");
-  --type: "American Typewriter", "Courier New", Courier, "Liberation Mono", ui-monospace, monospace;
 }
 .screen-room [data-paint="serious"] {
   /* (what the rest of the app reads off the theme, in this light) */
@@ -166,7 +165,7 @@ html:root:has(#screens > .screen-room[data-world="serious"]:not(.leaving)) body 
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07), inset 0.4rem 0.7rem 1.1rem rgb(0 0 0 / 0.55);
 }
 .screen-room [data-paint="serious"] .house-walls::before { border-color: rgb(0 0 0 / 0.78); border-radius: 0.3rem; translate: 0.3rem 0.55rem; filter: blur(2px); }
-.screen-room [data-paint="serious"] .house h2 { font-family: var(--type); font-weight: 400; letter-spacing: 0.24em; color: #aaa498; }
+.screen-room [data-paint="serious"] .house h2 { font-family: var(--font-typewriter); font-weight: var(--weight-regular); letter-spacing: var(--track-widest); color: #aaa498; }
 
 /* --- The name: a title card ------------------------------------------------------------- */
 .screen-room [data-paint="serious"] h1.sign {
@@ -286,7 +285,7 @@ html:root:has(#screens > .screen-room[data-world="serious"]:not(.leaving)) body 
 .screen-room [data-paint="serious"] .mat::before, .screen-room [data-paint="serious"] .mat::after { background: repeating-linear-gradient(0deg, #4f4333 0 0.14rem, transparent 0.14rem 0.36rem); }
 .screen-room [data-paint="serious"] .house .share { color: #c4bba8; }
 .screen-room [data-paint="serious"] .house .share .code {
-  font-family: var(--type); border-radius: 0.12rem; color: #241f15;
+  font-family: var(--font-typewriter); border-radius: 0.12rem; color: #241f15;
   background: linear-gradient(172deg, #d0be8b, #b19e69 52%, #c0ad77);
   text-shadow: 0 1px 0 rgb(255 255 255 / 0.35);
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.35), 0 0.25rem 0.5rem rgb(0 0 0 / 0.65);
