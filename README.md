@@ -239,8 +239,8 @@ is, how a place says it, and the shape of the adventure. Read it before
 writing anything Penny is in, and write changes to the story there, not here;
 this README keeps how Penny's part of the app is built. A comment in the code
 that cites this README for "Penny", "How a place says it", "The question
-Penny's Radio asks" or the shape of "The adventure" means that part of the
-doc.
+Penny's Radio asks" (in the doc now "The question Liv Radio asks") or the
+shape of "The adventure" means that part of the doc.
 
 In one line, for when the doc cannot be reached: the story is about rejecting
 a scarcity mindset, as Penny, left behind by a world in a hurry, slowly finds
