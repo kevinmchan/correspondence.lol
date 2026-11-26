@@ -1479,7 +1479,7 @@ async function main() {
       assert.ok(set.top >= 0 && set.left >= 0 && set.right <= set.wide && set.bottom <= set.high, `the radio is not all on the screen: ${JSON.stringify(set)}`);
       assert.equal(set.scrolls, false, 'the page scrolls');
       assert.match(set.ground, /gradient/, 'the radio stands in the world');
-      assert.equal(await page.locator('.radio .plate').textContent(), 'Penny’s Radio');
+      assert.equal(await page.locator('.radio .plate').textContent(), 'Liv Radio');
       assert.equal(await page.locator('#taste-behind-open').isVisible(), true, 'the tag is on the side of the set from the start');
       assert.equal(await page.locator('#taste-behind-open').getAttribute('title'), null, 'the tag says nothing, even under a pointer');
       // a screen reader is told what pressing the tag does, and nothing of what it will find there
@@ -1496,7 +1496,7 @@ async function main() {
       });
       assert.ok(label.caption && label.after && label.figure === 'FIGURE' && label.reordered === 0, `the label is not the set's caption, after it: ${JSON.stringify(label)}`);
       assert.ok(label.under && label.inside, `the label is not on the plinth under the set: ${JSON.stringify(label)}`);
-      assert.match(label.text, /^Penny’s Radio Steel, enamel Two stations, one listener Anonymous loan$/);
+      assert.match(label.text, /^Liv Radio Steel, enamel Two stations, one listener Anonymous loan$/);
       assert.doesNotMatch(label.text, /experiment|model|test/i, 'the label everyone reads first gives the experiment away');
       // the plinth is as wide as the set, by the one rule they share, not a copy of it
       const wide = await page.evaluate(() => {
@@ -1865,7 +1865,7 @@ async function main() {
       assert.deepEqual([m.warming, m.now, m.pips, m.risen, m.lit], [true, '1', model.WARMUP - 2, false, false]);
       assert.match(m.text, new RegExp(`^Warming up: ${model.WARMUP - 2} of ${model.WARMUP}`));
       assert.deepEqual(await h.words('#radio-meter'), [], 'words or numbers on the meter');
-      assert.deepEqual(await h.words('.radio .top-row'), ['Penny’s Radio'], 'words on the top of the set');
+      assert.deepEqual(await h.words('.radio .top-row'), ['Liv Radio'], 'words on the top of the set');
       assert.equal(m.swings, '1.6s', 'the needle swings to where it stands, slowly');
       // a pick while it warms up lights one more pip; the needle stays where it is; and it was made with no stake shown
       await keepOne(page);
