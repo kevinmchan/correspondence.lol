@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), a room
+// The screens: the introduction to Penny (/?hello), scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), a room
 // (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its radio (/jam/?taste). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -23,6 +23,7 @@ const asks = (url, word) => isHome(url.pathname) && url.searchParams.has(word);
 const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
+  { name: 'hello', depth: 1, match: (path, url) => asks(url, 'hello'), load: () => import('/penny/hello.js') },
   { name: 'office', depth: 1, match: (path, url) => asks(url, 'office') || asks(url, 'penny'), load: () => import('/penny/office.js') },
   { name: 'slow', depth: 1, match: (path, url) => asks(url, 'slow'), load: () => import('/penny/slow.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
@@ -51,6 +52,7 @@ const stage = document.getElementById('screens');
 let current = null; // { key, screen, root, life }
 let moving = false;
 let queued = null; // a move asked for while another was under way
+let heading = null; // the address of the screen being moved to, until it is up
 
 async function show(url, { announce }) {
   const screen = screenFor(url);
@@ -108,10 +110,12 @@ async function move(url, options) {
     return;
   }
   moving = true;
+  heading = keyOf(url);
   try {
     await show(url, options);
   } finally {
     moving = false;
+    heading = null;
     if (queued) {
       const [nextUrl, nextOptions] = queued;
       queued = null;
@@ -149,7 +153,10 @@ document.addEventListener('click', (event) => {
 // the address after # for a step of its own: that is not a move.)
 window.addEventListener('popstate', () => {
   const url = new URL(location.href);
-  if (current && keyOf(url) === current.key) return;
+  // (Back, pressed while the next screen is still on its way: where it is
+  // heading is what counts, not what is still up, or the screen that then
+  // arrives would be left standing at the address of the one gone back to.)
+  if (current && keyOf(url) === (heading ?? current.key)) return;
   move(url, { announce: true });
 });
 

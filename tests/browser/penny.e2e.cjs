@@ -634,6 +634,162 @@ async function main() {
       assert.equal((await h.pal()).alone, false, 'and Dot with it');
     }),
 
+    check('the introduction: Penny hides behind the mailbox and looks out; comes up the street, shy of a touch; fills the glass, wider than the screen, its eyes on a finger; a portal opens behind it, it jumps back and then in; and the portal, which could not be pressed before, leads on; not a word', {}, async (page, h) => {
+      const it = () => page.evaluate(() => {
+        const penny = document.querySelector('.h-penny');
+        const at = penny.querySelector('.paper').getBoundingClientRect();
+        return { behind: Boolean(penny.closest('.h-behind')), wide: at.width / innerWidth, left: at.left, right: at.right, mood: penny.dataset.mood, lookX: Number(penny.style.getPropertyValue('--look-x')), gone: penny.classList.contains('gone') };
+      });
+      const said = (text, timeout = 30000) => page.waitForFunction((want) => document.querySelector('#hello-said')?.textContent.includes(want), text, { timeout });
+      await page.goto(`${origin}/?hello`);
+      // first, alone and large in the middle of the screen, until it is touched
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      await sleep(600);
+      assert.deepEqual(await h.words('main.hello'), [], 'no words');
+      let now = await it();
+      assert.ok(!now.behind && now.wide > 0.5 && now.wide < 0.75, `at first it is large: ${now.wide.toFixed(2)} of the screen wide`);
+      assert.ok(Math.abs((now.left + now.right) / 2 - PHONE.width / 2) < 4, 'and in the middle');
+      // touched: knocked back down the street, and it hides
+      await page.locator('#hello-penny').click();
+      await said('hides behind a mailbox');
+      now = await it();
+      assert.ok(now.behind && now.wide < 0.2, 'small, behind the mailbox');
+      assert.equal(await page.locator('#hello-portal').isHidden(), true);
+      // it looks out: part of it shows beside the mailbox
+      await said('looks out');
+      const box = await page.locator('.h-box .body').boundingBox();
+      now = await it();
+      assert.ok(now.left < box.x - 2, 'something of Penny shows beside the mailbox');
+      assert.ok(now.right > box.x, 'and the rest is behind it');
+      // out, and up the street; touched on the way, it starts and goes back, and comes on again
+      await said('comes out');
+      await sleep(1700);
+      const before = (await it()).wide;
+      await page.mouse.click(200, 200);
+      await said('goes back a step');
+      await sleep(600);
+      assert.ok((await it()).wide <= before + 0.01, 'a touch did not send it back');
+      // at the glass: wider than the screen, and its eyes go to a finger
+      await said('bigger than the screen');
+      await page.waitForSelector('.h-penny.pressed');
+      await sleep(400);
+      now = await it();
+      assert.ok(now.wide > 1.2, `at the glass Penny is ${now.wide.toFixed(2)} of the screen wide`);
+      assert.ok(now.left < 0 && now.right > PHONE.width, 'it runs off both sides of the screen');
+      // (once it has looked you over and tapped: from then its eyes are yours, and it stays while there is a finger to follow)
+      await page.waitForSelector('.hello[data-watching] .h-penny[data-mood="glad"]', { timeout: 20000 });
+      const looks = (side) => page.waitForFunction((want) => Math.sign(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) === want && Math.abs(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) > 0.5, side, { timeout: 4000 });
+      await page.mouse.move(20, 300);
+      await page.mouse.move(30, 300);
+      await looks(-1); // its eyes follow to the left
+      await page.mouse.move(370, 300);
+      await looks(1); // and to the right
+      // the portal: there, but behind Penny and not to be pressed, until Penny has gone through
+      await said('A portal opens');
+      assert.equal(await page.locator('#hello-portal').isDisabled(), true);
+      const covered = await page.evaluate(() => { const p = document.querySelector('#hello-portal').getBoundingClientRect(); const body = document.querySelector('.h-penny .paper').getBoundingClientRect(); return p.left > body.left && p.right < body.right && p.top > body.top && p.bottom < body.bottom; });
+      assert.ok(covered, 'the portal opens behind Penny: Penny hides it');
+      await said('there it is');
+      await sleep(700);
+      now = await it();
+      assert.ok(now.left >= 0 && now.wide < 0.6, 'jumped back: small again, and wholly on the screen');
+      const clear = await page.evaluate(() => { const p = document.querySelector('#hello-portal').getBoundingClientRect(); const body = document.querySelector('.h-penny .paper').getBoundingClientRect(); return body.right < p.left + 4 || body.top > p.bottom; });
+      assert.ok(clear, 'and the portal is revealed');
+      await said('jumps in');
+      assert.equal((await it()).gone, true);
+      assert.equal(await page.locator('#hello-portal').isDisabled(), false);
+      assert.deepEqual(await h.words('main.hello'), []);
+      await page.locator('#hello-portal').click({ force: true }); // (it breathes: it is never quite still)
+      await page.waitForURL(/\?office/);
+    }),
+
+    check('the introduction, at first: Penny alone, going through one feeling after another, its face, its eyes and its paper with each, until it is touched; one feeling can be held; and by keyboard, Penny can be pressed', {}, async (page) => {
+      const face = () => page.evaluate(() => { const it = document.querySelector('.h-penny'); return `${it.dataset.mood} ${it.dataset.eyes} ${it.dataset.mouth}`; });
+      await page.goto(`${origin}/?hello`);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      const faces = new Set();
+      const paper = new Set();
+      for (let i = 0; i < 40; i++) {
+        faces.add(await face());
+        paper.add(await page.evaluate(() => document.querySelector('.h-penny .paper').getAttribute('d')));
+        await sleep(500);
+      }
+      assert.ok(faces.size >= 6, `only ${faces.size} feelings: ${[...faces].join(', ')}`);
+      for (const one of ['happy', 'closed', 'half']) assert.ok([...faces].some((f) => f.includes(one)), `its eyes never ${one}`);
+      assert.ok(paper.size > 10, 'its paper never changed shape');
+      assert.ok(/\?hello/.test(page.url()) && await page.locator('.hello.in-street').count() === 0, 'nothing happens until it is touched');
+      // one feeling, held
+      await page.goto(`${origin}/?hello&emote=sad`);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      for (let i = 0; i < 6; i++) {
+        await sleep(800);
+        assert.equal(await face(), 'sad half frown');
+      }
+      // and by keyboard
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-penny');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.hello.in-street');
+      await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('hides behind a mailbox'), null, { timeout: 10000 });
+    }),
+
+    check('the introduction: Penny walks, it does not slide or swell: it comes nearer a step at a time, still between steps, and nearer is always bigger and lower together, on the street', {}, async (page) => {
+      await page.goto(`${origin}/?hello`);
+      await page.locator('#hello-penny').click();
+      await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('comes out'), null, { timeout: 30000 });
+      // where it stands, as the page draws it, sampled through the first stretches up the street (asked of the page: not timed from here)
+      const seen = await page.evaluate(() => new Promise((done) => {
+        const out = [];
+        const started = performance.now();
+        const take = () => {
+          const at = document.querySelector('.h-penny').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/).slice(1).map(Number);
+          out.push(at);
+          if (performance.now() - started < 6000) requestAnimationFrame(take); else done(out);
+        };
+        requestAnimationFrame(take);
+      }));
+      const [, , first] = seen[0];
+      const [, , lastS] = seen.at(-1);
+      assert.ok(lastS > first * 1.3, `it came no nearer: from ${first} to ${lastS}`);
+      // on the street: it stands where its size says (the horizon at 168, its eyes 15.4 of its units above the ground)
+      for (const [, y, scale] of seen) assert.ok(Math.abs(y - (168 + 15.4 * scale)) < 0.1, `off the street: at ${y} for a size of ${scale}`);
+      // still between steps: runs of frames where it does not move at all, and more than one of them
+      let stills = 0;
+      let run = 0;
+      for (let i = 1; i < seen.length; i++) {
+        const same = seen[i][0] === seen[i - 1][0] && seen[i][2] === seen[i - 1][2];
+        run = same ? run + 1 : 0;
+        if (run === 3) stills += 1;
+      }
+      assert.ok(stills >= 3, `it slid: only ${stills} moments of standing still in six seconds of coming nearer`);
+    }),
+
+    check('the introduction, the other ways up the street, with less motion asked for: each gets to the glass and through the portal', { reducedMotion: 'reduce' }, async (page) => {
+      for (const [gait, walk] of [['zigzag', ''], ['edges', '&walk=rock'], ['tiptoe', '&walk=hop']]) {
+        await page.goto(`${origin}/?hello&gait=${gait}${walk}`);
+        await page.locator('#hello-penny').click();
+        await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('jumps in'), null, { timeout: 20000 });
+        assert.equal(await page.locator('.hello').getAttribute('data-gait'), gait);
+        assert.equal(await page.locator('#hello-portal').isDisabled(), false);
+      }
+      // (round from wherever the keys last were: Penny, pressed and gone)
+      for (let n = 0; n < 4 && await page.evaluate(() => document.activeElement.id) !== 'hello-portal'; n++) await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-portal', 'the portal can be reached by keyboard');
+      await page.keyboard.press('Enter');
+      await page.waitForURL(/\?office/);
+    }),
+
+    check('back, pressed while the next screen is still on its way, goes back: the screen that is up is the one the address names', {}, async (page) => {
+      await page.goto(`${origin}/?walk`);
+      await page.waitForSelector('#walk-board .cell');
+      // the way home is pressed, and back at once, before the home page has been fetched
+      await page.evaluate(() => { document.querySelector('.penny-back').click(); history.back(); });
+      await sleep(3000); // (the home page arrives, and the walk comes back over it)
+      assert.ok(/\?walk/.test(page.url()));
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#screens .screen')].map((screen) => screen.className.match(/screen-\w+/)[0])), ['screen-walk']);
+    }),
+
     check('walked again afterwards: Dot is there from the start and is not found twice', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:place:v1': 4 } }, async (page, h) => {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);

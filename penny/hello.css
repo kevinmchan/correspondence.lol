@@ -1,0 +1,129 @@
+/* The introduction (/?hello, penny/hello.js): a quiet street, a mailbox, and
+   Penny, who is shy. Three layers: the street; the portal; Penny, and the
+   glass between you. Soft, warm, nothing hurried. */
+.screen-hello main.hello {
+  position: relative; padding: 0; overflow: clip;
+  --sky-top: #f3e6d2; --sky-low: #fbeedd; --sun: #fbd9a5; --hills: #dfe3cf; --ground: #e9e2cb; --path: #f4ecda; --tuft: #b9c7a0;
+  --box: #5fa9a8; --box-line: #2d5f66; --box-lid: #7dbdb8;
+  background: var(--sky-low);
+  touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+}
+:root[data-theme="dark"] .screen-hello main.hello {
+  --sky-top: #2b2a33; --sky-low: #3a332f; --sun: #6d5a48; --hills: #33372f; --ground: #2c2a26; --path: #38332c; --tuft: #4b5540;
+  --box: #3f7f80; --box-line: #173b40; --box-lid: #569492;
+}
+.hello-stage { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.hello-near { pointer-events: none; z-index: 3; }
+
+/* --- The street --------------------------------------------------------------------- */
+.hello .h-sky { fill: var(--sky-low); }
+.hello .h-sun { fill: var(--sun); opacity: 0.75; }
+.hello .h-hills { fill: var(--hills); }
+.hello .h-ground { fill: var(--ground); }
+.hello .h-path { fill: var(--path); }
+.hello .h-tufts path { fill: none; stroke: var(--tuft); stroke-width: 1.6; stroke-linecap: round; }
+.hello .shade { fill: rgb(60 45 30 / 0.16); }
+.hello .h-box .legs { fill: none; stroke: var(--box-line); stroke-width: 2.6; stroke-linecap: round; }
+.hello .h-box .body { fill: var(--box); stroke: var(--box-line); stroke-width: 2; stroke-linejoin: round; }
+.hello .h-box .lid { fill: none; stroke: var(--box-lid); stroke-width: 2.2; stroke-linecap: round; }
+.hello .h-box .slot { fill: var(--box-line); }
+.hello .h-box .mark { fill: none; stroke: var(--box-lid); stroke-width: 1.3; stroke-linejoin: round; }
+.hello .h-box { transform-box: fill-box; transform-origin: 50% 100%; }
+.hello .h-box.bumped { animation: h-bump 500ms ease-out; }
+@keyframes h-bump { 0%, 100% { transform: none; } 30% { transform: rotate(-2.5deg); } 65% { transform: rotate(1.5deg); } }
+
+/* --- Penny ---------------------------------------------------------------------------
+   Where it stands, how near, and the shape of its paper are drawn by the
+   script, a frame at a time (penny/hello.js): nothing here moves it about. */
+.hello .h-penny { transition: opacity 400ms ease; }
+.hello .h-penny .act, .hello .h-penny .idle { transform-box: fill-box; transform-origin: 50% 100%; }
+.hello .h-penny .paper { fill: #f6f1e7; stroke: #22303c; stroke-width: 2.6; stroke-linejoin: round; }
+.hello .h-penny .flap { fill: none; stroke: #22303c; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+/* a corner folded towards you: the back of the paper shows */
+.hello .h-penny .fold { fill: #e4dac8; stroke: #22303c; stroke-width: 2.2; stroke-linejoin: round; }
+.hello .h-penny .seal { fill: #c8442e; transform-box: fill-box; transform-origin: center; }
+.hello .h-penny .warmth { fill: #f6a070; opacity: 0.18; transform-box: fill-box; transform-origin: center; transition: opacity 900ms ease; }
+.hello .h-penny .cheek { fill: #f3a08f; opacity: 0.55; transition: opacity 700ms ease; }
+.hello .h-penny .ball { fill: #22303c; }
+.hello .h-penny .shine { fill: #fff; }
+.hello .h-penny .eyes { transform-box: fill-box; transform-origin: center; translate: calc(var(--look-x, 0) * 1px) calc(var(--look-y, 0) * 1px); transition: translate 380ms ease; }
+.hello .h-penny .eye { transform-box: fill-box; transform-origin: center; scale: var(--eye, 1); transition: scale 300ms ease; }
+.hello .h-penny .mouth { fill: none; stroke: #22303c; stroke-width: 1.7; stroke-linecap: round; opacity: 0; transition: opacity 250ms ease; }
+.hello .h-penny .m-grin, .hello .h-penny .m-o { fill: #22303c; }
+.hello .h-penny[data-mouth="frown"] .m-frown { opacity: 1; }
+/* its eyes: open; happy (two arches); closed (two smiles); half (heavy lids) */
+.hello .h-penny .lid { fill: none; stroke: #22303c; stroke-width: 1.7; stroke-linecap: round; opacity: 0; }
+.hello .h-penny .ball, .hello .h-penny .shine { transition: opacity 200ms ease; }
+.hello .h-penny:is([data-eyes="happy"], [data-eyes="closed"]) :is(.ball, .shine) { opacity: 0; }
+.hello .h-penny[data-eyes="happy"] .lid.happy, .hello .h-penny[data-eyes="closed"] .lid.closed { opacity: 1; }
+.hello .h-penny[data-eyes="half"] .eye { scale: 1 0.55; }
+.hello .h-penny[data-eyes="half"] .shine { opacity: 0; }
+.hello .h-penny[data-mood="sad"] .warmth { opacity: 0.04; }
+.hello .h-penny[data-mood="excited"] .warmth { opacity: 0.7; }
+.hello .h-penny[data-mood="excited"] .cheek { opacity: 1; }
+.hello .h-penny[data-mood="listening"] .warmth { opacity: 0.38; }
+.hello .h-penny[data-mouth="smile"] .m-smile, .hello .h-penny[data-mouth="grin"] .m-grin, .hello .h-penny[data-mouth="wavy"] .m-wavy, .hello .h-penny[data-mouth="o"] .m-o { opacity: 1; }
+/* shy: its cheeks; curious: its eyes; startled: all of it (and its corners: penny/hello.js) */
+.hello .h-penny[data-mood="shy"] { --eye: 0.95; }
+.hello .h-penny[data-mood="shy"] .cheek { opacity: 1; }
+.hello .h-penny[data-mood="curious"] { --eye: 1.15; }
+.hello .h-penny[data-mood="startled"] { --eye: 1.32; }
+.hello .h-penny[data-mood="glad"] .cheek { opacity: 1; }
+.hello .h-penny[data-mood="glad"] .warmth { opacity: 0.5; }
+.hello .h-penny .seal.sound { animation: p-sound-still var(--d, 400ms) ease-out; }
+.hello .h-penny.gone { opacity: 0; }
+
+/* --- At first: Penny alone, on plain ground --------------------------------------------
+   Soft light, the colour of the sky; it lifts away as Penny is knocked back
+   into the street. */
+.hello-plain {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(90% 60% at 50% 45%, var(--sky-low) 0%, var(--sky-top) 100%);
+  transition: opacity 1100ms ease;
+}
+.hello.in-street .hello-plain { opacity: 0; }
+.hello-tap {
+  position: absolute; z-index: 4; padding: 0; border: 0; border-radius: 12%; background: transparent; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hello-tap[hidden] { display: none; }
+.hello-tap:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+
+/* --- The glass ----------------------------------------------------------------------- */
+.hello .h-fog { fill: #fff; opacity: 0; filter: blur(7px); }
+.hello .h-fog.on { animation: h-fog 4200ms ease-out both; }
+.hello .h-tap { fill: none; stroke: #fff; stroke-width: 1.4; opacity: 0; }
+.hello .h-tap.on { animation: h-tap 620ms ease-out both; }
+@keyframes h-fog { 0% { opacity: 0; } 18% { opacity: 0.5; } 100% { opacity: 0; } }
+@keyframes h-tap { 0% { opacity: 0.85; transform: scale(0.3); } 100% { opacity: 0; transform: scale(1); } }
+.hello .h-tap { transform-box: fill-box; transform-origin: center; }
+
+/* --- The portal ----------------------------------------------------------------------
+   It opens behind Penny, so the first thing seen of it is its light, round
+   Penny's edges. */
+.hello-light {
+  position: absolute; z-index: 1; left: var(--px, 56%); top: var(--py, 58%); width: 150vmax; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgb(255 244 214 / 0.95) 0, rgb(255 226 170 / 0.5) 22%, rgb(154 211 247 / 0.22) 42%, transparent 62%);
+  opacity: 0; scale: 0.2; transition: opacity 700ms ease, scale 900ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.hello.opened .hello-light { opacity: 1; scale: 1; }
+.hello.revealed .hello-light { opacity: 0.4; scale: 0.34; transition-duration: 1400ms; }
+.hello #hello-portal { position: absolute; z-index: 2; left: var(--px, 56%); top: var(--py, 58%); width: clamp(4.2rem, 24vw, 6rem); margin: 0; translate: -50% -50%; }
+.hello #hello-portal:disabled { opacity: 1; filter: none; cursor: default; }
+.hello #hello-portal.took::before { animation: portal-turn 7s linear infinite, h-took 700ms ease-out; }
+@keyframes h-took { 0% { filter: none; } 30% { filter: brightness(1.5) drop-shadow(0 0 1rem #fff); } 100% { filter: none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hello .h-penny .idle { animation: breathe 3.4s ease-in-out infinite; }
+  .hello .h-penny.moving .idle { animation: none; } /* (it does not breathe in the middle of a step) */
+  .hello .h-penny .eye { animation: blink 5.2s infinite; }
+  .hello .h-penny .act.start { animation: h-start 420ms cubic-bezier(0.3, 1.6, 0.5, 1); }
+  .hello .h-penny .act.tilt { animation: h-tilt 1400ms ease-in-out; }
+  .hello .h-penny .seal.sound { animation-name: p-sound; }
+}
+@keyframes h-start { 0% { transform: none; } 40% { transform: translateY(-9%) scale(0.96, 1.05); } 100% { transform: none; } }
+@keyframes h-tilt { 0%, 100% { transform: none; } 30%, 70% { transform: rotate(9deg); } }
+
+/* The way out, in the corner: quiet, as in the film's other scenes (penny/office.css), and only its own size. */
+.hello .office-door { bottom: auto; height: 2.75rem; background: transparent; color: #8a97a3; opacity: 0.55; z-index: 5; }
+.hello .office-door:hover, .hello .office-door:focus-visible { opacity: 1; }
