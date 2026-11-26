@@ -556,6 +556,50 @@ dialog.behind .sheet-foot .shut svg { width: 1.3rem; height: 1.3rem; }
 @keyframes dash-tick { 0%, 100% { rotate: 7deg; } 50% { rotate: 13deg; } }
 @keyframes dash-no { 0%, 100% { translate: 0 0; } 25% { translate: -3px 0; } 50% { translate: 3px 0; } 75% { translate: -3px 0; } }
 
+/* --- Still being built, in the room -------------------------------------------------------------
+   The cone from the home page's stamp (styles.css, .building), off its stamp and on the gallery floor, by
+   the work, at the bottom right. It is asleep on its feet: it breathes, a z drifts up now and then, and
+   once in a while it strolls a little way along the floor, waddling, still asleep, and dozes where it
+   stops, then strolls back. Slow, and soft against the wall; the attendant's place while it is here, so
+   it steps out of the room for the lesson. With less motion asked for, it only stands there, asleep. */
+@property --sway { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+.gallery-cone {
+  position: absolute; z-index: 1; pointer-events: none;
+  right: max(1.1rem, env(safe-area-inset-right)); bottom: calc(env(safe-area-inset-bottom, 0px) + var(--pal-w) * 0.07);
+  width: calc(var(--pal-w) * 0.3); transition: opacity 1.2s ease;
+}
+.radio-world[data-story="lesson"] .gallery-cone { opacity: 0; transition-duration: 300ms; }
+.gallery-cone svg { display: block; width: 100%; overflow: visible; }
+.gallery-cone .c-waddle, .gallery-cone .c-cone { transform-box: fill-box; transform-origin: center bottom; }
+.gallery-cone .c-shade { fill: rgb(0 0 0 / 0.3); }
+.gallery-cone .c-body { fill: #e3876b; }
+.gallery-cone .c-stripes { stroke: #f3ece0; stroke-width: 6.5; }
+.gallery-cone .c-eyes { stroke: #4a2f27; stroke-width: 3.6; fill: none; stroke-linecap: round; }
+.gallery-cone .c-cheeks { stroke: #f6c3b3; stroke-width: 6; stroke-linecap: round; opacity: 0.8; }
+.gallery-cone .c-foot { fill: #3b4954; }
+.gallery-cone .z { font: italic 13px Georgia, serif; fill: rgb(246 241 231 / 0.75); opacity: 0; }
+:root[data-theme="dark"] .gallery-cone .c-body { fill: #d07a60; }
+@media (prefers-reduced-motion: no-preference) {
+  .gallery-cone .c-walk { animation: cone-stroll 48s ease-in-out infinite; }
+  .gallery-cone .c-waddle { animation: cone-waddle 0.9s ease-in-out infinite; }
+  .gallery-cone .c-cone { animation: cone-breathe 5s ease-in-out infinite; }
+  .gallery-cone .c-zs { animation: cone-dozing 48s linear infinite; }
+  .gallery-cone .z { animation: cone-z 6s ease-out infinite; }
+  .gallery-cone .z.two { animation-delay: 2s; font-size: 10px; }
+  .gallery-cone .z.three { animation-delay: 4s; font-size: 8px; }
+}
+/* (a stroll is half a figure's width along the floor, and back: never as far as whoever stands at the left) */
+@keyframes cone-stroll {
+  0%, 33% { translate: 0 0; --sway: 0deg; }
+  35%, 44% { --sway: 5deg; }
+  46%, 79% { translate: calc(var(--pal-w) * -0.5) 0; --sway: 0deg; }
+  81%, 90% { --sway: 5deg; }
+  92%, 100% { translate: 0 0; --sway: 0deg; }
+}
+@keyframes cone-waddle { 0%, 100% { rotate: calc(var(--sway) * -1); } 50% { rotate: var(--sway); } }
+/* (no z while it strolls) */
+@keyframes cone-dozing { 0%, 31% { opacity: 1; } 33%, 47% { opacity: 0; } 50%, 77% { opacity: 1; } 79%, 93% { opacity: 0; } 96%, 100% { opacity: 1; } }
+
 /* --- What Dot says ----------------------------------------------------------------------------
    Round and plain, as Dot is: against the attendant's sign, the difference is seen before a word is read. */
 .dot-says { position: absolute; z-index: 4; left: 0; top: 0; margin: 0; max-width: 11.5rem; box-sizing: border-box; padding: 0.55rem 0.75rem; pointer-events: none; border: 0.16rem solid #22303c; border-radius: 1.1rem; background: #f6f1e7; color: #22303c; font-family: system-ui, sans-serif; font-size: 1rem; line-height: 1.25; font-weight: 800; text-align: left; box-shadow: 0.16rem 0.2rem 0 #2aa198; }
