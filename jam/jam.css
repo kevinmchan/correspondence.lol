@@ -77,6 +77,16 @@
 /* (the tempo is kept narrow, its unit under its number, so that the two sides weigh the same and the dice sit dead centre) */
 .jam-controls #jam-tempo { font-variant-numeric: tabular-nums; min-width: 2.9rem; padding: 0 0.35rem; flex-direction: column; gap: 0; line-height: 1.05; }
 .jam-controls #jam-tempo::after { content: "bpm"; font-weight: 400; font-size: 0.625rem; color: var(--muted); }
+/* Play, lit: for a beat that has just arrived by a link, until it is played (jam.js). A ring in the
+   accent, and a soft light round it that comes and goes slowly; with reduced motion, the ring alone. */
+.jam-controls #jam-play.lit { color: var(--accent); box-shadow: 0 0.2rem 0 var(--accent), inset 0 0 0 2px var(--accent), 0 0 0 0.3rem color-mix(in srgb, var(--accent) 22%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .jam-controls #jam-play.lit { animation: play-lit 2.6s ease-in-out infinite; }
+}
+@keyframes play-lit {
+  0%, 100% { box-shadow: 0 0.2rem 0 var(--accent), inset 0 0 0 2px var(--accent), 0 0 0 0.1rem color-mix(in srgb, var(--accent) 8%, transparent); }
+  50% { box-shadow: 0 0.2rem 0 var(--accent), inset 0 0 0 2px var(--accent), 0 0 0 0.42rem color-mix(in srgb, var(--accent) 26%, transparent); }
+}
 /* The dice are the big button, in the middle. Play and pause sit beside them. */
 #jam-dice {
   /* A dark tile, like the app's own mark, inside a ring that never stops

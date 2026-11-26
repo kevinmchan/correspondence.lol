@@ -541,6 +541,11 @@ Without an account there are no tabs, only the two ways to get one.
 
 ## Loops, the music maker
 
+**Play is lit for a beat that has just arrived.** When a shared beat is
+opened by its link it is on the board, and silent: the play button wears a
+ring in the accent with a soft light that comes and goes slowly, until it is
+played. Not otherwise, and not on a first visit.
+
 `/jam/` (`jam/jam.js`) is a board of tiles, eight steps across and seven rows
 high, with four instruments that loop together. Its name is not written on
 the page (it was, over the board, until v1.1.82): it is the window's title,
