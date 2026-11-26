@@ -221,6 +221,24 @@ and never delivered; the rain that smudged its address did not come off. A
 sound is heard once and is over. A day goes one way. This is meant to be both
 things at once, beautiful and painful, and nothing should resolve it.
 
+**What it is about, beneath everything: rejecting a scarcity mindset** (the
+owner, 26 November 2026: "The story is about rejecting a scarcity mindset.
+It's about the world coming alive and you begin to believe the world will
+conspire to hold you up if you fall and the karma it unlocks compared to
+believing you must fend for yourself."). Two ways of living are set side by
+side. In one there is not enough to go round: the quickest are served, the
+rest are left, and you must fend for yourself. In the other the world is alive
+and on your side: if you fall, something holds you up, and what you give (a
+hand, a hint, your attention) comes back, often from somewhere you did not
+expect. Penny begins in the first, the sorting office where the slow is left,
+and the story is its slow turn to the second. The themes below are this one
+seen from a side: hurry is what scarcity feels like; slowing down is daring to
+trust; racing for fun is competition with nothing scarce riding on it; others
+lighting the parts of us gone dark is the world holding us up; the dark is
+where a fall happens and the holding is felt; and the meadow, whose things
+were alive all along and wake as the work is done, is the world coming alive.
+As everywhere, the story shows this and never says it.
+
 **What it is about: learning to slow down, where it had seemed that the thing
 was to be fastest.** Penny comes from a place that runs on hurry, where the
 quickest mail leaves first and Penny, slow and plain, is what is left. It
@@ -285,6 +303,7 @@ Wherever a new place is drawn, these hold:
 | Light | Cold, and the same whatever happens. | Warmer, and only once things have slowed. |
 | Sound | Short and bright. | Long, low, with an echo: it has come a long way and took its time. |
 | A race | In earnest: the quickest leave, and whoever is slow is left. The room speeds up with it. | For fun: the clock does not change for it, anyone may have a hint, and every finish is cheered the same. |
+| When someone falls | Whoever falls is passed by: there was only room for the quick. | Something catches them: a hand, a light, a thing that turns out to have been awake. |
 | What is asked of you | Nothing is ever timed, counted down or hurried in Penny's story. | Staying is rewarded: a screen left up tells more, and Penny hears only where a finger is held still. |
 
 A place does not start slow. It slows, and it slows because somebody in it
