@@ -55,6 +55,13 @@ export function mount(root, life) {
   // The lobby: big tiles. Opening and joining a room each have a screen of their own (rooms.js).
   const menu = $('menu');
   const play = $('play'); // the one wide button: a board of your own, at once
+  // But somebody who has never played is taken through the first places first
+  // (penny/walk.js), where the rules are shown one at a time, and every time
+  // until they have been walked: the last of them leads out to a board. New
+  // means nothing played on this device: no board of one's own yet (the key
+  // is postmarks/ui.js's, set by the first) and nothing earned in a room.
+  const SOLO_KEY = 'postmarks:howto-solo:v1';
+  const newHere = () => !hasWalked() && !load(SOLO_KEY) && readEnergy(load(ENERGY_KEY)).earned === 0;
   // Under it, energy: one bar for everything earned in every game, and the meadow at its end (shared/meadow.js).
   const energyRow = $('home-energy');
   const meadowMark = $('meadow');
@@ -93,6 +100,7 @@ export function mount(root, life) {
     me.card.hidden = none;
     menu.hidden = none;
     play.hidden = none;
+    play.setAttribute('href', newHere() ? '/?walk' : '/postmarks/');
     energyRow.hidden = none;
     if (!none) showEnergy();
     showTabs();
