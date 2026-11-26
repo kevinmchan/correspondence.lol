@@ -100,6 +100,8 @@ export function mount(root, life) {
   const keep = () => save(SAVE_KEY, { v: 1, tempo, notes: sets.map((set) => [...set]) });
   let layer = 0;
   let playing = false;
+  // Play is lit for a beat that has just arrived by a link, until it is played: it is there on the board, and silent.
+  let lit = false;
   // The sounds recorded ({ id, name, rate, pcm, hz }), and the deck: for each of its eight places the sound that is
   // in it (a recorded one's id, or 'kind:0' to 'kind:3' for one of the four instruments), or null. The first four
   // places are the instruments', and one with no sound in it plays the instrument; the other four are there only
@@ -242,6 +244,7 @@ export function mount(root, life) {
     el.play.setAttribute('aria-pressed', String(playing));
     el.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
     el.play.classList.toggle('playing', playing);
+    el.play.classList.toggle('lit', lit && !playing);
     standAgain(); // (what is under Penny may have moved)
   }
 
@@ -283,6 +286,7 @@ export function mount(root, life) {
   function setPlaying(on) {
     playing = on;
     if (on) {
+      lit = false;
       loop.rewind();
       heard = 0;
       pal.mood('dancing').look(null);
@@ -765,6 +769,7 @@ export function mount(root, life) {
     if (beat && !isEmpty(beat)) {
       adopt(beat);
       say('A beat that was shared with you. Press play, and make it yours.');
+      lit = true;
       // The instruments that were in other places of its deck, if any were: the deck is as it was shared.
       const lent = arrivedWith;
       if (/^[0-3-]{8}$/.test(lent ?? '')) {

@@ -354,6 +354,8 @@ async function states() {
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
+    // (a beat that has just arrived by a link: it is on the board, the note under the board says so, and play is lit until it is played)
+    { name: 'the music maker, a shared beat just arrived', screen: 'jam', at: `/jam/?b=${beats[0].code}`, ready: '.jam-board .pad.on', settle: '#jam-play.lit', small: [PADS] },
     // (playing: the first note has set the loop going, the hint above the board has gone, and Penny has come up to dance where there is room.
     // No title is written over the board, since v1.1.82: its name is for screen readers.)
     { name: 'the music maker, playing', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: (page) => page.locator('.jam-board .pad').nth(3).click(), settle: '#jam-play.playing', small: [PADS] },

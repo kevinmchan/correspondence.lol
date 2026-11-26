@@ -751,6 +751,7 @@ async function main() {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
       assert.equal(await page.locator('#jam-save').isDisabled(), true, 'nothing to save yet');
+      assert.equal(await page.locator('#jam-play.lit').count(), 0, 'play is lit, with no beat arrived');
       for (const pad of [0, 9, 18, 27]) await page.locator('.jam-board .pad').nth(pad).click();
       await page.locator('#jam-save').click();
       await page.waitForSelector('.jam-saved li');
@@ -775,6 +776,12 @@ async function main() {
       assert.equal(unsaved, 5);
       await page.goto(link);
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('shared with you'));
+      // play is lit for the beat that has arrived, until it is played, and not again after
+      assert.equal(await page.locator('#jam-play.lit').count(), 1, 'a beat has arrived, and play is not lit');
+      await page.locator('#jam-play').click();
+      await page.waitForSelector('#jam-play.playing:not(.lit)');
+      await page.locator('#jam-play').click();
+      assert.equal(await page.locator('#jam-play.lit').count(), 0, 'play is lit again once the beat has been played');
       assert.equal(new URL(page.url()).search, '', 'the address goes back to plain');
       assert.equal(await page.locator('.jam-board .pad.on').count(), 4, 'the shared beat is on the board');
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat', 'Morning'], 'what was on the board was put by');
