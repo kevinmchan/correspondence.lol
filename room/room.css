@@ -567,10 +567,35 @@ form.card button.icon-button svg { width: 1.45rem; height: 1.45rem; }
 /* seen by somebody who is not in it, and the door found by its code */
 .outside { display: flex; flex-direction: column; align-items: center; padding-bottom: 1rem; font-family: system-ui, sans-serif; }
 .roof-big { position: relative; width: 100%; }
-/* whoever is in, at the skylight */
-.skylight { position: absolute; left: 50%; top: 61%; translate: -50% -50%; display: flex; gap: 0.4rem; padding: 0.4rem 0.55rem 0.45rem; border-radius: 1.2rem; background: color-mix(in oklab, var(--roof-line, #3a322e) 40%, #1d1918); box-shadow: inset 0 0.15rem 0.4rem rgb(0 0 0 / 0.35); }
-.skylight .avatar { width: 2.3rem; height: 2.3rem; font-size: 1.3rem; }
+/* A wide skylight in the middle of the roof, with the lights on: under the glass, the room's floor, its table with a
+   board on it, and whoever is in sitting round it, each with their name over them as at the table inside. It is what
+   says, to somebody who has only been sent a link, whose room this is and what is done in it. (The light is the lamp's,
+   warm and low; a game somebody has been asked to lies under a lamp of its own, as what is waiting on you does inside.) */
+.roof-big { --frame: color-mix(in oklab, var(--room, #9aa7b1) 44%, #d9cbb8); }
+:root[data-theme="dark"] .roof-big { --frame: color-mix(in oklab, var(--room, #5c6b78) 30%, #241f1d); }
+.skylight {
+  position: absolute; left: 50%; top: 40.5%; translate: -50% -50%; box-sizing: border-box; width: max-content; max-width: calc(100% - 3.6rem);
+  display: flex; align-items: flex-end; justify-content: center; gap: 0.6rem; padding: 0.65rem 0.9rem 0.8rem; border-radius: 1.6rem;
+  background: radial-gradient(90% 120% at 50% 62%, var(--lamp), transparent 72%), var(--floor);
+  box-shadow: 0 0 0 0.28rem var(--frame), inset 0 0.12rem 0.4rem rgb(70 50 35 / 0.14);
+}
+:root[data-theme="dark"] .skylight { background: radial-gradient(90% 120% at 50% 62%, rgb(255 196 130 / 0.2), transparent 74%), color-mix(in oklab, #f2cf7a 7%, var(--floor)); box-shadow: 0 0 0 0.28rem var(--frame), 0 0 1.6rem rgb(255 196 130 / 0.1), inset 0 0.12rem 0.4rem rgb(0 0 0 / 0.3); }
+.roof-big .roof :is(.pot, .flue) { display: none; } /* (no chimney on this one: the glass has its place) */
+.skylight .seat { flex: 0 1 auto; min-width: 2.9rem; max-width: 4.6rem; gap: 0.22rem; }
+.skylight .seat .avatar { width: 2.9rem; height: 2.9rem; font-size: 1.55rem; }
+/* (four round the table sit closer, on a mini most of all) */
+.skylight:has(> :nth-child(5)) { gap: 0.35rem; padding-inline: 0.7rem; }
+.skylight:has(> :nth-child(5)) .seat { min-width: 2.4rem; }
+.skylight:has(> :nth-child(5)) .seat .avatar { width: 2.4rem; height: 2.4rem; font-size: 1.3rem; }
+.skylight:has(> :nth-child(5)) .tabletop { width: 3.3rem; padding: 0.3rem; }
+.skylight .seat .name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: system-ui, sans-serif; color: color-mix(in oklab, var(--ink) 62%, var(--floor)); }
+.skylight .tabletop { flex: none; width: 4.1rem; padding: 0.4rem; border-radius: 1.05rem; background: var(--wood); box-shadow: var(--soft-1); }
+.skylight .mini[data-state="wait"] { filter: saturate(0.6); opacity: 0.88; }
+.skylight.lit .tabletop { box-shadow: var(--soft-1), 0 0 1.4rem 0.3rem var(--lamp); }
+/* you, on the mat: a little larger than the faces under the glass, being nearer */
+.outside #join-you { width: 3.3rem; height: 3.3rem; font-size: 1.8rem; background: color-mix(in oklab, var(--bg) var(--face-mix), var(--floor)); box-shadow: var(--soft-2); }
 .outside form.mat { box-sizing: border-box; width: min(100% - 3rem, 18.5rem); max-width: none; margin-top: -1.1rem; padding: 1rem 1rem 0.9rem; gap: 0.75rem; align-items: center; text-align: center; }
+#join.outside form.mat { margin-top: -1.9rem; }
 .outside form.mat fieldset { width: 100%; min-width: 0; padding: 0; gap: 0.75rem; align-items: center; background: none; box-shadow: none; border-radius: 0; }
 .outside form.mat .field { align-self: stretch; }
 /* (a field keeps a soft edge, so that it does not vanish into its card in the dark) */

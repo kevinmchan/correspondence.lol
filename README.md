@@ -1298,8 +1298,18 @@ room are its content: names, notes, the code.
   the room's board, by anyone, and for its finish; a time trial or a pass
   phrase, for your own run; a phrase's author's test run, nothing. In a game
   together the bar is shorter, beside the words of the turn.
-- **Outside**, for somebody who is not in it, the roof is on. Whoever is in
-  shows at the skylight, and the mat at the door is where to ask in.
+- **Outside**, for somebody who is not in it, the roof is on, and in the
+  middle of it is a wide skylight with the lights on. Somebody sent a link
+  has nothing else to go by, so under the glass is what the room is: its
+  table with a board on it, and whoever is in sitting round it (four at
+  most), each with their name over them as inside. A link to a game lays
+  that game's board there, under a lamp; otherwise a board at rest (nobody
+  outside is told what games a room has, so it is a picture of what the room
+  is for, not one of its games). On the mat at the door stands whoever has
+  come: the face they will go in with, their name to write under it, and the
+  way in. The face is their profile's, or the one last chosen on the device;
+  for somebody new it is picked there, never one already at the table, and
+  it is theirs from then on.
 - **On the home page** your rooms are a street of little shops seen from in
   front, the last opened first: a strip of roof, a board over the window in
   the room's colour with the room's name lettered on it (two lines at most,

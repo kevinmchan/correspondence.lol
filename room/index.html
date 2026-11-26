@@ -277,11 +277,15 @@
         <p id="loading" class="lede" role="status"><span class="sr-only">Opening room…</span></p>
         <p id="room-error" class="message bad" role="alert"></p>
 
-        <!-- Seen by somebody who is not in it: the roof is on, whoever is in shows at the skylight, and the mat at the door is where to ask. -->
+        <!-- Seen by somebody who is not in it: the roof is on, with a wide skylight in it, lit. Under the glass is what the room is: its
+             table with a board on it, and whoever is in sitting round it, each with their name. On the mat at the door is whoever has come,
+             with their name to write under them, and the way in. -->
         <div id="join" class="outside" hidden>
           <div class="roof-big" aria-hidden="true"><span id="join-faces" class="skylight"></span></div>
           <form id="join-form" class="card mat">
             <p id="join-text" class="sr-only"></p>
+            <!-- (you, on the mat: the face you will go in with, and under it your name) -->
+            <span id="join-you" class="avatar" aria-hidden="true"></span>
             <label class="field">
               <span class="sr-only">Your name</span>
               <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
