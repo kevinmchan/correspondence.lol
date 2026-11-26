@@ -1104,3 +1104,39 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 }
 @keyframes feed-go { 0%, 100% { transform: none; } 50% { transform: translateX(0.18rem); } }
 @keyframes feed-pip { from { transform: scale(0); } to { transform: none; } }
+
+/* --- Still being built: a stamp in the top left corner of the home page --------
+   Opposite the face in the other corner, at the same height. On it, a traffic
+   cone asleep: it breathes, and a z drifts up now and then. Nothing to press. */
+:root { --stamp: color-mix(in srgb, var(--paper), #ffffff 55%); }
+:root[data-theme="dark"] { --stamp: color-mix(in srgb, var(--paper), var(--ink) 13%); }
+main:has(> .building) { position: relative; }
+.building {
+  --r: 2.5px;
+  position: absolute; z-index: 1; margin: 0;
+  left: calc(0.875rem + 3px);
+  top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem));
+  width: 3rem; aspect-ratio: 5 / 6; padding: calc(var(--r) * 1.6);
+  background: var(--stamp);
+  /* perforated: holes punched all round by a mask, the middle kept whole */
+  -webkit-mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / calc(var(--r) * 2.8) calc(var(--r) * 2.8), linear-gradient(#000 0 0) content-box;
+          mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / calc(var(--r) * 2.8) calc(var(--r) * 2.8), linear-gradient(#000 0 0) content-box;
+  filter: drop-shadow(0 1px 0 var(--line));
+  transform: rotate(-5deg);
+}
+.building svg { display: block; width: 100%; height: 100%; overflow: visible; border: 1px solid var(--line); border-radius: 3px; }
+.building .cone { transform-box: fill-box; transform-origin: center bottom; }
+.building .cone-body { fill: var(--accent); opacity: 0.9; }
+.building .cone-stripes { stroke: var(--stamp); stroke-width: 6.5; }
+.building .cone-eyes { stroke: var(--stamp); stroke-width: 3.6; fill: none; stroke-linecap: round; }
+.building .cone-cheeks { stroke: #f3b7a6; stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
+.building .cone-foot { fill: var(--ink); opacity: 0.8; }
+.building .z { font: italic 13px Georgia, serif; fill: var(--muted); opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .building .cone { animation: cone-breathe 5s ease-in-out infinite; }
+  .building .z { animation: cone-z 6s ease-out infinite; }
+  .building .z.two { animation-delay: 2s; font-size: 10px; }
+  .building .z.three { animation-delay: 4s; font-size: 8px; }
+}
+@keyframes cone-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.04, 0.96); } }
+@keyframes cone-z { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translate(10px, -22px); } }

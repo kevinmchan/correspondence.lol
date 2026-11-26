@@ -205,6 +205,20 @@ async function states() {
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
     { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
+    // Still being built: a stamp in the top left corner with a sleepy cone on it, opposite the face, and clear of it and of the title.
+    { name: 'home, the sleepy cone in its corner, in the dark', screen: 'home', at: '/', storage: { ...ACCOUNT, 'correspondence:theme:v1': 'dark' }, ready: '#menu, .feed-item, #feed-empty',
+      then: async (page) => {
+        const apart = await page.evaluate(() => {
+          const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+          const cone = box('#building');
+          if (cone.top < 0 || cone.left < 0 || cone.right > window.innerWidth || cone.bottom > window.innerHeight) return ['the edge of the first screen'];
+          return ['.screen-home .mark', '.screen-home h1', '#me-edit'].filter((selector) => {
+            const other = box(selector);
+            return cone.right > other.left && cone.left < other.right && cone.bottom > other.top && cone.top < other.bottom;
+          });
+        });
+        if (apart.length) throw new Error(`the cone's stamp lies over ${apart.join(', ')}`);
+      } },
     // (Play at the head of the page, the face in its corner, and the portal at its foot beside Penny: the lobby with a street of rooms is the longest the page gets)
     { name: 'home, the lobby, at its foot', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li', then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '#portal' },
     { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
