@@ -339,7 +339,8 @@ function scheduleBeat(at, n) {
     tone({ at: from, freq: chord.bass, dur: BEAT * BAR, type: 'triangle', gain: 0.07, attack: BEAT, into: band });
   }
   // the tune: more likely on the strong beats, moving by small steps, sometimes resting
-  const chance = where % 4 === 0 ? 0.75 : where % 2 === 0 ? 0.5 : 0.22;
+  // (about two and a half notes to a bar: any more and it chimes over the quiet)
+  const chance = where % 4 === 0 ? 0.62 : where % 2 === 0 ? 0.36 : 0.13;
   if (Math.random() < chance) {
     lastNote = Math.max(0, Math.min(chord.tune.length - 1, lastNote + Math.floor(Math.random() * 3) - 1));
     const freq = chord.tune[lastNote];
