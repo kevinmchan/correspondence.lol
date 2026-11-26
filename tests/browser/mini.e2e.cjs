@@ -354,6 +354,9 @@ async function states() {
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
+    // (playing: the first note has set the loop going, the hint above the board has gone, and Penny has come up to dance where there is room.
+    // No title is written over the board, since v1.1.82: its name is for screen readers.)
+    { name: 'the music maker, playing', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: (page) => page.locator('.jam-board .pad').nth(3).click(), settle: '#jam-play.playing', small: [PADS] },
     { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li', small: [PADS] },
     // (scrolled to its foot, where the last beat lies along the edge Penny stands on: each beat's own share button is
     // the only one there is, and Penny goes under the edge for it: jam/jam.js)

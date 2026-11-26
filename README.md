@@ -542,7 +542,9 @@ Without an account there are no tabs, only the two ways to get one.
 ## Loops, the music maker
 
 `/jam/` (`jam/jam.js`) is a board of tiles, eight steps across and seven rows
-high, with four instruments that loop together. It is built on the same
+high, with four instruments that loop together. Its name is not written on
+the page (it was, over the board, until v1.1.82): it is the window's title,
+and is said to screen readers. It is built on the same
 things as the game's background music (`postmarks/sound.js`), so that what
 is made there sounds like it belongs with it:
 
