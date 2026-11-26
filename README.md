@@ -1300,8 +1300,21 @@ room are its content: names, notes, the code.
   the room's board, by anyone, and for its finish; a time trial or a pass
   phrase, for your own run; a phrase's author's test run, nothing. In a game
   together the bar is shorter, beside the words of the turn.
-- **Outside**, for somebody who is not in it, the roof is on. Whoever is in
-  shows at the skylight, and the mat at the door is where to ask in.
+- **Outside**, for somebody who is not in it, it is the same building, as
+  it is inside (the owner's choice, 26 November 2026), so that somebody sent
+  a link knows the place when they are in it: its walls and floor, its table
+  with whoever is in at the head of it, each with their name, and a board on
+  the table. A link to a game lays that game's board there, under a lamp;
+  otherwise a board at rest (nobody outside is told what games a room has,
+  so it is a picture of what the room is for, not one of its games). At the
+  door is the mat, in one row as the code and the bell are inside: the face
+  whoever has come will go in with, their name to write beside it, and the
+  way in. The face is their profile's, or the one last chosen on the device;
+  for somebody new it is picked there, never one already at the table, and
+  it is theirs from then on. In the dark a low pool of warm light lies under
+  the door, as under the doors on the street. (There is no way to bring an
+  account from another device here: that is on the home page. The owner's
+  choice, 26 November 2026.)
 - **On the home page** your rooms are a street of little shops seen from in
   front, the last opened first: a strip of roof, a board over the window in
   the room's colour with the room's name lettered on it (two lines at most,
