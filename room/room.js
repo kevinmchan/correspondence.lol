@@ -173,6 +173,7 @@ export function mount(root, life) {
     input.autocomplete = 'off';
     input.enterKeyHint = 'done';
     input.value = room.name;
+    input.placeholder = 'Room name';
     input.setAttribute('aria-label', 'Room name');
     form.append(input);
     el.name.replaceChildren(form);
