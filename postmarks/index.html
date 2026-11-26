@@ -129,10 +129,11 @@
             <span id="feed-empty-note">Nothing is waiting on you.</span>
           </div>
           <!-- Reels: somebody else's feed, under what is waiting on you, and never counted with it (reels/reel.js). One comes in the
-               middle of each energy bar, or by being shared (shared/reels.js); until then, it is not here. -->
+               middle of each energy bar, or by being shared (shared/reels.js); until then, it is not here. Once there is one,
+               the first tile makes a reel of it, and the reels made (yours, and those shared with you) come next, newest first. -->
           <section id="reels" class="reels" aria-labelledby="reels-title" hidden>
             <h2 id="reels-title" class="reels-title">Reels</h2>
-            <div class="reel-tiles"><div hidden><a class="reel-tile" data-reel="inflection" href="/?reel=inflection" aria-label="A reel by marcus.pell">
+            <div class="reel-tiles"><div hidden><a class="reel-tile reel-new" href="/?reel=inflection&amp;make" aria-label="Make a reel"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a></div><div hidden><a class="reel-tile" data-reel="inflection" href="/?reel=inflection" aria-label="A reel by marcus.pell">
               <svg viewBox="0 0 90 160" aria-hidden="true">
                 <rect width="90" height="160" fill="#5f6e7a"/>
                 <rect y="118" width="90" height="42" fill="#4a5661"/>
@@ -981,6 +982,27 @@
       </div>
       <a href="/" class="penny-back reel-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
       <button type="button" class="reel-pause" aria-label="Pause"></button>
+      <!-- A reel somebody made: shared on by its link; and, if it is yours, its words changed. -->
+      <button type="button" class="reel-share" aria-label="Share this reel" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6"/></svg></button>
+      <a class="reel-change" href="/" aria-label="Change its words" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></a>
+      <!-- Making a reel: each blank in turn, written in place. -->
+      <form class="reel-make" hidden>
+        <div class="reel-make-line">
+          <span class="reel-make-kind" aria-hidden="true">
+            <svg class="as-voice" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4.5 3.5V16H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <svg class="as-caption" viewBox="0 0 24 24"><path d="M6 6h12M12 6v12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+          </span>
+          <input type="text" class="reel-make-words" maxlength="200" autocomplete="off" autocapitalize="sentences" enterkeyhint="next">
+        </div>
+        <p class="reel-make-error message bad" role="alert"></p>
+        <div class="reel-make-steps">
+          <button type="button" class="reel-make-back" aria-label="The blank before"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+          <span class="reel-make-count" aria-hidden="true"></span>
+          <button type="button" class="reel-make-on" aria-label="The next blank"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button>
+          <button type="button" class="reel-make-play" aria-label="Play this part"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg></button>
+          <button type="submit" class="reel-make-done" aria-label="Keep this reel"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+        </div>
+      </form>
       <a class="reel-cta" href="/postmarks/" hidden></a>
       <button type="button" class="reel-again" hidden>Watch again</button>
       <p class="sr-only reel-told"></p>

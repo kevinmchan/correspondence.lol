@@ -15,3 +15,15 @@ test('a reel shared with you is in your feed whatever the energy, and only reels
   assert.deepEqual(reelsFor(0, [REELS[0]]), [REELS[0]]);
   assert.deepEqual(reelsFor(0, ['no such reel']), []);
 });
+
+import { decodeWords, encodeWords } from '../shared/reels.js';
+
+test('a made reel’s words go in its link and come back out, and nothing else does', () => {
+  const words = { 'the hook': 'Ça va? Ünïcödé “quotes” / and 🙏', 'the reveal': '  spaced  ', empty: '' };
+  const code = encodeWords(words);
+  assert.match(code, /^[A-Za-z0-9_-]+$/, 'safe in an address');
+  assert.deepEqual(decodeWords(code, ['the hook', 'the reveal']), { 'the hook': 'Ça va? Ünïcödé “quotes” / and 🙏', 'the reveal': 'spaced' });
+  assert.deepEqual(decodeWords(code, ['the hook']), { 'the hook': 'Ça va? Ünïcödé “quotes” / and 🙏' }, 'only the entries the reel has');
+  assert.deepEqual(decodeWords('not a code!', ['the hook']), {});
+  assert.deepEqual(decodeWords(encodeWords({}), ['the hook']), {});
+});

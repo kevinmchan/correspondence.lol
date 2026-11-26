@@ -64,3 +64,13 @@ test('nothing in the sponsored clip is hurried: nobody speaks in it, and its wor
   for (let i = 1; i < reel.AD_WORDS.length; i++) assert.ok(reel.AD_WORDS[i].at - reel.AD_WORDS[i - 1].at >= 3, 'the sponsor’s words come at least three seconds apart');
   assert.ok(reel.CTA_AT > reel.AD_WORDS.at(-1).at, 'the way to play is offered last');
 });
+
+test('making a reel stops at every blank in turn, each where it can be seen', () => {
+  assert.deepEqual([...reel.ORDER].sort(), Object.keys(reel.SCRIPT).sort());
+  for (const key of reel.ORDER) {
+    const at = reel.seenAt(key);
+    assert.ok(at >= 0 && at <= reel.LENGTH, `"${key}" is never stopped at`);
+    assert.ok(reel.startOf(key) <= at, `"${key}" is played from after where it is seen`);
+  }
+  for (let i = 1; i < reel.ORDER.length; i++) assert.ok(reel.seenAt(reel.ORDER[i]) >= reel.seenAt(reel.ORDER[i - 1]), 'in the order they are met');
+});

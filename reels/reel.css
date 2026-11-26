@@ -159,7 +159,7 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
 .reel-top { position: absolute; left: 0; right: 0; top: 0; padding: max(0.5rem, env(safe-area-inset-top)) 0.75rem 0; display: grid; justify-items: center; gap: 0.75rem; pointer-events: none; }
 .reel-bar { justify-self: stretch; height: 0.2rem; border-radius: 0.2rem; background: rgba(255, 255, 255, 0.28); overflow: hidden; }
 .reel-bar i { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); }
-.reel-top b { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); line-height: 2.75rem; margin-top: -0.6rem; }
+.reel-top b { justify-self: start; margin-left: 3.4rem; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); line-height: 2.75rem; margin-top: -0.6rem; }
 .reel-rail { position: absolute; right: 0.6rem; bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 5.5rem); display: grid; gap: 1rem; justify-items: center; pointer-events: none; transition: opacity 600ms; }
 .reel-rail span { display: grid; justify-items: center; gap: 0.15rem; font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
 .reel-rail svg { width: 1.9rem; height: 1.9rem; fill: none; stroke: #fff; stroke-width: 2; stroke-linejoin: round; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
@@ -205,6 +205,52 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
 }
 .reel-pause:focus-visible, .reel-cta:focus-visible, .reel-again:focus-visible { outline: 3px solid #f3b35a; outline-offset: 2px; }
 
+/* A reel somebody made: share it, and (if it is yours) change its words. Beside pause, in the top corner. */
+.reel-share, .reel-change {
+  position: absolute; z-index: 4; top: max(0.75rem, env(safe-area-inset-top));
+  width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  color: #22303c; background: rgba(246, 241, 231, 0.72); cursor: pointer;
+}
+.reel-share { right: calc(max(0.75rem, env(safe-area-inset-right)) + 3.25rem); }
+.reel-change { right: calc(max(0.75rem, env(safe-area-inset-right)) + 6.5rem); }
+.reel-share svg, .reel-change svg { width: 1.2rem; height: 1.2rem; }
+
+/* Making a reel: the blank being written, and the way between them, over the foot of the picture and above the keyboard. */
+.reel-make {
+  position: absolute; z-index: 5; left: max(0.75rem, env(safe-area-inset-left)); right: max(0.75rem, env(safe-area-inset-right));
+  bottom: calc(var(--keys, 0px) + max(0.75rem, env(safe-area-inset-bottom)));
+  display: grid; gap: 0.5rem; padding: 0.6rem; border-radius: 1.1rem; background: rgba(11, 14, 18, 0.88);
+  box-shadow: 0 0.3rem 1.2rem rgba(0, 0, 0, 0.4);
+}
+.reel-make-line { display: flex; align-items: center; gap: 0.5rem; }
+.reel-make-kind { flex: none; width: 2rem; height: 2rem; display: grid; place-items: center; color: #b4c4d4; }
+.reel-make-kind svg { width: 1.4rem; height: 1.4rem; display: none; }
+.reel-make-kind[data-kind="voice"] .as-voice, .reel-make-kind[data-kind="caption"] .as-caption { display: block; }
+.reel-make-words {
+  flex: 1; min-width: 0; height: 2.75rem; box-sizing: border-box; padding: 0 0.8rem; border: 0.12rem solid #3a4654; border-radius: 0.8rem;
+  background: #f6f1e7; color: #22303c; font: inherit; font-size: 1rem; font-weight: 700;
+}
+.reel-make-words::placeholder { color: #8b97a4; font-style: italic; font-weight: 600; }
+.reel-make-words:focus-visible { outline: 3px solid #f3b35a; outline-offset: 1px; }
+.reel-make-error { margin: 0 0 0 2.5rem; font-size: 0.9rem; color: #f0a08f; }
+.reel-make-steps { display: flex; align-items: center; gap: 0.4rem; }
+.reel-make-steps button {
+  width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  color: #f4f6f8; background: rgba(255, 255, 255, 0.1);
+}
+.reel-make-steps button svg { width: 1.2rem; height: 1.2rem; }
+.reel-make-steps button:disabled { opacity: 0.35; cursor: default; }
+.reel-make-steps button:focus-visible { outline: 3px solid #f3b35a; outline-offset: 2px; }
+.reel-make-count { min-width: 3.2rem; text-align: center; font-size: 0.85rem; font-weight: 700; font-variant-numeric: tabular-nums; color: #b4c4d4; }
+.reel-make-play { margin-left: auto; }
+.reel-make-done { background: #e8664f !important; color: #fff !important; }
+/* While a reel is made: the feed's own chrome steps aside, and what is being written is marked. */
+.reel.making .reel-rail, .reel.making .reel-who { opacity: 0; }
+.reel.making .reel-cta { pointer-events: none; bottom: calc(var(--keys, 0px) + max(0.75rem, env(safe-area-inset-bottom)) + 7.6rem); }
+.reel.making .reel-sponsor, .reel.making .reel-disclose { translate: 0 calc(-1 * (var(--keys, 0px) + 7rem)); }
+.reel.making .editing:not(text) { outline: 0.14rem dashed #f3b35a; outline-offset: 0.2rem; }
+.reel.making text.editing { fill: #f3b35a; fill-opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
   .shot-car.on .sway, .shot-street.on .cam, .reel-shot.on .rain, .shot-choice.on .runner, .reel.talking .shot-car.on .mouth, .reel-bubble.on { animation: none !important; }
 }
@@ -214,11 +260,17 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
 .reel-tiles { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 .reels-title { margin: 0; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .reel-tile {
-  position: relative; width: 7.5rem; aspect-ratio: 9 / 16; border-radius: 0.9rem; overflow: hidden; display: block;
+  position: relative; width: 6.4rem; aspect-ratio: 9 / 16; border-radius: 0.9rem; overflow: hidden; display: block;
   box-shadow: 0 0.2rem 0 var(--lip, rgba(0, 0, 0, 0.15));
 }
 .reel-tile > svg { display: block; width: 100%; height: 100%; }
 .reel-tile-play { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: rgba(0, 0, 0, 0.4); color: #fff; }
 .reel-tile-play svg { width: 1.1rem; height: 1.1rem; }
-.reel-tile-who { position: absolute; left: 0.5rem; right: 0.5rem; bottom: 0.45rem; font-size: 0.75rem; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reel-tile-who { position: absolute; left: 0.5rem; right: 0.5rem; bottom: 0.45rem; font: 700 0.75rem/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .reel-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* Making one: a tile of its own, first in the row. */
+.reel-tile.reel-new { display: grid; place-items: center; background: color-mix(in srgb, var(--ink) 7%, var(--paper)); border: 0.14rem dashed color-mix(in srgb, var(--ink) 30%, transparent); box-sizing: border-box; color: var(--ink); }
+.reel-tile.reel-new svg { width: 2rem; height: 2rem; }
+/* One somebody made (a pencil on your own). */
+.reel-tile-mine { position: absolute; top: 0.4rem; left: 0.4rem; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center; background: rgba(246, 241, 231, 0.9); color: #22303c; }
+.reel-tile-mine svg { width: 0.85rem; height: 0.85rem; }

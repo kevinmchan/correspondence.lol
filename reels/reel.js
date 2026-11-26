@@ -12,27 +12,49 @@
 //
 // Everything is worked out from the time, so it can be paused, started part
 // way (`&at=44`, for the sponsored clip; `&hold` to start it paused) and played again.
+//
+// A reel can be made of it (`&make`): it stops at each blank in turn, to be
+// written there, and can be played from any of them. A reel so made carries
+// its words in its link (`&w=`, shared/reels.js), so it can be shared; it is
+// kept on the device, and so is one shared with you.
 
 import { audio, holdMusic, isMuted, noise, tone } from '/postmarks/sound.js';
 import { HELLO, createVoice, playAt } from '/penny/penny.js';
 import * as INFLECTION from './inflection.js';
-import { meet } from '/shared/reels.js';
+import { decodeWords, draftOf, dropDraft, encodeWords, keep, keepDraft, made, madeLink, meet } from '/shared/reels.js';
+import { go } from '/shared/nav.js';
+import { oops } from '/shared/place.js';
 
 const REELS = { inflection: INFLECTION };
 const still = matchMedia('(prefers-reduced-motion: reduce)');
 const PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13M16 5.5v13" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>';
+const COPIED = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 export function mount(root, life) {
   const url = new URL(location.href);
-  const reel = REELS[url.searchParams.get('reel')] ?? INFLECTION;
-  meet(REELS[url.searchParams.get('reel')] ? url.searchParams.get('reel') : 'inflection'); // (shared with you, or come to from the feed: it is in your feed from now on)
+  const name = REELS[url.searchParams.get('reel')] ? url.searchParams.get('reel') : 'inflection';
+  const reel = REELS[name];
+  meet(name); // (shared with you, or come to from the feed: it is in your feed from now on)
+  // The words: the reel's own, or those of a reel made of it, in its link.
+  const code = url.searchParams.get('w');
+  const making = url.searchParams.has('make');
+  const keys = Object.keys(reel.SCRIPT);
+  // (making one afresh goes on from a draft left unkept, if there is one)
+  const draft = making && !code ? draftOf(name) : null;
+  const script = { ...reel.SCRIPT, ...(code ? decodeWords(code, keys) : {}), ...(draft ? Object.fromEntries(Object.entries(draft).filter(([key, text]) => keys.includes(key) && typeof text === 'string')) : {}) };
+  if (code && !making) keep({ reel: name, code, mine: false }); // (one shared with you is kept; one of your own stays yours)
+  const words = (key) => reel.words(key, script);
+  const blank = (key) => reel.blank(key, script);
+  const pieces = (key) => reel.pieces(key, script);
+
   const main = root.querySelector('main.reel');
   const $ = (selector) => main.querySelector(selector);
   const [frame, stage, bar, bubble, caption, said, pause, again, cta, adWords, comments] =
     ['.reel-frame', '.reel-stage', '.reel-bar i', '.reel-bubble', '.reel-words', '.reel-said', '.reel-pause', '.reel-again', '.reel-cta', '.reel-ad-words', '.reel-comments'].map($);
-  // Every word is the script's, or its blank (reels/inflection.js).
-  const write = (el, key) => { el.textContent = reel.words(key); el.classList.toggle('blank', reel.blank(key)); };
+  // Every word is the script's, or its blank (reels/inflection.js); `refresh` writes one again wherever it is.
+  const write = (el, key) => { el.dataset.slot = key; el.textContent = words(key); el.classList.toggle('blank', blank(key)); };
+  const refresh = (key) => main.querySelectorAll(`[data-slot="${CSS.escape(key)}"]`).forEach((el) => write(el, key));
   write(cta, reel.CHROME.play);
   write($('.reel-disclose'), reel.CHROME.reveal);
   write($('.reel-caption'), reel.CHROME.caption);
@@ -65,6 +87,7 @@ export function mount(root, life) {
     line.classList.toggle('big', Boolean(one.big));
     return line;
   }));
+  for (const key of Object.keys(script)) refresh(key); // (the labels in the drawings, in these words)
   const views = $('.reel-insights .views');
   const insights = $('.reel-insights');
   const timecode = $('.timecode');
@@ -204,19 +227,19 @@ export function mount(root, life) {
       saidCount = 0;
       const over = now && shots.find((shot) => shot.ranges.some(([a, b]) => now.at >= a && now.at < b));
       const voiced = now?.kind === 'voice';
-      const blankNow = now && reel.blank(now.slot) ? ' blank' : '';
+      const blankNow = now && blank(now.slot) ? ' blank' : '';
       bubble.className = `reel-bubble${voiced ? ` on at-${now.where} in-${over?.name} by-${now.who}${blankNow}` : ''}`;
-      bubble.replaceChildren(...(voiced ? reel.pieces(now.slot).flatMap((part, i) => { const span = document.createElement('span'); span.textContent = part; return i ? [' ', span] : [span]; }) : []));
+      bubble.replaceChildren(...(voiced ? pieces(now.slot).flatMap((part, i) => { const span = document.createElement('span'); span.textContent = part; return i ? [' ', span] : [span]; }) : []));
       caption.className = `reel-words${now && !voiced ? ` on in-${over?.name}${blankNow}` : ''}`;
-      caption.textContent = now && !voiced ? reel.words(now.slot) : '';
+      caption.textContent = now && !voiced ? words(now.slot) : '';
       if (now && !voiced && advancing && engine()) tone({ freq: 1567.98, dur: 0.05, gain: 0.03, into: bus }); // (a caption comes with a tick)
       // (the whole line is said to screen readers once, as it comes)
-      if (now) said.textContent = voiced ? `${now.who === 'aside' ? 'Marcus, under his breath' : 'Marcus'}: ${reel.words(now.slot)}` : reel.words(now.slot);
+      if (now) said.textContent = voiced ? `${now.who === 'aside' ? 'Marcus, under his breath' : 'Marcus'}: ${words(now.slot)}` : words(now.slot);
     }
     if (now?.kind === 'voice') {
-      const parts = reel.pieces(now.slot);
+      const parts = pieces(now.slot);
       const gap = reel.VOICES[now.who].gap;
-      const count = still.matches ? parts.length : Math.min(parts.length, Math.floor((t - now.at) / gap) + 1);
+      const count = still.matches || (making && !playing) ? parts.length : Math.min(parts.length, Math.floor((t - now.at) / gap) + 1);
       const spans = bubble.children;
       for (let i = saidCount; i < count; i++) {
         spans[i].classList.add('said');
@@ -231,7 +254,7 @@ export function mount(root, life) {
     [...comments.children].forEach((item, i) => item.classList.toggle('in', i < shown));
     if (advancing) for (let i = commentsIn; i < shown; i++) {
       ring(reel.COMMENTS[i].who);
-      said.textContent = `${reel.COMMENTS[i].name}: ${reel.words(reel.COMMENTS[i].slot)}`;
+      said.textContent = `${reel.COMMENTS[i].name}: ${words(reel.COMMENTS[i].slot)}`;
     }
     commentsIn = shown;
 
@@ -242,7 +265,7 @@ export function mount(root, life) {
     cta.hidden = t < reel.CTA_AT;
     main.classList.toggle('offered', t >= reel.CTA_AT);
     main.classList.toggle('disclosed', t >= reel.DISCLOSE_AT);
-    if (advancing && ad && !main.dataset.toldAd) { main.dataset.toldAd = '1'; said.textContent = `Sponsored: ${reel.AD_WORDS.map((one) => reel.words(one.slot)).join(' ')}`; }
+    if (advancing && ad && !main.dataset.toldAd) { main.dataset.toldAd = '1'; said.textContent = `Sponsored: ${reel.AD_WORDS.map((one) => words(one.slot)).join(' ')}`; }
 
     // the views, going up
     const { COUNT } = reel;
@@ -276,9 +299,10 @@ export function mount(root, life) {
     last = now;
     engine(); // (sound starts as soon as it may)
     draw(advancing);
+    if (stopAt !== null && t >= stopAt) { stopAt = null; setPlaying(false); }
     if (t >= reel.LENGTH && playing) {
       setPlaying(false);
-      again.hidden = false;
+      again.hidden = making;
       pause.hidden = true;
     }
     requestAnimationFrame(frameLoop);
@@ -291,23 +315,123 @@ export function mount(root, life) {
   life.on(document, 'keydown', (event) => {
     if (event.key === ' ' && event.target === document.body) { event.preventDefault(); toggle(); }
   });
-  again.addEventListener('click', () => {
-    t = 0;
-    begin = 0;
-    cue = 0;
-    commentsIn = 0;
-    nextTick = 0;
+  // Go to a moment, each shot as it would be by then; nothing before it is played.
+  function seek(to) {
+    t = Math.min(Math.max(0, to), reel.LENGTH);
+    begin = t;
+    cue = reel.CUES.findIndex((one) => one.at >= t);
+    commentsIn = reel.COMMENTS.filter((one) => one.at <= t).length;
+    nextTick = t;
     lineShown = null;
-    delete main.dataset.toldAd;
+    if (t < reel.AD_AT) delete main.dataset.toldAd;
+    else main.dataset.toldAd = '1';
     for (const shot of shots) { shot.el.classList.remove('on'); shot.key = null; }
-    again.hidden = true;
-    pause.hidden = false;
+    again.hidden = making || t < reel.LENGTH;
+    pause.hidden = making || t >= reel.LENGTH;
+  }
+  again.addEventListener('click', () => {
+    seek(0);
     setPlaying(true);
     pause.focus();
   });
 
-  setPlaying(playing);
-  if (t >= reel.LENGTH) { again.hidden = false; pause.hidden = true; }
+  // --- A reel of your own, or one shared with you --------------------------------------------------
+  // Shared on, by its link; and one of your own can have its words changed.
+  const share = $('.reel-share');
+  const change = $('.reel-change');
+  if (code && !making) {
+    share.hidden = false;
+    const mine = made().some((one) => one.reel === name && one.code === code && one.mine);
+    change.hidden = !mine;
+    change.href = `${madeLink(name, code)}&make`;
+    share.addEventListener('click', async () => {
+      const link = new URL(madeLink(name, code), location.origin).href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ url: link });
+          return;
+        }
+        await navigator.clipboard.writeText(link);
+        share.innerHTML = COPIED;
+        said.textContent = 'Link copied';
+        life.setTimeout(() => { share.innerHTML = share.dataset.icon; }, 2000);
+      } catch (error) {
+        if (error?.name !== 'AbortError') prompt('Copy this link to share the reel', link);
+      }
+    });
+    share.dataset.icon = share.innerHTML;
+  }
+
+  // --- Making a reel -------------------------------------------------------------------------------
+  // The reel stops at each blank in turn, and it is written there, into the
+  // reel as it is typed. Play goes from the start of that line to its end.
+  let stopAt = null;
+  if (making) {
+    main.classList.add('making');
+    const form = $('.reel-make');
+    const [field, kind, count, back, on, preview, error] = ['.reel-make-words', '.reel-make-kind', '.reel-make-count', '.reel-make-back', '.reel-make-on', '.reel-make-play', '.reel-make-error'].map($);
+    form.hidden = false;
+    let index = 0;
+    const keyNow = () => reel.ORDER[index];
+    const show = (to) => {
+      index = Math.max(0, Math.min(reel.ORDER.length - 1, to));
+      const key = keyNow();
+      field.value = script[key];
+      field.placeholder = key;
+      field.setAttribute('aria-label', `Words for ${key}`);
+      count.textContent = `${index + 1}/${reel.ORDER.length}`;
+      kind.dataset.kind = reel.LINES.find((one) => one.slot === key)?.kind === 'voice' ? 'voice' : 'caption';
+      back.disabled = index === 0;
+      on.disabled = index === reel.ORDER.length - 1;
+      main.querySelectorAll('.editing').forEach((el) => el.classList.remove('editing'));
+      main.querySelectorAll(`[data-slot="${CSS.escape(key)}"]`).forEach((el) => el.classList.add('editing'));
+      stopAt = null;
+      seek(reel.seenAt(key));
+      setPlaying(false);
+    };
+    field.addEventListener('input', () => {
+      const key = keyNow();
+      script[key] = field.value;
+      refresh(key);
+      lineShown = null; // (said again, in these words)
+      oops(error, '');
+      if (!code) keepDraft(name, Object.fromEntries(keys.map((one) => [one, script[one]]).filter(([, text]) => String(text).trim())));
+    });
+    field.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); if (index < reel.ORDER.length - 1) show(index + 1); }
+    });
+    back.addEventListener('click', () => show(index - 1));
+    on.addEventListener('click', () => show(index + 1));
+    preview.addEventListener('click', () => {
+      const key = keyNow();
+      const line = reel.LINES.find((one) => one.slot === key);
+      seek(reel.startOf(key));
+      stopAt = line ? line.end - 0.05 : reel.seenAt(key) + 1.5;
+      setPlaying(true);
+    });
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const written = encodeWords(script);
+      if (written === encodeWords({})) { // nothing written yet
+        oops(error, 'Write something first.', { shake: field });
+        return;
+      }
+      keep({ reel: name, code: written, mine: true, replaces: code });
+      if (!code) dropDraft();
+      go(new URL(madeLink(name, written), location.origin).href, { replace: true }); // (back, from there, is home)
+    });
+    // (the room the keyboard leaves, so what is being written is above it)
+    const view = window.visualViewport;
+    if (view) {
+      const fit = () => main.style.setProperty('--keys', `${Math.max(0, Math.round(innerHeight - view.height - view.offsetTop))}px`);
+      life.on(view, 'resize', fit);
+      life.on(view, 'scroll', fit);
+    }
+    show(0);
+  }
+
+  setPlaying(playing && !making);
+  if (t >= reel.LENGTH && !making) { again.hidden = false; pause.hidden = true; }
   draw(false);
   requestAnimationFrame(frameLoop);
 }

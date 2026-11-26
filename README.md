@@ -699,6 +699,17 @@ have:
   in a picture, the post's own caption, the comments, the sponsor's lines, the
   button and the last line are written words too.
 
+**Reels are made of these** (the owner, 26 November 2026). Once there is a
+reel in the feed, the first tile there (a plus) makes one: the reel opens at
+`&make` and stops at each of its blanks in turn, in the order they are met, to
+be written in place (an icon says whether it is voice or a caption; Play goes
+through that part of it; arrows go between blanks). What is written is kept as
+a draft until the tick keeps the reel. A reel so made carries its words in its
+link (`&w=`, base64url, `shared/reels.js`), so it needs nothing of the server,
+and it can be shared from its own screen; one of your own can have its words
+changed (a pencil). The reels made, yours and those shared with you, are kept
+on the device and come next in the feed, newest first, a pencil on your own.
+
 **The first is "The Inflection Point"** (`reels/inflection.js`; the owner, 26
 November 2026): a social post that is also an ad. marcus.pell talks to the
 camera from his car in the rain; a chart of a line climbing faster than he

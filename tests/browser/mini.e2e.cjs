@@ -73,6 +73,9 @@ const SEVERAL = [
   listed({ last_player: 1, found: 2 }), listed({ mode: 'trial', size: 7, mine: 'playing', finished: 1 }), listed({ mode: 'phrase', size: 6, phrase_by: 1 }),
   listed({ size: 8, last_player: 2, found: 4, hearts: 1 }), listed({ last_player: 0, size: 6 }), listed({ mode: 'trial', size: 9, mine: 'won', finished: 3 }),
 ].map((game, i) => ({ ...game, id: `${String(i + 1).repeat(8)}-5555-4555-8555-555555555555` }));
+// A reel made of the first, its words in its link (shared/reels.js).
+const WORDS = Buffer.from(JSON.stringify({ 'the hook': 'I almost / didn’t / post this.', 'chart title': 'THE LINE', 'the reveal': 'The last line, written in.' })).toString('base64url');
+const OTHER_WORDS = Buffer.from(JSON.stringify({ 'the hook': 'Somebody else’s words' })).toString('base64url');
 const ENERGY = (earned) => ({ 'correspondence:energy:v1': { earned, spent: 0, boards: [] } }); // energy earned in all, in other games
 const CROWD = [...PEOPLE, { name: 'Bartholomew', avatar: '🐙', color: 5, left: false }, { name: 'Lin', avatar: '🌵', color: 3, left: false }, { name: 'Wilhelmina Longname', avatar: '🦉', color: 6, left: false }];
 // A dozen messages from two people, short and long, with what the room itself says in between (rooms.room_view).
@@ -473,7 +476,7 @@ async function states() {
     // A reel: somebody else's feed, played. Held still where it matters (`&hold`), but for the comments coming in and its end.
     // Its words are the owner's to write, and blank until they are: the blanks are the length the screens are tested at.
     { name: 'home, the feed, a reel come in the middle of the bar, under what is waiting', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(35) }, server: rooms(GAMES), ready: '.feed-item',
-      then: (page) => page.locator('.reel-tile').scrollIntoViewIfNeeded() },
+      then: (page) => page.locator('.reel-tile[data-reel]').scrollIntoViewIfNeeded() },
     { name: 'home, the feed with nothing waiting, and a reel shared with you', screen: 'home', at: '/', storage: { ...ACCOUNT, 'reels:met:v1': ['inflection'] }, server: rooms([]), ready: '#feed-empty:not([hidden])', settle: '#reels:not([hidden]) .reel-tile' },
     { name: 'a reel, Marcus in his car, saying it a few words at a time', screen: 'reel', at: '/?reel=inflection&at=1.2&hold', ready: '.reel-bubble.on.at-face', whole: ['.reel-back', '.reel-pause', '.reel-bubble'] },
     { name: 'a reel, a caption over the chart', screen: 'reel', at: '/?reel=inflection&at=12&hold', ready: '.reel-words.on.in-chart', whole: ['.reel-back', '.reel-pause', '.reel-words'] },
@@ -481,6 +484,21 @@ async function states() {
     { name: 'a reel, the footage, and what he says off camera', screen: 'reel', at: '/?reel=inflection&at=32.4&hold', ready: '.reel-bubble.on.at-aside', whole: ['.reel-bubble'] },
     { name: 'a reel, his views going up, under his breath', screen: 'reel', at: '/?reel=inflection&at=37.5&hold', ready: '.reel-insights.show', whole: ['.reel-insights', '.reel-bubble'] },
     { name: 'a reel, the comments coming in', screen: 'reel', at: '/?reel=inflection&at=41.6', ready: '.reel-comment.by-ra.in', whole: ['.reel-comments'] },
+    // Making a reel: each blank in turn, written where it is; and reels made, yours and others', in the feed and played.
+    { name: 'making a reel, the first blank', screen: 'reel', at: '/?reel=inflection&make', ready: '.reel-make:not([hidden])', whole: ['.reel-make', '.reel-back', '.reel-bubble'] },
+    { name: 'making a reel, a label in the chart, written long', screen: 'reel', at: '/?reel=inflection&make', ready: '.reel-make:not([hidden])',
+      then: async (page) => { for (let i = 0; i < 7; i++) await page.locator('.reel-make-on').click(); await page.locator('.reel-make-words').fill('What the line is, as long as anyone might write it'); },
+      settle: 'text.editing:not(.blank)', whole: ['.reel-make'] },
+    { name: 'making a reel, kept with nothing written', screen: 'reel', at: '/?reel=inflection&make', ready: '.reel-make:not([hidden])',
+      then: (page) => page.locator('.reel-make-done').click(), settle: '.reel-make-error:not(:empty)', whole: ['.reel-make', '.reel-make-error'] },
+    { name: 'making a reel, the last blank, over the sponsored clip', screen: 'reel', at: '/?reel=inflection&make', ready: '.reel-make:not([hidden])',
+      then: async (page) => { for (let i = 0; i < 30; i++) await page.locator('.reel-make-on').click(); }, settle: '.reel-make-on:disabled', whole: ['.reel-make'] },
+    { name: 'a reel you made, to share or change', screen: 'reel', at: `/?reel=inflection&w=${WORDS}&hold`, storage: { 'reels:made:v1': [{ reel: 'inflection', code: WORDS, mine: true, at: 1 }] },
+      ready: '.reel-change:not([hidden])', whole: ['.reel-back', '.reel-pause', '.reel-share', '.reel-change'] },
+    { name: 'a reel shared with you, played through', screen: 'reel', at: `/?reel=inflection&w=${WORDS}&at=58`, ready: '.reel-again:not([hidden])', whole: ['.reel-share', '.reel-cta', '.reel-again'] },
+    { name: 'home, the feed, reels you made and one shared with you', screen: 'home', at: '/', server: rooms([]), ready: '#feed-empty:not([hidden])', settle: '.reel-tiles .made',
+      storage: { ...ACCOUNT, 'reels:made:v1': [{ reel: 'inflection', code: WORDS, mine: true, at: 3 }, { reel: 'inflection', code: OTHER_WORDS, mine: false, at: 2 }, { reel: 'inflection', code: WORDS + 'x', mine: true, at: 1 }] },
+      then: (page) => page.locator('#reels').scrollIntoViewIfNeeded() },
     { name: 'a reel, the sponsored clip, at its end', screen: 'reel', at: '/?reel=inflection&at=58', ready: '.reel-again:not([hidden])', whole: ['.reel-back', '.reel-cta', '.reel-again', '.reel-disclose'] },
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
     { name: 'the night, left alone until the way back has gone', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky.idle', wait: 9000, whole: ['.penny-back'] },

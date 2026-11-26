@@ -68,12 +68,13 @@ export const SCRIPT = {
 };
 
 // What an entry says: its words, or its name in brackets while it is blank.
-export const filled = (key) => String(SCRIPT[key] ?? '').trim();
-export const blank = (key) => !filled(key);
-export const words = (key) => filled(key) || `[${key}]`;
+// `script` is these, or a reel somebody made of this one (reels/reel.js).
+export const filled = (key, script = SCRIPT) => String(script[key] ?? '').trim();
+export const blank = (key, script = SCRIPT) => !filled(key, script);
+export const words = (key, script = SCRIPT) => filled(key, script) || `[${key}]`;
 // A voice line in the pieces it is said in.
-export function pieces(key) {
-  const text = filled(key);
+export function pieces(key, script = SCRIPT) {
+  const text = filled(key, script);
   if (!text) return [`[${key}]`];
   if (text.includes(' / ')) return text.split(' / ').map((piece) => piece.trim()).filter(Boolean);
   const all = text.split(/\s+/);
@@ -142,6 +143,25 @@ export const DISCLOSE_AT = 54.6;
 // The words on the feed around the reel.
 export const CHROME = { caption: 'the post caption', play: 'call to play', reveal: 'the reveal' };
 
+// Where in the reel each of the words can be seen, to stop there and write it
+// (making a reel, reels/reel.js): a line while it is up, anything else at a
+// moment it is on the screen.
+const SEEN = {
+  'the post caption': 1.6,
+  'chart title': 13.2, 'above the line': 13.2, 'below the line': 13.2, 'him, on the chart': 13.2, 'Mr. Alvarez, on the chart': 13.2, 'time, on the chart': 13.2, // (between two captions)
+  'choice one': 19.9, 'choice two': 19.9,
+  'first comment': 43.6, 'his reply': 43.6, 'third comment': 43.6, 'last comment': 43.6,
+  'sponsor, first': 53, 'sponsor, second': 53, 'call to play': 57.6, 'the reveal': 57.6,
+};
+export const seenAt = (key) => {
+  const line = LINES.find((one) => one.slot === key);
+  return line ? Math.min(line.end - 0.2, line.at + 1.2) : SEEN[key];
+};
+// The blanks, in the order they are met in the reel.
+export const ORDER = Object.keys(SCRIPT).map((key, i) => [key, i]).sort((a, b) => seenAt(a[0]) - seenAt(b[0]) || a[1] - b[1]).map(([key]) => key);
+// Where a line starts, to play it from there.
+export const startOf = (key) => LINES.find((one) => one.slot === key)?.at ?? Math.max(0, seenAt(key) - 1.5);
+
 // Sounds that are not anyone speaking. The beds (rain, and a clock that ticks
 // a little quicker as it goes) run under Marcus's part and stop at the cut.
 export const CUES = [
@@ -170,7 +190,7 @@ export const COUNT = { from: 34.6, to: 37.8, start: 12408, end: 1204331, shown: 
 
 const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 // A label drawn into a picture: its words, or its blank.
-const label = (key, attrs, kind = '') => `<text class="${[kind, blank(key) ? 'blank' : ''].join(' ').trim()}" ${attrs}>${escape(words(key))}</text>`;
+const label = (key, attrs, kind = '') => `<text data-slot="${escape(key)}" class="${[kind, blank(key) ? 'blank' : ''].join(' ').trim()}" ${attrs}>${escape(words(key))}</text>`;
 
 const RAIN = (rows) => rows.map(([x, y]) => `<line x1="${x}" y1="${y}" x2="${x - 3}" y2="${y + 14}"/>`).join('');
 

@@ -8,7 +8,7 @@ import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
-import { met as reelsMet, reelsFor } from '/shared/reels.js';
+import { made as madeReels, madeLink, met as reelsMet, reelsFor } from '/shared/reels.js';
 import { BAR, ENERGY_KEY, held, read as readEnergy } from '/shared/energy.js';
 import { earned as meadowOwned, wear, wearing } from '/shared/meadow.js';
 import { ASK, BEGINNING, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached, playAt } from '/penny/penny.js';
@@ -79,8 +79,24 @@ export function mount(root, life) {
     meadowMark.setAttribute('aria-label', mine ? 'The meadow, in rooms' : 'The meadow, when the bar is full');
     // Reels come in the middle of the bars, or by being shared (shared/reels.js); they are in the feed, under what is waiting.
     const reels = reelsFor(state.earned, reelsMet());
-    for (const tile of root.querySelectorAll('.reel-tile')) tile.parentElement.hidden = !reels.includes(tile.dataset.reel);
-    $('reels').hidden = reels.length === 0;
+    const made = madeReels();
+    const row = root.querySelector('.reel-tiles');
+    row.querySelectorAll('.made').forEach((one) => one.remove());
+    for (const tile of row.querySelectorAll('.reel-tile[data-reel]')) tile.parentElement.hidden = !reels.includes(tile.dataset.reel);
+    row.querySelector('.reel-new').parentElement.hidden = reels.length === 0 && made.length === 0;
+    const after = row.querySelector('.reel-tile[data-reel]').parentElement;
+    for (const one of made) { // (each drawn as the reel it was made of, with a pencil on your own)
+      const tile = row.querySelector(`.reel-tile[data-reel="${one.reel}"]`).parentElement.cloneNode(true);
+      tile.hidden = false;
+      tile.classList.add('made');
+      const link = tile.querySelector('a');
+      link.removeAttribute('data-reel');
+      link.href = madeLink(one.reel, one.code);
+      link.setAttribute('aria-label', one.mine ? 'A reel you made' : 'A reel shared with you');
+      if (one.mine) link.insertAdjacentHTML('beforeend', '<span class="reel-tile-mine" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></span>');
+      row.insertBefore(tile, after);
+    }
+    $('reels').hidden = reels.length === 0 && made.length === 0;
   }
   meadowMark.addEventListener('click', () => {
     if (meadowMark.disabled) return;
