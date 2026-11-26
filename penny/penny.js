@@ -69,10 +69,14 @@ export const playAt = () => (hasWalked() ? '/postmarks/' : STORY_AT[storyReached
 // sheet, shared/profile.js). Everything the story and its walkthroughs keep on
 // the device is forgotten: how far the story has got, the first places walked,
 // Dot found, the pieces of the sound heard, the night found in the game, the
-// radio shown and its story told, and the first game's how-to. What was
-// earned and made stays: energy and the meadow, games, rooms, beats, what the
-// radio has learnt of your taste, and settings.
-const STORY_KEYS = [STORY_KEY, WALKED_KEY, PLACE_KEY, DOT_KEY, 'penny:sound:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1'];
+// radio shown and its story told, the first game's how-to; and energy, with
+// what it brought (the meadow, worn or not, and the thanks on the second bar).
+// What was made stays: games, rooms, beats, what the radio has learnt of your
+// taste, and settings.
+const STORY_KEYS = [
+  STORY_KEY, WALKED_KEY, PLACE_KEY, DOT_KEY, 'penny:sound:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1',
+  'correspondence:energy:v1', 'correspondence:meadow:v1', 'correspondence:thanks:v1', // (the owner: "reset the energy too")
+];
 export const storyBegun = () => STORY_KEYS.some((key) => load(key) != null);
 export const forgetStory = () => STORY_KEYS.forEach((key) => save(key, null));
 

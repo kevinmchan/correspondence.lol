@@ -855,10 +855,10 @@ async function main() {
       await page.waitForURL(/\/postmarks\//);
     }),
 
-    check('the story started over, from the profile: asked first; everything the story and its walkthroughs kept is forgotten, and what was earned and made stays; and play begins at the beginning again', { storage: { ...ACCOUNT, 'penny:walked:v1': true, 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:story:v1': 'walk', 'tags:found:v1': ['night'], 'radio:taught:v1': true, 'radio:story:v1': 'told', 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 30, spent: 0, boards: [] }, 'jam:saved:v1': [{ name: 'Morning', code: 'x', at: 1 }], 'correspondence:theme:v1': 'dark' } }, async (page) => {
+    check('the story started over, from the profile: asked first; everything the story and its walkthroughs kept is forgotten, and energy with it, and what was made stays; and play begins at the beginning again', { storage: { ...ACCOUNT, 'penny:walked:v1': true, 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:story:v1': 'walk', 'tags:found:v1': ['night'], 'radio:taught:v1': true, 'radio:story:v1': 'told', 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 300, spent: 0, boards: [] }, 'correspondence:meadow:v1': 'off', 'correspondence:thanks:v1': true, 'jam:saved:v1': [{ name: 'Morning', code: 'x', at: 1 }], 'correspondence:theme:v1': 'dark' } }, async (page) => {
       const stored = (key) => page.evaluate((k) => localStorage.getItem(k), key);
-      const STORY = ['penny:walked:v1', 'penny:place:v1', 'penny:dot:v1', 'penny:sound:v1', 'penny:story:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1'];
-      const KEPT = ['correspondence:energy:v1', 'jam:saved:v1', 'correspondence:theme:v1', 'correspondence:token:v1'];
+      const STORY = ['penny:walked:v1', 'penny:place:v1', 'penny:dot:v1', 'penny:sound:v1', 'penny:story:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1', 'correspondence:energy:v1', 'correspondence:meadow:v1', 'correspondence:thanks:v1'];
+      const KEPT = ['jam:saved:v1', 'correspondence:theme:v1', 'correspondence:token:v1'];
       await page.goto(`${origin}/?home`);
       await page.waitForSelector('#play:not([hidden])');
       assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/');
@@ -879,6 +879,7 @@ async function main() {
       for (const key of STORY) assert.equal(await stored(key), null, `${key} was not forgotten`);
       for (const key of KEPT) assert.notEqual(await stored(key), null, `${key} was lost`);
       assert.equal(await page.locator('#play').getAttribute('href'), '/?hello', 'play begins the story again');
+      assert.equal(await page.locator('#meadow').isDisabled(), true, 'energy begins again: the meadow is to be earned again');
       // with nothing of the story kept, there is nothing to start over
       await page.waitForFunction(() => !document.querySelector('#splash'));
       await page.locator('#me-edit').click();

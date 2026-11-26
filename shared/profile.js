@@ -274,7 +274,7 @@ export function openProfile({ person, onSave }) {
   restart.textContent = 'Start the story over';
   restart.addEventListener('click', async () => {
     const sure = await askFirst('Start the story over?', {
-      detail: 'Penny’s story and its walkthroughs begin again. Your games, rooms, beats and energy stay.',
+      detail: 'Penny’s story, its walkthroughs and your energy begin again. Your games, rooms and beats stay.',
       yes: 'Start over',
       no: 'Keep it',
       danger: true,

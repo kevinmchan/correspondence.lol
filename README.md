@@ -57,9 +57,10 @@ profile sheet, once any of the story has been seen: "Start the story over",
 asked first. It forgets everything the story and its walkthroughs keep on the
 device (how far the story has got, the first places walked, Dot found, the
 pieces of the sound heard, the night found in the game, the radio shown and
-its story told, the first game's how-to) and opens the app afresh, so play
-begins at the beginning. What was earned and made stays: energy and the
-meadow, games, rooms, beats, what the radio has learnt of your taste, and
+its story told, the first game's how-to) and energy with what it brought (the
+meadow, and the thanks on the second bar; the owner: "reset the energy too"),
+and opens the app afresh, so play begins at the beginning. What was made
+stays: games, rooms, beats, what the radio has learnt of your taste, and
 settings (`penny/penny.js`, `forgetStory()`).
 
 How Penny comes up the street is still being played with, so there are three
