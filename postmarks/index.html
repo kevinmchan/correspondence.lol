@@ -31,7 +31,6 @@
   <link rel="stylesheet" href="/jam/jam.css">
   <link rel="stylesheet" href="/penny/story.css">
   <link rel="stylesheet" href="/penny/walk.css">
-  <link rel="stylesheet" href="/penny/map.css">
   <link rel="stylesheet" href="/penny/pal.css">
   <link rel="stylesheet" href="/jam/taste.css">
   <link rel="stylesheet" href="/penny/office.css">
@@ -47,7 +46,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|map|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -803,22 +802,6 @@
       <p class="sr-only">A picture of the night, come to life. Its five lights twinkle and wander, and each has a note. Touch one to hear it, or anywhere else and the nearest answers; a finger held near them stirs them. With a keyboard, the keys 1 to 5 are the five lights, and the space bar is each of them in turn.</p>
       <canvas class="sky-view" role="img" aria-label="Five dim lights on black. Three stars with four points fall in a line from the top left, each bigger than the last, with two small round lights beside them."></canvas>
       <p id="sky-said" class="sr-only" role="status"></p>
-    </main>
-  </template>
-
-  <template id="screen-map">
-    <!-- The map from higher up: the places walked, the places open, and the places not yet lit. No words on this screen: see penny/map.js. -->
-    <main class="far">
-      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
-      <!-- Energy, everything earned in every game (shared/energy.js): what is held of it lights a place, poured in by a touch. -->
-      <p id="far-energy" class="energy far-energy" role="img"><span class="bar" aria-hidden="true"><i></i></span></p>
-      <p id="far-feeling" class="sr-only" role="status"></p>
-      <div id="far-ground" class="far-ground">
-        <div id="far-land" class="far-land">
-          <div class="map-far far-map" aria-hidden="true"></div>
-          <div id="far-places" class="far-places" role="group" aria-label="The map, from higher up"></div>
-        </div>
-      </div>
     </main>
   </template>
 

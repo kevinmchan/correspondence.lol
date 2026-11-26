@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the map from higher up at `/?map` and the places beyond the fifth (`map.js`, `map.css`, `beyond.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -228,7 +228,7 @@ Only the first quarter is built. The shape of the whole:
 | The start | Two scenes. A sorting office in a hurry. The express mail leaves, quicker and quicker, and Penny is left. It tries to be as fast, and cannot. When it stops, the room slows, and there is a sound. It is looking for whoever made it. Then the same room, slowed, where what you draw slowly stays and grows, and a portal out of it to go and look. | built |
 | To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them, and nothing in them is timed: Penny hears by holding still. | built |
 | **A quarter** | **Penny finds a friend, Dot**, a stamp, in the last post of the fifth place. From here on Penny is not alone. | built |
-| To a half | The search goes on, with Dot. | not written; how the map opens beyond the fifth place has been begun (below, "Beyond the fifth place") |
+| To a half | The search goes on, with Dot. | not written |
 | **A half** | **Who Penny is searching for is revealed.** | not written, and not decided |
 | The second half | | not written |
 
@@ -237,9 +237,7 @@ hints.** Dot is a friend met on the way, not the one being looked for.
 
 **The solo campaign runs on energy, earned by work (the owner, 25 November
 2026).** Penny earns energy by completing work, and the work is how Penny meets
-new characters. What the energy is spent on is not decided yet (a first
-attempt, lighting places on the map, is built to be looked at: "Beyond the
-fifth place", below). How it is
+new characters. What the energy is spent on is not decided yet. How it is
 earned and shown has begun (the owner, 25 November 2026): in every game,
 alone or in a room, every post found is energy at once, and finishing the board
 entirely earns as much again (`shared/energy.js`). **The bar is a stat of the
@@ -284,51 +282,6 @@ otherwise: it is earned by care and never bought, waited out or nagged for
 (an energy that pressures people to come back or to pay is the opposite of
 this story); and the people met at work are the "others" of the theme above,
 who can light up parts of Penny it has lost touch with.
-
-### Beyond the fifth place
-
-**A first attempt, built to be looked at and not yet the owner's decision**
-(26 November 2026). Nothing of the story is in it: who is met in these places,
-what each is there to show and what is found in them are not written. What is
-built is only how the map opens.
-
-**The map from higher up** (`/?map`, `penny/map.js`). The walk shows one place
-at a time; this is the same map from further off, so that several can be seen
-at once. From the fifth place on, the places are a network and not a line
-(`penny/beyond.js`): the fifth leads to two at once, to be walked in either
-order, and the two lead on to one that waits for both. A place says what it
-is by its form, never by a word, a lock or a number:
-
-| | |
-| --- | --- |
-| Walked | Flat and pale, its posts in colour. A touch walks it again. |
-| Lit | Standing up off the map, in colour, breathing. A touch goes there. |
-| Near | The way to it is open but it is not lit: grey, with as many squares in colour as it has been given energy for, and a spark resting on it while there is energy to give. |
-| Faint | The way to it is not open. A touch stirs it, no more. |
-
-**Energy lights a place.** A touch on a place that is near pours in all the
-energy that is held, as far as the place has room, a spark a square from the
-bar to the place; when the last square takes colour it is lit. Pouring is by
-hand so that, where there are two to choose from, the choice is yours. It is
-spent, never taken back, and the bar (everything earned) loses nothing by it.
-Prices are low on purpose: walking the places that lead to a place earns what
-it costs (`tests/beyond.test.js` holds every place to that), so nobody has to
-go and play for the sake of the price.
-
-**A place beyond is played in the walk** (`/?walk&at=west`), by all the rules,
-as the fifth place is: nothing to hear, a slide makes crosses, and your crosses
-are Penny's memory. Its board is one of the game's own, named by size and
-seed, chosen so that what Penny can see for itself, a step at a time, is
-enough to finish it. What is found in it is energy by the game's own count: a
-post, one; the place finished, as much again; walked a second time, nothing
-more. Its portal, and its way back, lead out to the map from higher up.
-
-Open, for the owner: whether energy should light the map at all; whether the
-walk should end on this map and not in a solo game; what each place beyond is
-there to show, and who is met there; the hour of the day beyond the fifth
-place (it stays evening); and how the map moves once there is more of it than
-one screen holds (it does not move yet: what is shown is the last of the
-first five and the places beyond).
 
 ### Where Penny is
 
@@ -480,13 +433,10 @@ loud post stirs of its own accord.
 One day passes over the five places: early light in the first, evening by the
 last. In the last post of the last place there is no sound. There is Dot, who
 looks out, map-small, and then crosses over to stand beside Penny. The portal
-that opens after that leads out to the map from higher up (below), and Penny
-and Dot come out with you. (Until the places beyond were begun it led to a
-real solo game.)
+that opens after that leads out to a real solo game, and Penny and Dot come
+through with you.
 
-The places can be walked again afterwards: the home page's portal, now
-quieter, opens on the map from higher up, the fifth place is on it, and the
-walk's two tiles go back from there.
+The places can be walked again afterwards, from the same portal, now quieter.
 Dot is beside Penny from the start then, and is not found a second time: that
 last post is somebody's ordinary mail. Nothing already heard is lost.
 

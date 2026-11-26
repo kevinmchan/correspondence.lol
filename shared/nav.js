@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk) and seen from higher up (/?map), the night sky (/?sky), a room
+// The screens: scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), a room
 // (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its radio (/jam/?taste). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -25,8 +25,6 @@ const SCREENS = [
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
   { name: 'office', depth: 1, match: (path, url) => asks(url, 'office') || asks(url, 'penny'), load: () => import('/penny/office.js') },
   { name: 'slow', depth: 1, match: (path, url) => asks(url, 'slow'), load: () => import('/penny/slow.js') },
-  // (the map from higher up lies between the home page and a place on it: into a place is forth, out to it is back)
-  { name: 'map', depth: 0.5, match: (path, url) => asks(url, 'map'), load: () => import('/penny/map.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'sky', depth: 1, match: (path, url) => asks(url, 'sky'), load: () => import('/penny/sky.js') },
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
@@ -42,7 +40,7 @@ const MOVE_MS = 360;
 // Between the home page and the map the move is through a portal, not a slide,
 // and is given longer (penny/walk.css).
 const PORTAL_MS = 950;
-const throughPortal = (a, b) => ['home,walk', 'home,map'].includes([a, b].sort().join());
+const throughPortal = (a, b) => [a, b].sort().join() === 'home,walk';
 // Between any screen and the night the move is a tumble, and is given longer
 // still (penny/tags.js, penny/tags.css).
 const TUMBLE_MS = 1180;

@@ -17,7 +17,9 @@
   background: radial-gradient(circle at 50% 46%, #fff 0 5%, #3b4d63 12%, #1b2732 46%, #0c1217 100%);
   box-shadow: inset 0 0 0.5rem #000;
 }
-.portal svg { display: none; }
+.portal svg { position: absolute; inset: 27%; width: 46%; height: 46%; z-index: 1; display: none; }
+.portal.last svg { display: block; }
+.portal.last::after { background: radial-gradient(circle, #3b4d63 0, #1b2732 60%, #0c1217 100%); }
 .portal:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .portal.calm { opacity: 0.6; }
 @media (prefers-reduced-motion: no-preference) {
