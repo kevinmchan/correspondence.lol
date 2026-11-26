@@ -3,6 +3,11 @@
 A static, no-build progressive web app served from the repository root at
 <https://correspondence.lol>.
 
+## What the app is
+
+A network of interactive story clips, reached through portals, with games of
+the story between them as pauses: see [the story](https://claude.ai/artifact/Ducds4iaTSYyUefz14Amvu).
+
 ## Layout
 
 | Path | Purpose |
@@ -202,110 +207,22 @@ the letters of a phrase. A double tap on a square guesses a post there.
 
 ## Penny
 
-Penny is a letter. Penny cannot speak, read or write, so nothing Penny is part
-of uses words (the lines for screen readers aside). What Penny has is a voice,
-a closed-mouth hum that comes from its seal (`penny/penny.js`), and feelings,
-which show. Others can speak. Dot, once found, can say what Penny means, as it
-does at the radio: it translates Penny, it does not read. And the one who shows
-how the radio works gives orders, in signs, and only for how. The only words
-a visitor to the radio reads are the gallery's: its label on the plinth, and its
-reading of it, where words are the point. What is printed on the set itself
-(its name, Keep, FM, the readout) is part of the drawing.
+**What the story means is in the owner's living doc, [the story](https://claude.ai/artifact/Ducds4iaTSYyUefz14Amvu)** (the
+owner, 26 November 2026): what the app is, what the story is about, who Penny
+is, how a place says it, and the shape of the adventure. Read it before
+writing anything Penny is in, and write changes to the story there, not here;
+this README keeps how Penny's part of the app is built. A comment in the code
+that cites this README for "Penny", "How a place says it", "The question
+Penny's Radio asks" or the shape of "The adventure" means that part of the
+doc.
 
-**Penny feels things hard.** Its highs are very high and its lows go all the
-way down, and both pass quickly. That intensity is what the adventure looks
-like: on the map, what Penny feels colours what Penny sees.
-
-**Penny's life is finite, and it is finding that out.** It was posted long ago
-and never delivered; the rain that smudged its address did not come off. A
-sound is heard once and is over. A day goes one way. This is meant to be both
-things at once, beautiful and painful, and nothing should resolve it.
-
-**What it is about: learning to slow down, where it had seemed that the thing
-was to be fastest.** Penny comes from a place that runs on hurry, where the
-quickest mail leaves first and Penny, slow and plain, is what is left. It
-takes itself to have been left because it was not quick enough, and tries to
-be. It gets nowhere by that. What it is looking for can only be heard by
-something that has stopped. The story never says this; the places do.
-
-**And about playing at being fastest.** Going fast was never the trouble;
-having to was. Once Penny has slowed, it races again, for the fun of it: the
-same dash, with nothing riding on it. Competition in this story is play. Nobody
-is left behind for losing, whoever comes last is as welcome as whoever comes
-first, and help is allowed: a hint may be asked for in the middle of a race,
-and Penny thinks that a fine idea.
-
-**What the writing keeps coming back to: others can light up parts of us,
-above all the parts we have lost touch with.** Penny cannot say what it means;
-Dot can, and when Dot says it, something Penny had no way to reach is out in
-the light. A part of oneself can go dark for a long time (Penny, posted long
-ago and never delivered, has more of those than most) and come back lit
-because someone else noticed it, named it, or only stood beside it. The story
-shows this rather than saying it, and mostly in light: Penny's seal glows, a
-fingertip of light passes from one to another, a room's window is lit when
-somebody there is waiting on you. It is also why the radio's question matters:
-whether something that learns what you like lights a part of you up, or
-evens it out.
-
-**The look is part of the writing: soothing turns to wrestling with the
-dark.** The app begins soothing, and is meant to (CLAUDE.md, "Look and
-words"). But the calm is a place the story starts from, not where it stays:
-soothing turns, in time, to wrestling with the dark, and the change is
-written, as a scene is, never an accident of style. It is in the dark that
-the theme above matters most: what has gone dark in us is what others can
-help light. The two worlds (Seasons) are one way the turn may be seen, and
-the first in the app: a portal in a room, stepped through on purpose and
-stepped back out of. When and how the story itself turns are not decided.
-
-**What the world is afraid of: losing music.** Taste is being averaged, more
-and more efficiently: what one person likes is worked out, set beside what
-everyone likes, and evened out, a little faster each time. The world Penny
-lives in is worried that, done well enough, this leaves no music at all: only
-the middle of it. It is kin to the hurry Penny comes from, efficiency turned on
-listening. Penny's Radio is where the story comes closest to it: a radio that
-learns what you like. Who is doing the averaging, and whether the fear is
-right, are not decided, and as everywhere but the gallery's reading of the
-radio, the story does not say it in words.
-
-**The question Penny's Radio asks.** Is a radio that learns one person's taste
-a defence of that taste, or one more step in the averaging? The piece asks it
-and does not answer it. Nothing in it tilts the question either way: not the
-exhibit's words, not the meter, not Penny.
-
-### How a place says it
-
-The theme is carried by the surroundings, not by anything Penny does to camera.
-Wherever a new place is drawn, these hold:
-
-| | Hurry | Slowness |
-| --- | --- | --- |
-| Time | A clock whose hand races. | The same hand at the pace of a real second hand; a day that takes five places to pass. |
-| Things | Thin, striped, straight-edged, and going somewhere: express mail. | Round, plain, and drifting: dust in lamplight, Penny itself. |
-| Movement | Straight lines, quicker each time, over almost as they start. | Eased, and taking its own time; a walk where there was a dash. |
-| Light | Cold, and the same whatever happens. | Warmer, and only once things have slowed. |
-| Sound | Short and bright. | Long, low, with an echo: it has come a long way and took its time. |
-| A race | In earnest: the quickest leave, and whoever is slow is left. The room speeds up with it. | For fun: the clock does not change for it, anyone may have a hint, and every finish is cheered the same. |
-| What is asked of you | Nothing is ever timed, counted down or hurried in Penny's story. | Staying is rewarded: a screen left up tells more, and Penny hears only where a finger is held still. |
-
-A place does not start slow. It slows, and it slows because somebody in it
-has stopped: so the hurry has to be drawn first, and the same things that
-showed it (the one clock, the one lamp) are what show it easing.
+In one line, for when the doc cannot be reached: the story is about rejecting
+a scarcity mindset, as Penny, left behind by a world in a hurry, slowly finds
+the world alive and ready to hold it up; and it shows this, never says it.
 
 ### The adventure
 
-Only the first quarter is built. The shape of the whole:
-
-| Mark | What happens | State |
-| --- | --- | --- |
-| The start | Two scenes. A sorting office in a hurry. The express mail leaves, quicker and quicker, and Penny is left. It tries to be as fast, and cannot. When it stops, the room slows, and there is a sound. It is looking for whoever made it. Then the same room, slowed, where what you draw slowly stays and grows, and a portal out of it to go and look. | built |
-| To a quarter | Five places on the map, played with Penny beside you. Pieces of the sound turn up, never the whole. One day passes over them, and nothing in them is timed: Penny hears by holding still. | built |
-| **A quarter** | **Penny finds a friend, Dot**, a stamp, in the last post of the fifth place. From here on Penny is not alone. | built |
-| To a half | The search goes on, with Dot. | not written |
-| **A half** | **Who Penny is searching for is revealed.** | not written, and not decided |
-| The second half | | not written |
-
-**Who or what makes the sound is not decided, and nothing in the app says or
-hints.** Dot is a friend met on the way, not the one being looked for.
+Its shape, and what is not decided, are in the doc. How the campaign is built:
 
 **The solo campaign runs on energy, earned by work (the owner, 25 November
 2026).** Penny earns energy by completing work, and the work is how Penny meets
@@ -378,7 +295,7 @@ of its own (`folkOf` in `shared/energy.js`, `room/folk.js`).
 
 What wakes them is the energy and Penny's wonder at them together: attention
 is what the story is about, and here it is what brings a thing to life. They
-are the first of the "others" of the theme above. What each of them is to
+are the first of the "others" of the story's themes (the doc). What each of them is to
 Penny, and whether any of them knows anything of the sound, is not written.
 Like the meadow they are paint: drawn round the things of the room in layers
 that cannot be pressed, so that nothing that can be pressed moves or changes
@@ -407,7 +324,7 @@ hints are free; a board played again earns only for what it has not earned
 before. It is held to two things unless the owner says
 otherwise: it is earned by care and never bought, waited out or nagged for
 (an energy that pressures people to come back or to pay is the opposite of
-this story); and the people met at work are the "others" of the theme above,
+this story); and the people met at work are the "others" of the story's themes (the doc),
 who can light up parts of Penny it has lost touch with.
 
 ### Where Penny is
