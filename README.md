@@ -3,6 +3,11 @@
 A static, no-build progressive web app served from the repository root at
 <https://correspondence.lol>.
 
+## What the app is
+
+A network of interactive story clips, reached through portals, with games of
+the story between them as pauses: see [the story](https://claude.ai/artifact/Ducds4iaTSYyUefz14Amvu).
+
 ## Layout
 
 | Path | Purpose |
@@ -130,6 +135,32 @@ iPhone's screen gives, not Safari's own engine.
 A new screen, or a new state of one, gets a test screen in the suite in the
 same change that adds it.
 
+## Type
+
+Every word in the app is set from a few tokens at the top of `styles.css`
+(#136). **Use a step; don't add a size.** `tests/type.test.js` fails on a raw
+font, size, weight, line height or tracking anywhere else.
+
+| | Tokens |
+| --- | --- |
+| Faces | `--font-letter` (Georgia: what is said, written as a letter; the page's own face), `--font-text` (the system's sans: what the app itself says, its labels and buttons), `--font-mono` (codes to type in), `--font-typewriter` (the room's other world) |
+| Sizes | `--text-fine` 11, `--text-caption` 13, `--text-small` 15, `--text-body` 17, `--text-lead` 20, `--text-title` 24, `--text-large` 30, `--text-display` 38 (px at the phone's 16px rem) |
+| Weights | `--weight-regular` 400, `--weight-medium` 600, `--weight-bold` 700 |
+| Line heights | `--leading-none` 1 (one line in a box of its own), `--leading-tight` 1.2, `--leading-snug` 1.35, `--leading-loose` 1.5 (lines to read) |
+| Tracking | `--track-tight`, `--track-open`, `--track-label` (small capitals), `--track-wide`, `--track-widest` |
+
+- The steps go up by about a sixth at the small end, and by about a quarter at
+  the large. Eleven is the least the phone suite allows; every field is at
+  `--text-body`, as no field may be under 16px.
+- The same thing is the same step everywhere: every sheet's title is
+  `--text-lead`; a page's title (`h1`) grows with the screen between two steps,
+  with `clamp()`.
+- Sizes are in rem, so they follow the reader's own settings.
+- Type that is part of a drawing keeps its own value and is marked
+  `/* drawn */` just before it: an emoji in an avatar's circle, a glyph on a
+  button, a heart, the small boards, the *z*s of a sleeping cone, and Liv
+  Radio and its plinth, which are drawn in em and scale with the work.
+
 ## The control on pull requests
 
 Nothing goes into `main` without two things (`tests/pr-control.cjs`, run on
@@ -202,14 +233,22 @@ the letters of a phrase. A double tap on a square guesses a post there.
 
 ## Penny
 
-Penny's story lives in one place, the doc [Penny's story](https://claude.ai/artifact/TAGZNDPusr9QFcgS5KU9Ni)
-(the owner, 26 November 2026): who Penny is, what the story is about, the two
-paths it runs on, how a place says it, the sender, the shape of the
-adventure, and what is proposed for it. Read it (with the Docs connector)
-before writing anything of the story, and write story there, not here. Only
-the first quarter is built; what is built, and how, is described below.
+**What the story means is in the owner's living doc, [the story](https://claude.ai/artifact/Ducds4iaTSYyUefz14Amvu)** (the
+owner, 26 November 2026): what the app is, what the story is about, who Penny
+is, how a place says it, and the shape of the adventure. Read it before
+writing anything Penny is in, and write changes to the story there, not here;
+this README keeps how Penny's part of the app is built. A comment in the code
+that cites this README for "Penny", "How a place says it", "The question
+Penny's Radio asks" or the shape of "The adventure" means that part of the
+doc.
 
-### Energy and the meadow
+In one line, for when the doc cannot be reached: the story is about rejecting
+a scarcity mindset, as Penny, left behind by a world in a hurry, slowly finds
+the world alive and ready to hold it up; and it shows this, never says it.
+
+### The adventure
+
+Its shape, and what is not decided, are in the doc. How the campaign is built:
 
 **The solo campaign runs on energy, earned by work (the owner, 25 November
 2026).** Penny earns energy by completing work, and the work is how Penny meets
@@ -282,7 +321,7 @@ of its own (`folkOf` in `shared/energy.js`, `room/folk.js`).
 
 What wakes them is the energy and Penny's wonder at them together: attention
 is what the story is about, and here it is what brings a thing to life. They
-are the first of the "others" of the story (the doc "Penny's story"). What each of them is to
+are the first of the "others" of the story's themes (the doc). What each of them is to
 Penny, and whether any of them knows anything of the sound, is not written.
 Like the meadow they are paint: drawn round the things of the room in layers
 that cannot be pressed, so that nothing that can be pressed moves or changes
@@ -311,7 +350,7 @@ hints are free; a board played again earns only for what it has not earned
 before. It is held to two things unless the owner says
 otherwise: it is earned by care and never bought, waited out or nagged for
 (an energy that pressures people to come back or to pay is the opposite of
-this story); and the people met at work are the "others" of the story (the doc "Penny's story"),
+this story); and the people met at work are the "others" of the story's themes (the doc),
 who can light up parts of Penny it has lost touch with.
 
 ### Where Penny is
@@ -549,7 +588,7 @@ one that is up is pressed in and lit.
   the tab. Games that are over, games you are waiting on someone else in, and
   phrases you wrote yourself are left out.
 - **Lobby**: everything else. Your rooms, and the tiles for opening or
-  joining a room, making music and Penny's Radio.
+  joining a room, Liv Radio (making music) and Museum (the radio).
 
 Above both tabs is the one wide button of the page: play, a board of your own
 at once (`/postmarks/`). Your account is your face in the top right corner.
@@ -708,9 +747,9 @@ What it still does not have, next to the game's music: more than eight steps,
 notes of different lengths, any way to choose the chords, and a deck that
 is saved with each beat.
 
-## Penny's Radio
+## Liv Radio
 
-`/jam/?taste` (`jam/taste.js`), "Penny's Radio" on the home page's menu and a
+`/jam/?taste` (`jam/taste.js`), "Museum" on the home page's menu and a
 radio at the top of the music maker, is a work in a gallery. To whoever plays
 it, it is a radio; behind that, it is an experiment: can a model of what you
 like in a loop predict your choices, and can that be shown to be more than
@@ -737,7 +776,7 @@ rule (`--work-w`).
 gallery's label, written as a gallery writes one: the title in italic, what it
 is made of, and whose it is.
 
-> *Penny's Radio*
+> *Liv Radio*
 > Steel, enamel
 > Two stations, one listener
 > Anonymous loan

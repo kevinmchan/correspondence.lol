@@ -118,7 +118,7 @@ html.has-pal { scroll-padding-bottom: calc(var(--pal-w) * 0.6 + env(safe-area-in
 .pal .seal.sound { animation: pal-sound-still var(--d, 400ms) ease-out; }
 @keyframes pal-sound-still { 0%, 100% { filter: brightness(1.1); } 25% { filter: brightness(1.7); } }
 
-.pal-heart { position: fixed; font-size: 1.15rem; color: #c8442e; pointer-events: none; translate: -50% 0; animation: pal-heart 1500ms ease-out both; }
+.pal-heart { position: fixed; /* drawn */ font-size: 1.15rem; color: #c8442e; pointer-events: none; translate: -50% 0; animation: pal-heart 1500ms ease-out both; }
 @keyframes pal-heart { from { transform: translateY(0) scale(0.6); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-4rem) scale(1.2); opacity: 0; } }
 
 @media (prefers-reduced-motion: no-preference) {

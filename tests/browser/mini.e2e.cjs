@@ -244,6 +244,9 @@ async function states() {
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
     // (each room is a little shop, its name on the board over its window, two lines at most; in the dark, an evening street)
     { name: 'home, the lobby, a street of rooms in the dark', screen: 'home', at: '/', storage: { ...STREET, 'correspondence:theme:v1': 'dark' }, ready: '#rooms .street li' },
+    // (the type is set in rem from one scale, so that it follows the reader's own size: here a step larger than the phone's 16px, #136)
+    { name: 'home, the lobby, its words a size larger, as a reader may set them', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li',
+      init: () => { addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '18px'; }); } },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
     { name: 'a room, empty', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room(), ready: '#no-games:not([hidden])' },
     { name: 'a room, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li' },
@@ -425,6 +428,8 @@ async function states() {
     // Penny's Radio: a work in a gallery, played and read about. Its story is told once; these are its stills.
     // (told: nobody comes to show how, and nothing opens by itself.)
     { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', whole: SET },
+    // (the cone from the home page's stamp, asleep on the floor by the work: all of it in the room, and under nothing to press)
+    { name: 'Liv Radio, the cone in the room', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.gallery-cone svg', whole: [...SET, '.gallery-cone'] },
     // (arriving with twelve stations kept, two of them presets: the room is the same as on the first day)
     { name: 'Penny’s Radio, under way', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': kept }, ready: '.radio .presets i.lit', whole: SET },
     // (the attendant's sign hangs over the gallery's label)

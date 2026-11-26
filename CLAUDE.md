@@ -4,6 +4,19 @@ Standing rules for anyone (or any Claude session) changing this repository. The
 README says what the app is and why it is the way it is; this is how changes
 are made.
 
+## The story
+
+- What the story means (what the app is, what it is about, who Penny is, how
+  a place says it, the shape of the adventure) is in the owner's living doc,
+  "correspondence.lol — the story":
+  https://claude.ai/artifact/Ducds4iaTSYyUefz14Amvu (the owner's choice, 26
+  November 2026). Read it with the Docs tools before writing anything Penny is
+  in; it changes without pull requests, so read it fresh, not from memory.
+- A change to the story's meaning is written in the doc, with the owner's
+  words and the date, never in the README. How the story is built stays in the
+  README, beside the code. Without the Docs tools, say so and ask the owner;
+  do not guess what the doc says.
+
 ## Phones
 
 - The interface is designed for an iPhone Pro: 393 by 852 installed to the Home
@@ -24,8 +37,8 @@ are made.
   warm in the dark theme; generous space; soft shapes; slow, eased motion or
   none. Nothing is urgent unless it is truly yours to do, and even that is said
   gently. Soothing must not cost clarity: a person still sees what needs them.
-  The story may turn from soothing to wrestling with the dark (the doc
-  "Penny's story", linked from the README); that is the writing's choice, made on purpose in a scene, never a
+  The story may turn from soothing to wrestling with the dark (the story
+  doc, below); that is the writing's choice, made on purpose in a scene, never a
   screen that happens to be harsh.
 - Few words. Words are allowed on a screen (the owner's choice, 26 November
   2026, in place of the rule against them), and kept to the fewest: a short
