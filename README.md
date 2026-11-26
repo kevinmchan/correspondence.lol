@@ -1294,6 +1294,8 @@ room are its content: names, notes, the code.
   under the question mark): one board for the whole room; take turns, after
   your move someone else goes next; three hearts, shared by everyone. Each is
   a picture on a tile of its colour and a line of words (the owner's choice).
+  Whoever started the game has just read those cards at the desk, so for them
+  it opens on its board: nobody is told twice.
 - **Energy in a room's games**: a game together earns for every post found on
   the room's board, by anyone, and for its finish; a time trial or a pass
   phrase, for your own run; a phrase's author's test run, nothing. In a game

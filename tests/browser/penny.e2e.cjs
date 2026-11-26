@@ -2673,6 +2673,80 @@ async function main() {
       assert.equal(await page.locator('dialog.together[open]').count(), 0, 'the sheet only the first time');
       assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2; the meadow at 140', 'and the same posts earn nothing again');
     }),
+    // Whoever starts a game together has just read its cards, at the desk's first step: the game opens on its board,
+    // and does not show them the same cards again. (Anybody else's first sight of the game still brings the sheet: above.)
+    check('a game together, started at the desk: its cards were the desk\'s, and the game does not show them again', { storage: ACCOUNT }, async (page) => {
+      const { generatePuzzle } = await import('../../postmarks/game.js');
+      const id = '77777777-7777-4777-8777-777777777777';
+      const room = '11111111-1111-4111-8111-111111111111';
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      let started = null;
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(postmarks_get|postmarks_start|room_get)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const asked = route.request().url().match(/rpc\/(\w+)/)[1];
+        const args = JSON.parse(route.request().postData());
+        if (asked === 'room_get') return route.fulfill({ json: { id: room, name: 'Book club', code: 'K7M2QP', you: 0, people, messages: [], games: [] }, headers: cors });
+        if (asked === 'postmarks_start') {
+          const size = args.p_size;
+          started = { id, room, room_name: 'Book club', you: 0, people, players: ['Sam', 'Ada'], mode: 'coop', size, regions: args.p_regions, cells: new Array(size * size).fill(0), hearts: 3, moves: 0, status: 'playing', last: null };
+        }
+        return route.fulfill({ json: started ?? { id, size: 6, regions: generatePuzzle(6, 8).regions }, headers: cors });
+      });
+      await page.goto(`${origin}/room/?id=${room}`);
+      await page.locator('#modes [data-mode="coop"]').click();
+      await page.waitForSelector('#desk-how:not([hidden]) .mode-cards li');
+      assert.equal(await page.locator('#desk-how .mode-cards li').count(), 3, 'how a game together is played, read at the desk');
+      await page.locator('#desk-next').click();
+      await page.waitForSelector('#desk-board:not([hidden]) #preview-board svg');
+      await page.locator('#phrase-form .start-phrase').click();
+      await page.waitForSelector('#board > *');
+      await sleep(800);
+      assert.ok(started, 'the game was started');
+      assert.equal(await page.locator('dialog.howto[open]').count(), 0, 'no sheet over the board: not the same cards again, nor how to play');
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('postmarks:howto:v1'))), id, 'the game is kept as shown');
+    }),
+    // A board lost together can be tried again from its end: a new game for the whole room on the same board, which
+    // opens on that board, without the cards of a game together over it (whoever asks for it has just played one).
+    check('a game together, lost: tried again, the same board opens with no sheet over it', { storage: ACCOUNT }, async (page) => {
+      const { generatePuzzle } = await import('../../postmarks/game.js');
+      const size = 6;
+      const made = generatePuzzle(size, 8);
+      const id = '88888888-8888-4888-8888-888888888888';
+      const room = '11111111-1111-4111-8111-111111111111';
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const view = { id, room, room_name: 'Book club', you: 0, people, players: ['Sam', 'Ada'], mode: 'coop', size, regions: made.regions, cells: new Array(size * size).fill(0), hearts: 1, moves: 2, status: 'playing', last: { player: 1, type: 'guess', cell: 0, correct: false } };
+      const wrong = made.solution[2] === 0 ? 2 * size + 1 : 2 * size; // (a square in the third row with no post in it)
+      const lost = { ...view, solution: made.solution, hearts: 0, moves: 3, status: 'lost', last: { player: 0, type: 'guess', cell: wrong, correct: false } };
+      let moved = false;
+      let again = null;
+      const second = '99999999-9999-4999-8999-999999999999';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      const asked = [];
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(\w+)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const name = route.request().url().match(/rpc\/(\w+)/)[1];
+        asked.push(name);
+        if (name === 'room_get') return route.fulfill({ json: { id: room, name: 'Book club', you: 0, people, messages: [], games: [] }, headers: cors });
+        if (name === 'postmarks_start') again = { ...view, id: second, hearts: 3, moves: 0, last: null };
+        if (again) return route.fulfill({ json: again, headers: cors });
+        return route.fulfill({ json: (moved ||= name === 'postmarks_play') ? lost : view, headers: cors }); // (the last heart goes with the move)
+      });
+      await page.goto(`${origin}/postmarks/?game=${id}`);
+      await page.waitForSelector('dialog.together[open]');
+      await page.locator('dialog.together .start').click();
+      await page.locator(`#board .cell[data-cell="${wrong}"]`).dblclick();
+      await page.locator('#submit:not([disabled])').click();
+      await page.waitForSelector('dialog.finale.lost[open]', { timeout: 15000 });
+      assert.equal(await page.locator('dialog.finale h2').textContent(), 'Out of hearts');
+      assert.equal(await page.locator('dialog.finale button.again').textContent(), 'Try this board again');
+      await page.locator('dialog.finale button.again').click();
+      await page.waitForFunction((id) => location.search.includes(id), second);
+      await page.waitForSelector('#board .cell[data-state="empty"]:not(.last)');
+      await sleep(800);
+      assert.equal(asked.filter((name) => name === 'postmarks_start').length, 1, 'a new game, started once');
+      assert.equal(await page.locator('dialog[open]').count(), 0, 'and no sheet over its board');
+    }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('#jam-play');

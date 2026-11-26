@@ -140,6 +140,10 @@ export function modeCards(mode, list = document.createElement('ul')) {
   return list;
 }
 
+// The last room game this device showed its first sheet for (how to play, or playing together). Whoever starts a game
+// together has just read those cards at the desk, so the desk marks the game as shown: they are not told twice.
+export const HOWTO_KEY = 'postmarks:howto:v1';
+
 let together = null;
 export function openTogether() {
   if (!together) {
