@@ -197,7 +197,15 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
         for (let up = press[i]; up && !fixed; up = up.parentElement) fixed = getComputedStyle(up).position === 'fixed';
         const page = document.scrollingElement;
         // where it is in the window if fixed there; otherwise where it is on the page, whose ends are what cannot be scrolled clear
-        const [top, bottom, end] = fixed ? [a.top, a.bottom, H] : [a.top + page.scrollTop, a.bottom + page.scrollTop, Math.max(page.scrollHeight, H)];
+        // (what there is of it to press: a row at the end of a list that scrolls by itself, in a sheet, is cut off by the
+        // list, which ends above the home bar, and the rest of it is brought up by scrolling the list)
+        let [seenTop, seenBottom] = [a.top, a.bottom];
+        for (let up = press[i].parentElement; up && up !== document.body; up = up.parentElement) {
+          if (!/auto|scroll|hidden|clip/.test(getComputedStyle(up).overflowY)) continue;
+          const frame = up.getBoundingClientRect();
+          [seenTop, seenBottom] = [Math.max(seenTop, frame.top), Math.min(seenBottom, frame.bottom)];
+        }
+        const [top, bottom, end] = fixed ? [seenTop, seenBottom, H] : [a.top + page.scrollTop, a.bottom + page.scrollTop, Math.max(page.scrollHeight, H)];
         if (top < safe.top - 1 || bottom > end - safe.bottom + 1) out.unsafe.push({ what: say(press[i]), ...place(press[i]) });
       }
       for (let j = i + 1; j < press.length; j++) {
@@ -211,4 +219,8 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
   }, { safe: insets, skip: ignore });
 }
 
-module.exports = { ROOT, PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };
+// What "every phone" means (PHONES=all): the smallest both ways, and the largest installed. What is right at both ends
+// has been right in between; the others can still be asked for by name (the owner's choice, 26 November 2026).
+const ENDS = ['mini-safari', 'mini-app', 'max-app'];
+
+module.exports = { ROOT, PHONES, ENDS, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };

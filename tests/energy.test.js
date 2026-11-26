@@ -100,7 +100,7 @@ test('the bar is everything earned, about five games for now, and its first fill
   let seed = 0;
   while (state.earned < BAR - most(9)) state = played(state, at(9, seed++, 9, 'won')).state;
   assert.equal(meadowEarned(state), false);
-  assert.ok(bar(state).fill > 0.7 && bar(state).fill < 1);
+  assert.ok(bar(state).fill >= 1 - most(9) / BAR && bar(state).fill < 1, 'within one game of full');
   state = played(state, at(9, seed++, 9, 'won')).state;
   assert.equal(meadowEarned(state), true, 'one more game fills it');
   assert.equal(bar(state).fills, 1);

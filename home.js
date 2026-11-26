@@ -10,7 +10,7 @@ import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/a
 import { load, save } from '/shared/identity.js';
 import { BAR, ENERGY_KEY, held, read as readEnergy } from '/shared/energy.js';
 import { earned as meadowOwned, wear, wearing } from '/shared/meadow.js';
-import { ASK, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached } from '/penny/penny.js';
+import { ASK, BEGINNING, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached, playAt } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
 import { playMail, remembered } from '/penny/mail.js';
 import { showKept } from '/penny/tags.js';
@@ -55,6 +55,13 @@ export function mount(root, life) {
   // The lobby: big tiles. Opening and joining a room each have a screen of their own (rooms.js).
   const menu = $('menu');
   const play = $('play'); // the one wide button: a board of your own, at once
+  // But everybody goes through the story once first: the introduction
+  // (penny/hello.js), the film, and the first places (penny/walk.js), where
+  // the rules are shown one at a time. Until those have been walked, play goes
+  // on with the story from wherever it was left (penny/penny.js, playAt); the
+  // first time, that is the beginning. After that play is a board, and the
+  // story is the portal's, at the foot of the page, which always goes back to
+  // its beginning.
   // Under it, energy: one bar for everything earned in every game, and the meadow at its end (shared/meadow.js).
   const energyRow = $('home-energy');
   const meadowMark = $('meadow');
@@ -93,6 +100,7 @@ export function mount(root, life) {
     me.card.hidden = none;
     menu.hidden = none;
     play.hidden = none;
+    play.setAttribute('href', playAt());
     energyRow.hidden = none;
     if (!none) showEnergy();
     showTabs();
@@ -365,8 +373,8 @@ export function mount(root, life) {
   // page's is under it. But there are two things Penny wants, and since it
   // cannot say so, it comes up and shows them:
   //
-  //   The portal, at the foot of the page: a place on the map Penny wants to take you to
-  //   (penny/walk.js). Until the first places have been walked Penny keeps
+  //   The portal, at the foot of the page: a place on the map Penny wants to take you to,
+  //   the story from its beginning (penny/hello.js). Until the first places have been walked Penny keeps
   //   coming back to it: calls, walks along the edge to stand beside the
   //   portal, looks at it and back at you. The first time in a visit, and
   //   sometimes after, Penny stops to remember the sound it is looking for,
@@ -378,8 +386,7 @@ export function mount(root, life) {
   //   prompt has been turned down. Nothing waits on it.
   //
   // A tap on Penny while it is asking for the app to be installed is a yes to
-  // that. Any other tap goes through the portal with it, until the first
-  // places have been walked; and after that plays the film again from its first scene (penny/office.js).
+  // that. Any other tap goes through the portal with it: the story, from the beginning.
   // Those moves are made without the usual sound, so the next thing heard is
   // Penny.
   const portal = $('portal');
@@ -608,7 +615,7 @@ export function mount(root, life) {
       return;
     }
     if (!hasWalked()) pal.sing(HELLO, 0.9);
-    setTimeout(() => go(hasWalked() ? '/?office' : '/?walk', { quiet: true }), 300);
+    setTimeout(() => go(BEGINNING, { quiet: true }), 300); // through the portal with it: the story from the beginning
   });
   pal.onTap(() => pal.gesture('hop', 'dot').hearts(1, 'dot'), 'dot');
   // they glance toward wherever the page was last touched

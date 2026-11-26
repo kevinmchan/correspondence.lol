@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), a room
+// The screens: the introduction to Penny (/?hello), scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), a room
 // (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its radio (/jam/?taste). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -23,6 +23,7 @@ const asks = (url, word) => isHome(url.pathname) && url.searchParams.has(word);
 const SCREENS = [
   { name: 'open', depth: 1, match: (path, url) => asks(url, 'open'), load: () => import('/rooms.js'), mount: 'mountOpen' },
   { name: 'join', depth: 1, match: (path, url) => asks(url, 'join'), load: () => import('/rooms.js'), mount: 'mountJoin' },
+  { name: 'hello', depth: 1, match: (path, url) => asks(url, 'hello'), load: () => import('/penny/hello.js') },
   { name: 'office', depth: 1, match: (path, url) => asks(url, 'office') || asks(url, 'penny'), load: () => import('/penny/office.js') },
   { name: 'slow', depth: 1, match: (path, url) => asks(url, 'slow'), load: () => import('/penny/slow.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
@@ -40,7 +41,7 @@ const MOVE_MS = 360;
 // Between the home page and the map the move is through a portal, not a slide,
 // and is given longer (penny/walk.css).
 const PORTAL_MS = 950;
-const throughPortal = (a, b) => [a, b].sort().join() === 'home,walk';
+const throughPortal = (a, b) => ['home,walk', 'hello,home'].includes([a, b].sort().join());
 // Between any screen and the night the move is a tumble, and is given longer
 // still (penny/tags.js, penny/tags.css).
 const TUMBLE_MS = 1180;
@@ -51,6 +52,7 @@ const stage = document.getElementById('screens');
 let current = null; // { key, screen, root, life }
 let moving = false;
 let queued = null; // a move asked for while another was under way
+let heading = null; // the address of the screen being moved to, until it is up
 
 async function show(url, { announce }) {
   const screen = screenFor(url);
@@ -108,10 +110,12 @@ async function move(url, options) {
     return;
   }
   moving = true;
+  heading = keyOf(url);
   try {
     await show(url, options);
   } finally {
     moving = false;
+    heading = null;
     if (queued) {
       const [nextUrl, nextOptions] = queued;
       queued = null;
@@ -149,7 +153,10 @@ document.addEventListener('click', (event) => {
 // the address after # for a step of its own: that is not a move.)
 window.addEventListener('popstate', () => {
   const url = new URL(location.href);
-  if (current && keyOf(url) === current.key) return;
+  // (Back, pressed while the next screen is still on its way: where it is
+  // heading is what counts, not what is still up, or the screen that then
+  // arrives would be left standing at the address of the one gone back to.)
+  if (current && keyOf(url) === (heading ?? current.key)) return;
   move(url, { announce: true });
 });
 
@@ -163,8 +170,8 @@ document.addEventListener('close', (event) => {
   if (event.target instanceof HTMLDialogElement && !moving) play('shut');
 }, true);
 
-// The first screen: whichever one the address asks for. (The film's first
-// scene, penny/office.js, is not yet where the app opens: nobody is taken
-// there who has not asked. It is reached from the home page, by a tap on
-// Penny once the first places have been walked, and at /?office.)
+// The first screen: whichever one the address asks for. (The story is not
+// where the app opens: it is reached from the home page, by the portal, which
+// goes back to its beginning, penny/hello.js, or by play, which goes on from
+// wherever it was left.)
 move(new URL(location.href), { announce: false });

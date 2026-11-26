@@ -9,6 +9,7 @@
 
 import { audio, holdMusic, noise, tone } from '/postmarks/sound.js';
 import { CHORDS, arrange, pitch, plain, up } from './form.js';
+import { speed } from './sample.js';
 
 export { CHORDS };
 
@@ -72,9 +73,19 @@ export const LAYERS = [
   },
 ];
 
+// The deck: the four instruments, and four places more that are no
+// instrument's. Each of those plays a recorded sound, one of the four
+// instruments, or nothing; has a colour of its own, and a part on the board
+// like any instrument.
+const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+export const DECK = [...LAYERS, ...['#e79ac6', '#9bc873', '#74b4e6', '#d2a679'].map((colour) => ({ name: 'Sound', colour, icon: MIC, base: 261.63, tuned: true, extra: true, play() {} }))];
+
 // --- The loop -----------------------------------------------------------------------
-// read(): what should be sounding now, { tempo, sets, long } (sets: for each
-// instrument, the tiles that hold a note), or null for silence. It is asked
+// read(): what should be sounding now, { tempo, sets, long, voices } (sets:
+// for each instrument, the tiles that hold a note), or null for silence.
+// `voices`, if given, is for each instrument what is played in its place: a
+// sound recorded ({ rate, pcm, hz }: jam/sample.js), another of the four
+// instruments ({ lent: one of LAYERS }), or null for its own. It is asked
 // afresh for every step, so what is played can change under it at any time.
 // `long` plays the loop in its long form (jam/form.js): otherwise it is played
 // as it is written, round and round, through the four chords.
@@ -125,6 +136,30 @@ export function createLoop(life, read) {
   }
   const into = (kind) => (kind.tuned ? room : bus);
 
+  // One note of an instrument: its own, or the sound recorded to be played in its place.
+  const ready = new WeakMap(); // a recorded sound, as the engine plays it
+  function strike(index, row, at, chord, hard, voices) {
+    const kind = DECK[index];
+    const voice = voices?.[index];
+    if (!voice) return kind.play(row, at, into(kind), chord, hard);
+    if (voice.lent) return voice.lent.play(row, at, into(voice.lent), chord, hard); // (another instrument, as it sounds in its own place)
+    const { ctx } = audio();
+    let buffer = ready.get(voice);
+    if (!buffer) {
+      buffer = ctx.createBuffer(1, voice.pcm.length, voice.rate);
+      buffer.getChannelData(0).set(voice.pcm);
+      ready.set(voice, buffer);
+    }
+    const start = ctx.currentTime + at;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = speed(kind, voice.hz, chord, row);
+    const amp = ctx.createGain();
+    amp.gain.value = 0.3 * hard;
+    src.connect(amp).connect(kind.extra && !voice.hz ? bus : into(kind)); // (a sound with no note is kept dry, as the drums are)
+    src.start(start);
+  }
+
   life.setInterval(() => {
     const playing = read();
     const live = playing && engine();
@@ -155,9 +190,9 @@ export function createLoop(life, read) {
           tone({ at, freq: up(261.63, chord.root + semitones), dur: whole * 1.08, type: 'sine', gain: 0.04 * shape.pad, attack: whole * 0.35, into: room });
         }
       }
-      for (let index = 0; index < LAYERS.length; index++) {
+      for (let index = 0; index < sets.length; index++) {
         for (let row = 0; row < ROWS; row++) {
-          if (sets[index].has(keyOf(nextStep, row))) LAYERS[index].play(row, at, into(LAYERS[index]), chord, weight * shape.level[index] * (0.92 + Math.random() * 0.16));
+          if (sets[index].has(keyOf(nextStep, row))) strike(index, row, at, chord, weight * (shape.level[index] ?? 1) * (0.92 + Math.random() * 0.16), playing.voices);
         }
       }
       queue.push({ step: nextStep, time: nextTime, chord: shape.chord, bar });
@@ -193,9 +228,9 @@ export function createLoop(life, read) {
       }
       return { step, chord: chordHeard, bar: barHeard };
     },
-    // One note now, by hand, in the chord being heard.
-    tap(layerIndex, row) {
-      if (engine()) LAYERS[layerIndex].play(row, 0, into(LAYERS[layerIndex]), CHORDS[chordHeard]);
+    // One note now, by hand, in the chord being heard (`voices`: as read() gives them).
+    tap(layerIndex, row, voices = null) {
+      if (engine()) strike(layerIndex, row, 0, CHORDS[chordHeard], 1, voices);
     },
     // Back to the first step of the first chord.
     rewind() {

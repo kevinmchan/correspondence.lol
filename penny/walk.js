@@ -66,7 +66,7 @@ import { claim } from './pal.js';
 import { heard, murmur, playMail, remembered, soundSoFar } from './mail.js';
 import {
   ALARM, ASK, FAR, GASP, HELLO, LET_GO, LONGING, MM, NEAR, NO_NO, OOPS, RELIEF, SAG, THIS_WAY, TRILL, WONDER, YES,
-  hasDot, hasWalked, placeReached, setDot, setPlaceReached, setWalked,
+  hasDot, hasWalked, placeReached, reach, setDot, setPlaceReached, setWalked,
 } from './penny.js';
 
 const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
@@ -81,6 +81,7 @@ const STIRS = [6, 9, 14, 20, 0];
 
 export function mount(root, life) {
   document.title = 'correspondence.lol';
+  reach('walk'); // (where play goes on from: penny/penny.js)
   const $ = (id) => root.querySelector(`#${id}`);
   const main = root.querySelector('.walk');
   const board = $('walk-board');

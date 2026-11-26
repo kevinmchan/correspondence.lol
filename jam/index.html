@@ -33,6 +33,7 @@
   <link rel="stylesheet" href="/penny/walk.css">
   <link rel="stylesheet" href="/penny/pal.css">
   <link rel="stylesheet" href="/jam/taste.css">
+  <link rel="stylesheet" href="/penny/hello.css">
   <link rel="stylesheet" href="/penny/office.css">
   <link rel="stylesheet" href="/penny/slow.css">
   <link rel="stylesheet" href="/room/room.css">
@@ -47,7 +48,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -72,6 +73,21 @@
         <circle class="seal" cx="256" cy="290" r="30" fill="#c8442e"/>
       </svg>
       <h1>correspondence<span>.lol</span></h1>
+
+      <!-- Still being built: a stamp in the top left corner, a sleepy cone on it, breathing, and the words. Nothing to press. -->
+      <p id="building" class="building">
+        <svg viewBox="22 12 76 96" aria-hidden="true">
+          <text class="z" x="72" y="34">z</text><text class="z two" x="72" y="34">z</text><text class="z three" x="72" y="34">z</text>
+          <g class="cone">
+            <path class="cone-body" d="M38 98 L54 30 Q60 21 66 30 L82 98 Z"/>
+            <path class="cone-stripes" d="M46.5 74 H73.5 M43 88 H77"/>
+            <path class="cone-eyes" d="M51 56 q3 2.8 6 0 M63 56 q3 2.8 6 0"/>
+            <path class="cone-cheeks" d="M50 63 h0.01 M70 63 h0.01"/>
+            <rect class="cone-foot" x="30" y="97" width="60" height="7" rx="3.5"/>
+          </g>
+        </svg>
+        <span class="building-words">under construction</span>
+      </p>
 
       <!-- Who this device is: a face in the top right corner, and nothing written beside it. -->
       <section id="me" class="me-corner" aria-label="Your account" hidden>
@@ -171,7 +187,7 @@
       <p id="version" class="version"></p>
       <!-- The page is a map seen from very far up, and one place is marked on it, at the foot of the page where Penny stands: the portal Penny wants to take you through (penny/walk.js). It itself is not on the page: see penny/pal.js. -->
       <div class="map-far home-map" aria-hidden="true"></div>
-      <a href="/?walk" id="portal" class="portal home-portal" aria-label="Walk the map with Penny"></a>
+      <a href="/?hello" id="portal" class="portal home-portal" aria-label="The story, from the beginning"></a>
     </main>
   </template>
 
@@ -193,7 +209,7 @@
             <fieldset>
               <label class="field">
                 <span class="sr-only">Room name</span>
-                <input type="text" id="room-name" maxlength="24" autocomplete="off" enterkeyhint="go" aria-describedby="open-how" required>
+                <input type="text" id="room-name" maxlength="24" placeholder="room name…" autocomplete="off" enterkeyhint="go" aria-describedby="open-how" required>
               </label>
               <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg><span class="sr-only">Open room</span></button>
               <p id="create-error" class="message bad" role="alert"></p>
@@ -278,19 +294,31 @@
         <p id="loading" class="lede" role="status"><span class="sr-only">Opening room…</span></p>
         <p id="room-error" class="message bad" role="alert"></p>
 
-        <!-- Seen by somebody who is not in it: the roof is on, whoever is in shows at the skylight, and the mat at the door is where to ask. -->
+        <!-- Seen by somebody who is not in it: the same building, as it is inside, so that somebody sent a link knows the place when
+             they are in it. Its table, with whoever is in at the head of it, each with their name, and a board on it; and at the door the
+             mat, where whoever has come stands: the face they will go in with, their name to write beside it, and the way in. -->
         <div id="join" class="outside" hidden>
-          <div class="roof-big" aria-hidden="true"><span id="join-faces" class="skylight"></span></div>
-          <form id="join-form" class="card mat">
-            <p id="join-text" class="sr-only"></p>
-            <label class="field">
-              <span class="sr-only">Your name</span>
-              <input type="text" id="join-name" maxlength="20" required autocomplete="off" aria-describedby="join-text">
-            </label>
-            <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
-            <p id="join-error" class="message bad" role="alert"></p>
-            <a id="join-sign-in" class="sync" href="/" aria-label="Already have an account on another device? Sync it"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 0 1 12.9-5.2L19.5 9M19.5 4.5V9H15M19.5 12a7.5 7.5 0 0 1-12.9 5.2L4.5 15M4.5 19.5V15H9"/></svg></a>
-          </form>
+          <div class="house peek">
+            <div class="house-floor" aria-hidden="true"></div>
+            <div class="house-walls" aria-hidden="true"></div>
+            <div class="inside">
+              <span id="join-faces" class="seats" aria-hidden="true"></span>
+              <span id="join-table" class="peek-table" aria-hidden="true"></span>
+              <form id="join-form" class="card mat">
+                <p id="join-text" class="sr-only"></p>
+                <div>
+                  <span id="join-you" class="avatar" aria-hidden="true"></span>
+                  <label class="field">
+                    <span class="sr-only">Your name</span>
+                    <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
+                  </label>
+                  <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
+                </div>
+                <p id="join-error" class="message bad" role="alert"></p>
+              </form>
+            </div>
+            <span class="yard" aria-hidden="true"><i></i><i></i></span>
+          </div>
         </div>
 
         <div id="house" class="house" hidden>
@@ -525,16 +553,16 @@
   <template id="screen-jam">
     <header class="topbar">
       <a href="/">← correspondence.lol</a>
-      <!-- Keeping a beat, and passing one on. -->
+      <!-- Keeping a beat. (Passing one on is done from the list of those kept, under the board: each has its own button.) -->
       <div class="top-actions">
         <button type="button" id="jam-lab" class="quiet round" aria-label="Penny’s Radio" title="Penny’s Radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></button>
         <button type="button" id="jam-save" class="quiet round" aria-label="Save this beat" title="Save this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5h11v15.5l-5.5-4-5.5 4z"/></svg></button>
-        <button type="button" id="jam-share" class="quiet round" aria-label="Share this beat" title="Share this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg></button>
       </div>
     </header>
 
     <main>
-      <h1>Loops</h1>
+      <!-- No title is written: the board says what this is. Its name is said to screen readers, and is the window's title. -->
+      <h1 class="sr-only">Loops</h1>
       <div class="jam">
         <p id="jam-hint" class="jam-hint">Tap the tiles, or drag across them. It plays round and round, through four chords.</p>
         <div id="jam-board" class="jam-board" role="group" aria-label="The loop: eight steps across, seven notes high"></div>
@@ -552,6 +580,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
           </button>
           <div class="side">
+            <!-- The drawer of sounds for the instrument that is chosen, drawn as a drawer: its own, the other instruments', and those recorded (jam/mic.js). -->
+            <button type="button" id="jam-mic" class="quiet" aria-label="Sounds" title="Sounds" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.4"/><path d="M4 12h16M10 8.6h4M10 15.6h4"/></svg>
+            </button>
             <button type="button" id="jam-clear" class="quiet" aria-label="Clear this instrument" title="Clear this instrument">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7M10.3 10.5v5M13.7 10.5v5"/></svg>
             </button>
@@ -562,6 +594,22 @@
           <h2>Your beats</h2>
           <ul></ul>
         </section>
+        <!-- The drawer: a button to record a new sound, and under it the instrument's own sound, the other three
+             instruments', and every one recorded, each to be pressed into the instrument's place; a recorded one can be named, or deleted. What went wrong with the
+             microphone is said under the button that was tried. -->
+        <dialog id="jam-drawer" class="jam-drawer" aria-labelledby="jam-drawer-title">
+          <header>
+            <h2 id="jam-drawer-title">Sounds</h2>
+            <button type="button" id="jam-drawer-close" class="quiet round" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+          </header>
+          <button type="button" id="jam-record" class="record">
+            <svg class="mic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/></svg>
+            <svg class="stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.4" fill="currentColor"/></svg>
+            <span>Record</span>
+          </button>
+          <p id="jam-mic-error" class="message bad" role="alert"></p>
+          <ul id="jam-sounds" class="jam-sounds"></ul>
+        </dialog>
       </div>
     </main>
   </template>
@@ -739,6 +787,69 @@
           </section>
           <footer class="sheet-foot"><button type="button" id="taste-presets-close" class="go shut" aria-label="Back to the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></footer>
         </dialog>
+    </main>
+  </template>
+
+  <template id="screen-hello">
+    <!-- The introduction: Penny, shy, behind a mailbox; then up against the glass; then a portal. No words: see penny/hello.js. -->
+    <main class="hello">
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
+      <p id="hello-said" class="sr-only" role="status"></p>
+      <!-- the street, and the mailbox it hides behind -->
+      <svg class="hello-stage hello-far" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A quiet street, and a mailbox. Somebody small is hiding behind it.">
+        <rect class="h-sky" x="-2000" y="-2000" width="4200" height="2190"/>
+        <!-- (the street is drawn 20 lower than it stands: its horizon is at 168, the height of Penny's eyes, where the camera is) -->
+        <g transform="translate(0 -20)">
+          <circle class="h-sun" cx="52" cy="118" r="34"/>
+          <path class="h-hills" d="M-2000 190 V172 H-60 q40 -26 90 -10 q36 -24 78 -6 q40 -22 82 0 q30 -10 70 6 H2200 V190Z"/>
+          <rect class="h-ground" x="-2000" y="188" width="4200" height="2200"/>
+          <path class="h-path" d="M92 188 L20 420 H180 L108 188Z"/>
+          <g class="h-tufts"><path d="M34 214q3 -7 6 0M150 236q4 -9 8 0M170 204q2.5 -6 5 0M22 262q4 -9 8 0"/></g>
+        </g>
+        <g class="h-behind"></g>
+        <g transform="translate(0 -20)"><g class="h-box">
+          <ellipse class="shade" cx="140" cy="197" rx="17" ry="2.6"/>
+          <path class="legs" d="M131 189v8M149 189v8"/>
+          <path class="body" d="M126 191V163q0 -13 14 -13t14 13V191Z"/>
+          <path class="lid" d="M129 164q0 -10 11 -10t11 10"/>
+          <rect class="slot" x="131.5" y="166" width="17" height="3.6" rx="1.8"/>
+          <path class="mark" d="M135 174.5h10v6.5h-10zM135 174.5l5 3.6 5 -3.6"/>
+        </g></g>
+      </svg>
+      <!-- At first there is no street: Penny alone on plain ground, as large as life, going through what it can feel. -->
+      <div class="hello-plain" aria-hidden="true"></div>
+      <!-- the portal that opens behind it: between the street and Penny, so that it is hidden until Penny jumps back -->
+      <div class="hello-light" aria-hidden="true"></div>
+      <button type="button" id="hello-portal" class="portal" aria-label="Follow Penny through the portal" hidden></button>
+      <!-- Penny, and the glass between you. Penny's body is drawn afresh as it moves (penny/hello.js): its paper bends, and its corners curl. -->
+      <svg class="hello-stage hello-near" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g class="h-penny">
+          <ellipse class="shade" cx="0" cy="1.5" rx="27" ry="3"/>
+          <g class="act">
+            <g class="body"><g class="idle">
+              <path class="paper"/>
+              <path class="flap"/>
+              <g transform="translate(-90 -76.6)">
+                <circle class="warmth" cx="90" cy="54.5" r="9.5"/><circle class="seal" cx="90" cy="54.5" r="4.6"/>
+                <circle class="cheek" cx="71" cy="62.6" r="3.4"/><circle class="cheek" cx="109" cy="62.6" r="3.4"/>
+                <g class="eyes">
+                  <g class="eye"><ellipse class="ball" cx="78" cy="58.6" rx="2.4" ry="3"/><circle class="shine" cx="78.9" cy="57.3" r="0.8"/><path class="lid happy" d="M75.3 59.8q2.7 -3.8 5.4 0"/><path class="lid closed" d="M75.3 58.4q2.7 3 5.4 0"/></g>
+                  <g class="eye"><ellipse class="ball" cx="102" cy="58.6" rx="2.4" ry="3"/><circle class="shine" cx="102.9" cy="57.3" r="0.8"/><path class="lid happy" d="M99.3 59.8q2.7 -3.8 5.4 0"/><path class="lid closed" d="M99.3 58.4q2.7 3 5.4 0"/></g>
+                </g>
+                <path class="mouth m-smile" d="M86.5 65.6 q3.5 3 7 0"/>
+                <path class="mouth m-grin" d="M85.6 64.9 q4.4 5.4 8.8 0 z"/>
+                <path class="mouth m-wavy" d="M86.2 66.7 q1.9 -1.9 3.8 0 t3.8 0"/>
+                <path class="mouth m-frown" d="M87 67.5 q3 -2.4 6 0"/>
+                <circle class="mouth m-o" cx="90" cy="66.5" r="1.7"/>
+              </g>
+              <path class="fold"/><path class="fold"/><path class="fold"/><path class="fold"/>
+            </g></g>
+          </g>
+        </g>
+        <g class="h-glass"></g>
+      </svg>
+      <!-- Penny, to be pressed: over it while it stands there to be looked at, and gone once it has been -->
+      <button type="button" id="hello-penny" class="hello-tap" aria-label="Penny" hidden></button>
     </main>
   </template>
 

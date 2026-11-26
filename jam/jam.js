@@ -20,7 +20,7 @@
 // list is kept on the server (beats_get, beats_put, beats_drop) and a copy of
 // it on the device, so that it is there at once and when offline, and every
 // device of the same account has the same list. Each has a name that can be
-// changed. Sharing one hands over a link with the
+// changed, and its own button to share it. Sharing one hands over a link with the
 // whole beat written into it (jam/beat.js): whoever opens it finds it on their
 // own board, ready to play and to change, and nothing of theirs is lost by it.
 //
@@ -30,11 +30,30 @@
 // snare or a clap, a nod for a note on the beat, a jump when the chords come
 // round to the start, and a step to one side and back with each bar. Dot, if
 // Dot has been found, hops to the bells. It does not hum: the music is yours.
+// And it never hides anything there is to press: as the page is scrolled
+// under it, and as the list of beats grows, it comes only as far up as leaves
+// every button to be seen, and where that is nowhere it goes under the edge
+// until there is room again.
+//
+// The drawer of sounds. The drawer, beside the bin, opens on the sounds there
+// are for the instrument that is chosen: the instrument itself, the other
+// three (bells can be played in the bass's place, and so on), and every sound
+// that has been recorded, each with a name that can be changed. Recording
+// makes a new one each time and never takes the place of another
+// (jam/mic.js). Pressing one in the drawer puts it in that instrument's place
+// on the board: it is then what is played there, at the pitch of each row,
+// in tune with the chords if it has a note (jam/sample.js). The loop is quiet
+// while the microphone listens. The sounds belong to the profile, like the
+// saved beats: they are kept on the server and a copy on the device, so every
+// device of the same account has the same drawer. Which sound is in which
+// instrument's place is the device's own; a beat that is saved is its notes,
+// and one that is shared takes what is on the deck with it.
 //
 // The sound comes from the app's one sound engine (postmarks/sound.js), on its
 // clock, so the loop keeps exact time however busy the screen is.
 
-import { CHORDS, LAYERS, ROWS, STEPS, TEMPOS, createLoop, keyOf } from './engine.js';
+import { CHORDS, DECK, LAYERS, ROWS, STEPS, TEMPOS, createLoop, keyOf } from './engine.js';
+import { unpack } from './sample.js';
 import { randomLayer } from './make.js';
 import { load, myToken, save } from '/shared/identity.js';
 import { rpc } from '/shared/api.js';
@@ -43,36 +62,73 @@ import { go } from '/shared/nav.js';
 import { decode, encode, isEmpty } from './beat.js';
 import { claim as callPal } from '/penny/pal.js';
 import { hasDot } from '/penny/penny.js';
+import { oops } from '/shared/place.js';
+import { MOST_NAME, SILENT, addSound, dropSound, listen, renameSound, sounds, syncSounds } from './mic.js';
 
 const SAVE_KEY = 'jam:v1'; // the beat on the board
 const SAVED_KEY = 'jam:saved:v1'; // the beats kept: [{ name, code, at, auto, synced }]
+const SLOTS_KEY = 'jam:slots:v1'; // which recorded sound each instrument plays in its place: its id, or null for its own
+const MOST_SOUNDS = 24;
 const GONE_KEY = 'jam:gone:v1'; // beats deleted here that the server has still to be told of
 const MOST = 30;
-const nameOf = (kind, row) => kind.notes?.[row] ?? `Note ${ROWS - row} of ${ROWS}`;
+// What a row of an instrument's part is called. (`voice`: what is played in its place, if not itself: a recorded
+// sound, whose rows are heights of it, or another instrument, whose rows are that one's.)
+const nameOf = (kind, row, voice) => ((voice ? voice.lent : kind)?.notes?.[row]) || `Note ${ROWS - row} of ${ROWS}`;
+// One of the four instruments in another place of the deck: what is kept for that place ('kind:2' is the bass),
+// and what the loop is given to play there.
+const LENT = LAYERS.map((kind) => ({ lent: kind, name: kind.name }));
+const lentBy = (id) => LENT[/^kind:([0-3])$/.exec(id ?? '')?.[1]] ?? null;
+const SHARE = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg>';
+const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
 
-const empty = () => LAYERS.map(() => []);
+const empty = () => DECK.map(() => []);
 
 export function mount(root, life) {
   const $ = (id) => root.querySelector(`#${id}`);
-  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), save: $('jam-save'), share: $('jam-share'), note: $('jam-note'), saved: $('jam-saved') };
+  const el = { board: $('jam-board'), layers: $('jam-layers'), play: $('jam-play'), tempo: $('jam-tempo'), clear: $('jam-clear'), dice: $('jam-dice'), hint: $('jam-hint'), mic: $('jam-mic'), micError: $('jam-mic-error'), drawer: $('jam-drawer'), record: $('jam-record'), sounds: $('jam-sounds'), save: $('jam-save'), note: $('jam-note'), saved: $('jam-saved') };
   document.title = 'Loops · correspondence.lol';
 
   // --- What has been made: for each layer, the tiles that hold a note -----------
   const kept = load(SAVE_KEY);
   let notes = empty();
   let tempo = 1;
-  if (kept && kept.v === 1 && Array.isArray(kept.notes) && kept.notes.length === LAYERS.length) {
-    notes = kept.notes.map((layer) => (Array.isArray(layer) ? layer.filter((k) => Number.isInteger(k) && k >= 0 && k < STEPS * ROWS) : []));
+  if (kept && kept.v === 1 && Array.isArray(kept.notes) && kept.notes.length >= LAYERS.length) {
+    notes = notes.map((none, index) => (Array.isArray(kept.notes[index]) ? kept.notes[index].filter((k) => Number.isInteger(k) && k >= 0 && k < STEPS * ROWS) : none));
     if (TEMPOS[kept.tempo]) tempo = kept.tempo;
   }
   const sets = notes.map((layer) => new Set(layer));
   const keep = () => save(SAVE_KEY, { v: 1, tempo, notes: sets.map((set) => [...set]) });
   let layer = 0;
   let playing = false;
+  // Play is lit for a beat that has just arrived by a link, until it is played: it is there on the board, and silent.
+  let lit = false;
+  // The sounds recorded ({ id, name, rate, pcm, hz }), and the deck: for each of its eight places the sound that is
+  // in it (a recorded one's id, or 'kind:0' to 'kind:3' for one of the four instruments), or null. The first four
+  // places are the instruments', and one with no sound in it plays the instrument; the other four are there only
+  // while a sound (or a part written for one) is in them.
+  let made = [];
+  let slots = DECK.map((_, index) => load(SLOTS_KEY)?.[index] ?? null);
+  const voices = DECK.map(() => null);
+  let adding = -1; // the place a sound is being chosen for, from the + at the end of the deck
+  const onDeck = (index) => !DECK[index].extra || slots[index] !== null || sets[index].size > 0 || index === adding;
+  const free = () => DECK.findIndex((kind, index) => kind.extra && !onDeck(index));
+  let hearing = null; // while the microphone is listening: { stop }
 
   // --- Penny, who dances -----------------------------------------------------------------
-  const pal = callPal(life, { x: 0.74, height: 'low', mood: 'calm', dot: hasDot() });
-  life.setTimeout(() => { if (!playing) pal.settle('peek'); }, 600);
+  const [HOME, SIDE] = [0.74, 0.07]; // where it stands along the edge, and how far it steps to either side
+  const pal = callPal(life, { x: HOME, height: 'gone', mood: 'calm', dot: hasDot() }); // (it comes up once the page is laid out, where there is room)
+  // It comes right up to dance, and otherwise waits with its eyes over the edge; lower where either would hide
+  // something there is to press, and under the edge where there is no room for it at all. (It steps a little to
+  // either side with each bar: nothing is hidden anywhere along that.)
+  const stand = () => pal.clear(playing ? ['up', 'peek', 'low'] : ['peek', 'low'], [HOME - SIDE, HOME + SIDE]);
+  let standing = 0;
+  const standAgain = () => { // (once, when the page has been laid out again)
+    cancelAnimationFrame(standing);
+    standing = requestAnimationFrame(stand);
+  };
+  life.onEnd(() => cancelAnimationFrame(standing));
+  life.setTimeout(stand, 600);
+  for (const type of ['scroll', 'resize']) life.on(window, type, standAgain, { passive: true });
   const DRUMS = LAYERS.findIndex((kind) => kind.name === 'Drums');
   const BELLS = LAYERS.findIndex((kind) => kind.name === 'Bells');
   const has = (index, step, row) => sets[index].has(keyOf(step, row));
@@ -83,14 +139,14 @@ export function mount(root, life) {
     const kick = has(DRUMS, step, 6) || has(DRUMS, step, 5);
     const snare = has(DRUMS, step, 4) || has(DRUMS, step, 3);
     if (step === 0) {
-      pal.goTo(0.74 + (chord % 2 ? -0.07 : 0.07)); // a step to one side with each bar, and back with the next
+      pal.goTo(HOME + (chord % 2 ? -SIDE : SIDE)); // a step to one side with each bar, and back with the next
       if (chord === 0) pal.gesture('jump'); // the chords have come round
     }
     if (step === 0 && chord === 0) { /* the jump is the move */ }
     else if (kick) pal.gesture('hop');
     else if (snare) pal.gesture('wiggle');
     else if (step % 4 === 0) pal.gesture('hop'); // the beat itself, when no drum marks it
-    else if (step % 2 === 0 && LAYERS.some((kind, index) => index !== DRUMS && anyAt(index, step))) pal.gesture('nod');
+    else if (step % 2 === 0 && DECK.some((kind, index) => index !== DRUMS && anyAt(index, step))) pal.gesture('nod');
     if (anyAt(BELLS, step)) pal.gesture('hop', 'dot');
   }
 
@@ -113,9 +169,9 @@ export function mount(root, life) {
       pad.dataset.row = row;
       if (step % 4 === 0) pad.classList.add('beat'); // the start of each half of the loop
       // one small light for each of the other layers' notes on this tile
-      for (let other = 0; other < LAYERS.length; other++) {
+      for (let other = 0; other < DECK.length; other++) {
         const light = document.createElement('i');
-        light.style.setProperty('--c', LAYERS[other].colour);
+        light.style.setProperty('--c', DECK[other].colour);
         pad.append(light);
       }
       el.board.append(pad);
@@ -123,53 +179,79 @@ export function mount(root, life) {
     }
   }
 
-  LAYERS.forEach((kind, index) => {
+  DECK.forEach((kind, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'layer';
     button.setAttribute('role', 'radio');
     button.style.setProperty('--c', kind.colour);
-    button.innerHTML = `<span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true">${kind.icon}</svg></span><span class="name">${kind.name}</span><span class="count"></span>`;
+    button.innerHTML = `<span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"></svg></span><span class="name">${kind.name}</span><span class="sr-only"></span><span class="count"></span>`;
     button.addEventListener('click', () => {
       layer = index;
       render();
     });
     el.layers.append(button);
   });
+  // (and, while there is room on the deck, a place to put another sound)
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'layer more';
+  more.setAttribute('aria-label', 'Add a sound');
+  more.innerHTML = '<span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span><span class="name">Add</span>';
+  el.layers.append(more);
 
   function render() {
-    el.board.style.setProperty('--c', LAYERS[layer].colour);
+    if (!onDeck(layer)) layer = 0;
+    el.board.style.setProperty('--c', DECK[layer].colour);
     for (let key = 0; key < pads.length; key++) {
       const pad = pads[key];
       const on = sets[layer].has(key);
       pad.classList.toggle('on', on);
       const row = Number(pad.dataset.row);
-      pad.setAttribute('aria-label', `${nameOf(LAYERS[layer], row)}, step ${Number(pad.dataset.step) + 1}${on ? ', on' : ''}`);
+      pad.setAttribute('aria-label', `${nameOf(DECK[layer], row, voices[layer])}, step ${Number(pad.dataset.step) + 1}${on ? ', on' : ''}`);
       pad.setAttribute('aria-pressed', String(on));
-      for (let other = 0; other < LAYERS.length; other++) {
+      for (let other = 0; other < DECK.length; other++) {
         pad.children[other].hidden = other === layer || !sets[other].has(key);
       }
     }
-    [...el.layers.children].forEach((button, index) => {
+    more.hidden = free() < 0;
+    [...el.layers.children].slice(0, DECK.length).forEach((button, index) => {
+      button.hidden = !onDeck(index);
       button.setAttribute('aria-checked', String(index === layer));
       button.querySelector('.count').textContent = sets[index].size || '';
+      // (a place that plays your own sound wears the microphone; one that plays another instrument, that instrument's mark)
+      const lent = voices[index]?.lent ?? null;
+      const own = Boolean(voices[index]) && !lent;
+      const wears = own ? 'own' : lent ? lent.name : '';
+      if (button.dataset.wears !== wears) {
+        button.dataset.wears = wears;
+        button.dataset.own = own;
+        button.querySelector('svg').innerHTML = own ? MIC : (lent ?? DECK[index]).icon;
+        button.querySelector('.sr-only').textContent = own ? ', your sound' : '';
+      }
+      button.querySelector('.name').textContent = voices[index]?.name ?? (DECK[index].extra ? 'Empty' : DECK[index].name);
     });
+    el.mic.style.setProperty('--c', DECK[layer].colour);
+    el.mic.setAttribute('aria-pressed', String(Boolean(voices[layer])));
+    el.record.classList.toggle('hearing', Boolean(hearing));
+    el.record.querySelector('span').textContent = hearing ? 'Stop' : 'Record';
     const any = sets.some((set) => set.size > 0);
     el.hint.hidden = any;
     el.clear.disabled = sets[layer].size === 0;
     el.save.disabled = !any;
-    el.share.disabled = !any;
     el.tempo.textContent = `${TEMPOS[tempo]}`;
     el.tempo.setAttribute('aria-label', `Tempo, ${TEMPOS[tempo]} bpm`); // (what is written on it, and what it is: both said)
     el.play.setAttribute('aria-pressed', String(playing));
     el.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
     el.play.classList.toggle('playing', playing);
+    el.play.classList.toggle('lit', lit && !playing);
+    standAgain(); // (what is under Penny may have moved)
   }
 
   // --- Sound: the board, played round and round (jam/engine.js) -----------------------
-  const loop = createLoop(life, () => (playing ? { tempo, sets } : null));
+  const loop = createLoop(life, () => (playing ? { tempo, sets, voices } : null));
   let heard = 0; // the chord being heard now
-  const sound = (layerIndex, row) => loop.tap(layerIndex, row);
+  const sound = (layerIndex, row) => loop.tap(layerIndex, row, voices);
 
   // --- Sight: the step being heard lights up, and its notes jump -----------------------
   let shown = -1;
@@ -204,11 +286,12 @@ export function mount(root, life) {
   function setPlaying(on) {
     playing = on;
     if (on) {
+      lit = false;
       loop.rewind();
       heard = 0;
-      pal.rise().mood('dancing').look(null);
+      pal.mood('dancing').look(null);
     } else {
-      pal.mood('calm').goTo(0.74).settle('peek'); // the music has stopped: so has it
+      pal.mood('calm').goTo(HOME); // the music has stopped: so has it
     }
     render();
   }
@@ -305,6 +388,187 @@ export function mount(root, life) {
     if (!playing) setPlaying(true);
   });
 
+  // --- Sounds of your own: the drawer, and the microphone -----------------------------------
+  // Which sound each instrument plays: worked out again whenever the sounds or the choices change.
+  function fit() {
+    slots.forEach((id, index) => { voices[index] = made.find((one) => one.id === id) ?? lentBy(id); });
+    save(SLOTS_KEY, slots);
+    render();
+    showSounds();
+  }
+  // The drawer as the device has it, at once; and then as the server has it, whenever the screen opens, the app is
+  // come back to, and after a sound is recorded, named or deleted (jam/mic.js).
+  let syncingSounds = sounds().then((kept) => {
+    if (life.over) return;
+    made = [...kept, ...made];
+    fit();
+  });
+  const drawerSync = () => {
+    syncingSounds = syncingSounds.then(async () => {
+      const now = await syncSounds();
+      if (life.over || !now) return;
+      const was = made;
+      const looks = () => JSON.stringify([made.map((one) => [one.id, one.name]), slots]);
+      const before = looks();
+      // (the ones this page already has stay the very same things: one may be being named, or played)
+      made = now.map((one) => Object.assign(was.find((each) => each.id === one.id) ?? one, one));
+      for (const one of was) if (!one.synced && !made.includes(one)) made.push(one); // recorded since it asked
+      // (a sound that has gone, on another device, leaves the instruments it was played by)
+      slots = slots.map((id) => (was.some((one) => one.id === id) && !made.some((one) => one.id === id) ? null : id));
+      if (looks() !== before) fit(); // (left alone if nothing changed: a name may be being typed)
+    });
+    return syncingSounds;
+  };
+  drawerSync();
+  life.on(document, 'visibilitychange', () => { if (!document.hidden) drawerSync(); });
+  // Put a sound (or, with null, the instrument itself) in the chosen instrument's place, and hear it.
+  function swap(id) {
+    slots[layer] = id;
+    if (id === null && DECK[layer].extra) { // taken off the deck: its part goes with it, and so does its place
+      sets[layer].clear();
+      keep();
+      shut();
+      return;
+    }
+    fit();
+    showSaved();
+    if (!playing) sound(layer, 3);
+  }
+  // The drawer: the instrument itself (or, for a place that is no instrument's, nothing), then the other
+  // instruments, then every sound recorded, newest first. `one` is a recorded sound; or else `id` is what is kept
+  // for the place (null for its own) and `plays` the instrument that is, if any.
+  function showSounds() {
+    const kind = DECK[layer];
+    el.drawer.style.setProperty('--c', kind.colour);
+    const row = ({ one = null, id = one?.id ?? null, plays = null }) => {
+      const li = document.createElement('li');
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'tile';
+      tile.setAttribute('aria-pressed', String(id === slots[layer]));
+      tile.setAttribute('aria-label', one ? `Play ${one.name} here` : plays ? `Play ${plays.name} here` : 'Take this place off the deck');
+      tile.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${one ? MIC : plays ? plays.icon : '<path d="M7 12h10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'}</svg>`;
+      if (plays) tile.style.setProperty('--c', plays.colour); // (an instrument is known by its colour, whose place it is in)
+      tile.addEventListener('click', () => swap(id));
+      li.append(tile);
+      if (!one) {
+        const own = document.createElement('span');
+        own.className = 'own';
+        own.textContent = plays ? plays.name : 'None';
+        li.append(own);
+        return li;
+      }
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = one.name;
+      name.maxLength = MOST_NAME;
+      name.autocomplete = 'off';
+      name.enterKeyHint = 'done';
+      name.setAttribute('aria-label', 'Name of this sound');
+      name.addEventListener('change', () => {
+        one.name = name.value.trim() || one.name;
+        name.value = one.name;
+        renameSound(one, one.name).then(drawerSync);
+        tile.setAttribute('aria-label', `Play ${one.name} here`);
+        bin.setAttribute('aria-label', `Delete ${one.name}`);
+        render();
+      });
+      name.addEventListener('keydown', (event) => { if (event.key === 'Enter') name.blur(); });
+      const bin = document.createElement('button');
+      bin.type = 'button';
+      bin.className = 'quiet';
+      bin.setAttribute('aria-label', `Delete ${one.name}`);
+      bin.innerHTML = el.clear.querySelector('svg').outerHTML;
+      bin.addEventListener('click', async () => {
+        if (!(await ask(`Delete “${one.name}”?`, { yes: 'Delete', danger: true }))) return;
+        made = made.filter((each) => each !== one);
+        slots = slots.map((id) => (id === one.id ? null : id));
+        dropSound(one).then(drawerSync);
+        fit();
+      });
+      li.append(name, bin);
+      return li;
+    };
+    el.sounds.replaceChildren(
+      row({ plays: kind.extra ? null : kind }),
+      ...LAYERS.map((plays, index) => ({ plays, id: `kind:${index}` })).filter((each) => each.plays !== kind).map(row),
+      ...[...made].reverse().map((one) => row({ one })),
+    );
+  }
+  const openDrawer = () => {
+    oops(el.micError, '');
+    showSounds();
+    el.drawer.showModal();
+  };
+  el.mic.addEventListener('click', openDrawer);
+  more.addEventListener('click', () => {
+    adding = free();
+    if (adding < 0) return;
+    layer = adding;
+    render();
+    openDrawer();
+  });
+  // (shut at once, and not when the browser gets round to saying it has closed; Escape comes by that way)
+  const shut = () => {
+    hearing?.stop();
+    adding = -1; // (a place nothing was chosen for is not kept)
+    fit();
+    showSaved();
+    if (el.drawer.open) el.drawer.close();
+  };
+  $('jam-drawer-close').addEventListener('click', shut);
+  el.drawer.addEventListener('click', (event) => { if (event.target === el.drawer) shut(); }); // (a tap outside it)
+  el.drawer.addEventListener('close', shut);
+
+  // The microphone hears a new sound, which goes in the drawer and in the
+  // chosen instrument's place. The loop is quiet meanwhile (it would be heard
+  // too, and an iPhone turns everything down while it listens), and goes on
+  // afterwards with the new sound in it.
+  let asking = false; // the phone is asking whether the microphone may be used
+  async function record() {
+    const index = layer;
+    const was = playing;
+    oops(el.micError, '');
+    if (made.length >= MOST_SOUNDS) return oops(el.micError, 'The drawer is full.', { shake: el.record });
+    if (playing) setPlaying(false);
+    asking = true;
+    try {
+      hearing = await listen();
+    } catch (failure) {
+      oops(el.micError, failure.message, { shake: el.record });
+      if (was) setPlaying(true);
+      return;
+    } finally {
+      asking = false;
+    }
+    if (life.over || !el.drawer.open) hearing.stop();
+    render();
+    const heard = await hearing.heard;
+    hearing = null;
+    if (life.over) return;
+    if (heard) {
+      const taken = new Set(made.map((one) => one.name));
+      let n = 1;
+      while (taken.has(`Sound ${n}`)) n += 1;
+      const one = await addSound({ name: `Sound ${n}`, ...heard });
+      if (life.over) return;
+      made.push(one);
+      slots[index] = one.id;
+      fit();
+      drawerSync();
+      life.setTimeout(() => { if (!playing) sound(index, 3); }, 250); // heard back, once the phone has let go of the microphone
+    } else {
+      oops(el.micError, SILENT, { shake: el.record });
+      render();
+    }
+    if (was) setPlaying(true);
+  }
+  el.record.addEventListener('click', () => {
+    if (hearing) hearing.stop();
+    else if (!asking) record();
+  });
+  life.onEnd(() => hearing?.stop());
+
   // --- Keeping a beat, and passing one on ------------------------------------------------
   const now = () => ({ tempo, notes: sets.map((set) => [...set]) });
   const kept$ = () => (Array.isArray(load(SAVED_KEY)) ? load(SAVED_KEY).filter((beat) => beat && decode(beat.code)) : []);
@@ -364,9 +628,9 @@ export function mount(root, life) {
       save(SAVED_KEY, [{ name: 'Unsaved beat', code: encode(was), at: Date.now(), auto: true }, ...list.filter((one) => !one.auto)].slice(0, MOST));
     }
     tempo = beat.tempo;
-    beat.notes.forEach((tiles, index) => {
-      sets[index].clear();
-      for (const tile of tiles) sets[index].add(tile);
+    sets.forEach((set, index) => {
+      set.clear();
+      for (const tile of beat.notes[index] ?? []) set.add(tile);
     });
     keep();
     render();
@@ -376,20 +640,40 @@ export function mount(root, life) {
   function picture(beat) {
     const dots = [];
     beat.notes.forEach((tiles, index) => {
-      for (const tile of tiles) dots.push(`<rect x="${Math.floor(tile / ROWS) * 4 + 0.5}" y="${(tile % ROWS) * 4 + 0.5}" width="3" height="3" rx="0.8" fill="${LAYERS[index].colour}"/>`);
+      for (const tile of tiles) dots.push(`<rect x="${Math.floor(tile / ROWS) * 4 + 0.5}" y="${(tile % ROWS) * 4 + 0.5}" width="3" height="3" rx="0.8" fill="${DECK[index].colour}"/>`);
     });
     return `<svg viewBox="0 0 ${STEPS * 4} ${ROWS * 4}" aria-hidden="true">${dots.join('')}</svg>`;
   }
   const linkTo = (code) => `${location.origin}/jam/?b=${code}`;
+  // Sharing hands over a link with the beat written into it. If there are recorded sounds on the deck, a copy of
+  // them is left on the server for whoever opens the link (share_put), and the link says where. And if any place
+  // plays another of the instruments, the link says which, a letter for each place of the deck (o=--1-----: the
+  // keys, in the bass's place).
   async function share(code, name) {
-    const url = linkTo(code);
+    let url = linkTo(code);
+    const deck = slots.map((id) => (made.some((one) => one.id === id) ? id : null));
+    let without = false;
+    if (deck.some(Boolean)) {
+      try {
+        await drawerSync(); // (they are on the server before they are shared from it)
+        const id = await rpc('share_put', { p_token: myToken(), p_slots: deck });
+        if (id) url += `&s=${id}`;
+        else without = true;
+      } catch {
+        without = true;
+      }
+    }
+    const lent = slots.map((id) => (lentBy(id) ? id.slice(-1) : '-')).join('');
+    if (/\d/.test(lent)) url += `&o=${lent}`;
+    const told = without ? 'Shared without your sounds.' : '';
     try {
       if (navigator.share) {
         await navigator.share({ title: name ? `${name}: a beat` : 'A beat', text: 'Listen to this beat I made on correspondence.lol', url });
+        if (told) say(told);
         return;
       }
       await navigator.clipboard.writeText(url);
-      say('Link copied. Anyone who opens it gets this beat.');
+      say(without ? 'Link copied, without your sounds.' : 'Link copied. Anyone who opens it gets this beat.');
     } catch (error) {
       if (error?.name !== 'AbortError') prompt('Copy this link to share the beat', url);
     }
@@ -421,6 +705,7 @@ export function mount(root, life) {
         const to = name.value.trim() || one.name;
         name.value = to;
         save(SAVED_KEY, kept$().map((each) => (each.code === one.code ? { ...each, name: to, auto: false, synced: false } : each)));
+        for (const [button, does] of [[open, 'Play'], [send, 'Share'], [bin, 'Delete']]) button.setAttribute('aria-label', `${does} ${to}`); // (said by its new name)
         sync();
       });
       name.addEventListener('keydown', (event) => { if (event.key === 'Enter') name.blur(); });
@@ -428,7 +713,7 @@ export function mount(root, life) {
       send.type = 'button';
       send.className = 'quiet';
       send.setAttribute('aria-label', `Share ${one.name}`);
-      send.innerHTML = el.share.querySelector('svg').outerHTML;
+      send.innerHTML = SHARE;
       send.addEventListener('click', () => share(one.code, kept$().find((each) => each.code === one.code)?.name));
       const bin = document.createElement('button');
       bin.type = 'button';
@@ -446,6 +731,7 @@ export function mount(root, life) {
       li.append(open, name, send, bin);
       return li;
     }));
+    standAgain(); // (the list may have grown under Penny)
   }
   $('jam-lab').addEventListener('click', () => go('/jam/?taste')); // the radio (jam/taste.js)
   el.save.addEventListener('click', () => {
@@ -467,9 +753,6 @@ export function mount(root, life) {
     showSaved();
     sync();
   });
-  el.share.addEventListener('click', () => {
-    if (!isEmpty(now())) share(encode(now()));
-  });
   // (which of the saved beats is on the board is marked: kept up to date as the board changes)
   el.board.addEventListener('pointerup', () => life.setTimeout(showSaved, 0));
   for (const control of [el.dice, el.clear, el.tempo]) control.addEventListener('click', () => life.setTimeout(showSaved, 0));
@@ -478,12 +761,49 @@ export function mount(root, life) {
   // address goes back to plain /jam/ so that a reload does not bring it back
   // over whatever has been made of it since.
   const given = new URLSearchParams(location.search).get('b');
+  const arrived = new URLSearchParams(location.search).get('s');
+  const arrivedWith = new URLSearchParams(location.search).get('o');
   if (given !== null) {
     const beat = decode(given);
     history.replaceState(null, '', '/jam/');
     if (beat && !isEmpty(beat)) {
       adopt(beat);
       say('A beat that was shared with you. Press play, and make it yours.');
+      lit = true;
+      // The instruments that were in other places of its deck, if any were: the deck is as it was shared.
+      const lent = arrivedWith;
+      if (/^[0-3-]{8}$/.test(lent ?? '')) {
+        slots = [...lent].map((letter, index) => (letter === '-' || Number(letter) === index ? null : `kind:${letter}`));
+        fit();
+      }
+      // Its sounds, if it was shared with any: they go in the drawer, and on the deck where they were.
+      const theirs = arrived;
+      if (/^[0-9a-f]{20}$/.test(theirs ?? '')) {
+        syncingSounds = syncingSounds.then(async () => {
+          let given$;
+          try {
+            given$ = await rpc('share_get', { p_id: theirs });
+          } catch {
+            return;
+          }
+          if (life.over || !Array.isArray(given$) || given$.length === 0) return;
+          slots = slots.map((id) => (lentBy(id) ? id : null)); // (the instruments it came with stay where they are)
+          for (const one of given$) {
+            const pcm = unpack(one.pcm);
+            if (!pcm || !(one.slot >= 0 && one.slot < DECK.length)) continue;
+            let mine = made.find((each) => each.id === one.id);
+            if (!mine && made.length < MOST_SOUNDS) {
+              mine = await addSound({ name: String(one.name).slice(0, MOST_NAME), rate: one.rate, hz: one.hz > 0 ? one.hz : null, pcm }, one.id);
+              made.push(mine);
+            }
+            if (mine) slots[one.slot] = mine.id;
+          }
+          if (life.over) return;
+          fit();
+          showSaved();
+        });
+        drawerSync();
+      }
     } else {
       say('That link did not have a beat in it.');
     }

@@ -665,9 +665,12 @@ input.code-input::placeholder { letter-spacing: 0.12em; opacity: 0.45; }
 
 /* the account code, asked for from the profile editor */
 dialog.profile .sync { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); display: flex; flex-direction: column; align-items: center; gap: 0.4rem; font-family: system-ui, sans-serif; font-size: 0.875rem; color: var(--muted); }
-dialog.profile .sync .link { background: none; padding: 0.2rem 0.4rem; color: var(--ink); font-size: 0.9375rem; text-decoration: underline; text-underline-offset: 0.2em; }
+dialog.profile .sync .link { min-height: 2.75rem; background: none; padding: 0.2rem 0.4rem; color: var(--ink); font-size: 0.9375rem; text-decoration: underline; text-underline-offset: 0.2em; }
 dialog.profile .sync .code { font-size: 1.5rem; }
 dialog.profile .sync p { margin: 0; }
+dialog.profile .sync[hidden] { display: none; }
+/* starting the story over: quieter than the rest, at the very foot */
+dialog.profile .story-again .link { color: var(--muted); font-size: 0.875rem; }
 
 /* a switch in the profile menu */
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); font-family: system-ui, sans-serif; font-size: 1rem; color: var(--ink); text-align: left; cursor: pointer; }
@@ -953,7 +956,7 @@ html, body { overflow-x: clip; }
 /* a choice of a few in the profile menu (light, dark, or whatever the device says) */
 .setting.choice { cursor: default; }
 .segments { display: inline-flex; padding: 0.18rem; gap: 0.15rem; border-radius: 0.8rem; background: color-mix(in srgb, var(--muted) 22%, transparent); }
-.segments button { padding: 0.38rem 0.75rem; border-radius: 0.62rem; background: none; color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; }
+.segments button { min-height: 2.75rem; padding: 0.38rem 0.75rem; border-radius: 0.62rem; background: none; color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; }
 .segments button[aria-checked="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.18); }
 
 /* --- A small menu that drops from a button in the top bar ------------------------- */
@@ -1104,3 +1107,46 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 }
 @keyframes feed-go { 0%, 100% { transform: none; } 50% { transform: translateX(0.18rem); } }
 @keyframes feed-pip { from { transform: scale(0); } to { transform: none; } }
+
+/* --- Still being built: a stamp in the top left corner of the home page --------
+   Opposite the face, at the same height, in the room left of the logo and
+   above the title. On it, a traffic cone asleep (it breathes, and a z drifts
+   up now and then) and the words. Nothing to press. */
+:root { --stamp: color-mix(in srgb, var(--paper), #ffffff 55%); }
+:root[data-theme="dark"] { --stamp: color-mix(in srgb, var(--paper), var(--ink) 13%); }
+main:has(> .building) { position: relative; }
+.building {
+  --r: 3px;
+  position: absolute; z-index: 1; margin: 0;
+  left: calc(0.875rem + 3px);
+  top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem));
+  width: 7rem; height: 5rem; padding: calc(var(--r) * 1.6);
+  background: var(--stamp);
+  /* perforated: holes punched all round by a mask, the middle kept whole */
+  -webkit-mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / calc(var(--r) * 2.8) calc(var(--r) * 2.8), linear-gradient(#000 0 0) content-box;
+          mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / calc(var(--r) * 2.8) calc(var(--r) * 2.8), linear-gradient(#000 0 0) content-box;
+  filter: drop-shadow(0 1px 0 var(--line));
+  transform: rotate(-4deg);
+}
+.building::before { content: ""; position: absolute; inset: calc(var(--r) * 1.6); border: 1px solid var(--line); border-radius: 3px; pointer-events: none; }
+.building { display: grid; grid-template-columns: 2.4rem 1fr; align-items: center; gap: 0.15rem; }
+.building svg { display: block; width: 100%; height: 3.4rem; overflow: visible; }
+.building-words {
+  font: italic 0.6875rem/1.15 Georgia, "Iowan Old Style", serif;
+  color: var(--muted); text-align: left; padding-right: 0.2rem;
+}
+.building .cone { transform-box: fill-box; transform-origin: center bottom; }
+.building .cone-body { fill: var(--accent); opacity: 0.9; }
+.building .cone-stripes { stroke: var(--stamp); stroke-width: 6.5; }
+.building .cone-eyes { stroke: var(--stamp); stroke-width: 3.6; fill: none; stroke-linecap: round; }
+.building .cone-cheeks { stroke: #f3b7a6; stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
+.building .cone-foot { fill: var(--ink); opacity: 0.8; }
+.building .z { font: italic 13px Georgia, serif; fill: var(--muted); opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .building .cone { animation: cone-breathe 5s ease-in-out infinite; }
+  .building .z { animation: cone-z 6s ease-out infinite; }
+  .building .z.two { animation-delay: 2s; font-size: 10px; }
+  .building .z.three { animation-delay: 4s; font-size: 8px; }
+}
+@keyframes cone-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.04, 0.96); } }
+@keyframes cone-z { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translate(10px, -22px); } }

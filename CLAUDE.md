@@ -13,8 +13,10 @@ are made.
   rules at the top of `tests/browser/mini.e2e.cjs`. Keep it up: a new screen,
   or a new state of one (a sheet, a list that can grow, a step of a lesson),
   gets a test screen in `states()` in the same change that adds it.
-- Before shipping a change to the interface, run it on every phone too:
-  `PHONES=all npm run e2e:mini`.
+- Before shipping a change to the interface, run it on the largest phone too:
+  `PHONES=all npm run e2e:mini`, which is the mini in Safari and installed,
+  and the Pro Max installed (the owner's choice, 26 November 2026). Any other
+  can be asked for by name (`PHONES=pro-app`).
 
 ## Look and words
 
@@ -25,30 +27,22 @@ are made.
   The story may turn from soothing to wrestling with the dark (README,
   "Penny"); that is the writing's choice, made on purpose in a scene, never a
   screen that happens to be harsh.
-- No text descriptions, as a rule. Everything on a screen says what it is by
-  its form (an icon, a shape, a mark, a state of the drawing, a behaviour), and
-  labels are kept to the fewest. Labels, placeholders, hints and the words on
-  buttons are descriptions too; the words a screen shows are its content
-  (names, messages, a code, a phrase). What a description said stays for
-  screen readers (`aria-label`, `.sr-only`). An error is a short line of its
-  words beside what was tried, for as long as it stands, with a gentle shake
-  of what was tried, in `role="alert"`; never behind a mark to press (the
-  owner's choice, 25 November 2026). Prefer taking a thing away to swapping
-  its word for a new mark.
-- The one exception the owner has given is Penny's Radio as an exhibit: its
-  label and its reading are words, set as a museum sets them. The second is a
-  sheet that asks before something that cannot be undone ("Leave this room?",
-  "Delete this game?"): its question and its buttons are words (25 November
-  2026). The others the owner has given (25 November 2026): the question
-  at a pass phrase's desk ("What message would you like to deliver?"); the
-  words Rename and Leave in a room's options; and the lines of the sheet that
-  says what is particular to a game together; and the thanks on the fourth bar
-  of energy filled ("Speedy! Thanks for being an early tester. We're working
-  on your prize 🤍"). Any other place where only words will do is the owner's to allow.
+- Few words. Words are allowed on a screen (the owner's choice, 26 November
+  2026, in place of the rule against them), and kept to the fewest: a short
+  label, a short line. No paragraphs, no heavy instructions, no descriptions
+  of what a screen already shows by its form (an icon, a shape, a mark, a
+  state of the drawing, a behaviour). Where a form says it, prefer the form;
+  where a word or two says it better, use them. What is not written stays
+  for screen readers (`aria-label`, `.sr-only`).
+- An error is a short line of its words beside what was tried, for as long as
+  it stands, with a gentle shake of what was tried, in `role="alert"`; never
+  behind a mark to press (the owner's choice, 25 November 2026).
 - An error line takes its own room: what is below it moves down for it, and
   nothing above it moves (allowed by the owner, 25 November 2026).
-- Screens changed before these rules still carry words; each is brought to
-  them when it is next worked on, not left as it is.
+- Screens made under the old rule against words say things by form alone, and
+  some checks hold them to that; they are not rewritten for the sake of it. A
+  word is added where a screen is next worked on and is unclear without it,
+  and the check is changed with it.
 
 ## Every pull request
 

@@ -481,19 +481,84 @@ async function main() {
       const clear = await page.evaluate(() => document.querySelector('.pal-penny').getBoundingClientRect().left - document.querySelector('#portal').getBoundingClientRect().right);
       assert.ok(clear >= 0, `Penny stands over the portal it is showing, by ${-clear}px`);
       assert.deepEqual((await words('.pal')).filter((text) => text !== '♥'), [], 'nothing written in Penny\'s layer');
+      // through it: the story, from the beginning
       await page.locator('#portal').click({ force: true });
-      await page.waitForURL(/\?walk/);
-      await sleep(2500);
-      assert.equal((await pal()).height, 'face');
+      await page.waitForURL(/\?hello/);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      await sleep(1200);
+      assert.equal((await pal()).height, 'gone', 'Penny is in the scene, not standing at the edge');
       // (the portal was pressed while Penny was still walking over to it: that walk must not carry on here)
       assert.equal(await page.evaluate(() => document.querySelector('.pal-penny').classList.contains('walking')), false, 'not still walking');
-      assert.deepEqual((await words('main.walk')).filter((text) => text !== '×'), [], 'no words on the map');
+      assert.deepEqual(await words('main.hello'), [], 'no words in the introduction');
       await page.locator('.penny-back').click();
       await page.waitForURL((url) => url.search === '');
       await sleep(900);
       assert.notEqual((await pal()).height, 'gone', 'and Penny is at home again');
     }),
 
+    check('play: the story comes first for everybody, from its beginning the first time and then from wherever it was left, until the first places have been walked, whatever has been played already; then a board, and the portal always goes back to the beginning', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 5, spent: 0, boards: [] } } }, async (page) => {
+      const store = (values) => page.evaluate((all) => { for (const [key, value] of Object.entries(all)) localStorage.setItem(key, JSON.stringify(value)); }, values);
+      const home = async () => {
+        await page.goto(`${origin}/`);
+        await page.waitForSelector('#play:not([hidden])');
+      };
+      const playGoes = async () => page.locator('#play').getAttribute('href');
+      // the first time: the beginning
+      await home();
+      assert.equal(await playGoes(), '/?hello');
+      await page.locator('#play').click();
+      await page.waitForURL(/\?hello/);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      // still the beginning, if that is as far as it got
+      await home();
+      assert.equal(await playGoes(), '/?hello');
+      // through the introduction's portal to scene one, and left there: play goes on from scene one
+      await page.goto(`${origin}/?hello&at=portal`);
+      await page.waitForSelector('#hello-portal:not([hidden]):not(:disabled)', { timeout: 15000 });
+      await page.locator('#hello-portal').click({ force: true });
+      await page.waitForURL(/\?office/);
+      await page.waitForSelector('.screen-office .office-stage');
+      await home();
+      assert.equal(await playGoes(), '/?office', 'play goes on from where the story was left');
+      // the portal, though, is always the beginning
+      assert.equal(await page.locator('#portal').getAttribute('href'), '/?hello');
+      // and from scene two, and from the walk: on from there
+      await page.goto(`${origin}/?slow`);
+      await page.waitForSelector('.slow-keep');
+      await home();
+      assert.equal(await playGoes(), '/?slow');
+      await page.locator('#play').click();
+      await page.waitForURL(/\?slow/);
+      await page.goto(`${origin}/?walk`);
+      await page.waitForSelector('#walk-board .cell');
+      await home();
+      assert.equal(await playGoes(), '/?walk');
+      // a scene seen again from the beginning does not take play back with it
+      await page.goto(`${origin}/?office`);
+      await page.waitForSelector('.office-stage');
+      await home();
+      assert.equal(await playGoes(), '/?walk', 'seeing an earlier scene again does not lose the place');
+      // left part of the way along the walk: the walk again, at the place that had been reached
+      await store({ 'penny:place:v1': 2 });
+      await home();
+      assert.equal(await playGoes(), '/?walk', 'not walked yet: play is still the walk');
+      await page.locator('#play').click();
+      await page.waitForURL(/\?walk/);
+      await page.waitForFunction(() => document.querySelectorAll('#walk-board .cell').length > 1);
+      // walked: a board
+      await store({ 'penny:walked:v1': true });
+      await home();
+      await page.locator('#play').click();
+      await page.waitForURL(/\/postmarks\/$/);
+      await page.waitForSelector('#board .cell');
+      // and from then on the story is reached by the portal, from its beginning
+      await home();
+      assert.equal(await playGoes(), '/postmarks/');
+      await page.waitForFunction(() => !document.querySelector('#splash')); // (what the app opens under has cleared)
+      await page.locator('#portal').click({ force: true });
+      await page.waitForURL(/\?hello/);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+    }),
     check('the first quarter, start to finish, by touch', {}, async (page, h) => {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
@@ -603,6 +668,162 @@ async function main() {
       assert.equal((await h.pal()).alone, false, 'and Dot with it');
     }),
 
+    check('the introduction: Penny hides behind the mailbox and looks out; comes up the street, shy of a touch; fills the glass, wider than the screen, its eyes on a finger; a portal opens behind it, it jumps back and then in; and the portal, which could not be pressed before, leads on; not a word', {}, async (page, h) => {
+      const it = () => page.evaluate(() => {
+        const penny = document.querySelector('.h-penny');
+        const at = penny.querySelector('.paper').getBoundingClientRect();
+        return { behind: Boolean(penny.closest('.h-behind')), wide: at.width / innerWidth, left: at.left, right: at.right, mood: penny.dataset.mood, lookX: Number(penny.style.getPropertyValue('--look-x')), gone: penny.classList.contains('gone') };
+      });
+      const said = (text, timeout = 30000) => page.waitForFunction((want) => document.querySelector('#hello-said')?.textContent.includes(want), text, { timeout });
+      await page.goto(`${origin}/?hello`);
+      // first, alone and large in the middle of the screen, until it is touched
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      await sleep(600);
+      assert.deepEqual(await h.words('main.hello'), [], 'no words');
+      let now = await it();
+      assert.ok(!now.behind && now.wide > 0.5 && now.wide < 0.75, `at first it is large: ${now.wide.toFixed(2)} of the screen wide`);
+      assert.ok(Math.abs((now.left + now.right) / 2 - PHONE.width / 2) < 4, 'and in the middle');
+      // touched: knocked back down the street, and it hides
+      await page.locator('#hello-penny').click();
+      await said('hides behind a mailbox');
+      now = await it();
+      assert.ok(now.behind && now.wide < 0.2, 'small, behind the mailbox');
+      assert.equal(await page.locator('#hello-portal').isHidden(), true);
+      // it looks out: part of it shows beside the mailbox
+      await said('looks out');
+      const box = await page.locator('.h-box .body').boundingBox();
+      now = await it();
+      assert.ok(now.left < box.x - 2, 'something of Penny shows beside the mailbox');
+      assert.ok(now.right > box.x, 'and the rest is behind it');
+      // out, and up the street; touched on the way, it starts and goes back, and comes on again
+      await said('comes out');
+      await sleep(1700);
+      const before = (await it()).wide;
+      await page.mouse.click(200, 200);
+      await said('goes back a step');
+      await sleep(600);
+      assert.ok((await it()).wide <= before + 0.01, 'a touch did not send it back');
+      // at the glass: wider than the screen, and its eyes go to a finger
+      await said('bigger than the screen');
+      await page.waitForSelector('.h-penny.pressed');
+      await sleep(400);
+      now = await it();
+      assert.ok(now.wide > 1.2, `at the glass Penny is ${now.wide.toFixed(2)} of the screen wide`);
+      assert.ok(now.left < 0 && now.right > PHONE.width, 'it runs off both sides of the screen');
+      // (once it has looked you over and tapped: from then its eyes are yours, and it stays while there is a finger to follow)
+      await page.waitForSelector('.hello[data-watching] .h-penny[data-mood="glad"]', { timeout: 20000 });
+      const looks = (side) => page.waitForFunction((want) => Math.sign(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) === want && Math.abs(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) > 0.5, side, { timeout: 4000 });
+      await page.mouse.move(20, 300);
+      await page.mouse.move(30, 300);
+      await looks(-1); // its eyes follow to the left
+      await page.mouse.move(370, 300);
+      await looks(1); // and to the right
+      // the portal: there, but behind Penny and not to be pressed, until Penny has gone through
+      await said('A portal opens');
+      assert.equal(await page.locator('#hello-portal').isDisabled(), true);
+      const covered = await page.evaluate(() => { const p = document.querySelector('#hello-portal').getBoundingClientRect(); const body = document.querySelector('.h-penny .paper').getBoundingClientRect(); return p.left > body.left && p.right < body.right && p.top > body.top && p.bottom < body.bottom; });
+      assert.ok(covered, 'the portal opens behind Penny: Penny hides it');
+      await said('there it is');
+      await sleep(700);
+      now = await it();
+      assert.ok(now.left >= 0 && now.wide < 0.6, 'jumped back: small again, and wholly on the screen');
+      const clear = await page.evaluate(() => { const p = document.querySelector('#hello-portal').getBoundingClientRect(); const body = document.querySelector('.h-penny .paper').getBoundingClientRect(); return body.right < p.left + 4 || body.top > p.bottom; });
+      assert.ok(clear, 'and the portal is revealed');
+      await said('jumps in');
+      assert.equal((await it()).gone, true);
+      assert.equal(await page.locator('#hello-portal').isDisabled(), false);
+      assert.deepEqual(await h.words('main.hello'), []);
+      await page.locator('#hello-portal').click({ force: true }); // (it breathes: it is never quite still)
+      await page.waitForURL(/\?office/);
+    }),
+
+    check('the introduction, at first: Penny alone, going through one feeling after another, its face, its eyes and its paper with each, until it is touched; one feeling can be held; and by keyboard, Penny can be pressed', {}, async (page) => {
+      const face = () => page.evaluate(() => { const it = document.querySelector('.h-penny'); return `${it.dataset.mood} ${it.dataset.eyes} ${it.dataset.mouth}`; });
+      await page.goto(`${origin}/?hello`);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      const faces = new Set();
+      const paper = new Set();
+      for (let i = 0; i < 40; i++) {
+        faces.add(await face());
+        paper.add(await page.evaluate(() => document.querySelector('.h-penny .paper').getAttribute('d')));
+        await sleep(500);
+      }
+      assert.ok(faces.size >= 6, `only ${faces.size} feelings: ${[...faces].join(', ')}`);
+      for (const one of ['happy', 'closed', 'half']) assert.ok([...faces].some((f) => f.includes(one)), `its eyes never ${one}`);
+      assert.ok(paper.size > 10, 'its paper never changed shape');
+      assert.ok(/\?hello/.test(page.url()) && await page.locator('.hello.in-street').count() === 0, 'nothing happens until it is touched');
+      // one feeling, held
+      await page.goto(`${origin}/?hello&emote=sad`);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      for (let i = 0; i < 6; i++) {
+        await sleep(800);
+        assert.equal(await face(), 'sad half frown');
+      }
+      // and by keyboard
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-penny');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.hello.in-street');
+      await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('hides behind a mailbox'), null, { timeout: 10000 });
+    }),
+
+    check('the introduction: Penny walks, it does not slide or swell: it comes nearer a step at a time, still between steps, and nearer is always bigger and lower together, on the street', {}, async (page) => {
+      await page.goto(`${origin}/?hello`);
+      await page.locator('#hello-penny').click();
+      await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('comes out'), null, { timeout: 30000 });
+      // where it stands, as the page draws it, sampled through the first stretches up the street (asked of the page: not timed from here)
+      const seen = await page.evaluate(() => new Promise((done) => {
+        const out = [];
+        const started = performance.now();
+        const take = () => {
+          const at = document.querySelector('.h-penny').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/).slice(1).map(Number);
+          out.push(at);
+          if (performance.now() - started < 6000) requestAnimationFrame(take); else done(out);
+        };
+        requestAnimationFrame(take);
+      }));
+      const [, , first] = seen[0];
+      const [, , lastS] = seen.at(-1);
+      assert.ok(lastS > first * 1.3, `it came no nearer: from ${first} to ${lastS}`);
+      // on the street: it stands where its size says (the horizon at 168, its eyes 15.4 of its units above the ground)
+      for (const [, y, scale] of seen) assert.ok(Math.abs(y - (168 + 15.4 * scale)) < 0.1, `off the street: at ${y} for a size of ${scale}`);
+      // still between steps: runs of frames where it does not move at all, and more than one of them
+      let stills = 0;
+      let run = 0;
+      for (let i = 1; i < seen.length; i++) {
+        const same = seen[i][0] === seen[i - 1][0] && seen[i][2] === seen[i - 1][2];
+        run = same ? run + 1 : 0;
+        if (run === 3) stills += 1;
+      }
+      assert.ok(stills >= 3, `it slid: only ${stills} moments of standing still in six seconds of coming nearer`);
+    }),
+
+    check('the introduction, the other ways up the street, with less motion asked for: each gets to the glass and through the portal', { reducedMotion: 'reduce' }, async (page) => {
+      for (const [gait, walk] of [['zigzag', ''], ['edges', '&walk=rock'], ['tiptoe', '&walk=hop']]) {
+        await page.goto(`${origin}/?hello&gait=${gait}${walk}`);
+        await page.locator('#hello-penny').click();
+        await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('jumps in'), null, { timeout: 20000 });
+        assert.equal(await page.locator('.hello').getAttribute('data-gait'), gait);
+        assert.equal(await page.locator('#hello-portal').isDisabled(), false);
+      }
+      // (round from wherever the keys last were: Penny, pressed and gone)
+      for (let n = 0; n < 4 && await page.evaluate(() => document.activeElement.id) !== 'hello-portal'; n++) await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-portal', 'the portal can be reached by keyboard');
+      await page.keyboard.press('Enter');
+      await page.waitForURL(/\?office/);
+    }),
+
+    check('back, pressed while the next screen is still on its way, goes back: the screen that is up is the one the address names', {}, async (page) => {
+      await page.goto(`${origin}/?walk`);
+      await page.waitForSelector('#walk-board .cell');
+      // the way home is pressed, and back at once, before the home page has been fetched
+      await page.evaluate(() => { document.querySelector('.penny-back').click(); history.back(); });
+      await sleep(3000); // (the home page arrives, and the walk comes back over it)
+      assert.ok(/\?walk/.test(page.url()));
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#screens .screen')].map((screen) => screen.className.match(/screen-\w+/)[0])), ['screen-walk']);
+    }),
+
     check('walked again afterwards: Dot is there from the start and is not found twice', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:place:v1': 4 } }, async (page, h) => {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
@@ -634,13 +855,45 @@ async function main() {
       await page.waitForURL(/\/postmarks\//);
     }),
 
-    check('after the walk: a tap on Penny at rest plays the film from its first scene, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {
+    check('the story started over, from the profile: asked first; everything the story and its walkthroughs kept is forgotten, and energy with it, and what was made stays; and play begins at the beginning again', { storage: { ...ACCOUNT, 'penny:walked:v1': true, 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:story:v1': 'walk', 'tags:found:v1': ['night'], 'radio:taught:v1': true, 'radio:story:v1': 'told', 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 300, spent: 0, boards: [] }, 'correspondence:meadow:v1': 'off', 'correspondence:thanks:v1': true, 'jam:saved:v1': [{ name: 'Morning', code: 'x', at: 1 }], 'correspondence:theme:v1': 'dark' } }, async (page) => {
+      const stored = (key) => page.evaluate((k) => localStorage.getItem(k), key);
+      const STORY = ['penny:walked:v1', 'penny:place:v1', 'penny:dot:v1', 'penny:sound:v1', 'penny:story:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1', 'correspondence:energy:v1', 'correspondence:meadow:v1', 'correspondence:thanks:v1'];
+      const KEPT = ['jam:saved:v1', 'correspondence:theme:v1', 'correspondence:token:v1'];
+      await page.goto(`${origin}/?home`);
+      await page.waitForSelector('#play:not([hidden])');
+      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/');
+      await page.waitForFunction(() => !document.querySelector('#splash'));
+      await page.locator('#me-edit').click();
+      await page.waitForSelector('dialog.profile[open] #story-again');
+      // kept, if the answer is no
+      await page.locator('#story-again').click();
+      await page.waitForSelector('dialog.ask[open]');
+      await page.locator('dialog.ask[open] button', { hasText: 'Keep it' }).click();
+      await sleep(400);
+      for (const key of STORY) assert.notEqual(await stored(key), null, `${key} was forgotten on a no`);
+      // and started over on a yes
+      await page.locator('#story-again').click();
+      await page.waitForSelector('dialog.ask[open]');
+      await Promise.all([page.waitForEvent('load'), page.locator('dialog.ask[open] button', { hasText: 'Start over' }).click()]); // (the app is opened afresh)
+      await page.waitForSelector('#play:not([hidden])');
+      for (const key of STORY) assert.equal(await stored(key), null, `${key} was not forgotten`);
+      for (const key of KEPT) assert.notEqual(await stored(key), null, `${key} was lost`);
+      assert.equal(await page.locator('#play').getAttribute('href'), '/?hello', 'play begins the story again');
+      assert.equal(await page.locator('#meadow').isDisabled(), true, 'energy begins again: the meadow is to be earned again');
+      // with nothing of the story kept, there is nothing to start over
+      await page.waitForFunction(() => !document.querySelector('#splash'));
+      await page.locator('#me-edit').click();
+      await page.waitForSelector('dialog.profile[open]');
+      assert.equal(await page.locator('#story-again').isVisible(), false);
+    }),
+
+    check('after the walk: a tap on Penny at rest plays the story from its beginning, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {
       await page.goto(origin);
       await h.until('pleading', 12000); // once, soon after arriving
       await h.until('calm', 15000);
       await sleep(600);
       await page.locator('.pal-penny .paper').click({ force: true });
-      await page.waitForURL(/\?office/, { timeout: 5000 });
+      await page.waitForURL(/\?hello/, { timeout: 5000 });
       await sleep(800);
       await page.locator('.penny-back').click();
       await page.waitForURL((url) => url.search === '');
@@ -720,6 +973,7 @@ async function main() {
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
       assert.equal(await page.locator('#jam-save').isDisabled(), true, 'nothing to save yet');
+      assert.equal(await page.locator('#jam-play.lit').count(), 0, 'play is lit, with no beat arrived');
       for (const pad of [0, 9, 18, 27]) await page.locator('.jam-board .pad').nth(pad).click();
       await page.locator('#jam-save').click();
       await page.waitForSelector('.jam-saved li');
@@ -731,8 +985,10 @@ async function main() {
       await page.locator('.jam-saved input').press('Enter');
       assert.equal((await stored('jam:saved:v1'))[0].name, 'Morning');
       // shared: here that is a link on the clipboard, with the whole beat in it
+      // (from the beat itself, in the list: there is no other button for it)
       await page.evaluate(() => { delete Navigator.prototype.share; });
-      await page.locator('#jam-share').click();
+      assert.equal(await page.locator('#jam-share').count(), 0, 'a second way to share, at the top of the page');
+      await page.locator('.jam-saved button[aria-label="Share Morning"]').click();
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
       const link = await copiedBy(page);
       assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{39}$/);
@@ -742,6 +998,12 @@ async function main() {
       assert.equal(unsaved, 5);
       await page.goto(link);
       await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('shared with you'));
+      // play is lit for the beat that has arrived, until it is played, and not again after
+      assert.equal(await page.locator('#jam-play.lit').count(), 1, 'a beat has arrived, and play is not lit');
+      await page.locator('#jam-play').click();
+      await page.waitForSelector('#jam-play.playing:not(.lit)');
+      await page.locator('#jam-play').click();
+      assert.equal(await page.locator('#jam-play.lit').count(), 0, 'play is lit again once the beat has been played');
       assert.equal(new URL(page.url()).search, '', 'the address goes back to plain');
       assert.equal(await page.locator('.jam-board .pad.on').count(), 4, 'the shared beat is on the board');
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat', 'Morning'], 'what was on the board was put by');
@@ -756,6 +1018,369 @@ async function main() {
       await page.locator('dialog.ask button.yes').click();
       await page.waitForFunction(() => document.querySelectorAll('.jam-saved li').length === 1);
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat']);
+    }),
+
+    check('the music maker: Penny never hides a button of a saved beat, wherever the page is scrolled to, and a tap on Penny over something to press goes to it', {}, async (page) => {
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      // three beats, saved: the list is under the board, and the last of them at the very foot of the page
+      // (the first note sets the loop going, and Penny dancing, which is when it comes furthest up: there is room for it here)
+      await page.locator('.jam-board .pad').nth(0).click();
+      await page.waitForSelector('#jam-play.playing');
+      await page.waitForFunction(() => document.querySelector('.pal').dataset.height !== 'gone');
+      await page.locator('#jam-save').click();
+      for (const pad of [9, 18]) {
+        await page.locator('.jam-board .pad').nth(pad).click();
+        await page.locator('#jam-save').click();
+      }
+      await page.waitForFunction(() => document.querySelectorAll('.jam-saved li').length === 3);
+      // What of the list's buttons is in the window and is not what a finger there would find; and how Penny stands.
+      const hidden = () => page.evaluate(() => [...document.querySelectorAll('.jam-saved button')].filter((button) => {
+        const box = button.getBoundingClientRect();
+        const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+        if (y < 0 || y > window.innerHeight) return false;
+        const found = document.elementFromPoint(x, y);
+        return found !== button && !button.contains(found);
+      }).map((button) => button.getAttribute('aria-label')));
+      const height = () => page.evaluate(() => document.querySelector('.pal').dataset.height);
+      const foot = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+      assert.ok(foot > 0, 'the page is no longer than the window: there is nothing to scroll under Penny');
+      // all the way down, and then back up a little at a time: every button there is to see is there to press
+      for (const to of [foot, foot - 30, foot - 60, foot - 90, foot - 120, foot / 2]) {
+        await page.evaluate((y) => window.scrollTo(0, y), to);
+        await sleep(700); // (Penny looks again, and moves)
+        assert.deepEqual(await hidden(), [], `scrolled to ${Math.round(to)} of ${foot}, with Penny at "${await height()}"`);
+      }
+      // at the very foot the last beat lies along the edge Penny stands on: it has gone under
+      await page.evaluate((y) => window.scrollTo(0, y), foot);
+      await sleep(700);
+      assert.equal(await height(), 'gone', 'Penny is standing on the last beat');
+      // A tap that lands on Penny where something of the page's can be pressed goes to that: here, the tempo.
+      const tempo = page.locator('#jam-tempo');
+      const was = await tempo.innerText();
+      await tempo.evaluate((button) => {
+        const box = button.getBoundingClientRect();
+        document.querySelector('.pal-penny .paper').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 }));
+      });
+      assert.notEqual(await tempo.innerText(), was, 'a tap on Penny over the tempo did not reach it');
+    }),
+
+    check('the music maker: sounds recorded from the microphone go in a drawer, each a new one with a name, and one pressed there is what the instrument plays, in tune', {}, async (page) => {
+      const { fakeMic } = require('./mic.cjs');
+      await page.addInitScript(fakeMic, 'hum');
+      // every recorded sound the engine starts: how fast it is played
+      await page.addInitScript(() => {
+        window.__played = [];
+        const start = AudioBufferSourceNode.prototype.start;
+        AudioBufferSourceNode.prototype.start = function (...rest) {
+          if (this.buffer.length > 8000) window.__played.push(this.playbackRate.value); // (the drums' own bursts of noise are shorter)
+          return start.apply(this, rest);
+        };
+      });
+      const kept = () => page.evaluate(() => new Promise((done) => {
+        const opening = indexedDB.open('jam');
+        opening.onsuccess = () => {
+          const all = opening.result.transaction('sounds').objectStore('sounds').getAll();
+          all.onsuccess = () => { opening.result.close(); done(all.result.map((one) => ({ name: one.name, hz: one.hz, seconds: one.pcm.length / one.rate }))); };
+        };
+      }));
+      const record = async () => {
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('#jam-record.hearing');
+        await sleep(800);
+        await page.locator('#jam-record').click(); // enough
+        await page.waitForSelector('#jam-record:not(.hearing)');
+      };
+      const names = () => page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value));
+      const pressed = () => page.locator('.jam-sounds .tile').evaluateAll((all) => all.map((one) => one.getAttribute('aria-pressed') === 'true'));
+      const layers = () => page.locator('.layer:not([hidden]):not(.more) .name').allInnerTexts();
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      const mic = page.locator('#jam-mic');
+      // a note laid down, so the loop is playing
+      await page.locator('.jam-board .pad').nth(48).click();
+      await page.waitForSelector('#jam-play.playing');
+      // the drawer: at first the instrument itself, which is the one in its place, and the other three
+      await mic.click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.deepEqual(await pressed(), [true, false, false, false]);
+      // another instrument in the bells' place: the button wears its mark and its name, the rows are its rows, and the
+      // drawer's own button is lit; and then the bells themselves again
+      await page.locator('.jam-sounds .tile').nth(3).click();
+      assert.deepEqual(await pressed(), [false, false, false, true]);
+      assert.deepEqual(await layers(), ['Drums', 'Keys', 'Bass', 'Drums']);
+      assert.equal(await page.locator('.layer').first().getAttribute('data-own'), 'false', 'an instrument is not a sound of your own');
+      assert.equal(await page.locator('.layer').first().locator('svg').innerHTML(), await page.locator('.layer').nth(3).locator('svg').innerHTML(), 'the drums\' mark');
+      assert.match(await page.locator('.jam-board .pad').nth(48).getAttribute('aria-label'), /^Kick/, 'the rows are the drums\' rows');
+      assert.equal(await mic.getAttribute('aria-pressed'), 'true');
+      assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('jam:slots:v1')).slice(0, 4)), ['kind:3', null, null, null]);
+      await page.locator('.jam-sounds .tile').first().click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.equal(await mic.getAttribute('aria-pressed'), 'false');
+      // recording: the loop stops to listen and goes on afterwards, and the new sound is in the bells' place
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('#jam-record.hearing');
+      assert.equal(await page.locator('#jam-record').innerText(), 'Stop');
+      assert.equal(await page.locator('#jam-play.playing').count(), 0, 'the loop went on over the microphone');
+      await sleep(800);
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('.jam-sounds input');
+      await page.waitForSelector('#jam-play.playing');
+      assert.deepEqual(await names(), ['Sound 1']);
+      assert.deepEqual(await pressed(), [false, false, false, false, true]);
+      assert.deepEqual(await layers(), ['Sound 1', 'Keys', 'Bass', 'Drums']);
+      const [sound] = await kept();
+      assert.ok(Math.abs(12 * Math.log2(sound.hz / 220)) < 0.5, `a hum at 220 hertz, heard as ${sound.hz}`);
+      assert.ok(sound.seconds > 0.4 && sound.seconds <= 1.5, `${sound.seconds} seconds kept`);
+      // what the loop plays there is now that sound: the bottom row, the chord's own note (C, A, F or G), in some octave
+      await page.waitForFunction(() => window.__played.length > 0, null, { timeout: 8000 });
+      const rate = await page.evaluate(() => window.__played[0]);
+      const roots = [0, -3, -7, -5].map((semitones) => 523.25 * 2 ** (semitones / 12));
+      const off = Math.min(...roots.map((root) => { const octaves = Math.log2((sound.hz * rate) / root); return Math.abs(octaves - Math.round(octaves)) * 12; }));
+      assert.ok(off < 0.01, `out of tune by ${off} of a semitone (played at ${rate})`);
+      // recording again makes another, and takes the place of none
+      await record();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 2);
+      assert.deepEqual(await names(), ['Sound 2', 'Sound 1'], 'the newest first');
+      assert.deepEqual(await pressed(), [false, false, false, false, true, false]);
+      // named: the name is on the instrument's button too
+      await page.locator('.jam-sounds input').first().fill('Hum');
+      await page.locator('.jam-sounds input').first().press('Enter');
+      assert.deepEqual(await layers(), ['Hum', 'Keys', 'Bass', 'Drums']);
+      assert.match(await page.locator('.layer').first().innerText(), /your sound/);
+      // swapped: the other sound, and then the bells themselves
+      await page.locator('.jam-sounds .tile').nth(5).click();
+      assert.deepEqual(await pressed(), [false, false, false, false, false, true]);
+      assert.deepEqual(await layers(), ['Sound 1', 'Keys', 'Bass', 'Drums']);
+      await page.locator('.jam-sounds .tile').first().click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.equal(await mic.getAttribute('aria-pressed'), 'false');
+      // the same drawer for another instrument: its own sound, and the same two
+      await page.locator('#jam-drawer-close').click();
+      await page.locator('.layer').nth(3).click();
+      await mic.click();
+      assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['Drums', 'Bells', 'Keys', 'Bass'], 'its own first');
+      assert.deepEqual(await names(), ['Hum', 'Sound 1']);
+      await page.locator('.jam-sounds .tile').nth(4).click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Hum']);
+      await page.locator('#jam-drawer-close').click();
+      assert.equal(await mic.getAttribute('aria-pressed'), 'true');
+      assert.match(await page.locator('.jam-board .pad').nth(48).getAttribute('aria-label'), /^Note 1 of 7/, 'the drums\' rows are heights of the sound now');
+      // it is all there the next time
+      await page.reload();
+      await page.waitForFunction(() => document.querySelectorAll('.layer .name')[3]?.textContent === 'Hum');
+      // deleted: gone from the drawer, from where it was kept, and from the instrument that played it
+      await page.locator('.layer').nth(3).click();
+      await mic.click();
+      await page.locator('.jam-sounds button[aria-label="Delete Hum"]').click();
+      await page.locator('dialog.ask button.yes').click();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 1);
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.deepEqual((await kept()).map((one) => one.name), ['Sound 1']);
+    }),
+
+    check('the music maker: recorded sounds follow the profile: sent to the server whole once and by name after, fetched on a device that has not got them, and gone where they were deleted', {}, async (page) => {
+      const { fakeMic } = require('./mic.cjs');
+      await page.addInitScript(fakeMic, 'hum');
+      // the server, as supabase/migrations/20261126000000_sounds.sql has it: what it keeps, and what it was asked
+      const there = new Map();
+      const asked = [];
+      const view = () => [...there.values()].map((one) => ({ id: one.id, name: one.name, at: one.at }));
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co/, (route) => {
+        const request = route.request();
+        if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const call = request.url().match(/\/rpc\/(\w+)/)?.[1];
+        if (!/^sounds_/.test(call ?? '')) return route.abort();
+        const args = JSON.parse(request.postData());
+        asked.push({ call, ...args });
+        if (call === 'sounds_put') there.set(args.p_id, args.p_pcm ? { id: args.p_id, name: args.p_name, rate: args.p_rate, hz: args.p_hz, pcm: args.p_pcm, at: 1795000000000 + there.size } : { ...there.get(args.p_id), name: args.p_name });
+        if (call === 'sounds_drop') there.delete(args.p_id);
+        return route.fulfill({ json: call === 'sounds_fetch' ? there.get(args.p_id) ?? null : view(), headers: cors });
+      });
+      const until = (what, test) => (async () => { for (let i = 0; i < 100 && !test(); i++) await sleep(50); assert.ok(test(), what); })();
+      const names = () => page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value));
+      const layers = () => page.locator('.layer:not([hidden]):not(.more) .name').allInnerTexts();
+      const open = async () => { await page.locator('#jam-mic').click(); await page.waitForSelector('dialog#jam-drawer[open]'); };
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      // recorded: the whole of it goes to the server
+      await open();
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('#jam-record.hearing');
+      await sleep(700);
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('.jam-sounds input');
+      await until('the sound was not sent', () => there.size === 1);
+      const [sent] = there.values();
+      assert.match(sent.id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+      assert.equal(sent.name, 'Sound 1');
+      assert.equal(sent.rate, 44100);
+      assert.ok(Math.abs(12 * Math.log2(sent.hz / 220)) < 0.5, `a hum at 220 hertz, sent as ${sent.hz}`);
+      assert.ok(sent.pcm.length > 40000 && sent.pcm.length < 180000, `${sent.pcm.length} letters of it`);
+      // named: only the name goes
+      await page.locator('.jam-sounds input').fill('Hum');
+      await page.locator('.jam-sounds input').press('Enter');
+      await until('the name was not sent', () => sent.id && there.get(sent.id).name === 'Hum');
+      const renaming = asked.filter((one) => one.call === 'sounds_put').pop();
+      assert.equal(renaming.p_pcm, undefined, 'the whole sound was sent again for a name');
+      assert.equal(asked.filter((one) => one.call === 'sounds_put' && one.p_pcm).length, 1, 'sent whole more than once');
+      // another device of the profile (this one, with its own copy gone): the sound is fetched, and plays where it did
+      await page.evaluate(() => new Promise((done) => { indexedDB.deleteDatabase('jam').onsuccess = done; }));
+      await page.reload();
+      await page.waitForFunction(() => document.querySelector('.layer .name')?.textContent === 'Hum', null, { timeout: 8000 });
+      await open();
+      assert.deepEqual(await names(), ['Hum']);
+      await page.locator('#jam-drawer-close').click();
+      // a second, made on another device, arrives; and one deleted on another device goes
+      there.set('7d1f1c1e-0000-4000-8000-000000000002', { ...there.get(sent.id), id: '7d1f1c1e-0000-4000-8000-000000000002', name: 'Elsewhere', at: 1795000009000 });
+      await page.reload();
+      await page.waitForSelector('.jam-board .pad');
+      await open();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 2, null, { timeout: 8000 });
+      assert.deepEqual(await names(), ['Elsewhere', 'Hum']);
+      await page.locator('#jam-drawer-close').click();
+      there.delete(sent.id);
+      await page.reload();
+      await page.waitForSelector('.jam-board .pad');
+      await page.waitForFunction(() => document.querySelector('.layer .name')?.textContent === 'Bells', null, { timeout: 8000 });
+      await open();
+      assert.deepEqual(await names(), ['Elsewhere']);
+      // deleted here: the server is told
+      await page.locator('.jam-sounds button[aria-label="Delete Elsewhere"]').click();
+      await page.locator('dialog.ask button.yes').click();
+      await until('the server was not told of the deleting', () => there.size === 0);
+      assert.deepEqual(await names(), []);
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+    }),
+
+    check('the music maker: the deck holds up to eight, and a shared beat brings the deck\'s sounds to whoever opens it', { permissions: ['clipboard-read', 'clipboard-write'] }, async (page) => {
+      const { fakeMic } = require('./mic.cjs');
+      await keepsCopies(page);
+      await page.addInitScript(fakeMic, 'hum');
+      // the server, as supabase/migrations has it: the profile's sounds, and what has been shared
+      const there = new Map();
+      const shares = new Map();
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co/, (route) => {
+        const request = route.request();
+        if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const call = request.url().match(/\/rpc\/(\w+)/)?.[1];
+        const args = JSON.parse(request.postData() ?? '{}');
+        const view = () => [...there.values()].map((one) => ({ id: one.id, name: one.name, at: one.at }));
+        let answer;
+        if (call === 'sounds_get') answer = view();
+        else if (call === 'sounds_put') { there.set(args.p_id, args.p_pcm ? { id: args.p_id, name: args.p_name, rate: args.p_rate, hz: args.p_hz, pcm: args.p_pcm, at: 1795000000000 + there.size } : { ...there.get(args.p_id), name: args.p_name }); answer = view(); }
+        else if (call === 'sounds_drop') { there.delete(args.p_id); answer = view(); }
+        else if (call === 'sounds_fetch') answer = there.get(args.p_id) ?? null;
+        else if (call === 'share_put') {
+          const id = String(shares.size + 1).padStart(20, 'a');
+          shares.set(id, args.p_slots.map((sound, slot) => (there.has(sound) ? { slot, ...there.get(sound) } : null)).filter(Boolean));
+          answer = id;
+        } else if (call === 'share_get') answer = shares.get(args.p_id) ?? [];
+        else return route.abort();
+        return route.fulfill({ json: answer, headers: cors });
+      });
+      const layers = () => page.locator('.layer:not([hidden]):not(.more) .name').allInnerTexts();
+      const record = async () => {
+        const before = await page.locator('.jam-sounds input').count();
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('#jam-record.hearing');
+        await sleep(600);
+        await page.locator('#jam-record').click();
+        await page.waitForFunction((n) => document.querySelectorAll('.jam-sounds input').length === n + 1, before);
+      };
+      const more = page.locator('.layer.more');
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      // a place added and nothing put in it: it is not kept
+      await more.click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['None', 'Bells', 'Keys', 'Bass', 'Drums']);
+      await page.locator('#jam-drawer-close').click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      // a sound recorded into a new place: a fifth button, with a part of its own
+      await more.click();
+      await record();
+      await page.locator('#jam-drawer-close').click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums', 'Sound 1']);
+      assert.equal(await page.locator('.layer[aria-checked="true"] .name').innerText(), 'Sound 1');
+      await page.locator('.jam-board .pad').nth(50).click();
+      await page.locator('.layer').first().click();
+      await page.locator('.jam-board .pad').nth(48).click();
+      assert.equal(await page.locator('.jam-board .pad').nth(50).locator('i:not([hidden])').count(), 1, 'the other part\'s note shows as a light');
+      // up to eight, and then there is nowhere to add
+      for (let n = 6; n <= 8; n++) {
+        await more.click();
+        await page.locator('.jam-sounds .tile').nth(5).click(); // the same sound again will do
+        await page.locator('#jam-drawer-close').click();
+        assert.equal((await layers()).length, n);
+      }
+      assert.equal(await more.isVisible(), false, 'a ninth place');
+      // one taken off: its place goes, and there is room again
+      await page.locator('.layer:not([hidden]):not(.more)').nth(7).click();
+      await page.locator('#jam-mic').click();
+      await page.locator('.jam-sounds .tile').first().click();
+      await page.waitForSelector('dialog#jam-drawer', { state: 'hidden' });
+      assert.equal((await layers()).length, 7);
+      assert.equal(await more.isVisible(), true);
+      // one of the instruments in another's place: the keys, where the bass is
+      await page.locator('.layer').nth(2).click();
+      await page.locator('#jam-mic').click();
+      await page.locator('.jam-sounds .tile').nth(2).click();
+      await page.locator('#jam-drawer-close').click();
+      assert.deepEqual((await layers()).slice(0, 4), ['Bells', 'Keys', 'Keys', 'Drums']);
+      // saved, and shared: the link has the beat in it, the long way, and says where its sounds are, and which instrument is in another's place
+      await page.locator('#jam-save').click();
+      await page.locator('.jam-saved button[aria-label^="Share"]').first().click();
+      await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
+      const link = await page.evaluate(() => navigator.clipboard.readText());
+      assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{76}&s=a{19}1&o=--1-----$/);
+      assert.deepEqual(shares.get('aaaaaaaaaaaaaaaaaaa1').map((one) => one.slot), [4, 5, 6]);
+      // somebody else opens it (this browser, with nothing of the sharer's on it): the beat, and its sounds on the deck and in the drawer
+      there.clear();
+      await page.evaluate(() => new Promise((done) => { localStorage.clear(); indexedDB.deleteDatabase('jam').onsuccess = done; }));
+      await page.goto(link);
+      await page.waitForFunction(() => document.querySelectorAll('.layer:not([hidden]):not(.more)').length === 7, null, { timeout: 8000 });
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Keys', 'Drums', 'Sound 1', 'Sound 1', 'Sound 1'], 'the deck as it was shared');
+      assert.equal(new URL(page.url()).search, '', 'the address goes back to plain');
+      await page.locator('.layer').nth(4).click();
+      assert.equal(await page.locator('.jam-board .pad.on').count(), 1, 'the part written for the sound');
+      await page.locator('#jam-mic').click();
+      assert.deepEqual(await page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value)), ['Sound 1'], 'one sound, however many places it was in');
+      // and it is theirs now: kept in their own profile
+      for (let i = 0; i < 100 && there.size === 0; i++) await sleep(50);
+      assert.equal(there.size, 1, 'the sound that came with the beat was not kept for them');
+    }),
+
+    check('the music maker: a microphone that is refused, or hears nothing, says so under the button, moves nothing above it and makes no sound', {}, async (page) => {
+      const { fakeMic } = require('./mic.cjs');
+      await page.addInitScript(fakeMic, 'refused');
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      await page.locator('#jam-mic').click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      await sleep(500); // (the drawer has come up)
+      const [record, error] = [page.locator('#jam-record'), page.locator('#jam-mic-error')];
+      assert.equal(await error.isVisible(), false, 'nothing is wrong yet');
+      const above = await record.boundingBox();
+      await record.click();
+      await page.waitForFunction(() => document.querySelector('#jam-mic-error').textContent === 'The microphone is not allowed.');
+      assert.equal(await error.getAttribute('role'), 'alert');
+      // (where it is once its shake is over: measured in the middle of that, as it was on a busy machine, it is a hair to one side)
+      await record.evaluate((button) => Promise.all(button.getAnimations().map((shake) => shake.finished)));
+      assert.deepEqual(await record.boundingBox(), above, 'what is above the error moved');
+      // one that hears nothing
+      await page.evaluate(`(${fakeMic})('silent')`);
+      await record.click();
+      await page.waitForSelector('#jam-record.hearing');
+      assert.equal(await error.isVisible(), false, 'trying again takes the old error away');
+      await record.click();
+      await page.waitForFunction(() => document.querySelector('#jam-mic-error').textContent === 'Nothing was heard.');
+      assert.equal(await page.locator('.jam-sounds input').count(), 0, 'nothing recorded: only the instruments');
+      assert.equal(await page.locator('.layer[data-own="true"]').count(), 0);
     }),
 
     check('the background music stands aside for the music maker and the radio, and still does going from one to the other', { storage: { 'radio:taught:v1': true, 'radio:story:v1': 'told' } }, async (page) => {
@@ -1679,7 +2304,7 @@ async function main() {
       await page.waitForSelector('#games li');
       await sleep(900); // (the furniture settles)
       // What can be read on the screen, exactly: names, notes, the code. No labels, no headings, no words on buttons, no
-      // placeholders, nothing written on the table; and the line that a game was started is on the table instead. (Faces
+      // placeholders but the one in the box a message is written in (asked for by the owner, 26 November 2026), nothing written on the table; and the line that a game was started is on the table instead. (Faces
       // are emoji: people's faces are content too. The time shows where somebody starts to speak.) A regression guard on
       // the rule: a word that only describes, put back on the room, fails here.
       const seen = () => page.evaluate(() => {
@@ -1695,7 +2320,7 @@ async function main() {
         return out;
       });
       // (each game's card shows the faces of who is in it: faces are content, as the seats' are)
-      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP']);
+      assert.deepEqual(await seen(), ['🦊', 'Book club', '🦊', 'Sam', '🐼', 'Ada', '🦊', '🐼', '🐼', '🦊', 'Ada started a Postmarks time trial', 'Pass phrase solved: Sam started a game of Postmarks', 'Sam finished the time trial in 3:12', '🐼', 'Ada', '6:06 PM', 'one', 'two', '🐼', 'Ada', '6:30 PM', 'three', 'K7M-2QP', '(placeholder) message…']);
       // yours to play first; nothing on the table is written, it is said to screen readers
       assert.deepEqual(await page.locator('#games li').evaluateAll((all) => all.map((li) => li.dataset.state)), ['go', 'won']);
       // (and who started each, which the line in the chat said, put away while the game is on the table)
@@ -2687,6 +3312,80 @@ async function main() {
       await sleep(800);
       assert.equal(await page.locator('dialog.together[open]').count(), 0, 'the sheet only the first time');
       assert.equal(await page.locator('#energy').getAttribute('aria-label'), 'Energy 2; the meadow at 70', 'and the same posts earn nothing again');
+    }),
+    // Whoever starts a game together has just read its cards, at the desk's first step: the game opens on its board,
+    // and does not show them the same cards again. (Anybody else's first sight of the game still brings the sheet: above.)
+    check('a game together, started at the desk: its cards were the desk\'s, and the game does not show them again', { storage: ACCOUNT }, async (page) => {
+      const { generatePuzzle } = await import('../../postmarks/game.js');
+      const id = '77777777-7777-4777-8777-777777777777';
+      const room = '11111111-1111-4111-8111-111111111111';
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      let started = null;
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(postmarks_get|postmarks_start|room_get)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const asked = route.request().url().match(/rpc\/(\w+)/)[1];
+        const args = JSON.parse(route.request().postData());
+        if (asked === 'room_get') return route.fulfill({ json: { id: room, name: 'Book club', code: 'K7M2QP', you: 0, people, messages: [], games: [] }, headers: cors });
+        if (asked === 'postmarks_start') {
+          const size = args.p_size;
+          started = { id, room, room_name: 'Book club', you: 0, people, players: ['Sam', 'Ada'], mode: 'coop', size, regions: args.p_regions, cells: new Array(size * size).fill(0), hearts: 3, moves: 0, status: 'playing', last: null };
+        }
+        return route.fulfill({ json: started ?? { id, size: 6, regions: generatePuzzle(6, 8).regions }, headers: cors });
+      });
+      await page.goto(`${origin}/room/?id=${room}`);
+      await page.locator('#modes [data-mode="coop"]').click();
+      await page.waitForSelector('#desk-how:not([hidden]) .mode-cards li');
+      assert.equal(await page.locator('#desk-how .mode-cards li').count(), 3, 'how a game together is played, read at the desk');
+      await page.locator('#desk-next').click();
+      await page.waitForSelector('#desk-board:not([hidden]) #preview-board svg');
+      await page.locator('#phrase-form .start-phrase').click();
+      await page.waitForSelector('#board > *');
+      await sleep(800);
+      assert.ok(started, 'the game was started');
+      assert.equal(await page.locator('dialog.howto[open]').count(), 0, 'no sheet over the board: not the same cards again, nor how to play');
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('postmarks:howto:v1'))), id, 'the game is kept as shown');
+    }),
+    // A board lost together can be tried again from its end: a new game for the whole room on the same board, which
+    // opens on that board, without the cards of a game together over it (whoever asks for it has just played one).
+    check('a game together, lost: tried again, the same board opens with no sheet over it', { storage: ACCOUNT }, async (page) => {
+      const { generatePuzzle } = await import('../../postmarks/game.js');
+      const size = 6;
+      const made = generatePuzzle(size, 8);
+      const id = '88888888-8888-4888-8888-888888888888';
+      const room = '11111111-1111-4111-8111-111111111111';
+      const people = [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }];
+      const view = { id, room, room_name: 'Book club', you: 0, people, players: ['Sam', 'Ada'], mode: 'coop', size, regions: made.regions, cells: new Array(size * size).fill(0), hearts: 1, moves: 2, status: 'playing', last: { player: 1, type: 'guess', cell: 0, correct: false } };
+      const wrong = made.solution[2] === 0 ? 2 * size + 1 : 2 * size; // (a square in the third row with no post in it)
+      const lost = { ...view, solution: made.solution, hearts: 0, moves: 3, status: 'lost', last: { player: 0, type: 'guess', cell: wrong, correct: false } };
+      let moved = false;
+      let again = null;
+      const second = '99999999-9999-4999-8999-999999999999';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      const asked = [];
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/(\w+)/, (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const name = route.request().url().match(/rpc\/(\w+)/)[1];
+        asked.push(name);
+        if (name === 'room_get') return route.fulfill({ json: { id: room, name: 'Book club', you: 0, people, messages: [], games: [] }, headers: cors });
+        if (name === 'postmarks_start') again = { ...view, id: second, hearts: 3, moves: 0, last: null };
+        if (again) return route.fulfill({ json: again, headers: cors });
+        return route.fulfill({ json: (moved ||= name === 'postmarks_play') ? lost : view, headers: cors }); // (the last heart goes with the move)
+      });
+      await page.goto(`${origin}/postmarks/?game=${id}`);
+      await page.waitForSelector('dialog.together[open]');
+      await page.locator('dialog.together .start').click();
+      await page.locator(`#board .cell[data-cell="${wrong}"]`).dblclick();
+      await page.locator('#submit:not([disabled])').click();
+      await page.waitForSelector('dialog.finale.lost[open]', { timeout: 15000 });
+      assert.equal(await page.locator('dialog.finale h2').textContent(), 'Out of hearts');
+      assert.equal(await page.locator('dialog.finale button.again').textContent(), 'Try this board again');
+      await page.locator('dialog.finale button.again').click();
+      await page.waitForFunction((id) => location.search.includes(id), second);
+      await page.waitForSelector('#board .cell[data-state="empty"]:not(.last)');
+      await sleep(800);
+      assert.equal(asked.filter((name) => name === 'postmarks_start').length, 1, 'a new game, started once');
+      assert.equal(await page.locator('dialog[open]').count(), 0, 'and no sheet over its board');
     }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);

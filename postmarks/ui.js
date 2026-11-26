@@ -8,7 +8,7 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
-import { openHowTo, openTogether } from './howto.js';
+import { HOWTO_KEY, openHowTo, openTogether } from './howto.js';
 import { COLOUR_NAMES, findHint } from './hint.js';
 import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
@@ -28,7 +28,6 @@ export function mount(root, life) {
   // room (?game=<id>, stored on the server and open to everyone in that room).
 
   const GAME_KEY = 'postmarks:solo:v1';
-  const HOWTO_KEY = 'postmarks:howto:v1'; // the last room game this device showed the how-to for
   const SOLO_HOWTO_KEY = 'postmarks:howto-solo:v1'; // set once the how-to has been shown in solo play
   const DISTRICTS = COLOUR_NAMES;
   const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
@@ -413,7 +412,7 @@ export function mount(root, life) {
   // --- Energy ------------------------------------------------------------------------
   // Every post found is energy at once, and finishing the board entirely earns
   // as much again (shared/energy.js). The meter is everything earned, in every
-  // game: one bar, about twenty games long, with the meadow at its end, grey
+  // game: one bar, about five games long, for now, with the meadow at its end, grey
   // until the first bar is full (shared/meadow.js). There is no number (the
   // owner's choice), and all that is held is said only to screen readers. A
   // post found sends a spark from it to the end of the bar, which takes it in as
@@ -525,7 +524,7 @@ export function mount(root, life) {
     // the fourth time the bar fills (the first three are the meadow and its folk, found and then woken:
     // shared/meadow.js): a word of thanks, once (the owner's words, 25 November 2026, first said on the second, before
     // that had a reward)
-    const second = now.gained && energy.earned - now.gained < 4 * BAR && energy.earned >= 4 * BAR && !load(THANKS_KEY);
+    const second = now.gained && energy.earned >= 4 * BAR && !load(THANKS_KEY); // (or the first thing earned past it, if the bar was longer when it was passed)
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
@@ -698,6 +697,7 @@ export function mount(root, life) {
             p_regions: board.regions, p_solution: board.solution, p_phrase: null,
           });
           watcher?.poke();
+          save(HOWTO_KEY, fresh.id); // (the same people, at the same board again: nobody needs telling what a game together is)
           if (!life.over) go(gameUrl('postmarks', fresh.id), { replace: true });
         } catch (failure) {
           await tell('Couldn’t start it again', { detail: failure.message });
@@ -783,7 +783,7 @@ export function mount(root, life) {
       people: online ? online.people.filter((person) => !person.left) : [],
       hearts: game.hearts,
       about: about(),
-      leave: online ? 'Back to the room' : won ? 'Play again' : 'New puzzle',
+      leave: online ? 'Back to the room' : won ? 'Continue' : 'New puzzle',
       celebrate: confetti,
       retry: retryOffer(won),
       onDone: () => {
