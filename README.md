@@ -692,8 +692,10 @@ November 2026), a satire: a social post that is also an ad. marcus.pell says
 sincerely that the middle must choose between outrunning the line of
 inequality and reaching back across it, and keeps running without seeing it:
 his son's kindness done again for the shot, his views counted before Q1.
-Pressed in the comments, he answers well; the man he made content of is the
-one who asks how he is. That it is a paid partnership is the punchline, and is
+The comments say almost nothing, as comments do (the owner: the first ones
+were "too on the nose"): what car is that; the lease is up in March; saving
+this. The man he made content of says only that the boy brought him soup
+today, with no camera on it. That it is a paid partnership is the punchline, and is
 not given away early: no #ad, no label by his name, only the line at the very
 end ("Mr. Alvarez is not."). Then a sponsored clip for
 this app, in its own pace: the cuts stop, the express mail streaks off, the

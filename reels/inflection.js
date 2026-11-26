@@ -7,8 +7,9 @@
 // Marcus is sincere. He says that the middle class must choose between
 // outrunning the line of inequality and reaching back across it, and keeps
 // running without seeing it: his son's kindness is done again for the shot,
-// and the views are counted before Q1. Pressed, he answers well. The man he
-// made content of is the one who asks how he is. (The story doc: he is one
+// and the views are counted before Q1, the lease on the car up in March. The
+// man he made content of mentions only that the boy brought him soup: kindness
+// with no camera on it. (The story doc: he is one
 // way the character who carries Goodhart's law could look outside the game.)
 //
 // The reel's people speak as Dot does: in a bubble, a few words at a time, a
@@ -53,12 +54,15 @@ export const LINES = [
   { at: 35.2, end: 37.9, who: 'aside', where: 'aside', said: ['Gotta keep', 'this going', 'till Q1.'] },
 ];
 
-// The comments, each come in with its writer's bells.
+// The comments, each come in with its writer's bells. They say almost
+// nothing, as comments do (the owner, 26 November 2026: the first ones were
+// "too on the nose"). Nobody names the theme; R. A. only says what the boy
+// did when nobody was filming.
 export const COMMENTS = [
-  { at: 38.2, who: 'jordan', name: 'jordan.t', face: 'JT', text: 'Easy to say with two cars.' },
-  { at: 39.4, who: 'marcus', name: 'marcus.pell', face: 'MP', text: 'If I stop running, who catches my kids?', reply: true, creator: true },
-  { at: 40.6, who: 'priya', name: 'priya.n', face: 'PN', text: 'Is the chart a course? 🙏' },
-  { at: 42.2, who: 'ra', name: 'r.a.', face: 'RA', text: 'Tell your boy thanks for the umbrella. You alright, Marcus?' },
+  { at: 38.2, who: 'jordan', name: 'jordan.t', face: 'JT', text: 'what car is that' },
+  { at: 39.4, who: 'marcus', name: 'marcus.pell', face: 'MP', text: 'lease is up in March 😅', reply: true, creator: true },
+  { at: 40.6, who: 'priya', name: 'priya.n', face: 'PN', text: 'saving this 🙏' },
+  { at: 42.2, who: 'ra', name: 'r.a.', face: 'RA', text: 'Your boy brought me soup today.' },
 ];
 
 // The sponsor's words, in the clip at the end: few, and slow.
