@@ -1106,26 +1106,32 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 @keyframes feed-pip { from { transform: scale(0); } to { transform: none; } }
 
 /* --- Still being built: a stamp in the top left corner of the home page --------
-   Opposite the face in the other corner, at the same height, after whatever
-   has been found and is kept there (--kept: penny/tags.js). On it, a traffic
-   cone asleep: it breathes, and a z drifts up now and then. Nothing to press. */
+   Opposite the face, at the same height, in the room left of the logo and
+   above the title. On it, a traffic cone asleep (it breathes, and a z drifts
+   up now and then) and the words. Nothing to press. */
 :root { --stamp: color-mix(in srgb, var(--paper), #ffffff 55%); }
 :root[data-theme="dark"] { --stamp: color-mix(in srgb, var(--paper), var(--ink) 13%); }
 main:has(> .building) { position: relative; }
 .building {
-  --r: 2.5px;
+  --r: 3px;
   position: absolute; z-index: 1; margin: 0;
-  left: calc(0.875rem + 3px + var(--kept, 0) * 3rem);
+  left: calc(0.875rem + 3px);
   top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem));
-  width: 3rem; aspect-ratio: 5 / 6; padding: calc(var(--r) * 1.6);
+  width: 7rem; height: 5rem; padding: calc(var(--r) * 1.6);
   background: var(--stamp);
   /* perforated: holes punched all round by a mask, the middle kept whole */
   -webkit-mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / calc(var(--r) * 2.8) calc(var(--r) * 2.8), linear-gradient(#000 0 0) content-box;
           mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / calc(var(--r) * 2.8) calc(var(--r) * 2.8), linear-gradient(#000 0 0) content-box;
   filter: drop-shadow(0 1px 0 var(--line));
-  transform: rotate(-5deg);
+  transform: rotate(-4deg);
 }
-.building svg { display: block; width: 100%; height: 100%; overflow: visible; border: 1px solid var(--line); border-radius: 3px; }
+.building::before { content: ""; position: absolute; inset: calc(var(--r) * 1.6); border: 1px solid var(--line); border-radius: 3px; pointer-events: none; }
+.building { display: grid; grid-template-columns: 2.4rem 1fr; align-items: center; gap: 0.15rem; }
+.building svg { display: block; width: 100%; height: 3.4rem; overflow: visible; }
+.building-words {
+  font: italic 0.6875rem/1.15 Georgia, "Iowan Old Style", serif;
+  color: var(--muted); text-align: left; padding-right: 0.2rem;
+}
 .building .cone { transform-box: fill-box; transform-origin: center bottom; }
 .building .cone-body { fill: var(--accent); opacity: 0.9; }
 .building .cone-stripes { stroke: var(--stamp); stroke-width: 6.5; }

@@ -54,7 +54,7 @@ main:has(> .tag-hidden) { position: relative; }
 @keyframes night-comes { from { opacity: 0; } to { opacity: 1; } }
 @keyframes night-goes { to { opacity: 0; } }
 
-/* --- Kept: on the home page's map, in the top left corner, across from your face ----------------------------
+/* --- Kept: on the home page's map, at the top, beside your face (on its left) ----------------------------------
    A small square of night, with the picture in it, dim and a little warm, as the night itself
    is. The square is as it was; what is pressed is the room round it, which is never less than
    a finger needs (2.75rem is 44px: see tests/browser/mini.e2e.cjs). And on a phone with a
@@ -62,7 +62,7 @@ main:has(> .tag-hidden) { position: relative; }
 .tag-kept {
   --square: calc(2.625rem - 6px);
   position: absolute; z-index: 1; display: grid; place-items: center;
-  left: calc(0.875rem + 3px - (2.75rem - var(--square)) / 2 + var(--nth, 0) * 2.625rem); /* (each on a square of the map) */
+  right: calc(0.875rem + 3px + 3rem + 0.5rem - (2.75rem - var(--square)) / 2 + var(--nth, 0) * 2.625rem); /* (the face is 3rem across; each on a square of the map) */
   top: calc(max(var(--map-y, 0px) + 1.75rem + 3px, env(safe-area-inset-top, 0px) + 0.25rem) - (2.75rem - var(--square)) / 2);
   width: 2.75rem; height: 2.75rem; border-radius: 22%;
   color: #eee0cc;
