@@ -1,4 +1,5 @@
 import { wearing } from '/shared/meadow.js';
+import { troupe } from '/room/folk.js';
 import { ask, tell } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
@@ -71,6 +72,49 @@ export function mount(root, life) {
   // A portal in the top bar, for a member: the way into the room's other world, and back (room/worlds.js).
   const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
+
+  // In the meadow the things of the room are alive (room/folk.js): a tile that starts a game is a flower, a game's
+  // board a little cartoon with gloves and big shoes, the send button a bird, a note a butterfly, the code a sleepy
+  // hedgehog, the bell a bluebell, the name held up by a field mouse, and the people's tokens have feet. They are
+  // drawn on the page itself and only while it is the meadow that is seen: not in the night through the portal, nor
+  // while a passage is under way (room/worlds.js copies the page then, and would copy every blink).
+  if (wearing()) {
+    const here = ':scope > main ';
+    const CAST = [
+      ['board', `${here}#games > li`, { face: (li) => li.querySelector('.mini'), key: (li) => `board:${li.querySelector('a.game')?.getAttribute('href')}` }],
+      ['tile', `${here}.house .mode`, { key: (tile) => `tile:${tile.dataset.mode}` }],
+      ['send', `${here}.rug .chat form button[type="submit"]`, { key: () => 'send' }],
+      ['code', `${here}.house .share .code`, { key: () => 'code' }],
+      ['bell', `${here}.house .notify:not([hidden])`, { face: (notify) => notify.querySelector('.bell'), key: () => 'bell' }],
+      ['sign', ':scope > header h1.sign:not(.sr-only), :scope > main h1.sign:not(.sr-only)', { key: () => 'sign' }],
+      ['note', `${here}.rug .chat-log li:not(.note) > p`],
+      ['token', `${here}#members .seat`, { face: (seat) => seat.querySelector('.avatar'), key: (seat) => `seat:${seat.dataset.seat}` }],
+    ];
+    const typing = () => Boolean(document.activeElement?.matches?.('input:not([type="checkbox"]):not([type="radio"]), textarea'));
+    const meadowSeen = () => root.dataset.world === 'playful' && !root.querySelector(':scope > .worlds-copy');
+    const folk = troupe({ root, life, calm: typing, sights: () => [...root.querySelectorAll(`${here}#members .seat .avatar`)] });
+    let due = false;
+    const recast = () => {
+      due = false;
+      if (!life.over && meadowSeen()) folk.scan(CAST);
+    };
+    // (whenever the room draws something afresh; the folk's own layers going in and out do not count)
+    const own = (node) => node.nodeType === 1 && node.classList.contains('ff');
+    const drawn = new MutationObserver((changes) => {
+      if (due || changes.every((change) => [...change.addedNodes, ...change.removedNodes].every(own))) return;
+      due = true;
+      requestAnimationFrame(recast);
+    });
+    drawn.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'data-world'] });
+    life.onEnd(() => drawn.disconnect());
+    const beat = (now) => {
+      if (life.over) return;
+      if (meadowSeen()) folk.tick(now);
+      requestAnimationFrame(beat);
+    };
+    requestAnimationFrame(beat);
+    recast();
+  }
 
   // A link that leads nowhere (or a room that could not be reached the first time): the empty plot, with what went wrong
   // in a short line of words in the middle of it; the arrow at the top is the way home. (The name over it is said to

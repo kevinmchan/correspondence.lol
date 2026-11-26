@@ -1,0 +1,266 @@
+/* Meadow folk: the things of a world, alive (room/folk.js).
+
+   A body is drawn in two layers inside the element it belongs to: .ff-back,
+   behind its face (where the face is painted on a ::before, as the meadow does
+   with the things to press), and .ff-front. Neither can be pressed, read out,
+   or move the element: they are placed absolutely, round it.
+
+   What the folk are doing is said on the element (the face): data-ff (its
+   kind), data-ff-seen (on the screen: only then does anything of it move),
+   data-ff-mood (glad, sleep, sing), data-ff-do (a fidget), data-ff-blink,
+   data-ff-attend (a finger near: it stops and looks), data-ff-press; and where
+   it looks, --lx and --ly (-1 to 1). On the place: data-ff-still (something is
+   being typed: nobody moves) and data-ff-asleep (the page cannot be seen).
+   Nothing here moves for anybody who has asked for less motion. */
+
+.ff {
+  --ff-ink: #22303c; --ff-white: #fffdf8; --ff-cheek: #f27d8a; --ff-mouth: #9c3d3d;
+  --ff-leaf: #74b95f; --ff-leaf-dark: #4f8f3f;
+  position: absolute; z-index: 1; display: block; pointer-events: none; -webkit-user-select: none; user-select: none;
+}
+:root[data-theme="dark"] .ff { --ff-cheek: #e2707e; --ff-leaf: #5e9c50; --ff-leaf-dark: #3c6e33; }
+.ff-back { z-index: -2; }
+.ff-body { position: absolute; inset: 0; display: block; }
+/* (the drawing fills its layer, whatever the element says of the pictures in it) */
+.ff-body > svg { display: block !important; position: static !important; width: 100% !important; height: 100% !important; max-width: none !important; margin: 0 !important; overflow: visible; }
+
+/* --- A face: eyes, cheeks, a mouth ---------------------------------------------------------- */
+.ff .ff-white { fill: var(--ff-white); stroke: rgb(34 48 60 / 0.5); stroke-width: 0.7px; }
+.ff .ff-iris { fill: var(--ff-ink); }
+.ff .ff-glint { fill: #fff; }
+.ff .ff-eye { transform-box: fill-box; transform-origin: 50% 50%; }
+.ff .ff-pupil { transform: translate(calc(var(--lx, 0) * var(--reach, 1px)), calc(var(--ly, 0) * var(--reach, 1px))); }
+.ff .ff-glad, .ff .ff-shut { display: none; fill: none; stroke: var(--ff-ink); stroke-linecap: round; }
+.ff .ff-cheek { fill: var(--ff-cheek); opacity: 0.5; }
+.ff .ff-mouth { fill: none; stroke: var(--ff-ink); stroke-linecap: round; }
+.ff .ff-m-open, .ff .ff-m-o { display: none; fill: var(--ff-mouth); }
+
+/* glad (a press): eyes ^ ^, a wide smile, rosy */
+[data-ff-mood="glad"] > .ff .ff-eye, [data-ff-mood="sleep"] > .ff .ff-eye { display: none; }
+[data-ff-mood="glad"] > .ff .ff-glad, [data-ff-mood="sleep"] > .ff .ff-shut { display: inline; }
+[data-ff-mood="glad"] > .ff .ff-m-rest, [data-ff-mood="sing"] > .ff .ff-m-rest { display: none; }
+[data-ff-mood="glad"] > .ff .ff-m-open, [data-ff-mood="sing"] > .ff .ff-m-o { display: inline; }
+[data-ff-mood="glad"] > .ff .ff-cheek { opacity: 0.85; }
+/* (on a dark head, closed eyes are drawn light) */
+.ff-send .ff-glad, .ff-send .ff-shut { stroke: var(--paper); }
+.ff-note .ff-glad, .ff-note .ff-shut { stroke: #fffdf8; }
+:root[data-theme="dark"] .ff-note .ff-glad, :root[data-theme="dark"] .ff-note .ff-shut { stroke: #22303c; }
+/* looking at a finger: eyes a little wider */
+[data-ff-attend] > .ff .ff-eye { scale: 1.12; }
+
+/* --- The flower-heads: the tiles that start a game ------------------------------------------ */
+.ff-tile .ff-petals ellipse { fill: color-mix(in srgb, var(--tile, #f08a76) 34%, #fffdf8); stroke: color-mix(in srgb, var(--tile, #f08a76) 70%, #5a3b2a); stroke-width: 0.8px; }
+:root[data-theme="dark"] .ff-tile .ff-petals ellipse { fill: color-mix(in srgb, var(--tile, #d98572) 62%, #2b2620); stroke: color-mix(in srgb, var(--tile, #d98572) 50%, #111); }
+.ff-tile .ff-leaf { fill: var(--ff-leaf); stroke: var(--ff-leaf-dark); stroke-width: 0.8px; }
+.ff-tile .ff-vein { fill: none; stroke: var(--ff-leaf-dark); stroke-width: 0.9px; stroke-linecap: round; opacity: 0.7; }
+
+/* --- A game's small board: a cartoon of the old rubber-hose kind ---------------------------- */
+.ff-board .ff-white { fill: #fffdf8; stroke: #1d1a18; stroke-width: 1.1px; }
+.ff-board .ff-iris { fill: #1d1a18; }
+.ff-board .ff-hose { fill: none; stroke: #1d1a18; stroke-width: 2.3px; stroke-linecap: round; }
+.ff-board .ff-glove { fill: #fffdf8; stroke: #1d1a18; stroke-width: 0.9px; stroke-linejoin: round; }
+.ff-board .ff-dart { fill: none; stroke: #1d1a18; stroke-width: 0.7px; stroke-linecap: round; }
+.ff-board .ff-shoe { fill: #e0a03c; stroke: #1d1a18; stroke-width: 0.9px; stroke-linejoin: round; }
+.ff-board .ff-shine { fill: none; stroke: rgb(255 255 255 / 0.7); stroke-width: 0.9px; stroke-linecap: round; }
+.ff-board .ff-glad, .ff-board .ff-shut { stroke: #1d1a18; }
+
+/* --- The little bird: the send button ------------------------------------------------------- */
+.ff-send .ff-body { fill: var(--face, var(--ink)); }
+.ff-send .ff-feather { fill: color-mix(in srgb, var(--face, var(--ink)) 78%, #8a6a4a); }
+.ff-send .ff-bill { fill: #f4a340; stroke: #c4761c; stroke-width: 0.7px; stroke-linejoin: round; }
+.ff-send .ff-shank { fill: none; stroke: #e0922f; stroke-width: 1.6px; stroke-linecap: round; }
+.ff-send .ff-note { fill: none; stroke: var(--ink); stroke-width: 1.3px; stroke-linecap: round; stroke-linejoin: round; }
+.ff-send .ff-note-head { fill: var(--ink); }
+.ff-send .ff-song { opacity: 0; }
+.ff-send .ff-beak .ff-under { transform-box: fill-box; transform-origin: 0 0; }
+[data-ff-mood="glad"] > .ff-send .ff-beak .ff-under { rotate: 22deg; }
+
+/* --- The caterpillar: the portal ------------------------------------------------------------ */
+.ff-portal .ff-skin { fill: #9ad77a; stroke: #4f8f3f; stroke-width: 1.1px; }
+.ff-portal .ff-foot { fill: #4f8f3f; }
+.ff-portal .ff-feeler { fill: none; stroke: #3f7a32; stroke-width: 1.2px; stroke-linecap: round; }
+.ff-portal .ff-bead { fill: #3f7a32; }
+:root[data-theme="dark"] .ff-portal .ff-skin { fill: #7cbd62; stroke: #2f5f28; }
+:root[data-theme="dark"] .ff-portal .ff-foot, :root[data-theme="dark"] .ff-portal .ff-bead { fill: #8fcf74; }
+:root[data-theme="dark"] .ff-portal .ff-feeler { stroke: #8fcf74; }
+
+/* --- The sleepy hedgehog: the code on the mat ----------------------------------------------- */
+.ff-code .ff-spine-far { fill: #8a5d38; stroke: #5f3d22; stroke-width: 0.7px; stroke-linejoin: round; }
+.ff-code .ff-spine-near { fill: #b98a5c; stroke: #7a5236; stroke-width: 0.7px; stroke-linejoin: round; }
+.ff-code .ff-cape { fill: #b98a5c; stroke: #7a5236; stroke-width: 0.7px; stroke-linejoin: round; }
+.ff-code .ff-quills { fill: none; stroke: #7a5236; stroke-width: 1px; stroke-linecap: round; }
+:root[data-theme="dark"] .ff-code .ff-cape { fill: #9c7048; stroke: #5c3d24; }
+.ff-code .ff-ear-out { fill: #d9b48f; stroke: #a7805a; stroke-width: 0.7px; }
+.ff-code .ff-ear-in { fill: #f3b8b0; }
+.ff-code .ff-foot { fill: #8a5a35; }
+.ff-code .ff-muzzle { fill: #f2dcc0; stroke: #c9a27e; stroke-width: 0.8px; }
+.ff-code .ff-nose { fill: #3a2a22; }
+.ff-code .ff-z { fill: none; stroke: #6f7f8f; stroke-width: 1.3px; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+:root[data-theme="dark"] .ff-code .ff-spine-far { fill: #6f4a2c; stroke: #3f2816; }
+:root[data-theme="dark"] .ff-code .ff-spine-near { fill: #9c7048; stroke: #5c3d24; }
+:root[data-theme="dark"] .ff-code .ff-z { stroke: #c4ccd4; }
+
+/* --- The bluebell: the bell at the door ----------------------------------------------------- */
+/* (its own picture gives way to the flower: the bell is a picture, not something to press) */
+[data-ff="bell"] { background: none !important; box-shadow: none !important; }
+[data-ff="bell"] > svg { visibility: hidden; }
+.ff-bell .ff-petal { fill: #7f8ff0; stroke: #4d5cc0; stroke-width: 1px; stroke-linejoin: round; }
+.ff-bell .ff-cup { fill: #74b95f; stroke: #4f8f3f; stroke-width: 0.7px; stroke-linejoin: round; }
+.ff-bell .ff-shine { fill: none; stroke: rgb(255 255 255 / 0.55); stroke-width: 1.6px; stroke-linecap: round; }
+.ff-bell .ff-stem { fill: none; stroke: #5d9f4b; stroke-width: 2px; stroke-linecap: round; }
+.ff-bell .ff-leaf { fill: var(--ff-leaf); stroke: var(--ff-leaf-dark); stroke-width: 0.7px; }
+.ff-bell .ff-string { fill: none; stroke: #5868c4; stroke-width: 1.1px; }
+.ff-bell .ff-ball { fill: #f8d95a; stroke: #c9a227; stroke-width: 0.8px; }
+.ff-bell .ff-arcs { fill: none; stroke: #8b9cf0; stroke-width: 1.8px; stroke-linecap: round; opacity: 0; }
+:root[data-theme="dark"] .ff-bell .ff-petal { fill: #7d8de0; stroke: #4b58ad; }
+
+/* --- The field mouse holding up the name sign ----------------------------------------------- */
+.ff-sign .ff-skin, .ff-sign .ff-ear-out { fill: #c8b29b; stroke: #a08a74; stroke-width: 0.8px; }
+.ff-sign .ff-ear-in { fill: #f3b8b0; }
+.ff-sign .ff-nose { fill: #e88a8a; }
+.ff-sign .ff-whiskers { fill: none; stroke: #8a7560; stroke-width: 0.7px; stroke-linecap: round; }
+.ff-sign .ff-paw { fill: #e6d6c2; stroke: #a08a74; stroke-width: 0.8px; }
+.ff-sign .ff-toes { fill: none; stroke: #a08a74; stroke-width: 0.7px; stroke-linecap: round; }
+.ff-sign .ff-tail path { fill: none; stroke: #c4a587; stroke-width: 2.2px; stroke-linecap: round; }
+:root[data-theme="dark"] .ff-sign .ff-skin, :root[data-theme="dark"] .ff-sign .ff-ear-out { fill: #a8937e; stroke: #7d6955; }
+:root[data-theme="dark"] .ff-sign .ff-whiskers { stroke: #d2c4b4; }
+
+/* --- The butterflies at rest: the chat's notes ---------------------------------------------- */
+.ff-note .ff-wing { fill: #cdb8f5; stroke: #8f74c9; stroke-width: 0.8px; stroke-linejoin: round; }
+.ff-note .ff-spot { fill: #fffdf8; }
+.ff-note .ff-skin, .ff-note .ff-bead { fill: #6f5a8f; }
+.ff-note .ff-feeler, .ff-note .ff-legs { fill: none; stroke: #6f5a8f; stroke-width: 1px; stroke-linecap: round; }
+li.mine > p > .ff-note .ff-wing { fill: #f9c784; stroke: #c98d32; }
+:root[data-theme="dark"] .ff-note .ff-wing { fill: #a894d6; stroke: #6c58a3; }
+:root[data-theme="dark"] li.mine > p > .ff-note .ff-wing { fill: #d9a85e; stroke: #9c6f2a; }
+:root[data-theme="dark"] .ff-note .ff-skin, :root[data-theme="dark"] .ff-note .ff-bead { fill: #b9a3dc; }
+:root[data-theme="dark"] .ff-note .ff-feeler, :root[data-theme="dark"] .ff-note .ff-legs { stroke: #b9a3dc; }
+.ff-note .ff-wings { scale: 0.62 1; }
+
+/* --- Feet for the people ------------------------------------------------------------------- */
+.ff-token { z-index: -1; }
+.ff-token .ff-shoe { fill: #7a5a44; }
+.ff-token .ff-shine { fill: rgb(255 255 255 / 0.32); }
+:root[data-theme="dark"] .ff-token .ff-shoe { fill: #8c6a50; }
+
+/* --- Life ------------------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  .ff .ff-pupil { transition: transform 0.42s cubic-bezier(0.3, 0.7, 0.3, 1); }
+  .ff .ff-eye { transition: scale 0.3s ease; }
+  [data-ff-blink="a"] > .ff .ff-eye { animation: ff-blink-a 190ms ease-in-out; }
+  [data-ff-blink="b"] > .ff .ff-eye { animation: ff-blink-b 190ms ease-in-out; }
+
+  /* breathing, each kind its own way, while it is on the screen and nothing is near it: the
+     drawing moved as a whole (.ff-body), which the compositor does without drawing it again */
+  [data-ff-seen]:not([data-ff-attend]) > .ff-front > .ff-body { animation: ff-bob 3.8s ease-in-out var(--ff-age, 0s) infinite; }
+  [data-ff-seen]:not([data-ff-attend]) > .ff-send > .ff-body { animation-duration: 3.2s; }
+  [data-ff-seen]:not([data-ff-attend]) > .ff-note > .ff-body { animation-duration: 5.6s; }
+  [data-ff-seen]:not([data-ff-attend]) > .ff-back.ff-tile > .ff-body { animation: ff-swell 4.4s ease-in-out var(--ff-age, 0s) infinite; }
+  [data-ff-seen]:not([data-ff-attend]) > .ff-back.ff-code > .ff-body { animation: ff-snooze 5.2s ease-in-out var(--ff-age, 0s) infinite; }
+  [data-ff-seen]:not([data-ff-attend]) > .ff-front.ff-code > .ff-body { animation: none; }
+  [data-ff-seen]:not([data-ff-attend]) > .ff-front.ff-bell > .ff-body { animation: ff-dangle 6.2s ease-in-out var(--ff-age, 0s) infinite; }
+
+  /* fidgets (data-ff-do), each started at --ff-do-t (so one drawn again carries on where it was) */
+  [data-ff-do="wave"] > .ff-tile .ff-hand.ff-r { animation: ff-wave 1.8s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="ruffle"] > .ff-tile .ff-petals { animation: ff-ruffle 1.5s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="ruffle"] > .ff-tile .ff-hand { animation: ff-flutter 1.5s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="nod"] > .ff-tile .ff-nod { animation: ff-nod 1.2s ease-in-out var(--ff-do-t, 0s) both; }
+
+  [data-ff-do="tap"] > .ff-board .ff-leg0 { animation: ff-tap 0.36s ease-in-out var(--ff-do-t, 0s) 3; }
+  [data-ff-do="tap"] > .ff-board .ff-leg1 { animation: ff-tap 0.36s ease-in-out calc(var(--ff-do-t, 0s) + 0.18s) 3; }
+  [data-ff-do="feel"] > .ff .ff-feelers { animation: ff-feel 1.3s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="wave"] > .ff-board .ff-arm, [data-ff-do="call"] > .ff-board .ff-arm { animation: ff-wave-left 1.6s ease-in-out var(--ff-do-t, 0s) both; }
+    .mini[data-ff-do="call"] { animation: ff-hop 1.9s ease-in-out var(--ff-do-t, 0s) both; }
+
+  [data-ff-do="tilt"] > .ff-send .ff-head { animation: ff-tilt 1.6s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="hop"] > .ff-send .ff-breath { animation: ff-hop 0.9s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="hop"] > .ff-send .ff-feet { animation: ff-crouch 0.9s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="flick"] > .ff-send .ff-tail { animation: ff-flick 0.9s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-mood="glad"] > .ff-send .ff-song { animation: ff-song 1.5s ease-out both; }
+
+  [data-ff-do="ripple"] > .ff-portal .ff-foot { animation: ff-tap 0.5s ease-in-out var(--ff-do-t, 0s) 2; }
+  [data-ff-do="ripple"] > .ff-portal .ff-foot:nth-child(2) { animation-delay: calc(var(--ff-do-t, 0s) + 0.1s); }
+  [data-ff-do="ripple"] > .ff-portal .ff-foot:nth-child(3) { animation-delay: calc(var(--ff-do-t, 0s) + 0.2s); }
+  [data-ff-do="ripple"] > .ff-portal .ff-foot:nth-child(4) { animation-delay: calc(var(--ff-do-t, 0s) + 0.3s); }
+  [data-ff-do="ripple"] > .ff-portal .ff-foot:nth-child(5) { animation-delay: calc(var(--ff-do-t, 0s) + 0.4s); }
+
+  [data-ff-mood="sleep"][data-ff-do="snore"] > .ff-code .ff-z1 { animation: ff-z 3.2s ease-out var(--ff-do-t, 0s) both; }
+  [data-ff-mood="sleep"][data-ff-do="snore"] > .ff-code .ff-z2 { animation: ff-z 3.2s ease-out calc(var(--ff-do-t, 0s) + 0.7s) both; }
+  [data-ff-do="shuffle"] > .ff-code .ff-spines { animation: ff-ruffle 1.2s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-mood="glad"] > .ff-code .ff-spines { animation: ff-fluff 0.9s ease-out both; }
+
+  [data-ff-do="ring"] > .ff-bell .ff-flower { animation: ff-ring 2s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="ring"] > .ff-bell .ff-clapper { animation: ff-ring 2s ease-in-out calc(var(--ff-do-t, 0s) + 0.12s) both reverse; }
+  [data-ff-do="ring"] > .ff-bell .ff-arcs { animation: ff-chime 2s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="sway"] > .ff-bell .ff-flower { animation: ff-nod-side 1.8s ease-in-out var(--ff-do-t, 0s) both; }
+
+  [data-ff-do="ears"] > .ff-sign .ff-ear.ff-l { animation: ff-ear-l 1.1s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="ears"] > .ff-sign .ff-ear.ff-r { animation: ff-ear-r 1.1s ease-in-out calc(var(--ff-do-t, 0s) + 0.15s) both; }
+  [data-ff-do="sniff"] > .ff-sign .ff-nose { animation: ff-sniff 0.4s ease-in-out var(--ff-do-t, 0s) 3; }
+  [data-ff-do="sniff"] > .ff-sign .ff-whiskers { animation: ff-sniff-w 0.4s ease-in-out var(--ff-do-t, 0s) 3; }
+  [data-ff-do="peek"] > .ff-sign .ff-peek { animation: ff-peek 2.2s ease-in-out var(--ff-do-t, 0s) both; }
+  [data-ff-do="tail"] > .ff-sign .ff-tail { animation: ff-swish 1.6s ease-in-out var(--ff-do-t, 0s) both; }
+
+  [data-ff-do="fan"] > .ff-note .ff-wings { animation: ff-fan 2.6s ease-in-out var(--ff-do-t, 0s) both; }
+
+  /* walking: the feet go */
+  [data-walk] .ff-token .ff-foot.ff-l { animation: ff-step 0.52s ease-in-out infinite; }
+  [data-walk] .ff-token .ff-foot.ff-r { animation: ff-step 0.52s ease-in-out -0.26s infinite; }
+
+  /* a press: the face squashes down into its edge and springs back */
+  [data-ff-press="a"]:is(.mw-face, .world-portal)::before, [data-ff-press="a"]:is(.mw-face, .world-portal) > :not(a, button, input, form),
+  [data-ff-press="a"]:not(.mw-face, .world-portal, h1) { animation: ff-squash-a 0.46s ease-out !important; }
+  [data-ff-press="b"]:is(.mw-face, .world-portal)::before, [data-ff-press="b"]:is(.mw-face, .world-portal) > :not(a, button, input, form),
+  [data-ff-press="b"]:not(.mw-face, .world-portal, h1) { animation: ff-squash-b 0.46s ease-out !important; }
+  h1[data-ff-press="a"]::after, h1[data-ff-press="a"] > * { animation: ff-squash-a 0.46s ease-out !important; }
+  h1[data-ff-press="b"]::after, h1[data-ff-press="b"] > * { animation: ff-squash-b 0.46s ease-out !important; }
+}
+/* what is pressed stays where it is: the face is pressed, not the box */
+[data-ff-host]:active { translate: none !important; }
+
+/* Something is being typed: nobody moves. The page cannot be seen: nothing goes on. */
+[data-ff-still] .ff, [data-ff-still] .ff *, [data-ff-still] [data-ff] { animation: none !important; }
+[data-ff-asleep] .ff, [data-ff-asleep] .ff *, [data-ff-asleep] [data-ff] { animation-play-state: paused !important; }
+
+/* With reduced motion: drawn at rest (the hedgehog asleep, with its z) */
+@media (prefers-reduced-motion: reduce) {
+  .ff-code .ff-z1 { opacity: 0.75; }
+}
+
+@keyframes ff-blink-a { 0%, 100% { transform: none; } 42%, 58% { transform: scaleY(0.1); } }
+@keyframes ff-blink-b { 0%, 100% { transform: none; } 42%, 58% { transform: scaleY(0.1); } }
+@keyframes ff-bob { 0%, 100% { transform: none; } 50% { transform: translateY(0.8px); } }
+@keyframes ff-swell { 0%, 100% { transform: none; } 50% { transform: scale(1.035); } }
+@keyframes ff-snooze { 0%, 100% { transform: none; } 45% { transform: scale(1.01, 1.07); } }
+@keyframes ff-dangle { 0%, 100% { transform: rotate(-2.6deg); } 50% { transform: rotate(2.6deg); } }
+@keyframes ff-wave { 0%, 100% { transform: none; } 18%, 50% { transform: rotate(-44deg); } 34%, 66% { transform: rotate(-22deg); } 82% { transform: rotate(-40deg); } }
+@keyframes ff-wave-left { 0%, 100% { transform: none; } 20%, 52% { transform: rotate(38deg); } 36%, 68% { transform: rotate(14deg); } 84% { transform: rotate(28deg); } }
+@keyframes ff-wave-up { 0%, 100% { transform: none; } 20%, 52% { transform: rotate(-26deg); } 36%, 68% { transform: rotate(8deg); } 84% { transform: rotate(-18deg); } }
+@keyframes ff-flutter { 0%, 100% { transform: none; } 30% { transform: rotate(-10deg); } 65% { transform: rotate(6deg); } }
+@keyframes ff-ruffle { 0%, 100% { transform: none; } 25% { transform: rotate(-3deg); } 55% { transform: rotate(2.5deg); } 80% { transform: rotate(-1deg); } }
+@keyframes ff-nod { 0%, 100% { transform: none; } 35%, 55% { transform: translateY(2.2px); } }
+@keyframes ff-nod-side { 0%, 100% { transform: none; } 40% { transform: rotate(8deg); } 70% { transform: rotate(-4deg); } }
+@keyframes ff-tap { 0%, 100% { transform: none; } 50% { transform: rotate(-24deg) translateY(-0.8px); } }
+@keyframes ff-feel { 0%, 100% { transform: none; } 20% { transform: rotate(-9deg); } 45% { transform: rotate(7deg); } 70% { transform: rotate(-5deg); } }
+@keyframes ff-hop { 0%, 100% { transform: none; } 14% { transform: translateY(-4px); } 28% { transform: none; } 40% { transform: translateY(-3px); } 52% { transform: none; } }
+@keyframes ff-crouch { 0%, 100% { transform: none; } 14%, 40% { transform: translateY(-3px); } }
+@keyframes ff-tilt { 0%, 100% { transform: none; } 25%, 60% { transform: rotate(14deg); } 78% { transform: rotate(-6deg); } }
+@keyframes ff-flick { 0%, 100% { transform: none; } 30% { transform: rotate(-16deg); } 60% { transform: rotate(8deg); } }
+@keyframes ff-song { 0% { opacity: 0; transform: none; } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -12px); } }
+@keyframes ff-z { 0% { opacity: 0; transform: none; } 25% { opacity: 0.85; } 100% { opacity: 0; transform: translate(-7px, -13px); } }
+@keyframes ff-fluff { 0% { transform: none; } 30% { transform: scale(1.04, 1.22); } 100% { transform: none; } }
+@keyframes ff-ring { 0%, 100% { transform: none; } 10% { transform: rotate(13deg); } 24% { transform: rotate(-11deg); } 38% { transform: rotate(8deg); } 52% { transform: rotate(-5deg); } 66% { transform: rotate(2.5deg); } 80% { transform: rotate(-1deg); } }
+@keyframes ff-chime { 0%, 100% { opacity: 0; transform: none; } 18% { opacity: 0.85; } 70% { opacity: 0; transform: scale(1.1); } }
+@keyframes ff-ear-l { 0%, 100% { transform: none; } 25%, 45% { transform: rotate(-14deg); } }
+@keyframes ff-ear-r { 0%, 100% { transform: none; } 25%, 45% { transform: rotate(14deg); } }
+@keyframes ff-sniff { 0%, 100% { transform: none; } 50% { transform: scale(1.3); } }
+@keyframes ff-sniff-w { 0%, 100% { transform: none; } 50% { transform: translateY(-0.8px); } }
+@keyframes ff-peek { 0%, 100% { transform: none; } 25%, 70% { transform: translateY(-3.2px); } }
+@keyframes ff-swish { 0%, 100% { transform: none; } 30% { transform: rotate(-12deg); } 65% { transform: rotate(9deg); } }
+@keyframes ff-fan { 0%, 100% { transform: none; } 35% { transform: scaleX(1.55); } 55% { transform: scaleX(1.5); } 80% { transform: scaleX(0.4); } }
+@keyframes ff-step { 0%, 100% { transform: none; } 50% { transform: translateY(-2.4px) rotate(-6deg); } }
+@keyframes ff-squash-a { 0%, 100% { transform: none; } 28% { transform: translate(calc(var(--ex, 0.3rem) * 0.5), calc(var(--ey, 0.4rem) * 0.55)) scale(1.04, 0.9); } 62% { transform: scale(0.985, 1.035); } }
+@keyframes ff-squash-b { 0%, 100% { transform: none; } 28% { transform: translate(calc(var(--ex, 0.3rem) * 0.5), calc(var(--ey, 0.4rem) * 0.55)) scale(1.04, 0.9); } 62% { transform: scale(0.985, 1.035); } }
+
+/* In the room's other world (room/worlds.js) there are no folk: the night is live action. */
+[data-paint="serious"] .ff { display: none; }
