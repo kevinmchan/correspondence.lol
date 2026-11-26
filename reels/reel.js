@@ -2,10 +2,13 @@
 // network of the app's world called Ladder. It plays by itself; a touch
 // anywhere pauses it, and the button in the corner says so.
 //
-// Its people speak as Dot does (jam/taste.js): the whole line goes into a
-// bubble at once, for screen readers, and is shown a few words at a time, a
-// bell for each, falling. Each speaker has bells of their own (reels/inflection.js).
-// Penny cannot speak, and in the sponsored clip at the end only hums.
+// Its words are of the two kinds reels have. A voice line is said as Dot says
+// things (jam/taste.js): the whole line goes to screen readers at once, and is
+// shown in a bubble a few words at a time, a bell for each, falling; each
+// speaker has bells of their own. A caption is written over the picture,
+// whole, with a tick. Every word is the script's (reels/inflection.js), and a
+// blank shows its name in brackets. Penny cannot speak, and in the sponsored
+// clip at the end only hums.
 //
 // Everything is worked out from the time, so it can be paused, started part
 // way (`&at=44`, for the sponsored clip; `&hold` to start it paused) and played again.
@@ -26,8 +29,13 @@ export function mount(root, life) {
   meet(REELS[url.searchParams.get('reel')] ? url.searchParams.get('reel') : 'inflection'); // (shared with you, or come to from the feed: it is in your feed from now on)
   const main = root.querySelector('main.reel');
   const $ = (selector) => main.querySelector(selector);
-  const [frame, stage, bar, bubble, said, pause, again, cta, adWords, comments] =
-    ['.reel-frame', '.reel-stage', '.reel-bar i', '.reel-bubble', '.reel-said', '.reel-pause', '.reel-again', '.reel-cta', '.reel-ad-words', '.reel-comments'].map($);
+  const [frame, stage, bar, bubble, caption, said, pause, again, cta, adWords, comments] =
+    ['.reel-frame', '.reel-stage', '.reel-bar i', '.reel-bubble', '.reel-words', '.reel-said', '.reel-pause', '.reel-again', '.reel-cta', '.reel-ad-words', '.reel-comments'].map($);
+  // Every word is the script's, or its blank (reels/inflection.js).
+  const write = (el, key) => { el.textContent = reel.words(key); el.classList.toggle('blank', reel.blank(key)); };
+  write(cta, reel.CHROME.play);
+  write($('.reel-disclose'), reel.CHROME.reveal);
+  write($('.reel-caption'), reel.CHROME.caption);
   $('.reel-told').textContent = reel.TOLD;
   cta.href = playAt();
 
@@ -48,13 +56,13 @@ export function mount(root, life) {
     item.innerHTML = '<span class="face"></span><span class="words"><b></b><span></span></span>';
     item.querySelector('.face').textContent = one.face;
     item.querySelector('b').textContent = one.creator ? `${one.name} · creator` : one.name;
-    item.querySelector('.words > span').textContent = one.text;
+    write(item.querySelector('.words > span'), one.slot);
     return item;
   }));
   adWords.replaceChildren(...reel.AD_WORDS.map((one) => {
     const line = document.createElement('p');
-    line.className = one.big ? 'big' : '';
-    line.textContent = one.text;
+    write(line, one.slot);
+    line.classList.toggle('big', Boolean(one.big));
     return line;
   }));
   const views = $('.reel-insights .views');
@@ -189,27 +197,33 @@ export function mount(root, life) {
       if (key === null && shot.key !== null) shot.el.classList.remove('on');
       shot.key = key;
     }
-    // who is speaking, and how much of it has been said
-    const line = reel.LINES.find((one) => t >= one.at && t < one.end) ?? null;
-    if (line !== lineShown) {
-      lineShown = line;
+    // what is said, and how much of it has been; or what is written over the picture
+    const now = reel.LINES.find((one) => t >= one.at && t < one.end) ?? null;
+    if (now !== lineShown) {
+      lineShown = now;
       saidCount = 0;
-      const over = line && shots.find((shot) => shot.ranges.some(([a, b]) => line.at >= a && line.at < b));
-      bubble.className = `reel-bubble${line ? ` on at-${line.where} in-${over?.name} by-${line.who}` : ''}`;
-      bubble.replaceChildren(...(line ? line.said.flatMap((part, i) => { const span = document.createElement('span'); span.textContent = part; return i ? [' ', span] : [span]; }) : []));
+      const over = now && shots.find((shot) => shot.ranges.some(([a, b]) => now.at >= a && now.at < b));
+      const voiced = now?.kind === 'voice';
+      const blankNow = now && reel.blank(now.slot) ? ' blank' : '';
+      bubble.className = `reel-bubble${voiced ? ` on at-${now.where} in-${over?.name} by-${now.who}${blankNow}` : ''}`;
+      bubble.replaceChildren(...(voiced ? reel.pieces(now.slot).flatMap((part, i) => { const span = document.createElement('span'); span.textContent = part; return i ? [' ', span] : [span]; }) : []));
+      caption.className = `reel-words${now && !voiced ? ` on in-${over?.name}${blankNow}` : ''}`;
+      caption.textContent = now && !voiced ? reel.words(now.slot) : '';
+      if (now && !voiced && advancing && engine()) tone({ freq: 1567.98, dur: 0.05, gain: 0.03, into: bus }); // (a caption comes with a tick)
       // (the whole line is said to screen readers once, as it comes)
-      if (line) said.textContent = `${line.who === 'aside' ? 'Marcus, under his breath' : 'Marcus'}: ${line.said.join(' ')}`;
+      if (now) said.textContent = voiced ? `${now.who === 'aside' ? 'Marcus, under his breath' : 'Marcus'}: ${reel.words(now.slot)}` : reel.words(now.slot);
     }
-    if (line) {
-      const gap = reel.VOICES[line.who].gap;
-      const count = still.matches ? line.said.length : Math.min(line.said.length, Math.floor((t - line.at) / gap) + 1);
+    if (now?.kind === 'voice') {
+      const parts = reel.pieces(now.slot);
+      const gap = reel.VOICES[now.who].gap;
+      const count = still.matches ? parts.length : Math.min(parts.length, Math.floor((t - now.at) / gap) + 1);
       const spans = bubble.children;
       for (let i = saidCount; i < count; i++) {
         spans[i].classList.add('said');
-        if (advancing) bell(line.who, i, line.said.length);
+        if (advancing) bell(now.who, i, parts.length);
       }
       saidCount = Math.max(saidCount, count);
-      main.classList.toggle('talking', line.where === 'face' && t < line.at + gap * line.said.length + 0.25);
+      main.classList.toggle('talking', now.where === 'face' && t < now.at + gap * parts.length + 0.25);
     } else main.classList.remove('talking');
 
     // the comments, each with its bells
@@ -217,7 +231,7 @@ export function mount(root, life) {
     [...comments.children].forEach((item, i) => item.classList.toggle('in', i < shown));
     if (advancing) for (let i = commentsIn; i < shown; i++) {
       ring(reel.COMMENTS[i].who);
-      said.textContent = `${reel.COMMENTS[i].name}: ${reel.COMMENTS[i].text}`;
+      said.textContent = `${reel.COMMENTS[i].name}: ${reel.words(reel.COMMENTS[i].slot)}`;
     }
     commentsIn = shown;
 
@@ -228,7 +242,7 @@ export function mount(root, life) {
     cta.hidden = t < reel.CTA_AT;
     main.classList.toggle('offered', t >= reel.CTA_AT);
     main.classList.toggle('disclosed', t >= reel.DISCLOSE_AT);
-    if (advancing && ad && !main.dataset.toldAd) { main.dataset.toldAd = '1'; said.textContent = `Sponsored: ${reel.AD_WORDS.map((one) => one.text).join(' ')}`; }
+    if (advancing && ad && !main.dataset.toldAd) { main.dataset.toldAd = '1'; said.textContent = `Sponsored: ${reel.AD_WORDS.map((one) => reel.words(one.slot)).join(' ')}`; }
 
     // the views, going up
     const { COUNT } = reel;

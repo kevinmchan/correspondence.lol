@@ -1,23 +1,90 @@
 // "The Inflection Point": a reel by marcus.pell, and at its end a sponsored
-// clip for this app (the owner, 26 November 2026). A satire, in the world of
-// the app: a social post that is also an ad. Nothing says it is a paid
-// partnership until the very end: that is the punchline, and it is not given
-// away early (no #ad, no label by his name).
+// clip for this app (the owner, 26 November 2026): a social post that is also
+// an ad. That it is a paid partnership is the punchline, and nothing gives it
+// away early. (The story doc: Marcus is one way the character who carries
+// Goodhart's law could look outside the game.)
 //
-// Marcus is sincere. He says that the middle class must choose between
-// outrunning the line of inequality and reaching back across it, and keeps
-// running without seeing it: his son's kindness is done again for the shot,
-// and the views are counted before Q1, the lease on the car up in March. The
-// man he made content of mentions only that the boy brought him soup: kindness
-// with no camera on it. (The story doc: he is one
-// way the character who carries Goodhart's law could look outside the game.)
+// THE WORDS ARE THE OWNER'S TO WRITE (the owner, 26 November 2026: "a creative
+// challenge for me to fill in the text. Maybe that's the game."). Every word
+// the reel shows or says is an entry in SCRIPT, below. An empty one shows its
+// name in brackets, where it will be. Nothing else in the reel has words in
+// it, but for names, the network's and its people's.
 //
-// The reel's people speak as Dot does: in a bubble, a few words at a time, a
-// falling bell for each (reels/reel.js). Penny, in the sponsored clip, only hums.
+// They are of two kinds, as reels have:
+//   voice    said, as Dot says things (reels/reel.js): a bubble that fills a few
+//            words at a time, a falling bell for each. Write " / " where it is to
+//            break; without one it breaks every two words or so. A line has to be
+//            all said in the time it is up (tests/reel.test.js says if not).
+//   caption  written on the picture, whole, at once.
+// Labels drawn in a picture (the chart, the choice), the post's own caption,
+// the comments, the sponsor's lines, the button and the last line are written
+// too: captions, of one kind or another.
 //
 // Times are in seconds from the start. A drawing is 360 by 640, the shape of
 // the reel; it is shown whole on a phone of that shape and cut at its edges on
-// any other, so what matters is kept away from them.
+// any other, so what matters is kept away from them. A label written into a
+// drawing has as much room as its blank, more or less.
+
+export const SCRIPT = {
+  // Marcus, to camera, in his car (voice)
+  'the hook': '',
+  'what his son asked': '',
+  'about Mr. Alvarez': '',
+  // the chart (captions over it, then the labels in it)
+  'the chart, first': '',
+  'the chart, second': '',
+  'the chart, third': '',
+  'chart title': '',
+  'above the line': '',
+  'below the line': '',
+  'him, on the chart': '',
+  'Mr. Alvarez, on the chart': '',
+  'time, on the chart': '',
+  // the choice (a caption, the two choices drawn, a caption)
+  'the choice': '',
+  'choice one': '',
+  'choice two': '',
+  'after the choice': '',
+  // back in the car (voice)
+  'the turn': '',
+  'the resolve': '',
+  // the footage of his son (voice over it, then off camera)
+  'over the footage': '',
+  'off camera': '',
+  // the car, the last time (voice, then under his breath, as his views go up)
+  'the ask': '',
+  'under his breath': '',
+  // the post, and its comments
+  'the post caption': '',
+  'first comment': '',
+  'his reply': '',
+  'third comment': '',
+  'last comment': '',
+  // the sponsored clip
+  'sponsor, first': '',
+  'sponsor, second': '',
+  'call to play': '',
+  'the reveal': '',
+};
+
+// What an entry says: its words, or its name in brackets while it is blank.
+export const filled = (key) => String(SCRIPT[key] ?? '').trim();
+export const blank = (key) => !filled(key);
+export const words = (key) => filled(key) || `[${key}]`;
+// A voice line in the pieces it is said in.
+export function pieces(key) {
+  const text = filled(key);
+  if (!text) return [`[${key}]`];
+  if (text.includes(' / ')) return text.split(' / ').map((piece) => piece.trim()).filter(Boolean);
+  const all = text.split(/\s+/);
+  const out = [];
+  for (let i = 0; i < all.length; i += 2) out.push(all.slice(i, i + 2).join(' '));
+  if (out.length > 1 && !out.at(-1).includes(' ')) { // (no word left on its own at the end)
+    const last = out.pop();
+    out[out.length - 1] += ` ${last}`;
+  }
+  return out;
+}
 
 export const LENGTH = 58;
 export const AD_AT = 44; // where the sponsored clip begins
@@ -26,6 +93,7 @@ export const AD_AT = 44; // where the sponsored clip begins
 // falling: a thing said comes down. `gap` is the time between one piece of a
 // line and the next. Marcus's are short and bright, and quick (hurry); R. A.'s
 // are long and low, with an echo (it has come a long way and took its time).
+// The comments come in on their writers' bells, and a caption with a tick.
 export const VOICES = {
   marcus: { notes: [1046.5, 880, 783.99, 659.25], dur: 0.1, type: 'triangle', gain: 0.05, gap: 0.17 },
   aside: { notes: [783.99, 659.25, 523.25], dur: 0.08, type: 'sine', gain: 0.025, gap: 0.22 }, // Marcus, under his breath
@@ -34,44 +102,45 @@ export const VOICES = {
   ra: { notes: [261.63, 196, 130.81], dur: 0.9, type: 'sine', gain: 0.11, gap: 0.6, echo: true },
 };
 
-// What is said. `where` places the bubble: 'face' over Marcus's head in the
-// car, 'over' for his voice over a picture he is not in, 'aside' for what he
-// says off camera, under his breath.
+// The lines, in order. A voice line is in a bubble: `where` is 'face' (over
+// Marcus's head in the car), 'over' (his voice over a picture he is not in)
+// or 'aside' (off camera, under his breath). A caption is written over the
+// shot it is in.
 export const LINES = [
-  { at: 0.4, end: 2.6, who: 'marcus', where: 'face', said: ['I almost', 'didn’t', 'post this.'] },
-  { at: 2.8, end: 4.9, who: 'marcus', where: 'face', said: ['My son asked', 'why we have', 'two cars'] },
-  { at: 5.0, end: 7.0, who: 'marcus', where: 'face', said: ['and Mr. Alvarez', 'walks', 'in the rain.'] },
-  { at: 7.4, end: 9.6, who: 'marcus', where: 'over', said: ['So I made', 'a chart.'] },
-  { at: 10.6, end: 13.0, who: 'marcus', where: 'over', said: ['The line', 'keeps', 'climbing.'] },
-  { at: 13.4, end: 16.0, who: 'marcus', where: 'over', said: ['Faster', 'than us.'] },
-  { at: 16.3, end: 17.9, who: 'marcus', where: 'over', said: ['So the middle', 'gets a choice.'] },
-  { at: 20.6, end: 23.0, who: 'marcus', where: 'over', said: ['You can’t', 'do both.'] },
-  { at: 23.3, end: 25.1, who: 'marcus', where: 'face', said: ['Not choosing', 'is choosing', 'one.'] },
-  { at: 25.2, end: 27.0, who: 'marcus', where: 'face', said: ['This year', 'I’ll be', 'slower.'] },
-  { at: 28.0, end: 30.6, who: 'marcus', where: 'over', said: ['He’s seven.', 'He got there', 'before I did.'] },
-  { at: 30.9, end: 33.0, who: 'aside', where: 'aside', said: ['Okay buddy,', 'one more', 'time.'] },
-  { at: 33.2, end: 34.7, who: 'marcus', where: 'face', said: ['Repost', 'if this', 'moved you.'] },
-  { at: 35.2, end: 37.9, who: 'aside', where: 'aside', said: ['Gotta keep', 'this going', 'till Q1.'] },
+  { at: 0.4, end: 2.6, kind: 'voice', who: 'marcus', where: 'face', slot: 'the hook' },
+  { at: 2.8, end: 4.9, kind: 'voice', who: 'marcus', where: 'face', slot: 'what his son asked' },
+  { at: 5.0, end: 7.0, kind: 'voice', who: 'marcus', where: 'face', slot: 'about Mr. Alvarez' },
+  { at: 7.4, end: 9.6, kind: 'caption', slot: 'the chart, first' },
+  { at: 10.6, end: 13.0, kind: 'caption', slot: 'the chart, second' },
+  { at: 13.4, end: 16.0, kind: 'caption', slot: 'the chart, third' },
+  { at: 16.3, end: 17.9, kind: 'caption', slot: 'the choice' },
+  { at: 20.6, end: 23.0, kind: 'caption', slot: 'after the choice' },
+  { at: 23.3, end: 25.1, kind: 'voice', who: 'marcus', where: 'face', slot: 'the turn' },
+  { at: 25.2, end: 27.0, kind: 'voice', who: 'marcus', where: 'face', slot: 'the resolve' },
+  { at: 28.0, end: 30.6, kind: 'voice', who: 'marcus', where: 'over', slot: 'over the footage' },
+  { at: 30.9, end: 33.0, kind: 'voice', who: 'aside', where: 'aside', slot: 'off camera' },
+  { at: 33.2, end: 34.7, kind: 'voice', who: 'marcus', where: 'face', slot: 'the ask' },
+  { at: 35.2, end: 37.9, kind: 'voice', who: 'aside', where: 'aside', slot: 'under his breath' },
 ];
 
-// The comments, each come in with its writer's bells. They say almost
-// nothing, as comments do (the owner, 26 November 2026: the first ones were
-// "too on the nose"). Nobody names the theme; R. A. only says what the boy
-// did when nobody was filming.
+// The comments, each come in on its writer's bells.
 export const COMMENTS = [
-  { at: 38.2, who: 'jordan', name: 'jordan.t', face: 'JT', text: 'what car is that' },
-  { at: 39.4, who: 'marcus', name: 'marcus.pell', face: 'MP', text: 'lease is up in March 😅', reply: true, creator: true },
-  { at: 40.6, who: 'priya', name: 'priya.n', face: 'PN', text: 'saving this 🙏' },
-  { at: 42.2, who: 'ra', name: 'r.a.', face: 'RA', text: 'Your boy brought me soup today.' },
+  { at: 38.2, who: 'jordan', name: 'jordan.t', face: 'JT', slot: 'first comment' },
+  { at: 39.4, who: 'marcus', name: 'marcus.pell', face: 'MP', slot: 'his reply', reply: true, creator: true },
+  { at: 40.6, who: 'priya', name: 'priya.n', face: 'PN', slot: 'third comment' },
+  { at: 42.2, who: 'ra', name: 'r.a.', face: 'RA', slot: 'last comment' },
 ];
 
-// The sponsor's words, in the clip at the end: few, and slow.
+// The sponsor's words, in the clip at the end: few, and slow; then the way to
+// play, and the last line.
 export const AD_WORDS = [
-  { at: 47.2, text: 'Feel behind? So did Penny.', big: true },
-  { at: 51.6, text: 'Somewhere a window is lit.' },
+  { at: 47.2, slot: 'sponsor, first', big: true },
+  { at: 51.6, slot: 'sponsor, second' },
 ];
 export const CTA_AT = 53.4;
 export const DISCLOSE_AT = 54.6;
+// The words on the feed around the reel.
+export const CHROME = { caption: 'the post caption', play: 'call to play', reveal: 'the reveal' };
 
 // Sounds that are not anyone speaking. The beds (rain, and a clock that ticks
 // a little quicker as it goes) run under Marcus's part and stop at the cut.
@@ -98,6 +167,10 @@ export const SHOTS = [
 
 // The views on Marcus's insights card, while it is up.
 export const COUNT = { from: 34.6, to: 37.8, start: 12408, end: 1204331, shown: [34.6, 38] };
+
+const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// A label drawn into a picture: its words, or its blank.
+const label = (key, attrs, kind = '') => `<text class="${[kind, blank(key) ? 'blank' : ''].join(' ').trim()}" ${attrs}>${escape(words(key))}</text>`;
 
 const RAIN = (rows) => rows.map(([x, y]) => `<line x1="${x}" y1="${y}" x2="${x - 3}" y2="${y + 14}"/>`).join('');
 
@@ -140,13 +213,13 @@ export const DRAWINGS = {
       <rect width="360" height="640" fill="#1b232d"/>
       <g stroke="#2c3743" stroke-width="1"><line x1="40" y1="140" x2="340" y2="140"/><line x1="40" y1="240" x2="340" y2="240"/><line x1="40" y1="340" x2="340" y2="340"/><line x1="40" y1="440" x2="340" y2="440"/><line x1="40" y1="540" x2="340" y2="540"/></g>
       <line x1="40" y1="100" x2="40" y2="590" stroke="#6f7c89" stroke-width="2"/><line x1="40" y1="590" x2="340" y2="590" stroke="#6f7c89" stroke-width="2"/>
-      <text x="44" y="88" font-size="13" font-weight="700" fill="#8b97a4" letter-spacing="1.5">THE LINE</text>
-      <text x="336" y="612" text-anchor="end" font-size="12" fill="#8b97a4">years →</text>
+      ${label('chart title', 'x="44" y="88" font-size="13" font-weight="700" fill="#8b97a4" letter-spacing="1.5"')}
+      ${label('time, on the chart', 'x="312" y="612" text-anchor="end" font-size="12" fill="#8b97a4"')}
       <path class="rise" d="M40 520 C 150 500, 230 380, 296 110" stroke="#7fa8d1" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <text class="tag above" x="60" y="190" font-size="15" font-weight="700" fill="#a9c6e3">money makes money</text>
-      <text class="tag below" x="150" y="505" font-size="15" font-weight="700" fill="#e8a27f">money makes rent</text>
-      <circle cx="64" cy="578" r="7" fill="#8a96a3"/><text x="76" y="583" font-size="11" fill="#8b97a4">Mr. A.</text>
-      <g class="you"><circle r="9" fill="#e3b04b" stroke="#1b232d" stroke-width="3"/><text y="-16" text-anchor="middle" font-size="12" font-weight="700" fill="#e4e9ef">you</text></g>
+      ${label('above the line', 'x="60" y="190" font-size="15" font-weight="700" fill="#a9c6e3"', 'tag above')}
+      ${label('below the line', 'x="150" y="505" font-size="15" font-weight="700" fill="#e8a27f"', 'tag below')}
+      <circle cx="64" cy="578" r="7" fill="#8a96a3"/>${label('Mr. Alvarez, on the chart', 'x="76" y="583" font-size="11" fill="#8b97a4"')}
+      <g class="you"><circle r="9" fill="#e3b04b" stroke="#1b232d" stroke-width="3"/>${label('him, on the chart', 'y="-16" text-anchor="middle" font-size="12" font-weight="700" fill="#e4e9ef"')}</g>
     </svg>`,
 
   choice: `
@@ -154,13 +227,13 @@ export const DRAWINGS = {
       <rect width="360" height="640" fill="#12171d"/>
       <g class="half run">
         <rect x="0" y="0" width="360" height="318" fill="#1e2a36"/>
-        <text x="44" y="140" font-size="52" font-weight="800" fill="#e4e9ef">1. Run.</text>
+        ${label('choice one', 'x="44" y="140" font-size="34" font-weight="800" fill="#e4e9ef"')}
         <path d="M60 250 L300 160" stroke="#7fa8d1" stroke-width="4" stroke-dasharray="3 9" stroke-linecap="round"/>
         <g class="runner"><circle cx="80" cy="242" r="11" fill="#e3b04b" stroke="#fff" stroke-width="3"/></g>
       </g>
       <g class="half turn">
         <rect x="0" y="322" width="360" height="318" fill="#2a2420"/>
-        <text x="44" y="420" font-size="32" font-weight="800" fill="#f1ebdf">2. Turn around.</text>
+        ${label('choice two', 'x="44" y="420" font-size="34" font-weight="800" fill="#f1ebdf"')}
         <circle cx="230" cy="520" r="11" fill="#e3b04b" stroke="#fff" stroke-width="3"/>
         <path d="M216 524 Q170 556 122 552" stroke="#e8664f" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="2 7"/>
         <circle cx="108" cy="556" r="9" fill="#8a96a3"/>
@@ -215,4 +288,4 @@ export const DRAWINGS = {
 };
 
 // The reel's own page, for those who cannot see it: what happens, in order.
-export const TOLD = 'A reel by marcus.pell. In his car, in the rain, he talks to the camera. A chart of a line climbing faster than him. Run, or turn around. Phone footage of his son holding an umbrella over Mr. Alvarez at a bus stop. His views climbing. Then the comments. Then a sponsored clip: Penny, a plain letter, left on a road as fast red mail streaks away, until the light warms and a far window is lit. It was a paid partnership.';
+export const TOLD = 'A reel by marcus.pell. In his car, in the rain, he talks to the camera. A chart of a line climbing faster than he does. Two choices. Phone footage of his son holding an umbrella over Mr. Alvarez at a bus stop. His views climbing. Then the comments. Then a sponsored clip: Penny, a plain letter, left on a road as fast red mail streaks away, until the light warms and a far window is lit.';

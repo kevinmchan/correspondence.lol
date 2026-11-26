@@ -955,12 +955,13 @@
   </template>
 
   <template id="screen-reel">
-    <!-- A reel: a minute of somebody else's feed, played (reels/reel.js). Its people speak as Dot does, a few words at a time
-         on falling bells; Penny only hums. A touch on the picture pauses it. -->
+    <!-- A reel: a minute of somebody else's feed, played (reels/reel.js). Its words, said as Dot says things or written over the
+         picture, are all the script's (reels/inflection.js); Penny only hums. A touch on the picture pauses it. -->
     <main class="reel">
       <div class="reel-stage" aria-hidden="true">
         <div class="reel-frame">
           <p class="reel-bubble"></p>
+          <p class="reel-words"></p>
           <div class="reel-comments"></div>
           <div class="reel-ad-words"></div>
         </div>
@@ -973,14 +974,14 @@
         </div>
         <div class="reel-who">
           <span class="reel-id"><span class="face">MP</span><b>marcus.pell</b></span>
-          <span class="reel-caption">I almost didn’t post this.</span>
+          <span class="reel-caption"></span>
         </div>
         <div class="reel-sponsor"><svg viewBox="0 0 24 24"><use href="#mini-envelope"/></svg><span><b>correspondence.lol</b><small>Sponsored</small></span></div>
-        <p class="reel-disclose">Paid partnership with correspondence.lol. Mr. Alvarez is not.</p>
+        <p class="reel-disclose"></p>
       </div>
       <a href="/" class="penny-back reel-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
       <button type="button" class="reel-pause" aria-label="Pause"></button>
-      <a class="reel-cta" href="/postmarks/" hidden>Play free</a>
+      <a class="reel-cta" href="/postmarks/" hidden></a>
       <button type="button" class="reel-again" hidden>Watch again</button>
       <p class="sr-only reel-told"></p>
       <p class="sr-only reel-said" role="status"></p>

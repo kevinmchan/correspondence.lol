@@ -471,12 +471,13 @@ async function states() {
       then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
     // A reel: somebody else's feed, played. Held still where it matters (`&hold`), but for the comments coming in and its end.
+    // Its words are the owner's to write, and blank until they are: the blanks are the length the screens are tested at.
     { name: 'home, the feed, a reel come in the middle of the bar, under what is waiting', screen: 'home', at: '/', storage: { ...ACCOUNT, ...ENERGY(35) }, server: rooms(GAMES), ready: '.feed-item',
       then: (page) => page.locator('.reel-tile').scrollIntoViewIfNeeded() },
     { name: 'home, the feed with nothing waiting, and a reel shared with you', screen: 'home', at: '/', storage: { ...ACCOUNT, 'reels:met:v1': ['inflection'] }, server: rooms([]), ready: '#feed-empty:not([hidden])', settle: '#reels:not([hidden]) .reel-tile' },
     { name: 'a reel, Marcus in his car, saying it a few words at a time', screen: 'reel', at: '/?reel=inflection&at=1.2&hold', ready: '.reel-bubble.on.at-face', whole: ['.reel-back', '.reel-pause', '.reel-bubble'] },
-    { name: 'a reel, his voice over the chart', screen: 'reel', at: '/?reel=inflection&at=12&hold', ready: '.reel-bubble.on.in-chart', whole: ['.reel-back', '.reel-pause', '.reel-bubble'] },
-    { name: 'a reel, run or turn around', screen: 'reel', at: '/?reel=inflection&at=22&hold', ready: '.reel-bubble.on.in-choice', whole: ['.reel-bubble'] },
+    { name: 'a reel, a caption over the chart', screen: 'reel', at: '/?reel=inflection&at=12&hold', ready: '.reel-words.on.in-chart', whole: ['.reel-back', '.reel-pause', '.reel-words'] },
+    { name: 'a reel, the choice, and a caption over it', screen: 'reel', at: '/?reel=inflection&at=22&hold', ready: '.reel-words.on.in-choice', whole: ['.reel-words'] },
     { name: 'a reel, the footage, and what he says off camera', screen: 'reel', at: '/?reel=inflection&at=32.4&hold', ready: '.reel-bubble.on.at-aside', whole: ['.reel-bubble'] },
     { name: 'a reel, his views going up, under his breath', screen: 'reel', at: '/?reel=inflection&at=37.5&hold', ready: '.reel-insights.show', whole: ['.reel-insights', '.reel-bubble'] },
     { name: 'a reel, the comments coming in', screen: 'reel', at: '/?reel=inflection&at=41.6', ready: '.reel-comment.by-ra.in', whole: ['.reel-comments'] },

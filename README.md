@@ -681,31 +681,38 @@ sound; a touch on the picture pauses it, and so does the button in the
 corner. `&at=<seconds>` starts it part way (each shot as it would be by then),
 and `&hold` starts it paused. It waits for the splash.
 
-**Its people speak as Dot does** (the owner, 26 November 2026): a bubble,
-filled a few words at a time, a bell for each, falling. The whole line goes
-to screen readers at once. Each speaker has bells of their own, from the five
-notes the app keeps to: Marcus's are short, bright and quick; R. A.'s are long
-and low, with an echo. Penny cannot speak, and in a reel only hums.
+**Its words are the owner's to write** (the owner, 26 November 2026: "a
+creative challenge for me to fill in the text. Maybe that's the game."). Every
+word a reel shows or says is an entry in the `SCRIPT` at the top of its file,
+and an empty entry shows its name in brackets where it will be, so the reel
+plays whole before a word of it is written. Whether filling them in becomes
+something players do is not decided. The words are of the two kinds reels
+have:
+
+- **Voice**: said as Dot says things, in a bubble filled a few words at a time,
+  a bell for each, falling. Each speaker has bells of their own, from the five
+  notes the app keeps to: Marcus's are short, bright and quick; R. A.'s are long
+  and low, with an echo. A line breaks where " / " is written, or every two
+  words; `tests/reel.test.js` says when one is too long to be said in the time
+  it is up. Penny cannot speak, and in a reel only hums.
+- **Caption**: written over the picture, whole, with a tick. The labels drawn
+  in a picture, the post's own caption, the comments, the sponsor's lines, the
+  button and the last line are written words too.
 
 **The first is "The Inflection Point"** (`reels/inflection.js`; the owner, 26
-November 2026), a satire: a social post that is also an ad. marcus.pell says
-sincerely that the middle must choose between outrunning the line of
-inequality and reaching back across it, and keeps running without seeing it:
-his son's kindness done again for the shot, his views counted before Q1.
-The comments say almost nothing, as comments do (the owner: the first ones
-were "too on the nose"): what car is that; the lease is up in March; saving
-this. The man he made content of says only that the boy brought him soup
-today, with no camera on it. That it is a paid partnership is the punchline, and is
-not given away early: no #ad, no label by his name, only the line at the very
-end ("Mr. Alvarez is not."). Then a sponsored clip for
-this app, in its own pace: the cuts stop, the express mail streaks off, the
-light warms, a window is lit, and Penny hums. Its words are few and slow, and
-the way to play (`playAt()`) is offered last. It is cold and quick until the
-cut, as "How a place says it" has hurry, and slow and warm after it. The
-story doc has Marcus as one way the character who carries Goodhart's law could
-look outside the game. A drawing is 360 by 640 and covers the screen, cut at
-its edges on a phone of another shape; what is said is kept inside what is
-seen (`--edge` in `reels/reel.css`).
+November 2026): a social post that is also an ad. marcus.pell talks to the
+camera from his car in the rain; a chart of a line climbing faster than he
+does; two choices; phone footage of his son holding an umbrella over Mr.
+Alvarez at a bus stop; his views climbing; the comments. Then a sponsored clip
+for this app, in its own pace: the cuts stop, the express mail streaks off,
+the light warms, a window is lit, and Penny hums; the way to play (`playAt()`)
+is offered last. That it is a paid partnership is the punchline, and nothing
+gives it away early. It is cold and quick until the cut, as "How a place says
+it" has hurry, and slow and warm after it. The story doc has Marcus as one way
+the character who carries Goodhart's law could look outside the game. A
+drawing is 360 by 640 and covers the screen, cut at its edges on a phone of
+another shape; what is said is kept inside what is seen (`--edge` in
+`reels/reel.css`).
 
 ## Loops, the music maker
 
