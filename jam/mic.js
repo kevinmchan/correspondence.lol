@@ -98,8 +98,9 @@ export async function sounds() {
 }
 
 // Keep a new sound ({ name, rate, pcm, hz }). Resolves to it, as it is kept.
-export async function addSound(one) {
-  const kept = { ...one, id: crypto.randomUUID(), at: Date.now(), sent: false, synced: false };
+// (`id`: the one it already has, for a sound that came with a shared beat.)
+export async function addSound(one, id = crypto.randomUUID()) {
+  const kept = { ...one, id, at: Date.now(), sent: false, synced: false };
   await put(kept);
   return kept;
 }

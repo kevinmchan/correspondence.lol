@@ -88,8 +88,10 @@ function noteAt(pcm, start, size, least, most, rate) {
 //   much, from the middle of the board.
 //   The drums: the rows are seven heights of the sound, the lowest at the
 //   bottom where the kick was, and the chords leave them alone.
+//   A place on the deck that is no instrument's (`extra`): in tune if the
+//   sound has a note, and seven heights of it if it has none.
 export function speed(kind, hz, chord, row) {
-  if (!kind.base) return 2 ** (((ROWS - 1) / 2 - row) / 4);
+  if (!kind.base || (kind.extra && !hz)) return 2 ** (((ROWS - 1) / 2 - row) / 4);
   const middle = kind.base * 2 ** (4 / 12);
   const from = hz ? hz * 2 ** Math.round(Math.log2(middle / hz)) : middle;
   return pitch(kind.base, chord, row) / from;

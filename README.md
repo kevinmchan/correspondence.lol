@@ -610,6 +610,27 @@ none, and is moved by as much. In the drums' place the rows are seven heights
 of the sound, and the chords leave them alone. A microphone that is refused,
 or hears nothing, says so under Record.
 
+**The deck holds up to eight.** The four instruments are always on it, and
+beside them there is room for four sounds more. "Add", at the end of the deck,
+opens the drawer for a new place: a sound pressed or recorded there becomes a
+button of its own, in a colour of its own, with its own part on the board
+(in tune with the chords if the sound has a note, seven heights of it if it
+has none). In the drawer for such a place the first row is "None", which
+takes the place off the deck and its part with it. A beat with a part for
+any of those four is written the long way, 76 characters instead of 39
+(`jam/beat.js`); one without is written as it always was.
+
+**A shared beat brings the deck's sounds with it.** When there are recorded
+sounds on the deck, sharing leaves a copy of them on the server (`share_put`,
+in `supabase/migrations/20261126010000_shares.sql`) and the link says where:
+`/jam/?b=…&s=…`. Whoever opens it gets the beat on their board, the sounds
+in their drawer (theirs from then on, kept in their own profile) and on
+their deck in the places they were in. The copy is the sounds as they were
+when shared: renaming or deleting one afterwards changes nothing shared. A
+profile's twenty most recent shares are kept; an older link, or one shared
+while the server could not be reached, still has its beat in it and is played
+by the instruments.
+
 **The sounds follow the account**, as saved beats do: twenty-four at most,
 kept on the server by profile (`sounds_get`, `sounds_fetch`, `sounds_put`,
 `sounds_drop`, in `supabase/migrations/20261126000000_sounds.sql`) as 16-bit
@@ -619,16 +640,15 @@ opens, when the app is come back to, and after a sound is recorded, named or
 deleted: a new sound is sent whole, once, and only its name after that; one
 recorded offline is sent when it can be; one made on another device is
 fetched; one deleted on another device goes from this one too. Which sound is
-in which instrument's place is the device's own. The sounds belong to no
-beat: a beat that is saved or shared is its notes, and for anybody else the
-instruments play it themselves.
+on which place of the deck is the device's own, and a saved beat is its
+notes: it is played by whatever is on the deck when it is opened.
 
 A loop played here is played as it is written; the long form that Penny's
 Radio gives a loop (`jam/form.js`) is for listening, not for composing.
 
 What it still does not have, next to the game's music: more than eight steps,
-notes of different lengths, any way to choose the chords, and a recorded
-sound that travels with its beat.
+notes of different lengths, any way to choose the chords, and a deck that
+is saved with each beat.
 
 ## Penny's Radio
 

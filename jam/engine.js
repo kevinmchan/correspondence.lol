@@ -73,6 +73,12 @@ export const LAYERS = [
   },
 ];
 
+// The deck: the four instruments, and four places more that are no
+// instrument's. Each of those plays a recorded sound or nothing, has a colour
+// of its own, and a part on the board like any instrument.
+const MIC = '<rect x="9" y="3.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+export const DECK = [...LAYERS, ...['#e79ac6', '#9bc873', '#74b4e6', '#d2a679'].map((colour) => ({ name: 'Sound', colour, icon: MIC, base: 261.63, tuned: true, extra: true, play() {} }))];
+
 // --- The loop -----------------------------------------------------------------------
 // read(): what should be sounding now, { tempo, sets, long, voices } (sets:
 // for each instrument, the tiles that hold a note), or null for silence.
@@ -131,7 +137,7 @@ export function createLoop(life, read) {
   // One note of an instrument: its own, or the sound recorded to be played in its place.
   const ready = new WeakMap(); // a recorded sound, as the engine plays it
   function strike(index, row, at, chord, hard, voices) {
-    const kind = LAYERS[index];
+    const kind = DECK[index];
     const voice = voices?.[index];
     if (!voice) return kind.play(row, at, into(kind), chord, hard);
     const { ctx } = audio();
@@ -147,7 +153,7 @@ export function createLoop(life, read) {
     src.playbackRate.value = speed(kind, voice.hz, chord, row);
     const amp = ctx.createGain();
     amp.gain.value = 0.3 * hard;
-    src.connect(amp).connect(into(kind));
+    src.connect(amp).connect(kind.extra && !voice.hz ? bus : into(kind)); // (a sound with no note is kept dry, as the drums are)
     src.start(start);
   }
 
@@ -181,9 +187,9 @@ export function createLoop(life, read) {
           tone({ at, freq: up(261.63, chord.root + semitones), dur: whole * 1.08, type: 'sine', gain: 0.04 * shape.pad, attack: whole * 0.35, into: room });
         }
       }
-      for (let index = 0; index < LAYERS.length; index++) {
+      for (let index = 0; index < sets.length; index++) {
         for (let row = 0; row < ROWS; row++) {
-          if (sets[index].has(keyOf(nextStep, row))) strike(index, row, at, chord, weight * shape.level[index] * (0.92 + Math.random() * 0.16), playing.voices);
+          if (sets[index].has(keyOf(nextStep, row))) strike(index, row, at, chord, weight * (shape.level[index] ?? 1) * (0.92 + Math.random() * 0.16), playing.voices);
         }
       }
       queue.push({ step: nextStep, time: nextTime, chord: shape.chord, bar });

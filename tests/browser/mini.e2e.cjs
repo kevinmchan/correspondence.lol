@@ -173,6 +173,23 @@ async function states() {
     await page.locator('.jam-sounds input').first().fill('WWWWWWWWWWWW');
     await page.locator('.jam-sounds input').first().press('Enter');
   };
+  const eight = async (page) => {
+    for (let n = 5; n <= 8; n++) {
+      await page.locator('.layer.more').click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      if (n === 5) {
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('#jam-record.hearing');
+        await sleep(600);
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('.jam-sounds input');
+        await page.locator('.jam-sounds input').fill('WWWWWWWWWWWW');
+        await page.locator('.jam-sounds input').press('Enter');
+      } else await page.locator('.jam-sounds .tile').nth(1).click();
+      await page.locator('#jam-drawer-close').click();
+      await page.locator('.jam-board .pad').nth(n).click(); // (a note for it, so its light is on the board)
+    }
+  };
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   const NIGHT = { 'tags:found:v1': ['night'] }; // somebody who has found the night
   // The night, once the way through to it is over: the only screen there is, with nothing left over it; and its picture drawn for the size it is shown at.
@@ -347,6 +364,9 @@ async function states() {
     { name: 'the music maker, an instrument playing a recorded sound', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('#jam-drawer-close').click(); },
       settle: '#jam-mic[aria-pressed="true"]', small: [PADS] },
     { name: 'the music maker, a sound being deleted', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('.jam-sounds button.quiet').first().click(); }, settle: 'dialog.ask[open]' },
+    // (the deck: a place being added to it, with nothing chosen yet; and all eight places taken, the last with the longest name)
+    { name: 'the music maker, a place being added to the deck', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: (page) => page.locator('.layer.more').click(), settle: 'dialog#jam-drawer[open]' },
+    { name: 'the music maker, a deck of eight', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: eight, settle: '.layer.more[hidden]', small: [PADS] },
     { name: 'the music maker, the microphone refused', screen: 'jam', at: '/jam/', init: REFUSED, ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('#jam-record').click(); },
       settle: '#jam-mic-error.oops:not(:empty)' },
     // Penny's Radio: a work in a gallery, played and read about. Its story is told once; these are its stills.

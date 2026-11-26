@@ -817,7 +817,7 @@ async function main() {
       };
       const names = () => page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value));
       const pressed = () => page.locator('.jam-sounds .tile').evaluateAll((all) => all.map((one) => one.getAttribute('aria-pressed') === 'true'));
-      const layers = () => page.locator('.layer .name').allInnerTexts();
+      const layers = () => page.locator('.layer:not([hidden]):not(.more) .name').allInnerTexts();
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
       const mic = page.locator('#jam-mic');
@@ -913,7 +913,7 @@ async function main() {
       });
       const until = (what, test) => (async () => { for (let i = 0; i < 100 && !test(); i++) await sleep(50); assert.ok(test(), what); })();
       const names = () => page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value));
-      const layers = () => page.locator('.layer .name').allInnerTexts();
+      const layers = () => page.locator('.layer:not([hidden]):not(.more) .name').allInnerTexts();
       const open = async () => { await page.locator('#jam-mic').click(); await page.waitForSelector('dialog#jam-drawer[open]'); };
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
@@ -965,6 +965,99 @@ async function main() {
       await until('the server was not told of the deleting', () => there.size === 0);
       assert.deepEqual(await names(), []);
       assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+    }),
+
+    check('the music maker: the deck holds up to eight, and a shared beat brings the deck\'s sounds to whoever opens it', { permissions: ['clipboard-read', 'clipboard-write'] }, async (page) => {
+      const { fakeMic } = require('./mic.cjs');
+      await keepsCopies(page);
+      await page.addInitScript(fakeMic, 'hum');
+      // the server, as supabase/migrations has it: the profile's sounds, and what has been shared
+      const there = new Map();
+      const shares = new Map();
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co/, (route) => {
+        const request = route.request();
+        if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const call = request.url().match(/\/rpc\/(\w+)/)?.[1];
+        const args = JSON.parse(request.postData() ?? '{}');
+        const view = () => [...there.values()].map((one) => ({ id: one.id, name: one.name, at: one.at }));
+        let answer;
+        if (call === 'sounds_get') answer = view();
+        else if (call === 'sounds_put') { there.set(args.p_id, args.p_pcm ? { id: args.p_id, name: args.p_name, rate: args.p_rate, hz: args.p_hz, pcm: args.p_pcm, at: 1795000000000 + there.size } : { ...there.get(args.p_id), name: args.p_name }); answer = view(); }
+        else if (call === 'sounds_drop') { there.delete(args.p_id); answer = view(); }
+        else if (call === 'sounds_fetch') answer = there.get(args.p_id) ?? null;
+        else if (call === 'share_put') {
+          const id = String(shares.size + 1).padStart(20, 'a');
+          shares.set(id, args.p_slots.map((sound, slot) => (there.has(sound) ? { slot, ...there.get(sound) } : null)).filter(Boolean));
+          answer = id;
+        } else if (call === 'share_get') answer = shares.get(args.p_id) ?? [];
+        else return route.abort();
+        return route.fulfill({ json: answer, headers: cors });
+      });
+      const layers = () => page.locator('.layer:not([hidden]):not(.more) .name').allInnerTexts();
+      const record = async () => {
+        const before = await page.locator('.jam-sounds input').count();
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('#jam-record.hearing');
+        await sleep(600);
+        await page.locator('#jam-record').click();
+        await page.waitForFunction((n) => document.querySelectorAll('.jam-sounds input').length === n + 1, before);
+      };
+      const more = page.locator('.layer.more');
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      // a place added and nothing put in it: it is not kept
+      await more.click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      assert.equal(await page.locator('.jam-sounds .own').innerText(), 'None');
+      await page.locator('#jam-drawer-close').click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      // a sound recorded into a new place: a fifth button, with a part of its own
+      await more.click();
+      await record();
+      await page.locator('#jam-drawer-close').click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums', 'Sound 1']);
+      assert.equal(await page.locator('.layer[aria-checked="true"] .name').innerText(), 'Sound 1');
+      await page.locator('.jam-board .pad').nth(50).click();
+      await page.locator('.layer').first().click();
+      await page.locator('.jam-board .pad').nth(48).click();
+      assert.equal(await page.locator('.jam-board .pad').nth(50).locator('i:not([hidden])').count(), 1, 'the other part\'s note shows as a light');
+      // up to eight, and then there is nowhere to add
+      for (let n = 6; n <= 8; n++) {
+        await more.click();
+        await page.locator('.jam-sounds .tile').nth(1).click(); // the same sound again will do
+        await page.locator('#jam-drawer-close').click();
+        assert.equal((await layers()).length, n);
+      }
+      assert.equal(await more.isVisible(), false, 'a ninth place');
+      // one taken off: its place goes, and there is room again
+      await page.locator('.layer:not([hidden]):not(.more)').nth(7).click();
+      await page.locator('#jam-mic').click();
+      await page.locator('.jam-sounds .tile').first().click();
+      await page.waitForSelector('dialog#jam-drawer', { state: 'hidden' });
+      assert.equal((await layers()).length, 7);
+      assert.equal(await more.isVisible(), true);
+      // shared: the link has the beat in it, the long way, and says where its sounds are
+      await page.locator('#jam-share').click();
+      await page.waitForFunction(() => document.querySelector('#jam-note')?.textContent.includes('Link copied'));
+      const link = await page.evaluate(() => navigator.clipboard.readText());
+      assert.match(link, /\/jam\/\?b=[A-Za-z0-9_-]{76}&s=a{19}1$/);
+      assert.deepEqual(shares.get('aaaaaaaaaaaaaaaaaaa1').map((one) => one.slot), [4, 5, 6]);
+      // somebody else opens it (this browser, with nothing of the sharer's on it): the beat, and its sounds on the deck and in the drawer
+      there.clear();
+      await page.evaluate(() => new Promise((done) => { localStorage.clear(); indexedDB.deleteDatabase('jam').onsuccess = done; }));
+      await page.goto(link);
+      await page.waitForFunction(() => document.querySelectorAll('.layer:not([hidden]):not(.more)').length === 7, null, { timeout: 8000 });
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums', 'Sound 1', 'Sound 1', 'Sound 1']);
+      assert.equal(new URL(page.url()).search, '', 'the address goes back to plain');
+      await page.locator('.layer').nth(4).click();
+      assert.equal(await page.locator('.jam-board .pad.on').count(), 1, 'the part written for the sound');
+      await page.locator('#jam-mic').click();
+      assert.deepEqual(await page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value)), ['Sound 1'], 'one sound, however many places it was in');
+      // and it is theirs now: kept in their own profile
+      for (let i = 0; i < 100 && there.size === 0; i++) await sleep(50);
+      assert.equal(there.size, 1, 'the sound that came with the beat was not kept for them');
     }),
 
     check('the music maker: a microphone that is refused, or hears nothing, says so under the button, moves nothing above it and makes no sound', {}, async (page) => {
