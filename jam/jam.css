@@ -168,16 +168,43 @@
 .jam-saved button.quiet { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; }
 .jam-saved button.quiet svg { width: 1.15rem; height: 1.15rem; }
 
-/* --- A sound of your own ------------------------------------------------------------------ */
-/* The microphone, beside the bin. Lit in the instrument's colour when that instrument plays your sound; while it
-   listens it shows a square to stop it, and a ring in that colour goes once round it in the time it listens for. */
-.jam-controls #jam-mic.quiet { position: relative; padding: 0; }
-#jam-mic .stop { display: none; }
-#jam-mic.hearing .stop { display: block; }
-#jam-mic.hearing .mic { display: none; }
+/* --- Sounds of your own ------------------------------------------------------------------- */
+/* The microphone, beside the bin, opens the drawer. Lit in the instrument's colour when that instrument plays a
+   recorded sound. */
+.jam-controls #jam-mic.quiet { padding: 0; }
 #jam-mic[aria-pressed="true"] { box-shadow: 0 0.2rem 0 var(--c), inset 0 0 0 2px var(--c); }
+.layer .name { max-width: 100%; overflow-wrap: anywhere; text-align: center; line-height: 1.15; }
+
+/* The drawer comes up from the bottom, and is as tall however much is in it: the list scrolls inside. */
+dialog.jam-drawer {
+  position: fixed; inset: auto 0 0 0; margin: 0 auto; box-sizing: border-box; width: min(100%, 30rem); max-width: 100%;
+  height: min(31rem, 78dvh); max-height: none; padding: 0.9rem 1rem calc(1rem + env(safe-area-inset-bottom)); border: 0; border-radius: 1.5rem 1.5rem 0 0;
+  background: var(--paper); color: var(--ink); box-shadow: 0 -0.6rem 2.5rem rgb(0 0 0 / 0.3);
+}
+dialog.jam-drawer[open] { display: flex; flex-direction: column; gap: 0.7rem; }
+dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
+@media (prefers-reduced-motion: no-preference) {
+  dialog.jam-drawer[open] { animation: drawer-up 380ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  dialog.jam-drawer[open]::backdrop { animation: fade-in 300ms ease; }
+}
+@keyframes drawer-up { from { translate: 0 100%; } to { translate: 0 0; } }
+.jam-drawer header { flex: none; display: flex; align-items: center; justify-content: space-between; }
+.jam-drawer header button.quiet { width: 2.75rem; height: 2.75rem; }
+.jam-drawer h2 { margin: 0; padding-left: 0.3rem; font-family: Georgia, serif; font-size: 1.4rem; font-weight: 400; color: var(--ink); text-transform: none; letter-spacing: 0; }
+/* Record: while it listens it shows a square to stop it, and a ring in the instrument's colour goes once round it in
+   the time it listens for. */
+.jam-drawer .record {
+  position: relative; flex: none; height: 3.2rem; padding: 0 1rem; border: 0; border-radius: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  background: var(--card); color: var(--ink); box-shadow: 0 0.22rem 0 var(--lip);
+  font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 700;
+  transition: transform 70ms ease, box-shadow 70ms ease; -webkit-tap-highlight-color: transparent;
+}
+.jam-drawer .record:active { transform: translateY(0.16rem); box-shadow: 0 0.06rem 0 var(--lip); }
+.jam-drawer .record svg { width: 1.3rem; height: 1.3rem; }
+.jam-drawer .record .stop, .jam-drawer .record.hearing .mic { display: none; }
+.jam-drawer .record.hearing .stop { display: block; }
 @property --mic-turn { syntax: "<angle>"; inherits: false; initial-value: 360deg; }
-#jam-mic.hearing::before {
+.jam-drawer .record.hearing::before {
   content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px; pointer-events: none;
   background: conic-gradient(var(--c) var(--mic-turn), transparent 0);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -185,11 +212,28 @@
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 @media (prefers-reduced-motion: no-preference) {
-  #jam-mic.hearing::before { animation: mic-ring 3s linear both; } /* (3s: MOST_HEARD in jam/sample.js) */
+  .jam-drawer .record.hearing::before { animation: mic-ring 3s linear both; } /* (3s: MOST_HEARD in jam/sample.js) */
 }
 @keyframes mic-ring { from { --mic-turn: 0deg; } to { --mic-turn: 360deg; } }
-/* What went wrong with it is said where the page's notes are, in place of one, and (being taller than a note, in its
-   soft box) reaches a little into the space above and below: so nothing moves for it. The page is centred, and a line
-   with room of its own would push what is above it up. */
-.jam .message.bad.jam-mic-error { margin: -0.583rem auto; }
-.jam-mic-error:not(:empty) + .jam-note { display: none; }
+.jam-drawer .message.bad { flex: none; }
+/* The sounds: each a tile to press into the instrument's place (lit when it is the one there), its name, and a bin. */
+.jam-sounds { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; margin: 0; padding: 0 0 0.3rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.jam-sounds li { flex: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 1.1rem; background: var(--card); box-shadow: 0 0.22rem 0 var(--lip); }
+.jam-sounds li:has(.tile[aria-pressed="true"]) { box-shadow: 0 0.22rem 0 var(--c), inset 0 0 0 2px var(--c); }
+.jam-sounds .tile {
+  flex: none; width: 3rem; height: 3rem; padding: 0; border: 0; border-radius: 26%; display: grid; place-items: center;
+  background: var(--c); color: #22303c; box-shadow: inset 0 -0.2rem 0 rgb(0 0 0 / 0.16); opacity: 0.55; cursor: pointer;
+  transition: opacity 120ms ease, transform 70ms ease; -webkit-tap-highlight-color: transparent;
+}
+.jam-sounds .tile[aria-pressed="true"] { opacity: 1; }
+.jam-sounds .tile:active { transform: translateY(0.12rem); }
+.jam-sounds .tile svg { width: 62%; height: 62%; }
+.jam-sounds .own { flex: 1; padding-left: 0.5rem; text-align: left; font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 600; color: var(--muted); }
+.jam-sounds input[type="text"] {
+  flex: 1; min-width: 0; min-height: 2.75rem; padding: 0.45rem 0.5rem; border-color: transparent; background: transparent; box-shadow: none;
+  font-family: system-ui, sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink);
+}
+.jam-sounds input[type="text"]:hover { border-color: color-mix(in srgb, var(--ink) 14%, var(--paper)); }
+.jam-sounds input[type="text"]:focus-visible { border-color: var(--accent); background: var(--paper); }
+.jam-sounds button.quiet { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; }
+.jam-sounds button.quiet svg { width: 1.15rem; height: 1.15rem; }

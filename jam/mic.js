@@ -56,12 +56,13 @@ export async function listen() {
 }
 
 // --- Keeping them ----------------------------------------------------------------------
-// One sound for each instrument, by its place among them. Where the browser
-// will not keep them (a private window), they last as long as the page.
+// Every sound recorded is kept, with the name it is given: { id, name, rate,
+// pcm, hz }. Where the browser will not keep them (a private window), they
+// last as long as the page.
 const base = () => new Promise((resolve) => {
   try {
     const opening = indexedDB.open('jam', 1);
-    opening.onupgradeneeded = () => opening.result.createObjectStore('sounds');
+    opening.onupgradeneeded = () => opening.result.createObjectStore('sounds', { keyPath: 'id', autoIncrement: true });
     opening.onsuccess = () => resolve(opening.result);
     opening.onerror = () => resolve(null);
   } catch {
@@ -72,22 +73,32 @@ const done = (request) => new Promise((resolve) => {
   request.onsuccess = () => resolve(request.result);
   request.onerror = () => resolve(undefined);
 });
-const sound = (one) => (one && one.pcm instanceof Float32Array && one.pcm.length && one.rate > 0 ? { rate: one.rate, pcm: one.pcm, hz: one.hz > 0 ? one.hz : null } : null);
-
-// The sounds kept, for `count` instruments: each a sound, or null.
-export async function sounds(count) {
+const whole = (one) => one && one.pcm instanceof Float32Array && one.pcm.length && one.rate > 0;
+// A thing done to the kept sounds: what `work(store)` asks for, or undefined where nothing can be kept.
+async function among(mode, work) {
   const db = await base();
-  const all = [];
-  for (let index = 0; index < count; index++) all.push(db ? sound(await done(db.transaction('sounds').objectStore('sounds').get(index))) : null);
-  db?.close();
-  return all;
-}
-
-// Keep a sound for an instrument, or (null) forget the one it had.
-export async function keepSound(index, one) {
-  const db = await base();
-  if (!db) return;
-  const store = db.transaction('sounds', 'readwrite').objectStore('sounds');
-  await done(one ? store.put(one, index) : store.delete(index));
+  if (!db) return undefined;
+  const answer = await done(work(db.transaction('sounds', mode).objectStore('sounds')));
   db.close();
+  return answer;
 }
+
+// The sounds kept, oldest first.
+export async function sounds() {
+  const all = (await among('readonly', (store) => store.getAll())) ?? [];
+  return all.filter(whole).map((one) => ({ id: one.id, name: String(one.name ?? '').slice(0, MOST_NAME) || 'Sound', rate: one.rate, pcm: one.pcm, hz: one.hz > 0 ? one.hz : null }));
+}
+export const MOST_NAME = 12; // letters in a sound's name: what an instrument's button has room for
+
+// Keep a new sound ({ name, rate, pcm, hz }). Resolves to it, with the id it now has.
+let unkept = 0;
+export async function addSound(one) {
+  const id = await among('readwrite', (store) => store.add(one));
+  return { ...one, id: id ?? (unkept -= 1) }; // (not kept: a number no kept one has, for as long as the page lasts)
+}
+
+// Give a kept sound another name.
+export const renameSound = (one, name) => among('readwrite', (store) => store.put({ ...one, name }));
+
+// Forget a sound.
+export const dropSound = (id) => among('readwrite', (store) => store.delete(id));

@@ -588,22 +588,30 @@ when the screen opens, when the app is come back to, and after anything is
 saved, renamed or deleted. A beat saved offline is sent when it can be; one
 deleted on another device goes from this one too.
 
-**A sound of your own.** The microphone, beside the bin, records a sound for
-the instrument that is chosen (`jam/mic.js`): it listens for three seconds at
-most, or until it is pressed again, and the loop is quiet meanwhile. What it
-heard is cut to the sound itself, a second and a half at most, and is then what
-that instrument plays (`jam/sample.js`): faster for a higher row and slower
-for a lower one. If the sound has a note (a hum, a whistle, a struck glass),
-the note is found and the sound is played in tune with the chords, in
+**Sounds of your own.** The microphone, beside the bin, opens a drawer of
+sounds for the instrument that is chosen: the instrument itself, and every
+sound that has been recorded, newest first. Record, at the top of the drawer,
+makes a new sound each time and never takes the place of another
+(`jam/mic.js`): it listens for three seconds at most, or until it is pressed
+again, and the loop is quiet meanwhile. The new sound is called "Sound 1" (2,
+3…) until its name is changed, by tapping it, to anything of twelve letters or
+fewer; and it can be deleted. Pressing a sound in the drawer swaps it into the
+chosen instrument's place, and pressing the instrument itself swaps that back.
+The instrument's button on the board then wears the microphone and the
+sound's name, and the microphone beside the bin is lit in its colour. The same
+sound can be in more than one instrument's place.
+
+What was heard is cut to the sound itself, a second and a half at most, and
+is played faster for a higher row and slower for a lower one
+(`jam/sample.js`). If the sound has a note (a hum, a whistle, a struck
+glass), the note is found and the sound is played in tune with the chords, in
 whichever octave leaves it nearest to how it was heard; a clap or a word has
-none, and is moved by as much. On the drums the rows are seven heights of the
-sound, and the chords leave them alone. An instrument that plays your sound
-wears the microphone, and the microphone is lit in its colour; pressed then,
-it asks whether to record again or go back to the instrument. A microphone
-that is refused, or hears nothing, says so on the line under the controls.
-The sounds are kept on this device only (the browser's own database, one for
-each instrument) and belong to no beat: a beat that is saved or shared is its
-notes, and anywhere else the instruments play it themselves.
+none, and is moved by as much. In the drums' place the rows are seven heights
+of the sound, and the chords leave them alone. A microphone that is refused,
+or hears nothing, says so under Record. The sounds are kept on this device
+only (the browser's own database, twenty-four at most) and belong to no beat:
+a beat that is saved or shared is its notes, and anywhere else the
+instruments play it themselves.
 
 A loop played here is played as it is written; the long form that Penny's
 Radio gives a loop (`jam/form.js`) is for listening, not for composing.

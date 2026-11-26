@@ -789,7 +789,7 @@ async function main() {
       assert.deepEqual(await page.locator('.jam-saved input').evaluateAll((all) => all.map((one) => one.value)), ['Unsaved beat']);
     }),
 
-    check('the music maker: a sound recorded from the microphone is what its instrument plays, in tune, is kept on the device, and can be given up', {}, async (page) => {
+    check('the music maker: sounds recorded from the microphone go in a drawer, each a new one with a name, and one pressed there is what the instrument plays, in tune', {}, async (page) => {
       const { fakeMic } = require('./mic.cjs');
       await page.addInitScript(fakeMic, 'hum');
       // every recorded sound the engine starts: how fast it is played
@@ -803,87 +803,118 @@ async function main() {
       });
       const kept = () => page.evaluate(() => new Promise((done) => {
         const opening = indexedDB.open('jam', 1);
-        opening.onupgradeneeded = () => opening.result.createObjectStore('sounds');
         opening.onsuccess = () => {
           const all = opening.result.transaction('sounds').objectStore('sounds').getAll();
-          all.onsuccess = () => { opening.result.close(); done(all.result.map((one) => ({ hz: one.hz, seconds: one.pcm.length / one.rate }))); };
+          all.onsuccess = () => { opening.result.close(); done(all.result.map((one) => ({ name: one.name, hz: one.hz, seconds: one.pcm.length / one.rate }))); };
         };
       }));
+      const record = async () => {
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('#jam-record.hearing');
+        await sleep(800);
+        await page.locator('#jam-record').click(); // enough
+        await page.waitForSelector('#jam-record:not(.hearing)');
+      };
+      const names = () => page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value));
+      const pressed = () => page.locator('.jam-sounds .tile').evaluateAll((all) => all.map((one) => one.getAttribute('aria-pressed') === 'true'));
+      const layers = () => page.locator('.layer .name').allInnerTexts();
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
       const mic = page.locator('#jam-mic');
-      assert.equal(await mic.getAttribute('aria-label'), 'Record a sound for bells');
-      // a note laid down, so the loop is playing: it stops to listen, and goes on afterwards
+      // a note laid down, so the loop is playing
       await page.locator('.jam-board .pad').nth(48).click();
       await page.waitForSelector('#jam-play.playing');
+      // the drawer: at first only the instrument itself, which is the one in its place
       await mic.click();
-      await page.waitForSelector('#jam-mic.hearing');
-      assert.equal(await mic.getAttribute('aria-label'), 'Stop recording');
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      assert.equal(await page.locator('.jam-sounds li').count(), 1);
+      assert.equal(await page.locator('.jam-sounds .own').innerText(), 'Bells');
+      assert.deepEqual(await pressed(), [true]);
+      // recording: the loop stops to listen and goes on afterwards, and the new sound is in the bells' place
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('#jam-record.hearing');
+      assert.equal(await page.locator('#jam-record').innerText(), 'Stop');
       assert.equal(await page.locator('#jam-play.playing').count(), 0, 'the loop went on over the microphone');
-      await sleep(900);
-      await mic.click(); // enough
-      await page.waitForSelector('#jam-mic[aria-pressed="true"]:not(.hearing)');
+      await sleep(800);
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('.jam-sounds input');
       await page.waitForSelector('#jam-play.playing');
-      assert.equal(await page.locator('.layer').first().getAttribute('data-own'), 'true', 'the bells wear the microphone');
-      assert.match(await page.locator('.layer').first().innerText(), /your sound/);
+      assert.deepEqual(await names(), ['Sound 1']);
+      assert.deepEqual(await pressed(), [false, true]);
+      assert.deepEqual(await layers(), ['Sound 1', 'Keys', 'Bass', 'Drums']);
       const [sound] = await kept();
       assert.ok(Math.abs(12 * Math.log2(sound.hz / 220)) < 0.5, `a hum at 220 hertz, heard as ${sound.hz}`);
       assert.ok(sound.seconds > 0.4 && sound.seconds <= 1.5, `${sound.seconds} seconds kept`);
-      // what the loop plays for the bells is now that sound: the bottom row, the chord's own note (C, A, F or G), in some octave
+      // what the loop plays there is now that sound: the bottom row, the chord's own note (C, A, F or G), in some octave
       await page.waitForFunction(() => window.__played.length > 0, null, { timeout: 8000 });
       const rate = await page.evaluate(() => window.__played[0]);
       const roots = [0, -3, -7, -5].map((semitones) => 523.25 * 2 ** (semitones / 12));
       const off = Math.min(...roots.map((root) => { const octaves = Math.log2((sound.hz * rate) / root); return Math.abs(octaves - Math.round(octaves)) * 12; }));
       assert.ok(off < 0.01, `out of tune by ${off} of a semitone (played at ${rate})`);
-      assert.ok(rate > 0.4 && rate < 2.5, `played at ${rate} of its speed`);
-      // only the bells: another instrument still has its own, and is offered the microphone
-      await page.locator('.layer').nth(3).click();
+      // recording again makes another, and takes the place of none
+      await record();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 2);
+      assert.deepEqual(await names(), ['Sound 2', 'Sound 1'], 'the newest first');
+      assert.deepEqual(await pressed(), [false, true, false]);
+      // named: the name is on the instrument's button too
+      await page.locator('.jam-sounds input').first().fill('Hum');
+      await page.locator('.jam-sounds input').first().press('Enter');
+      assert.deepEqual(await layers(), ['Hum', 'Keys', 'Bass', 'Drums']);
+      assert.match(await page.locator('.layer').first().innerText(), /your sound/);
+      // swapped: the other sound, and then the bells themselves
+      await page.locator('.jam-sounds .tile').nth(2).click();
+      assert.deepEqual(await pressed(), [false, false, true]);
+      assert.deepEqual(await layers(), ['Sound 1', 'Keys', 'Bass', 'Drums']);
+      await page.locator('.jam-sounds .tile').first().click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
       assert.equal(await mic.getAttribute('aria-pressed'), 'false');
-      assert.equal(await mic.getAttribute('aria-label'), 'Record a sound for drums');
-      assert.match(await page.locator('.jam-board .pad').nth(48).getAttribute('aria-label'), /^Kick/);
-      // it is there the next time
-      await page.reload();
-      await page.waitForSelector('#jam-mic[aria-pressed="true"]');
-      assert.equal(await mic.getAttribute('aria-label'), 'Bells: your sound');
-      // asked about: put away, it stays; given up, the bells are bells again and nothing is kept
+      // the same drawer for another instrument: its own sound, and the same two
+      await page.locator('#jam-drawer-close').click();
+      await page.locator('.layer').nth(3).click();
       await mic.click();
-      await page.waitForSelector('dialog.ask[open]');
-      await page.keyboard.press('Escape');
-      await page.waitForSelector('dialog.ask', { state: 'detached' });
+      assert.equal(await page.locator('.jam-sounds .own').innerText(), 'Drums');
+      assert.deepEqual(await names(), ['Hum', 'Sound 1']);
+      await page.locator('.jam-sounds .tile').nth(1).click();
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Hum']);
+      await page.locator('#jam-drawer-close').click();
       assert.equal(await mic.getAttribute('aria-pressed'), 'true');
+      assert.match(await page.locator('.jam-board .pad').nth(48).getAttribute('aria-label'), /^Note 1 of 7/, 'the drums\' rows are heights of the sound now');
+      // it is all there the next time
+      await page.reload();
+      await page.waitForFunction(() => document.querySelectorAll('.layer .name')[3]?.textContent === 'Hum');
+      // deleted: gone from the drawer, from where it was kept, and from the instrument that played it
+      await page.locator('.layer').nth(3).click();
       await mic.click();
-      await page.locator('dialog.ask button', { hasText: 'Back to bells' }).click();
-      await page.waitForSelector('#jam-mic[aria-pressed="false"]');
-      assert.equal(await page.locator('.layer').first().getAttribute('data-own'), 'false');
-      assert.deepEqual(await kept(), []);
+      await page.locator('.jam-sounds button[aria-label="Delete Hum"]').click();
+      await page.locator('dialog.ask button.yes').click();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 1);
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
+      assert.deepEqual((await kept()).map((one) => one.name), ['Sound 1']);
     }),
 
-    check('the music maker: a microphone that is refused, or hears nothing, says so beside it and changes nothing', {}, async (page) => {
+    check('the music maker: a microphone that is refused, or hears nothing, says so under the button, moves nothing above it and makes no sound', {}, async (page) => {
       const { fakeMic } = require('./mic.cjs');
       await page.addInitScript(fakeMic, 'refused');
       await page.goto(`${origin}/jam/`);
       await page.waitForSelector('.jam-board .pad');
-      const [mic, error] = [page.locator('#jam-mic'), page.locator('#jam-mic-error')];
+      await page.locator('#jam-mic').click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      await sleep(500); // (the drawer has come up)
+      const [record, error] = [page.locator('#jam-record'), page.locator('#jam-mic-error')];
       assert.equal(await error.isVisible(), false, 'nothing is wrong yet');
-      const places = () => page.evaluate(() => ['.jam-controls', '.jam-saved'].map((one) => Math.round(document.querySelector(one).getBoundingClientRect().top))); // (to the pixel)
-      await page.locator('.jam-board .pad').nth(48).click();
-      await page.locator('#jam-save').click(); // (a beat saved, so there is something under the line too)
-      await page.waitForSelector('.jam-saved li');
-      const before = await places();
-      await mic.click();
+      const above = await record.boundingBox();
+      await record.click();
       await page.waitForFunction(() => document.querySelector('#jam-mic-error').textContent === 'The microphone is not allowed.');
       assert.equal(await error.getAttribute('role'), 'alert');
-      assert.equal(await mic.getAttribute('aria-pressed'), 'false');
-      assert.deepEqual(await places(), before, 'the error moved what is round it');
-      assert.equal(await page.locator('#jam-note').isVisible(), false, 'the note it takes the place of');
+      assert.deepEqual(await record.boundingBox(), above, 'what is above the error moved');
       // one that hears nothing
       await page.evaluate(`(${fakeMic})('silent')`);
-      await mic.click();
-      await page.waitForSelector('#jam-mic.hearing');
+      await record.click();
+      await page.waitForSelector('#jam-record.hearing');
       assert.equal(await error.isVisible(), false, 'trying again takes the old error away');
-      await mic.click();
+      await record.click();
       await page.waitForFunction(() => document.querySelector('#jam-mic-error').textContent === 'Nothing was heard.');
-      assert.equal(await mic.getAttribute('aria-pressed'), 'false');
+      assert.equal(await page.locator('.jam-sounds li').count(), 1, 'only the instrument itself');
       assert.equal(await page.locator('.layer[data-own="true"]').count(), 0);
     }),
 
