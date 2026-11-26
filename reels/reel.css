@@ -1,0 +1,209 @@
+/* A reel (reels/reel.js): a minute of somebody else's feed. It is a video, so
+   it has one look, dark, whatever the app's theme. The drawing is the shape of
+   the reel and covers the screen, cut at its edges on a phone of another
+   shape; on a wide screen the reel is shown at its own shape in the middle. */
+
+.screen-reel main.reel {
+  position: relative; height: 100dvh; padding: 0; overflow: clip;
+  background: #0b0e12; color: #f4f6f8; text-align: left;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none; }
+.screen.opening main.reel > .reel-stage { animation: none; }
+
+.reel-stage { position: absolute; inset: 0; overflow: hidden; container-type: size; cursor: pointer; }
+@media (min-aspect-ratio: 3/4) {
+  .reel-stage { left: 50%; right: auto; width: calc(100dvh * 9 / 16); translate: -50% 0; }
+}
+.reel-frame {
+  position: absolute; left: 50%; top: 50%; width: max(100cqw, 100cqh * 9 / 16); aspect-ratio: 9 / 16; translate: -50% -50%;
+  /* how much of each side is cut off on this screen, and the least room kept from what is seen of the edge */
+  --cut: calc((max(100cqw, 100cqh * 9 / 16) - 100cqw) / 2); --edge: calc(var(--cut) + 0.75rem);
+}
+.reel-shot { position: absolute; inset: 0; opacity: 0; transition: opacity 250ms linear; }
+.reel-shot.on { opacity: 1; }
+.reel-art { display: block; width: 100%; height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+.reel.paused .reel-shot *, .reel.paused .reel-shot { animation-play-state: paused !important; }
+
+/* Marcy, in her car */
+.shot-car .sway { transform-origin: 50% 80%; transform-box: view-box; }
+.shot-car.on .sway { animation: reel-sway 6s ease-in-out infinite; }
+@keyframes reel-sway { 0%, 100% { rotate: -0.6deg; } 50% { rotate: 0.7deg; translate: 0 -3px; } }
+.reel-shot.on .rain { animation: reel-rain 1.1s linear infinite; }
+@keyframes reel-rain { from { translate: 0 -60px; } to { translate: 0 0; } }
+.shot-car .eyes { transform-origin: 180px 330px; }
+.shot-car.on .eyes { animation: reel-blink 4.2s infinite; }
+@keyframes reel-blink { 0%, 94%, 100% { scale: 1 1; } 96% { scale: 1 0.1; } }
+.shot-car .mouth { transform-origin: 180px 372px; scale: 1 0.6; }
+.reel.talking .shot-car.on .mouth { animation: reel-talk 0.26s ease-in-out infinite alternate; }
+@keyframes reel-talk { from { scale: 1 0.5; } to { scale: 1 2.1; } }
+
+/* her views, while they go up */
+.reel-insights {
+  position: absolute; left: max(9%, var(--edge)); right: max(9%, var(--edge)); top: 15%; display: grid; gap: 0.1rem;
+  padding: 0.8rem 1rem; border-radius: 1rem; background: rgba(250, 251, 252, 0.96); color: #1d2733;
+  box-shadow: 0 0.4rem 1.4rem rgba(0, 0, 0, 0.35);
+  opacity: 0; translate: 0 -0.8rem; transition: opacity 400ms ease, translate 400ms ease;
+}
+.reel-insights.show { opacity: 1; translate: 0 0; }
+.reel-insights .lbl { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #66727f; }
+.reel-insights .views { font-size: 2.1rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.reel-insights .delta { font-size: 0.85rem; font-weight: 700; color: #1f8a4c; }
+
+/* the chart */
+.shot-chart .rise { stroke-dasharray: 600; stroke-dashoffset: 600; }
+.shot-chart.on .rise { animation: reel-draw 7s cubic-bezier(0.5, 0, 0.9, 0.6) forwards; }
+@keyframes reel-draw { to { stroke-dashoffset: 0; } }
+.shot-chart .you { offset-path: path("M44 560 C 130 540, 200 480, 270 400"); offset-distance: 0%; offset-rotate: 0deg; }
+.shot-chart.on .you { animation: reel-climb 7s cubic-bezier(0.4, 0, 0.6, 1) forwards; }
+@keyframes reel-climb { to { offset-distance: 100%; } }
+.shot-chart .tag { opacity: 0; }
+.shot-chart.on .tag.above { animation: reel-in 600ms 2.4s forwards; }
+.shot-chart.on .tag.below { animation: reel-in 600ms 4.4s forwards; }
+@keyframes reel-in { to { opacity: 1; } }
+
+/* run, or turn around */
+.shot-choice .half { opacity: 0.18; }
+.shot-choice.on .half.run { animation: reel-in 500ms 2s forwards; }
+.shot-choice.on .half.turn { animation: reel-in 500ms 3.5s forwards; }
+.shot-choice.on .runner { animation: reel-dash 1.2s 2s ease-in infinite; }
+@keyframes reel-dash { to { translate: 150px -56px; } }
+
+/* the footage */
+.shot-street .cam { transform-box: view-box; transform-origin: 50% 50%; scale: 1.04; }
+.shot-street.on .cam { animation: reel-shake 2.6s ease-in-out infinite; }
+@keyframes reel-shake { 25% { translate: 2px -1px; } 50% { translate: -2px 2px; } 75% { translate: 1px 1px; } }
+.shot-street.on .rec { animation: reel-rec 1s steps(2) infinite; }
+@keyframes reel-rec { 50% { opacity: 0; } }
+
+/* the comments */
+.reel-comments { position: absolute; top: 17%; bottom: 24%; left: max(7%, var(--edge)); right: max(7%, var(--edge)); display: flex; flex-direction: column; justify-content: center; gap: 0.75rem; }
+.shot-comments { background: linear-gradient(#20262e, #12161b); }
+.reel-comment { display: flex; gap: 0.6rem; align-items: flex-start; opacity: 0; translate: 0 1rem; transition: opacity 700ms ease, translate 700ms ease; }
+.reel-comment.in { opacity: 1; translate: 0 0; }
+.reel-comment.reply { margin-left: 2.2rem; }
+.reel-comment .face, .reel-id .face {
+  flex: none; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center;
+  font-size: 0.75rem; font-weight: 700; color: #22303c; background: linear-gradient(135deg, #b9cde3, #e9c9b3);
+}
+.reel-comment .words { min-width: 0; padding: 0.45rem 0.75rem; border-radius: 0 0.9rem 0.9rem 0.9rem; background: rgba(255, 255, 255, 0.08); font-size: 0.95rem; line-height: 1.3; }
+.reel-comment .words b { display: block; font-size: 0.8rem; }
+.reel-comment.by-ra .face { background: linear-gradient(135deg, #c9b8a6, #a9b9c4); }
+.reel-comment.by-ra .words { background: rgba(243, 179, 90, 0.14); }
+
+/* the sponsored clip */
+.shot-ad .warm, .shot-ad .window { opacity: 0; }
+.shot-ad.on .warm { animation: reel-in 6s 3s ease forwards; }
+.shot-ad.on .window { animation: reel-in 3s 5s ease forwards; }
+.shot-ad .streak { opacity: 0; }
+.shot-ad.on .streak { animation: reel-streak 1.1s ease-in 2 forwards; }
+.shot-ad.on .streak:nth-child(2) { animation-delay: 0.25s; }
+.shot-ad.on .streak:nth-child(3) { animation-delay: 0.5s; }
+@keyframes reel-streak { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 260px 0; } }
+.shot-ad .seal-glow { opacity: 0.3; transform-box: fill-box; transform-origin: center; }
+.shot-ad.on .seal-glow { animation: reel-breathe 5s ease-in-out infinite; }
+.shot-ad.on .seal-glow.lit { animation: reel-seal 900ms ease-out; }
+@keyframes reel-breathe { 0%, 100% { opacity: 0.3; scale: 0.9; } 50% { opacity: 0.85; scale: 1.15; } }
+@keyframes reel-seal { from { opacity: 1; scale: 1.35; } to { opacity: 0.45; scale: 1; } }
+.reel-ad-words { position: absolute; left: max(11%, var(--edge)); right: max(11%, var(--edge)); top: 16%; display: grid; gap: 0.9rem; color: #f1ebdf; }
+.reel-ad-words p { margin: 0; font-size: 1.15rem; line-height: 1.3; font-style: italic; opacity: 0; transition: opacity 1.6s ease; }
+.reel-ad-words p.big { font-size: 1.75rem; line-height: 1.15; font-style: normal; font-weight: 800; text-wrap: balance; }
+.reel-ad-words p.in { opacity: 1; }
+
+/* What is said: Dot's bubble (jam/taste.css), a few words at a time. Each
+   speaker's shadow is their own; R. A.'s is warm. */
+.reel-bubble {
+  position: absolute; z-index: 3; margin: 0; max-width: min(72%, 100cqw - 1.5rem); box-sizing: border-box; padding: 0.55rem 0.75rem;
+  border: 0.16rem solid #22303c; border-radius: 1.1rem; background: #f6f1e7; color: #22303c;
+  font-size: 1rem; line-height: 1.25; font-weight: 800; box-shadow: 0.16rem 0.2rem 0 var(--said-by, #7fa8d1);
+  display: none;
+}
+.reel-bubble.on { display: block; animation: reel-bubble-in 170ms ease-out; }
+@keyframes reel-bubble-in { from { scale: 0.85; opacity: 0; } }
+.reel-bubble span { opacity: 0; transition: opacity 120ms ease; }
+.reel-bubble span.said { opacity: 1; }
+.reel-bubble::after {
+  content: ""; position: absolute; width: 0.9rem; height: 0.9rem; background: #f6f1e7;
+  border-right: 0.16rem solid #22303c; border-bottom: 0.16rem solid #22303c; border-bottom-right-radius: 0.2rem;
+  left: 45%; bottom: -0.58rem; rotate: 45deg;
+}
+.reel-bubble.at-face { left: max(14%, var(--edge)); top: 13%; transform-origin: 45% 100%; }
+.reel-bubble.at-over::after { left: 0.9rem; }
+.reel-bubble.at-over.in-chart { left: max(13%, var(--edge)); top: 34%; max-width: min(56%, 100cqw - 1.5rem); }
+.reel-bubble.at-over.in-choice { left: max(11%, var(--edge)); top: 44%; }
+.reel-bubble.at-over.in-street { left: max(9%, var(--edge)); top: 15%; max-width: min(80%, 100cqw - 1.5rem); }
+.reel-bubble.at-aside { --said-by: #8b97a4; border-color: #66727f; font-weight: 600; font-style: italic; font-size: 0.95rem; opacity: 0.92; }
+.reel-bubble.at-aside::after { border-color: #66727f; left: auto; right: 1rem; }
+.reel-bubble.at-aside.in-street { left: max(6%, var(--edge)); top: 72%; }
+.reel-bubble.at-aside.in-street::after { right: auto; left: 1rem; }
+.reel-bubble.at-aside.in-car { left: max(6%, var(--edge)); top: 66%; }
+.reel-bubble.at-aside.in-car::after { right: auto; left: 1rem; }
+
+/* The feed it is in, drawn over it. */
+.reel-shade { position: absolute; inset: auto 0 0; height: 40%; background: linear-gradient(transparent, rgba(0, 0, 0, 0.55)); pointer-events: none; transition: opacity 600ms; }
+.reel-top { position: absolute; left: 0; right: 0; top: 0; padding: max(0.5rem, env(safe-area-inset-top)) 0.75rem 0; display: grid; justify-items: center; gap: 0.75rem; pointer-events: none; }
+.reel-bar { justify-self: stretch; height: 0.2rem; border-radius: 0.2rem; background: rgba(255, 255, 255, 0.28); overflow: hidden; }
+.reel-bar i { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); }
+.reel-top b { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); line-height: 2.75rem; margin-top: -0.6rem; }
+.reel-rail { position: absolute; right: 0.6rem; bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 5.5rem); display: grid; gap: 1rem; justify-items: center; pointer-events: none; transition: opacity 600ms; }
+.reel-rail span { display: grid; justify-items: center; gap: 0.15rem; font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.reel-rail svg { width: 1.9rem; height: 1.9rem; fill: none; stroke: #fff; stroke-width: 2; stroke-linejoin: round; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+.reel-who { position: absolute; left: 1rem; right: 4.5rem; bottom: max(1rem, env(safe-area-inset-bottom)); display: grid; gap: 0.35rem; pointer-events: none; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); transition: opacity 600ms; }
+.reel-id { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.reel-id small { font-size: 0.75rem; color: rgba(244, 246, 248, 0.75); }
+.reel-caption { font-size: 0.85rem; }
+.reel.is-ad .reel-rail, .reel.is-ad .reel-who, .reel.is-ad .reel-shade { opacity: 0; }
+
+.reel-sponsor {
+  position: absolute; left: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); height: 2.75rem;
+  display: flex; align-items: center; gap: 0.6rem; color: #f1ebdf; opacity: 0; transition: opacity 1.2s; pointer-events: none;
+}
+.reel-sponsor svg { width: 2rem; height: 2rem; padding: 0.3rem; box-sizing: border-box; border-radius: 0.5rem; background: #2a333d; }
+.reel-sponsor span { display: grid; font-size: 0.85rem; line-height: 1.2; }
+.reel-sponsor small { font-size: 0.75rem; color: #b4ab9c; }
+.reel-disclose {
+  position: absolute; left: 1rem; right: 1rem; bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.5rem); margin: 0;
+  font-size: 0.75rem; line-height: 1.35; color: #b4ab9c; opacity: 0; transition: opacity 1.5s; pointer-events: none;
+}
+.reel.offered .reel-sponsor { opacity: 1; }
+.reel.disclosed .reel-disclose { opacity: 1; }
+
+/* The things to press: the way back, pause, and at the end, play and again. */
+.reel-back { z-index: 4; }
+.reel-pause {
+  position: absolute; z-index: 4; top: max(0.75rem, env(safe-area-inset-top)); right: max(0.75rem, env(safe-area-inset-right));
+  width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  color: #22303c; background: rgba(246, 241, 231, 0.72); cursor: pointer;
+}
+.reel-pause svg { width: 1.2rem; height: 1.2rem; }
+.reel-cta {
+  position: absolute; z-index: 4; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom));
+  min-height: 2.75rem; padding: 0 1.2rem; display: grid; place-items: center; box-sizing: border-box;
+  border-radius: 999px; background: #e8664f; color: #fff; font-weight: 800; text-decoration: none;
+  animation: reel-arrive 1.2s ease;
+}
+@keyframes reel-arrive { from { opacity: 0; } }
+.reel-again {
+  position: absolute; z-index: 4; left: 50%; top: 42%; translate: -50% -50%; min-height: 2.75rem; padding: 0 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 999px; background: rgba(0, 0, 0, 0.5); color: #fff;
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.reel-pause:focus-visible, .reel-cta:focus-visible, .reel-again:focus-visible { outline: 3px solid #f3b35a; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-car.on .sway, .shot-street.on .cam, .reel-shot.on .rain, .shot-choice.on .runner, .reel.talking .shot-car.on .mouth, .reel-bubble.on { animation: none !important; }
+}
+
+/* In the feed, under what is waiting on you: a reel, as a tall tile. */
+.reels { display: grid; gap: 0.6rem; margin-top: 0.75rem; }
+.reels-title { margin: 0; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.reel-tile {
+  position: relative; width: 7.5rem; aspect-ratio: 9 / 16; border-radius: 0.9rem; overflow: hidden; display: block;
+  box-shadow: 0 0.2rem 0 var(--lip, rgba(0, 0, 0, 0.15));
+}
+.reel-tile > svg { display: block; width: 100%; height: 100%; }
+.reel-tile-play { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: rgba(0, 0, 0, 0.4); color: #fff; }
+.reel-tile-play svg { width: 1.1rem; height: 1.1rem; }
+.reel-tile-who { position: absolute; left: 0.5rem; right: 0.5rem; bottom: 0.45rem; font-size: 0.75rem; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reel-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }

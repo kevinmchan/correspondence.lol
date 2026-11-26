@@ -470,6 +470,16 @@ async function states() {
     { name: 'Penny’s Radio, reading about it, after starting over', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.carried }, ready: '.radio .dot',
       then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
+    // A reel: somebody else's feed, played. Held still where it matters (`&hold`), but for the comments coming in and its end.
+    { name: 'home, the feed, a reel under what is waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item',
+      then: (page) => page.locator('.reel-tile').scrollIntoViewIfNeeded() },
+    { name: 'a reel, Marcy in her car, saying it a few words at a time', screen: 'reel', at: '/?reel=inflection&at=1.2&hold', ready: '.reel-bubble.on.at-face', whole: ['.reel-back', '.reel-pause', '.reel-bubble'] },
+    { name: 'a reel, her voice over the chart', screen: 'reel', at: '/?reel=inflection&at=12&hold', ready: '.reel-bubble.on.in-chart', whole: ['.reel-back', '.reel-pause', '.reel-bubble'] },
+    { name: 'a reel, run or turn around', screen: 'reel', at: '/?reel=inflection&at=22&hold', ready: '.reel-bubble.on.in-choice', whole: ['.reel-bubble'] },
+    { name: 'a reel, the footage, and what she says off camera', screen: 'reel', at: '/?reel=inflection&at=32.4&hold', ready: '.reel-bubble.on.at-aside', whole: ['.reel-bubble'] },
+    { name: 'a reel, her views going up, under her breath', screen: 'reel', at: '/?reel=inflection&at=37.5&hold', ready: '.reel-insights.show', whole: ['.reel-insights', '.reel-bubble'] },
+    { name: 'a reel, the comments coming in', screen: 'reel', at: '/?reel=inflection&at=41.6', ready: '.reel-comment.by-ra.in', whole: ['.reel-comments'] },
+    { name: 'a reel, the sponsored clip, at its end', screen: 'reel', at: '/?reel=inflection&at=58', ready: '.reel-again:not([hidden])', whole: ['.reel-back', '.reel-cta', '.reel-again', '.reel-disclose'] },
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
     { name: 'the night, left alone until the way back has gone', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky.idle', wait: 9000, whole: ['.penny-back'] },
     // ...what is kept of it on the home page once it has been found, across the map from the portal...

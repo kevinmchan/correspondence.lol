@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="/penny/slow.css">
   <link rel="stylesheet" href="/room/room.css">
   <link rel="stylesheet" href="/penny/sky.css">
+  <link rel="stylesheet" href="/reels/reel.css">
   <link rel="stylesheet" href="/penny/tags.css">
   <link rel="stylesheet" href="/room/worlds.css">
   <link rel="stylesheet" href="/room/meadow.css">
@@ -127,6 +128,22 @@
             <strong>All clear</strong>
             <span id="feed-empty-note">Nothing is waiting on you.</span>
           </div>
+          <!-- Reels: somebody else's feed, under what is waiting on you, and never counted with it (reels/reel.js). -->
+          <section class="reels" aria-labelledby="reels-title">
+            <h2 id="reels-title" class="reels-title">Reels</h2>
+            <a class="reel-tile" href="/?reel=inflection" aria-label="A reel by marcy.pell">
+              <svg viewBox="0 0 90 160" aria-hidden="true">
+                <rect width="90" height="160" fill="#5f6e7a"/>
+                <rect y="118" width="90" height="42" fill="#4a5661"/>
+                <rect x="40" y="82" width="20" height="36" rx="7" fill="#3d4954"/><circle cx="50" cy="75" r="7" fill="#6c5444"/>
+                <rect x="22" y="99" width="11" height="19" rx="5" fill="#e3b04b"/><circle cx="27.5" cy="94" r="4.6" fill="#c99a7a"/>
+                <line x1="31" y1="101" x2="42" y2="63" stroke="#2a333b" stroke-width="1.6"/>
+                <path d="M24 65 Q44 38 66 64 Q58 60 50 64 Q42 60 34 64 Q28 61 24 65Z" fill="#c8442e"/>
+              </svg>
+              <span class="reel-tile-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg></span>
+              <span class="reel-tile-who" aria-hidden="true">marcy.pell</span>
+            </a>
+          </section>
         </section>
 
         <div id="panel-lobby" class="stack" role="tabpanel" aria-labelledby="tab-lobby">
@@ -933,6 +950,39 @@
         <div id="walk-board" class="board walk-board" role="group" aria-label="A place on the map"></div>
         <button type="button" id="walk-portal" class="portal" aria-label="On to the next place" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
       </div>
+    </main>
+  </template>
+
+  <template id="screen-reel">
+    <!-- A reel: a minute of somebody else's feed, played (reels/reel.js). Its people speak as Dot does, a few words at a time
+         on falling bells; Penny only hums. A touch on the picture pauses it. -->
+    <main class="reel">
+      <div class="reel-stage" aria-hidden="true">
+        <div class="reel-frame">
+          <p class="reel-bubble"></p>
+          <div class="reel-comments"></div>
+          <div class="reel-ad-words"></div>
+        </div>
+        <div class="reel-shade"></div>
+        <div class="reel-top"><span class="reel-bar"><i></i></span><b>Ladder</b></div>
+        <div class="reel-rail">
+          <span><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>48.1K</span>
+          <span><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>611</span>
+          <span><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-6z"/></svg>12K</span>
+        </div>
+        <div class="reel-who">
+          <span class="reel-id"><span class="face">MP</span><b>marcy.pell</b><small>Paid partnership</small></span>
+          <span class="reel-caption">I almost didn’t post this. #ad</span>
+        </div>
+        <div class="reel-sponsor"><svg viewBox="0 0 24 24"><use href="#mini-envelope"/></svg><span><b>correspondence.lol</b><small>Sponsored</small></span></div>
+        <p class="reel-disclose">Paid partnership with correspondence.lol. Mr. Alvarez is not.</p>
+      </div>
+      <a href="/" class="penny-back reel-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <button type="button" class="reel-pause" aria-label="Pause"></button>
+      <a class="reel-cta" href="/postmarks/" hidden>Play free</a>
+      <button type="button" class="reel-again" hidden>Watch again</button>
+      <p class="sr-only reel-told"></p>
+      <p class="sr-only reel-said" role="status"></p>
     </main>
   </template>
 

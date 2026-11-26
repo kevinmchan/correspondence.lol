@@ -373,13 +373,13 @@ export function hide(life, { main, map = null, board = () => null, seed = () => 
 
 // Every screen has it somewhere, without having to ask. (A game's screen
 // hides its own, in a square of its map: postmarks/ui.js. The night has none:
-// it is where they lead. And once it has been found, the home page has it
-// where it is kept.)
+// it is where they lead. Nor has a reel, which is somebody else's video. And
+// once it has been found, the home page has it where it is kept.)
 const DARK = ['office', 'slow', 'taste'];
 window.addEventListener('screen', (event) => {
   const { name, life, root } = event.detail ?? {};
   const main = root?.querySelector('main');
-  if (!main || !life || name === 'game' || name === 'sky' || (name === 'home' && found().length > 0)) return;
+  if (!main || !life || name === 'game' || name === 'sky' || name === 'reel' || (name === 'home' && found().length > 0)) return;
   hide(life, { main, seed: () => `${name}:${visit}`, dark: DARK.includes(name) });
 });
 
