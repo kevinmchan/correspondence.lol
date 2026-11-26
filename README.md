@@ -49,7 +49,8 @@ home bar), and holds each to the same rules:
   named for it are entirely on the screen.
 
 The same suite can be pointed at any of the phones in `tests/browser/phone.cjs`:
-`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all`; and at one screen:
+`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all` (the smallest and
+the largest, each in Safari and installed); and at one screen:
 `ONLY=radio npm run e2e:mini`. There is no WebKit where the suites run, only
 Chromium told to be a phone (its size, touch, a phone's viewport and the
 insets of the notch and the home bar): what is checked is the layout an

@@ -211,4 +211,8 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
   }, { safe: insets, skip: ignore });
 }
 
-module.exports = { ROOT, PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };
+// What "every phone" means (PHONES=all): the smallest and the largest, each both ways. What is right at both ends has
+// been right in between; the Pros can still be asked for by name (the owner's choice, 26 November 2026).
+const ENDS = ['mini-safari', 'mini-app', 'max-safari', 'max-app'];
+
+module.exports = { ROOT, PHONES, ENDS, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };
