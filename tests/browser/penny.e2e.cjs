@@ -603,6 +603,16 @@ async function main() {
       assert.equal((await h.pal()).alone, false, 'and Dot with it');
     }),
 
+    check('back, pressed while the next screen is still on its way, goes back: the screen that is up is the one the address names', {}, async (page) => {
+      await page.goto(`${origin}/?walk`);
+      await page.waitForSelector('#walk-board .cell');
+      // the way home is pressed, and back at once, before the home page has been fetched
+      await page.evaluate(() => { document.querySelector('.penny-back').click(); history.back(); });
+      await sleep(3000); // (the home page arrives, and the walk comes back over it)
+      assert.ok(/\?walk/.test(page.url()));
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#screens .screen')].map((screen) => screen.className.match(/screen-\w+/)[0])), ['screen-walk']);
+    }),
+
     check('walked again afterwards: Dot is there from the start and is not found twice', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:place:v1': 4 } }, async (page, h) => {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);
