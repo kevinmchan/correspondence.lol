@@ -58,10 +58,21 @@
 // The last post of the last place has no sound in it. It has Dot. (The
 // places can be walked again, and then Dot is there from the start and that
 // post is somebody's ordinary mail: Dot is found once.)
+//
+// Its portal leads out to the map from higher up (/?map, penny/map.js), where
+// the places beyond the fifth are (penny/beyond.js). Those are played here
+// too, one at a time, asked for by name (/?walk&at=west): by all the rules, as
+// the fifth place is, with nothing to hear. What is found in them is energy,
+// by the game's own count (shared/energy.js), and the way out of one is back
+// to that map. One of the first five can be asked for the same way
+// (/?walk&at=2), as far as has been reached.
 
 import { audio, isMuted, play as sfx, noise } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
+import { load, save } from '/shared/identity.js';
+import { ENERGY_KEY, played, read as readEnergy } from '/shared/energy.js';
 import { PLACES, groupsOf, hear, mailIn, read, ruledOut, vouch } from './places.js';
+import { BEYOND_KEY, FIRST_AT, beyond, everywhere, stateOf, tidy, walk as walked } from './beyond.js';
 import { claim } from './pal.js';
 import { heard, murmur, playMail, remembered, soundSoFar } from './mail.js';
 import {
@@ -73,7 +84,7 @@ const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelo
 // Where each place lies on the map: the [column, row] of its bottom-left
 // square, rows counting up. Each starts one square beyond the last one's
 // portal, so the walk runs up the map and what has been walked stays below.
-const AT = [[1, 0], [0, 2], [1, 7], [-1, 12], [0, 17]];
+const AT = FIRST_AT;
 // How long it waits, left alone, before its eyes go to a square the rules
 // have made certain; and before a loud post stirs. Seconds, a place each.
 const PATIENCE = [3, 3, 3, 5, 7];
@@ -106,6 +117,21 @@ export function mount(root, life) {
   // back to, and come on from, by the two tiles in the bottom corners.
   const furthest = () => Math.max(0, Math.min(placeReached(), PLACES.length - 1));
   let index = hasWalked() ? 0 : furthest();
+  // A place asked for by name: one beyond the fifth, if it is lit or has been
+  // walked; or one of the first five, as far as has been reached. Either way
+  // it was come to from the map from higher up, and that is the way back.
+  const askedFor = new URLSearchParams(location.search).get('at');
+  let far = null; // the place beyond that is being played, if one is
+  if (askedFor !== null) {
+    const there = beyond(askedFor);
+    if (there && hasWalked() && ['lit', 'walked'].includes(stateOf(tidy(load(BEYOND_KEY)), there.id))) {
+      far = there;
+      index = PLACES.length - 1; // it is played as the last of the five is
+    } else if (/^[0-4]$/.test(askedFor) && (hasWalked() || Number(askedFor) <= furthest())) {
+      index = Number(askedFor);
+    }
+    root.querySelector('.penny-back').href = '/?map';
+  }
   let place = null;
   let cells = []; // 'empty' | 'cross' | 'letter'
   let found = []; // the squares whose posts are open, in the order they were found
@@ -176,14 +202,19 @@ export function mount(root, life) {
     portal.style.width = `${side}px`;
     portal.style.left = `${left + Math.floor((place.n - 1) / 2) * pitch}px`;
     portal.style.top = `${top - pitch}px`;
-    const [here, base] = AT[index];
+    const [here, base] = far ? far.at : AT[index];
     const tiles = [];
-    PLACES.slice(0, index).forEach((walked, i) => {
-      walked.regions.forEach((region, cell) => {
-        const column = AT[i][0] + (cell % walked.n);
-        const row = AT[i][1] + (walked.n - 1 - Math.floor(cell / walked.n)); // counting up the map
+    // (from a place beyond: the first five, and whichever others beyond have been walked)
+    const gone = far ? tidy(load(BEYOND_KEY)).walked : [];
+    const behind = far
+      ? everywhere().filter((one) => one.id !== far.id && (typeof one.id === 'number' || gone.includes(one.id)))
+      : PLACES.slice(0, index).map((one, i) => ({ ...one, at: AT[i] }));
+    behind.forEach((before) => {
+      before.regions.forEach((region, cell) => {
+        const column = before.at[0] + (cell % before.n);
+        const row = before.at[1] + (before.n - 1 - Math.floor(cell / before.n)); // counting up the map
         const square = document.createElement('i');
-        square.className = `cell d${region}${walked.posts.includes(cell) ? ' held' : ''}`;
+        square.className = `cell d${region}${before.posts.includes(cell) ? ' held' : ''}`;
         square.style.width = square.style.height = `${side}px`;
         square.style.left = `${left + (column - here) * pitch}px`;
         square.style.top = `${top + (place.n - 1 - (row - base)) * pitch}px`;
@@ -229,10 +260,10 @@ export function mount(root, life) {
 
   function start(at) {
     index = at;
-    setPlaceReached(Math.max(furthest(), index));
-    down.hidden = index === 0; // a tile that would lead nowhere is not shown
-    up.hidden = index >= furthest();
-    place = PLACES[index];
+    if (!far) setPlaceReached(Math.max(furthest(), index));
+    down.hidden = Boolean(far) || index === 0; // a tile that would lead nowhere is not shown
+    up.hidden = Boolean(far) || index >= furthest();
+    place = far ?? PLACES[index];
     cells = place.regions.map(() => 'empty');
     found = [];
     misses = new Set();
@@ -263,7 +294,6 @@ export function mount(root, life) {
     }));
     cells.forEach((_, cell) => paint(cell));
     portal.hidden = true;
-    portal.classList.toggle('last', index === PLACES.length - 1);
     showTrail();
     lay();
     say('');
@@ -693,11 +723,17 @@ export function mount(root, life) {
     know();
     if (!frightened().length && !stuck.length) uneasy = false; // (the cross that frightened Penny may just have been opened instead)
     done = found.length === place.posts.length;
+    if (far) {
+      // a place beyond is work: what is found in it is energy, by the game's own count, and it is walked once every post is found
+      const now = played(readEnergy(load(ENERGY_KEY)), { size: far.n, seed: far.board.seed, status: done ? 'won' : 'playing', found: found.length });
+      if (now.gained) save(ENERGY_KEY, now.state);
+      if (done) save(BEYOND_KEY, walked(tidy(load(BEYOND_KEY)), far.id));
+    }
 
     // And what was inside it. Every time, this could be the one: it can
     // hardly bear it. Then it holds still to listen.
     await wait(Math.max(900, Math.min(at + 250, 1700)));
-    const mail = mailIn(index, found.length - 1, place.posts.length, hasDot()); // (Dot is only there to be found once)
+    const mail = mailIn(index, found.length - 1, place.posts.length, Boolean(far) || hasDot()); // (Dot is only there to be found once)
     if (mail.dot) {
       await findDot(cell);
     } else {
@@ -1147,9 +1183,10 @@ export function mount(root, life) {
   // --- Through the portal ---------------------------------------------------------------------
   portal.addEventListener('click', async () => {
     if (busy || portal.hidden || main.classList.contains('through')) return; // (busy: the sound so far is being played back)
-    if (index === PLACES.length - 1) {
-      setWalked();
-      go('/postmarks/');
+    if (far || index === PLACES.length - 1) {
+      // out, to the map from higher up: where the places beyond are
+      if (!far) setWalked();
+      go('/?map');
       return;
     }
     // the map rushes up through the portal, and settles, from high above, on the next place
@@ -1174,7 +1211,7 @@ export function mount(root, life) {
   // Back down the map to a place already walked, and up again as far as has
   // been reached. (The portal is still the only way to somewhere new.)
   async function step(to) {
-    if (busy || to < 0 || to > furthest() || main.classList.contains('through')) return;
+    if (far || busy || to < 0 || to > furthest() || main.classList.contains('through')) return;
     setBusy(true);
     start(to);
     main.classList.add('arriving');

@@ -596,11 +596,103 @@ async function main() {
       assert.ok(await h.portalOpen());
       await sleep(800);
       await page.locator('#walk-portal').click({ force: true });
-      await page.waitForURL(/\/postmarks\//);
+      // out, to the map from higher up, where the places beyond are: two of them lit, at once
+      await page.waitForURL(/\?map/);
       await sleep(900);
       assert.equal(await h.stored('penny:walked:v1'), true);
-      assert.notEqual((await h.pal()).height, 'gone', 'Penny comes through into the game');
+      assert.notEqual((await h.pal()).height, 'gone', 'Penny comes out onto the map');
       assert.equal((await h.pal()).alone, false, 'and Dot with it');
+      assert.equal(await page.locator('.far-place[data-state="lit"]').count(), 2);
+    }),
+
+    check('beyond the first five: two places lit at once, walked in either order; what is found in them is energy; the place they lead to takes it by a touch, a square at a time, and is lit; not a word', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:place:v1': 4 } }, async (page, h) => {
+      const { beyond } = await import('../../penny/beyond.js');
+      const states = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.far-place[data-id]')].filter((one) => !/^\d$/.test(one.dataset.id)).map((one) => [one.dataset.id, one.dataset.state])));
+      const lit = (id) => page.evaluate((which) => document.querySelectorAll(`.far-place[data-id="${which}"] .cell.on`).length, id);
+      const onMap = async () => { await page.waitForURL(/\?map/); await page.waitForSelector('.screen-map:not(.entering) .far-place'); await sleep(700); };
+      // the home page's portal now opens on the map from higher up
+      await page.goto(`${origin}/?home`);
+      await page.waitForFunction(() => document.querySelector('#portal')?.getAttribute('href') === '/?map');
+      // (once the splash has cleared, and the portal can be reached)
+      await page.waitForFunction(() => { const at = document.querySelector('#portal').getBoundingClientRect(); return document.elementFromPoint(at.left + at.width / 2, at.top + at.height / 2)?.id === 'portal'; }, null, { timeout: 15000 });
+      await page.locator('#portal').click({ force: true });
+      await onMap();
+      assert.deepEqual(await states(), { west: 'lit', east: 'lit', north: 'faint' });
+      assert.deepEqual(await h.words('main.far'), [], 'no words on the map from higher up');
+      assert.equal((await h.pal()).alone, false, 'Dot is with Penny');
+      // a place the way to which is not open: a touch stirs it, and goes nowhere
+      await page.locator('.far-place[data-id="north"]').click({ force: true });
+      await sleep(500);
+      assert.ok(/\?map/.test(page.url()));
+      assert.equal(await h.stored('penny:beyond:v1'), null);
+      // the further of the two first: it does not matter which
+      for (const [n, id] of ['east', 'west'].entries()) {
+        await page.locator(`.far-place[data-id="${id}"]`).click({ force: true }); // (it breathes: it is never quite still)
+        await page.waitForURL(new RegExp(`at=${id}`));
+        await page.waitForSelector('.screen-walk:not(.entering) #walk-board .cell:nth-child(25)');
+        await sleep(1500);
+        assert.equal(await page.locator('#walk-down').isHidden() && await page.locator('#walk-up').isHidden(), true, 'no tiles to the place before or after: the way is by the map');
+        const place = beyond(id);
+        // a guess that finds nothing costs nothing, here as anywhere on the walk
+        const empty = place.regions.findIndex((_, cell) => !place.posts.includes(cell));
+        await h.open(empty);
+        assert.equal((await h.board())[empty], 'x');
+        for (const post of place.posts) await h.open(post);
+        assert.equal([...(await h.board())].filter((mark) => mark === 'L').length, 5);
+        assert.ok(await h.portalOpen());
+        assert.equal((await h.stored('correspondence:energy:v1')).earned, (n + 1) * 10, 'a post found is one, and the place finished as much again');
+        assert.deepEqual((await h.stored('penny:beyond:v1')).walked, n === 0 ? ['east'] : ['west', 'east']);
+        assert.ok(!(await h.feeling()).includes('stamp'), 'Dot is not found again');
+        await sleep(800);
+        await page.locator('#walk-portal').click({ force: true });
+        await onMap();
+        assert.deepEqual(await states(), n === 0 ? { west: 'lit', east: 'walked', north: 'faint' } : { west: 'walked', east: 'walked', north: 'near' });
+      }
+      // the place they both lead to: grey, a spark on it, and a touch pours in what is held
+      assert.equal(await page.locator('.far-place[data-id="north"].can').count(), 1);
+      assert.equal(await lit('north'), 0);
+      await page.locator('.far-place[data-id="north"]').click({ force: true });
+      await page.waitForSelector('.far-place[data-id="north"][data-state="lit"]', { timeout: 8000 });
+      assert.deepEqual(await h.stored('correspondence:energy:v1').then((energy) => [energy.earned, energy.spent]), [20, 20], 'what was poured is spent, and nothing is taken off what was earned');
+      assert.deepEqual((await h.stored('penny:beyond:v1')).charge, { north: 20 });
+      assert.deepEqual(await h.words('main.far'), []);
+      // and a place walked can be walked again, for nothing more
+      await sleep(1800);
+      await page.locator('.far-place[data-id="west"]').click({ force: true });
+      await page.waitForURL(/at=west/);
+      await page.waitForSelector('.screen-walk:not(.entering) #walk-board .cell:nth-child(25)');
+      await sleep(1500);
+      await h.open(beyond('west').posts[0]);
+      assert.equal((await h.stored('correspondence:energy:v1')).earned, 20);
+      // the way back from a place is to the map
+      await page.locator('.penny-back').click();
+      await onMap();
+      assert.deepEqual(await states(), { west: 'walked', east: 'walked', north: 'lit' });
+    }),
+
+    check('the map from higher up, with part of what a place wants: some of its squares take colour and it is not lit; with reduced motion and by keyboard', { reducedMotion: 'reduce', storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:beyond:v1': { walked: ['west', 'east'], charge: {} }, 'correspondence:energy:v1': { earned: 8, spent: 0, boards: [] } } }, async (page, h) => {
+      await page.goto(`${origin}/?map`);
+      await page.waitForSelector('.far-place[data-id="north"].can');
+      await page.locator('.far-place[data-id="north"]').focus();
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => document.querySelectorAll('.far-place[data-id="north"] .cell.on').length === 10);
+      assert.equal(await page.locator('.far-place[data-id="north"]').getAttribute('data-state'), 'near');
+      assert.equal(await page.locator('.far-place[data-id="north"].can').count(), 0, 'nothing left to pour: no spark on it');
+      assert.deepEqual((await h.stored('penny:beyond:v1')).charge, { north: 8 });
+      // nothing held: a touch stirs it, and nothing changes
+      await page.keyboard.press('Enter');
+      await sleep(400);
+      assert.deepEqual((await h.stored('penny:beyond:v1')).charge, { north: 8 });
+      // a place that is not lit cannot be walked into by its address
+      await page.goto(`${origin}/?walk&at=north`);
+      await page.waitForSelector('#walk-board .cell');
+      assert.equal((await h.board()).length, 1, 'the walk begins where it always does');
+      // the fifth place is on the map, and leads back into the first five
+      await page.goto(`${origin}/?map`);
+      await page.locator('.far-place[data-id="4"]').click();
+      await page.waitForURL(/at=4/);
+      await page.waitForSelector('#walk-board .cell:nth-child(16)');
+      assert.equal(await page.locator('#walk-down').isHidden(), false);
     }),
 
     check('walked again afterwards: Dot is there from the start and is not found twice', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:place:v1': 4 } }, async (page, h) => {
@@ -631,7 +723,7 @@ async function main() {
       assert.ok(/\?walk/.test(page.url()), 'the portal does not open in the middle of the sound');
       await h.idle();
       await page.locator('#walk-portal').click({ force: true });
-      await page.waitForURL(/\/postmarks\//);
+      await page.waitForURL(/\?map/);
     }),
 
     check('after the walk: a tap on Penny at rest plays the film from its first scene, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {

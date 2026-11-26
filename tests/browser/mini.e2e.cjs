@@ -306,6 +306,14 @@ async function states() {
     { name: 'the game, how to play', screen: 'game', at: '/postmarks/', ready: 'dialog.howto[open]' },
     { name: 'the walk, the first place', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 0 }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back'] },
     { name: 'the walk, the last place, with Dot', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:walked:v1': true }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back', '#walk-down'] },
+    // The map from higher up (penny/map.js): the fifth place walked and the two beyond it lit; those walked and the third
+    // taking energy, a spark on it; every place walked; and before the first five have been, when it opens on those.
+    // And one of the places beyond, in the walk: five squares across.
+    { name: 'the map from higher up, two places lit', screen: 'map', at: '/?map', storage: withDot, ready: '.far-place[data-state="lit"]', whole: ['.far-place[data-state="lit"]', '.far-place[data-state="faint"]', '.penny-back', '#far-energy'] },
+    { name: 'the map from higher up, a place taking energy', screen: 'map', at: '/?map', storage: { ...withDot, ...ENERGY(60), 'penny:beyond:v1': { walked: ['west', 'east'], charge: { north: 8 } } }, ready: '.far-place[data-state="near"].can', whole: ['.far-place[data-state="near"]', '.penny-back', '#far-energy'] },
+    { name: 'the map from higher up, every place walked', screen: 'map', at: '/?map', storage: { ...withDot, 'correspondence:energy:v1': { earned: 60, spent: 20, boards: [] }, 'penny:beyond:v1': { walked: ['west', 'east', 'north'], charge: { north: 20 } } }, ready: '.far-place[data-id="north"][data-state="walked"]', whole: ['.far-place[data-id="north"]', '.penny-back', '#far-energy'] },
+    { name: 'the map from higher up, before the first places are walked', screen: 'map', at: '/?map', storage: { 'penny:place:v1': 2 }, ready: '.far-place[data-state="lit"]', whole: ['.far-place[data-state="lit"]', '.penny-back'] },
+    { name: 'the walk, a place beyond', screen: 'walk', at: '/?walk&at=west', storage: withDot, ready: '#walk-board .cell:nth-child(25)', whole: ['#walk-board', '.penny-back'] },
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },

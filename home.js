@@ -394,6 +394,7 @@ export function mount(root, life) {
   let turn = 0; // which of its wants is being shown: so that one does not start while another is going on
 
   portal.classList.toggle('calm', hasWalked());
+  if (hasWalked()) portal.href = '/?map'; // once the first places have been walked, it opens on the map from higher up, where the places beyond are (penny/map.js)
   // Where Penny stands to show the portal: just clear of it, on its right.
   const beside = () => {
     const at = portal.getBoundingClientRect();
