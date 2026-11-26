@@ -62,7 +62,7 @@
 
 import { audio, isMuted, noise } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice } from './penny.js';
+import { ASK, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice, reach } from './penny.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 // The horizon, in the scene's units: Penny's eyes are always on it. It stands
@@ -161,6 +161,7 @@ function paperOf(shape) {
 
 export function mount(root, life) {
   document.title = 'correspondence.lol';
+  reach('hello'); // (where play goes on from: penny/penny.js)
   const main = root.querySelector('.hello');
   const far = root.querySelector('.hello-far');
   const near = root.querySelector('.hello-near');

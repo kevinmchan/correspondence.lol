@@ -23,7 +23,7 @@
 // crosses the room, slowly, and what it leaves behind is what there is to make.
 
 import { go } from '/shared/nav.js';
-import { A4, A5, C5, D5, E5, G4, G5, createVoice } from './penny.js';
+import { A4, A5, C5, D5, E5, G4, G5, createVoice, reach } from './penny.js';
 
 const COLOURS = ['#f08a76', '#f8d95a', '#7cc46a', '#2aa198', '#9ad3f7', '#736dd0', '#f3b3e6'];
 const NOTES = [A5, G5, E5, D5, C5, A4, G4]; // high up the screen, high in pitch
@@ -32,6 +32,7 @@ const ENOUGH = 700; // how much has to have been made, slowly, before the way on
 
 export function mount(root, life) {
   document.title = 'correspondence.lol';
+  reach('slow'); // (where play goes on from: penny/penny.js)
   const main = root.querySelector('.slow');
   const stage = root.querySelector('.office-stage');
   const portal = root.querySelector('#slow-portal');

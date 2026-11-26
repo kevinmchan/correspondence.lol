@@ -374,6 +374,17 @@ async function states() {
     // portal, once Penny has gone through it, which is then the one thing there is to press.
     { name: 'the introduction, at first: Penny alone, going through what it feels', screen: 'hello', at: '/?hello', ready: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
     { name: 'the introduction, at first, one feeling held: excited', screen: 'hello', at: '/?hello&emote=excited', ready: '#hello-penny:not([hidden])', wait: 4000, whole: ['.office-door', '#hello-penny'] },
+    // The profile sheet, part way through the story: the way to start it over at its foot; and the question asked before.
+    { name: 'the profile, with the story begun: start it over', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'slow' }, ready: '#me-edit',
+      small: [['^input$', 'a switch is drawn 46 by 27, but it sits in a label that is the whole row of its setting, and a touch anywhere on the row turns it', 27],
+        ['^button "([^\\x00-\\x7F]+|Coral|Marigold|Leaf|Teal|Sky|Indigo|Orchid|Clay)"$', 'the faces and the colours to choose from, eight to a row across the sheet: 33 each on a mini (the sheet had no test screen before this one; making them 44 is a change of the sheet\'s own, not this one\'s)', 33]],
+      then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#me-edit').click(); await page.waitForSelector('dialog.profile[open]'); await page.evaluate(() => { const d = document.querySelector('dialog.profile'); d.scrollTop = d.scrollHeight; }); }, settle: '#story-again' },
+    { name: 'the profile, starting the story over: asked first', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'slow' }, ready: '#me-edit',
+      then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#me-edit').click(); await page.locator('#story-again').click(); }, settle: 'dialog.ask[open]' },
+    // How the story is reached (README): play part way through it goes on with it; the portal goes back to the beginning.
+    { name: 'home, part way through the story: play goes on with it', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'office' }, ready: '#play[href="/?office"]:not([hidden])' },
+    { name: 'the introduction, come to through the portal on the home page', screen: 'hello', at: '/', ready: '#portal',
+      then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#portal').click({ force: true }); }, settle: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
     { name: 'the introduction, behind the mailbox', screen: 'hello', at: '/?hello&at=street', ready: '.hello-far .h-penny', whole: ['.office-door'] },
     { name: 'the introduction, up against the glass', screen: 'hello', at: '/?hello&at=glass', ready: '.h-penny.pressed', whole: ['.office-door'] },
     { name: 'the introduction, the portal left open', screen: 'hello', at: '/?hello&at=portal', ready: '#hello-portal:not([hidden]):not(:disabled)', wait: 15000, settle: '.h-penny.gone', whole: ['.office-door', '#hello-portal'] },

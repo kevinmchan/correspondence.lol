@@ -49,6 +49,33 @@ const DOT_KEY = 'penny:dot:v1';
 export const hasDot = () => load(DOT_KEY) === true;
 export const setDot = () => save(DOT_KEY, true);
 
+// How far into the story this device has been: the furthest of its scenes
+// reached, in order. The portal on the home page always goes back to the
+// beginning; play goes on from here (home.js), and once the first places have
+// been walked, play is a board of your own.
+const STORY_KEY = 'penny:story:v1';
+export const STORY = ['hello', 'office', 'slow', 'walk'];
+const STORY_AT = { hello: '/?hello', office: '/?office', slow: '/?slow', walk: '/?walk' };
+export const BEGINNING = STORY_AT.hello;
+// (somebody part of the way along the walk before this was kept is on the walk)
+export const storyReached = () => (STORY.includes(load(STORY_KEY)) ? load(STORY_KEY) : placeReached() > 0 ? 'walk' : null);
+export function reach(scene) {
+  if (STORY.indexOf(scene) > STORY.indexOf(storyReached())) save(STORY_KEY, scene);
+}
+// Where play goes: on with the story from where it was left, or a board once the first places are walked.
+export const playAt = () => (hasWalked() ? '/postmarks/' : STORY_AT[storyReached() ?? 'hello']);
+
+// Starting the story over (the owner, 26 November 2026; from the profile
+// sheet, shared/profile.js). Everything the story and its walkthroughs keep on
+// the device is forgotten: how far the story has got, the first places walked,
+// Dot found, the pieces of the sound heard, the night found in the game, the
+// radio shown and its story told, and the first game's how-to. What was
+// earned and made stays: energy and the meadow, games, rooms, beats, what the
+// radio has learnt of your taste, and settings.
+const STORY_KEYS = [STORY_KEY, WALKED_KEY, PLACE_KEY, DOT_KEY, 'penny:sound:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1'];
+export const storyBegun = () => STORY_KEYS.some((key) => load(key) != null);
+export const forgetStory = () => STORY_KEYS.forEach((key) => save(key, null));
+
 // A voice for one screen, ending with its `life`.
 //   onNote(pitch, seconds, tag): called as each note starts, so the screen can
 //     show it (its seal brightens); `tag` is whatever sing() was given

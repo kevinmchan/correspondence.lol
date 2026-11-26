@@ -22,8 +22,8 @@ A static, no-build progressive web app served from the repository root at
 ## The film
 
 **The introduction** (`/?hello`, `penny/hello.js`; the owner, 26 November
-2026; a first draft, reached only by its address so far). The first time Penny
-is seen. It begins with Penny alone on plain ground, large, in the middle of
+2026; a first draft). The first time Penny is seen, and the beginning of the
+story (see "How the story is reached", below). It begins with Penny alone on plain ground, large, in the middle of
 the screen, going through what it can feel, one feeling after another: at
 rest, curious, glad, shy, startled, sad, listening, excited. This is where
 Penny's character is worked out, for use everywhere Penny goes (the owner, 26
@@ -40,6 +40,27 @@ its light comes round Penny's edges, because Penny is in the way. Penny
 starts, jumps back, and there it is; looks at it, and at you, and jumps in.
 The portal stays open, and you are expected to follow; nothing hurries you. It
 leads, for now, to scene one.
+
+**How the story is reached** (the owner, 26 November 2026). Two ways, and they
+differ on purpose. The portal on the home page always goes back to the
+beginning: the introduction, then the film, then the first places, in order.
+Play goes on from where you are: the first time, that is the beginning too;
+after that, the furthest scene reached (the introduction, scene one, scene
+two or the walk, at the place it had got to). Once the first places have been
+walked, play is a board of your own, and the story is the portal's. How far
+the story has got is kept on the device (`penny/penny.js`: `reach()`,
+`playAt()`); seeing an earlier scene again does not lose the place. A tap on
+Penny on the home page goes through the portal with it.
+
+**Starting the story over** (the owner, 26 November 2026). At the foot of the
+profile sheet, once any of the story has been seen: "Start the story over",
+asked first. It forgets everything the story and its walkthroughs keep on the
+device (how far the story has got, the first places walked, Dot found, the
+pieces of the sound heard, the night found in the game, the radio shown and
+its story told, the first game's how-to) and opens the app afresh, so play
+begins at the beginning. What was earned and made stays: energy and the
+meadow, games, rooms, beats, what the radio has learnt of your taste, and
+settings (`penny/penny.js`, `forgetStory()`).
 
 How Penny comes up the street is still being played with, so there are three
 ways of it, chosen in the address (`/?hello&gait=zigzag`): `tiptoe` (as it is
@@ -71,10 +92,10 @@ five mouths (a smile, a grin, an o, a wobble and a frown); sad, it also sits
 lower and wider, and its seal all but goes out.
 
 The app is meant to become a film that is played. Its first scene, the Dead
-Letter Office (`/?office`, `penny/office.js`), is still being worked out, so
-nobody is taken there who has not asked: the app opens on the home page. The
-scene is reached by a tap on Penny on the home page once the first places
-have been walked, and a door in its corner leads back.
+Letter Office (`/?office`, `penny/office.js`), is still being worked out. The
+app opens on the home page, never in the film: the film is reached through
+the introduction, by the portal or by play, and a door in its corner leads
+back.
 
 ## Phones
 
@@ -385,8 +406,8 @@ two things, and shows them by coming up and standing by them.
   `installState()`, `requestInstall()` and an `install` event.)
 
 A tap on Penny while it is asking for the app to be installed is a yes to
-that. Any other tap goes through the portal with it, until the first places
-have been walked, and after that plays the film again from scene one.
+that. Any other tap goes through the portal with it: the story, from the
+beginning.
 
 ### Walking the map
 
@@ -486,14 +507,15 @@ looks out, map-small, and then crosses over to stand beside Penny. The portal
 that opens after that leads out to a real solo game, and Penny and Dot come
 through with you.
 
-The places can be walked again afterwards, from the same portal, now quieter.
+The places can be walked again afterwards, by going through the story again
+from the portal, now quieter.
 Dot is beside Penny from the start then, and is not found a second time: that
 last post is somebody's ordinary mail. Nothing already heard is lost.
 
 ### Seeing the film again
 
-Once the first places have been walked, a tap on Penny on the home page plays
-the film again from scene one (`/?office`, `penny/office.js`).
+The portal on the home page, or a tap on Penny there, plays the story again
+from its beginning, the introduction (`/?hello`), and the film follows it.
 
 The story is gone through by swiping up. The scene is a handful of screens,
 and none of them moves on by itself: a swipe up turns to the next at once (the

@@ -37,7 +37,7 @@
 
 import { audio, isMuted } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, TRILL, createVoice } from './penny.js';
+import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, TRILL, createVoice, reach } from './penny.js';
 import { playMail, remembered } from './mail.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -48,6 +48,7 @@ const square = (col, row) => ({ x: MAP.x + col * MAP.pitch + MAP.side / 2, y: MA
 
 export function mount(root, life) {
   document.title = 'correspondence.lol';
+  reach('office'); // (where play goes on from: penny/penny.js)
   const main = root.querySelector('.office');
   const stage = root.querySelector('.office-stage');
   const penny = stage.querySelector('.p-penny');
