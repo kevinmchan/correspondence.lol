@@ -298,8 +298,13 @@ Where they may meet what is already written (a reading, not decided):
   and the "others" who light up what has gone dark are the small path. The
   radio's question (does it light a part of you up, or even it out?) is the
   small path's form of aid or detractor.
-- Whether "the user" of each path is Penny, the one playing beside Penny, or
-  both, is not decided.
+- "The user" of both paths is the person beside Penny, the one playing: the
+  one Penny meets (the owner, 26 November 2026). **They are the sender of the
+  letter.** Penny, posted long ago and never delivered, has been stood beside
+  by whoever posted it all along. The contradictions of the large path and
+  the search of the small path are theirs, seen with Penny. Whether the sender
+  is who made the sound is not decided, and, as with the sound, nothing in the
+  app says or hints it.
 
 As with the radio, neither path answers its question, and both are carried
 by the places, not said in words.
