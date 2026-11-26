@@ -2706,9 +2706,9 @@ async function main() {
       assert.equal(await page.locator('dialog.howto[open]').count(), 0, 'no sheet over the board: not the same cards again, nor how to play');
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('postmarks:howto:v1'))), id, 'the game is kept as shown');
     }),
-    // A board lost together is left as it lies: its end offers the way back to the room, and no second go at the same
-    // board (which started a new game for the whole room, and showed its starter the cards of a game together again).
-    check('a game together, lost: no second go at the same board, only the way back to the room', { storage: ACCOUNT }, async (page) => {
+    // A board lost together can be tried again from its end: a new game for the whole room on the same board, which
+    // opens on that board, without the cards of a game together over it (whoever asks for it has just played one).
+    check('a game together, lost: tried again, the same board opens with no sheet over it', { storage: ACCOUNT }, async (page) => {
       const { generatePuzzle } = await import('../../postmarks/game.js');
       const size = 6;
       const made = generatePuzzle(size, 8);
@@ -2719,6 +2719,8 @@ async function main() {
       const wrong = made.solution[2] === 0 ? 2 * size + 1 : 2 * size; // (a square in the third row with no post in it)
       const lost = { ...view, solution: made.solution, hearts: 0, moves: 3, status: 'lost', last: { player: 0, type: 'guess', cell: wrong, correct: false } };
       let moved = false;
+      let again = null;
+      const second = '99999999-9999-4999-8999-999999999999';
       const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
       const asked = [];
       await page.route(/supabase\.co\/rest\/v1\/rpc\/(\w+)/, (route) => {
@@ -2726,6 +2728,8 @@ async function main() {
         const name = route.request().url().match(/rpc\/(\w+)/)[1];
         asked.push(name);
         if (name === 'room_get') return route.fulfill({ json: { id: room, name: 'Book club', you: 0, people, messages: [], games: [] }, headers: cors });
+        if (name === 'postmarks_start') again = { ...view, id: second, hearts: 3, moves: 0, last: null };
+        if (again) return route.fulfill({ json: again, headers: cors });
         return route.fulfill({ json: (moved ||= name === 'postmarks_play') ? lost : view, headers: cors }); // (the last heart goes with the move)
       });
       await page.goto(`${origin}/postmarks/?game=${id}`);
@@ -2735,9 +2739,13 @@ async function main() {
       await page.locator('#submit:not([disabled])').click();
       await page.waitForSelector('dialog.finale.lost[open]', { timeout: 15000 });
       assert.equal(await page.locator('dialog.finale h2').textContent(), 'Out of hearts');
-      assert.equal(await page.locator('dialog.finale button.again').count(), 0, 'no second go at the board');
-      assert.deepEqual(await page.locator('dialog.finale .buttons .quiet').allTextContents(), ['Back to the room']);
-      assert.equal(asked.includes('postmarks_start'), false, 'and nothing was started');
+      assert.equal(await page.locator('dialog.finale button.again').textContent(), 'Try this board again');
+      await page.locator('dialog.finale button.again').click();
+      await page.waitForFunction((id) => location.search.includes(id), second);
+      await page.waitForSelector('#board .cell[data-state="empty"]:not(.last)');
+      await sleep(800);
+      assert.equal(asked.filter((name) => name === 'postmarks_start').length, 1, 'a new game, started once');
+      assert.equal(await page.locator('dialog[open]').count(), 0, 'and no sheet over its board');
     }),
     check('a hop is Penny\'s own; and at the end of a game won, what was kept hops, one after another', {}, async (page) => {
       await page.goto(`${origin}/jam/`);

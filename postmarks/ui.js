@@ -674,13 +674,35 @@ export function mount(root, life) {
   });
   const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 
-  // Another go at the same board, after losing a game played alone. Not in a room: a board lost together is left as
-  // it lies (a new game is started at the room's desk), and where people are ranked against each other on a board a
-  // second attempt would not be a fair one.
+  // Another go at the same board, where that makes sense: after losing a solo
+  // game, or a shared one (which starts a new game in the room on the same
+  // board, for everyone). Not in the modes where people are ranked against each
+  // other on a board: a second attempt there would not be a fair one.
   function retryOffer(won) {
-    if (won || online) return null;
-    const again = { size: game.size, seed: game.seed };
-    return { label: 'Try this board again', run: () => { if (!life.over) { startSolo(again); render(); } } };
+    if (won) return null;
+    if (!online) {
+      const again = { size: game.size, seed: game.seed };
+      return { label: 'Try this board again', run: () => { if (!life.over) { startSolo(again); render(); } } };
+    }
+    if (online.mode !== 'coop' || !game.solution) return null;
+    const board = { room: online.room, size: game.size, regions: game.regions, solution: game.solution };
+    return {
+      label: 'Try this board again',
+      run: async () => {
+        try {
+          const fresh = await rpc('postmarks_start', {
+            p_room: board.room, p_token: myToken(), p_mode: 'coop', p_size: board.size,
+            p_regions: board.regions, p_solution: board.solution, p_phrase: null,
+          });
+          watcher?.poke();
+          save(HOWTO_KEY, fresh.id); // (the same people, at the same board again: nobody needs telling what a game together is)
+          if (!life.over) go(gameUrl('postmarks', fresh.id), { replace: true });
+        } catch (failure) {
+          await tell('Couldn’t start it again', { detail: failure.message });
+          if (!life.over) go(roomUrl(board.room));
+        }
+      },
+    };
   }
 
   // The screen at the end of a game: a send-off that suits the mode, and a
