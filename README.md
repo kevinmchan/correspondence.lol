@@ -302,9 +302,10 @@ Where they may meet what is already written (a reading, not decided):
   one Penny meets (the owner, 26 November 2026). **They are the sender of the
   letter.** Penny, posted long ago and never delivered, has been stood beside
   by whoever posted it all along. The contradictions of the large path and
-  the search of the small path are theirs, seen with Penny. Whether the sender
-  is who made the sound is not decided, and, as with the sound, nothing in the
-  app says or hints it.
+  the search of the small path are theirs, seen with Penny. The sound Penny
+  remembers is a sound from the sender's room, and the sender is not fully the
+  answer to the search (the owner, 25 November 2026; worked out in the doc
+  "Penny's story and the neighbours"). Nothing in the app says or hints it.
 
 As with the radio, neither path answers its question, and both are carried
 by the places, not said in words.
