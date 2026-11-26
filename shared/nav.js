@@ -41,7 +41,7 @@ const MOVE_MS = 360;
 // Between the home page and the map the move is through a portal, not a slide,
 // and is given longer (penny/walk.css).
 const PORTAL_MS = 950;
-const throughPortal = (a, b) => [a, b].sort().join() === 'home,walk';
+const throughPortal = (a, b) => ['home,walk', 'hello,home'].includes([a, b].sort().join());
 // Between any screen and the night the move is a tumble, and is given longer
 // still (penny/tags.js, penny/tags.css).
 const TUMBLE_MS = 1180;
@@ -170,8 +170,8 @@ document.addEventListener('close', (event) => {
   if (event.target instanceof HTMLDialogElement && !moving) play('shut');
 }, true);
 
-// The first screen: whichever one the address asks for. (The film's first
-// scene, penny/office.js, is not yet where the app opens: nobody is taken
-// there who has not asked. It is reached from the home page, by a tap on
-// Penny once the first places have been walked, and at /?office.)
+// The first screen: whichever one the address asks for. (The story is not
+// where the app opens: it is reached from the home page, by the portal, which
+// goes back to its beginning, penny/hello.js, or by play, which goes on from
+// wherever it was left.)
 move(new URL(location.href), { announce: false });

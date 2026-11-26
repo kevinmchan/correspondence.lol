@@ -2,6 +2,8 @@ import { rpc } from './api.js';
 import { copyable, prettyCode } from './handoff.js';
 import { load, myToken, save } from './identity.js';
 import { isMusicOff, isMuted, setMusicOff, setMuted } from '/postmarks/sound.js';
+import { forgetStory, storyBegun } from '/penny/penny.js';
+import { ask as askFirst } from './ask.js';
 
 // A profile is a name plus an avatar: an emoji on one of eight colours.
 export const AVATARS = [
@@ -258,7 +260,33 @@ export function openProfile({ person, onSave }) {
   });
   sync.append(ask, code, note);
 
-  dialog.append(preview, form, settings, sync);
+  // Starting the story over: Penny's story from its beginning, and every
+  // walkthrough with it (penny/penny.js says what is forgotten, and what
+  // stays). Asked first, since it cannot be undone; then the app is opened
+  // afresh, so that nothing on screen remembers what was forgotten.
+  const again = document.createElement('div');
+  again.className = 'sync story-again';
+  again.hidden = !storyBegun();
+  const restart = document.createElement('button');
+  restart.type = 'button';
+  restart.className = 'link';
+  restart.id = 'story-again';
+  restart.textContent = 'Start the story over';
+  restart.addEventListener('click', async () => {
+    const sure = await askFirst('Start the story over?', {
+      detail: 'Penny’s story, its walkthroughs and your energy begin again. Your games, rooms and beats stay.',
+      yes: 'Start over',
+      no: 'Keep it',
+      danger: true,
+    });
+    if (!sure) return;
+    forgetStory();
+    dialog.close();
+    location.reload();
+  });
+  again.append(restart);
+
+  dialog.append(preview, form, settings, sync, again);
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close();
   });

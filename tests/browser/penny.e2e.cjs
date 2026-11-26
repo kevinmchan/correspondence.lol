@@ -481,33 +481,67 @@ async function main() {
       const clear = await page.evaluate(() => document.querySelector('.pal-penny').getBoundingClientRect().left - document.querySelector('#portal').getBoundingClientRect().right);
       assert.ok(clear >= 0, `Penny stands over the portal it is showing, by ${-clear}px`);
       assert.deepEqual((await words('.pal')).filter((text) => text !== '♥'), [], 'nothing written in Penny\'s layer');
+      // through it: the story, from the beginning
       await page.locator('#portal').click({ force: true });
-      await page.waitForURL(/\?walk/);
-      await sleep(2500);
-      assert.equal((await pal()).height, 'face');
+      await page.waitForURL(/\?hello/);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      await sleep(1200);
+      assert.equal((await pal()).height, 'gone', 'Penny is in the scene, not standing at the edge');
       // (the portal was pressed while Penny was still walking over to it: that walk must not carry on here)
       assert.equal(await page.evaluate(() => document.querySelector('.pal-penny').classList.contains('walking')), false, 'not still walking');
-      assert.deepEqual((await words('main.walk')).filter((text) => text !== '×'), [], 'no words on the map');
+      assert.deepEqual(await words('main.hello'), [], 'no words in the introduction');
       await page.locator('.penny-back').click();
       await page.waitForURL((url) => url.search === '');
       await sleep(900);
       assert.notEqual((await pal()).height, 'gone', 'and Penny is at home again');
     }),
 
-    check('play: the first places come first for everybody, every time until they have been walked, whatever has been played already; then a board, and the walk is the portal\'s', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 5, spent: 0, boards: [] } } }, async (page) => {
+    check('play: the story comes first for everybody, from its beginning the first time and then from wherever it was left, until the first places have been walked, whatever has been played already; then a board, and the portal always goes back to the beginning', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 5, spent: 0, boards: [] } } }, async (page) => {
       const store = (values) => page.evaluate((all) => { for (const [key, value] of Object.entries(all)) localStorage.setItem(key, JSON.stringify(value)); }, values);
       const home = async () => {
         await page.goto(`${origin}/`);
         await page.waitForSelector('#play:not([hidden])');
       };
+      const playGoes = async () => page.locator('#play').getAttribute('href');
+      // the first time: the beginning
       await home();
+      assert.equal(await playGoes(), '/?hello');
       await page.locator('#play').click();
-      await page.waitForURL(/\?walk/);
+      await page.waitForURL(/\?hello/);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      // still the beginning, if that is as far as it got
+      await home();
+      assert.equal(await playGoes(), '/?hello');
+      // through the introduction's portal to scene one, and left there: play goes on from scene one
+      await page.goto(`${origin}/?hello&at=portal`);
+      await page.waitForSelector('#hello-portal:not([hidden]):not(:disabled)', { timeout: 15000 });
+      await page.locator('#hello-portal').click({ force: true });
+      await page.waitForURL(/\?office/);
+      await page.waitForSelector('.screen-office .office-stage');
+      await home();
+      assert.equal(await playGoes(), '/?office', 'play goes on from where the story was left');
+      // the portal, though, is always the beginning
+      assert.equal(await page.locator('#portal').getAttribute('href'), '/?hello');
+      // and from scene two, and from the walk: on from there
+      await page.goto(`${origin}/?slow`);
+      await page.waitForSelector('.slow-keep');
+      await home();
+      assert.equal(await playGoes(), '/?slow');
+      await page.locator('#play').click();
+      await page.waitForURL(/\?slow/);
+      await page.goto(`${origin}/?walk`);
       await page.waitForSelector('#walk-board .cell');
-      // left before the end, and come back to: it is the walk again, at the place that had been reached
+      await home();
+      assert.equal(await playGoes(), '/?walk');
+      // a scene seen again from the beginning does not take play back with it
+      await page.goto(`${origin}/?office`);
+      await page.waitForSelector('.office-stage');
+      await home();
+      assert.equal(await playGoes(), '/?walk', 'seeing an earlier scene again does not lose the place');
+      // left part of the way along the walk: the walk again, at the place that had been reached
       await store({ 'penny:place:v1': 2 });
       await home();
-      assert.equal(await page.locator('#play').getAttribute('href'), '/?walk', 'not walked yet: play is still the walk');
+      assert.equal(await playGoes(), '/?walk', 'not walked yet: play is still the walk');
       await page.locator('#play').click();
       await page.waitForURL(/\?walk/);
       await page.waitForFunction(() => document.querySelectorAll('#walk-board .cell').length > 1);
@@ -517,13 +551,13 @@ async function main() {
       await page.locator('#play').click();
       await page.waitForURL(/\/postmarks\/$/);
       await page.waitForSelector('#board .cell');
-      // and from then on the walk is reached by the portal
+      // and from then on the story is reached by the portal, from its beginning
       await home();
-      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/');
+      assert.equal(await playGoes(), '/postmarks/');
       await page.waitForFunction(() => !document.querySelector('#splash')); // (what the app opens under has cleared)
       await page.locator('#portal').click({ force: true });
-      await page.waitForURL(/\?walk/);
-      await page.waitForSelector('#walk-board .cell');
+      await page.waitForURL(/\?hello/);
+      await page.waitForSelector('#hello-penny:not([hidden])');
     }),
     check('the first quarter, start to finish, by touch', {}, async (page, h) => {
       await page.goto(`${origin}/?walk`);
@@ -821,13 +855,45 @@ async function main() {
       await page.waitForURL(/\/postmarks\//);
     }),
 
-    check('after the walk: a tap on Penny at rest plays the film from its first scene, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {
+    check('the story started over, from the profile: asked first; everything the story and its walkthroughs kept is forgotten, and energy with it, and what was made stays; and play begins at the beginning again', { storage: { ...ACCOUNT, 'penny:walked:v1': true, 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:sound:v1': 3, 'penny:story:v1': 'walk', 'tags:found:v1': ['night'], 'radio:taught:v1': true, 'radio:story:v1': 'told', 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 300, spent: 0, boards: [] }, 'correspondence:meadow:v1': 'off', 'correspondence:thanks:v1': true, 'jam:saved:v1': [{ name: 'Morning', code: 'x', at: 1 }], 'correspondence:theme:v1': 'dark' } }, async (page) => {
+      const stored = (key) => page.evaluate((k) => localStorage.getItem(k), key);
+      const STORY = ['penny:walked:v1', 'penny:place:v1', 'penny:dot:v1', 'penny:sound:v1', 'penny:story:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1', 'correspondence:energy:v1', 'correspondence:meadow:v1', 'correspondence:thanks:v1'];
+      const KEPT = ['jam:saved:v1', 'correspondence:theme:v1', 'correspondence:token:v1'];
+      await page.goto(`${origin}/?home`);
+      await page.waitForSelector('#play:not([hidden])');
+      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/');
+      await page.waitForFunction(() => !document.querySelector('#splash'));
+      await page.locator('#me-edit').click();
+      await page.waitForSelector('dialog.profile[open] #story-again');
+      // kept, if the answer is no
+      await page.locator('#story-again').click();
+      await page.waitForSelector('dialog.ask[open]');
+      await page.locator('dialog.ask[open] button', { hasText: 'Keep it' }).click();
+      await sleep(400);
+      for (const key of STORY) assert.notEqual(await stored(key), null, `${key} was forgotten on a no`);
+      // and started over on a yes
+      await page.locator('#story-again').click();
+      await page.waitForSelector('dialog.ask[open]');
+      await Promise.all([page.waitForEvent('load'), page.locator('dialog.ask[open] button', { hasText: 'Start over' }).click()]); // (the app is opened afresh)
+      await page.waitForSelector('#play:not([hidden])');
+      for (const key of STORY) assert.equal(await stored(key), null, `${key} was not forgotten`);
+      for (const key of KEPT) assert.notEqual(await stored(key), null, `${key} was lost`);
+      assert.equal(await page.locator('#play').getAttribute('href'), '/?hello', 'play begins the story again');
+      assert.equal(await page.locator('#meadow').isDisabled(), true, 'energy begins again: the meadow is to be earned again');
+      // with nothing of the story kept, there is nothing to start over
+      await page.waitForFunction(() => !document.querySelector('#splash'));
+      await page.locator('#me-edit').click();
+      await page.waitForSelector('dialog.profile[open]');
+      assert.equal(await page.locator('#story-again').isVisible(), false);
+    }),
+
+    check('after the walk: a tap on Penny at rest plays the story from its beginning, and the asking is counted for the whole visit', { storage: { 'penny:walked:v1': true, 'penny:dot:v1': true, 'penny:sound:v1': 3 } }, async (page, h) => {
       await page.goto(origin);
       await h.until('pleading', 12000); // once, soon after arriving
       await h.until('calm', 15000);
       await sleep(600);
       await page.locator('.pal-penny .paper').click({ force: true });
-      await page.waitForURL(/\?office/, { timeout: 5000 });
+      await page.waitForURL(/\?hello/, { timeout: 5000 });
       await sleep(800);
       await page.locator('.penny-back').click();
       await page.waitForURL((url) => url.search === '');
