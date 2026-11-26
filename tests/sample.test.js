@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MOST_KEPT, noteOf, prepare, speed } from '../jam/sample.js';
+import { MOST_KEPT, noteOf, pack, prepare, speed, unpack } from '../jam/sample.js';
 import { CHORDS, pitch } from '../jam/form.js';
 import { ROWS } from '../jam/beat.js';
 
@@ -70,4 +70,17 @@ test('a sound without one is moved as the instrument would be, and on the drums 
   assert.equal(speeds[3], 1, 'the middle row is the sound as it was heard');
   for (let row = 1; row < ROWS; row++) assert.ok(speeds[row] < speeds[row - 1]);
   assert.deepEqual(speeds, Array.from({ length: ROWS }, (_, row) => speed(drums, null, CHORDS[0], row)), 'whatever the chord or the note');
+});
+
+test('a sound goes to the server and comes back the same, to within a sixteen-bit number', () => {
+  const made = prepare(heard(1.9, hum(220)), RATE);
+  const text = pack(made.pcm);
+  assert.match(text, /^[A-Za-z0-9+/]+=*$/);
+  assert.ok(text.length < 200000, `${text.length} letters`);
+  const back = unpack(text);
+  assert.equal(back.length, made.pcm.length);
+  for (let i = 0; i < back.length; i += 97) assert.ok(Math.abs(back[i] - made.pcm[i]) < 1 / 32000);
+  assert.deepEqual([...unpack(pack(Float32Array.of(-1, 0, 1, 2)))], [-1, 0, 1, 1], 'nothing louder than as loud as it goes');
+  assert.equal(unpack('not a sound!'), null);
+  assert.equal(unpack(btoa('abc')), null, 'half a number');
 });

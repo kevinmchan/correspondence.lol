@@ -38,9 +38,11 @@
 // (jam/mic.js). Pressing one in the drawer puts it in that instrument's place
 // on the board: it is then what is played there, at the pitch of each row,
 // in tune with the chords if it has a note (jam/sample.js). The loop is quiet
-// while the microphone listens. The sounds stay on this device: a beat that
-// is saved or shared is its notes, and is played elsewhere by the instruments
-// themselves.
+// while the microphone listens. The sounds belong to the profile, like the
+// saved beats: they are kept on the server and a copy on the device, so every
+// device of the same account has the same drawer. Which sound is in which
+// instrument's place is the device's own; and a beat that is saved or shared
+// is its notes, played for anybody else by the instruments themselves.
 //
 // The sound comes from the app's one sound engine (postmarks/sound.js), on its
 // clock, so the loop keeps exact time however busy the screen is.
@@ -55,7 +57,7 @@ import { decode, encode, isEmpty } from './beat.js';
 import { claim as callPal } from '/penny/pal.js';
 import { hasDot } from '/penny/penny.js';
 import { oops } from '/shared/place.js';
-import { MOST_NAME, SILENT, addSound, dropSound, listen, renameSound, sounds } from './mic.js';
+import { MOST_NAME, SILENT, addSound, dropSound, listen, renameSound, sounds, syncSounds } from './mic.js';
 
 const SAVE_KEY = 'jam:v1'; // the beat on the board
 const SAVED_KEY = 'jam:saved:v1'; // the beats kept: [{ name, code, at, auto, synced }]
@@ -341,17 +343,36 @@ export function mount(root, life) {
   // --- Sounds of your own: the drawer, and the microphone -----------------------------------
   // Which sound each instrument plays: worked out again whenever the sounds or the choices change.
   function fit() {
-    slots = slots.map((id) => (made.some((one) => one.id === id) ? id : null));
     slots.forEach((id, index) => { voices[index] = made.find((one) => one.id === id) ?? null; });
     save(SLOTS_KEY, slots);
     render();
     showSounds();
   }
-  sounds().then((kept) => {
+  // The drawer as the device has it, at once; and then as the server has it, whenever the screen opens, the app is
+  // come back to, and after a sound is recorded, named or deleted (jam/mic.js).
+  let syncingSounds = sounds().then((kept) => {
     if (life.over) return;
     made = [...kept, ...made];
     fit();
   });
+  const drawerSync = () => {
+    syncingSounds = syncingSounds.then(async () => {
+      const now = await syncSounds();
+      if (life.over || !now) return;
+      const was = made;
+      const looks = () => JSON.stringify([made.map((one) => [one.id, one.name]), slots]);
+      const before = looks();
+      // (the ones this page already has stay the very same things: one may be being named, or played)
+      made = now.map((one) => Object.assign(was.find((each) => each.id === one.id) ?? one, one));
+      for (const one of was) if (!one.synced && !made.includes(one)) made.push(one); // recorded since it asked
+      // (a sound that has gone, on another device, leaves the instruments it was played by)
+      slots = slots.map((id) => (was.some((one) => one.id === id) && !made.some((one) => one.id === id) ? null : id));
+      if (looks() !== before) fit(); // (left alone if nothing changed: a name may be being typed)
+    });
+    return syncingSounds;
+  };
+  drawerSync();
+  life.on(document, 'visibilitychange', () => { if (!document.hidden) drawerSync(); });
   // Put a sound (or, with null, the instrument itself) in the chosen instrument's place, and hear it.
   function swap(id) {
     slots[layer] = id;
@@ -389,7 +410,7 @@ export function mount(root, life) {
       name.addEventListener('change', () => {
         one.name = name.value.trim() || one.name;
         name.value = one.name;
-        renameSound(one, one.name);
+        renameSound(one, one.name).then(drawerSync);
         tile.setAttribute('aria-label', `Play ${one.name} here`);
         bin.setAttribute('aria-label', `Delete ${one.name}`);
         render();
@@ -403,7 +424,8 @@ export function mount(root, life) {
       bin.addEventListener('click', async () => {
         if (!(await ask(`Delete “${one.name}”?`, { yes: 'Delete', danger: true }))) return;
         made = made.filter((each) => each !== one);
-        dropSound(one.id);
+        slots = slots.map((id) => (id === one.id ? null : id));
+        dropSound(one).then(drawerSync);
         fit();
       });
       li.append(name, bin);
@@ -455,6 +477,7 @@ export function mount(root, life) {
       made.push(one);
       slots[index] = one.id;
       fit();
+      drawerSync();
       life.setTimeout(() => { if (!playing) sound(index, 3); }, 250); // heard back, once the phone has let go of the microphone
     } else {
       oops(el.micError, SILENT, { shake: el.record });

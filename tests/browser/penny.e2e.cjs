@@ -802,7 +802,7 @@ async function main() {
         };
       });
       const kept = () => page.evaluate(() => new Promise((done) => {
-        const opening = indexedDB.open('jam', 1);
+        const opening = indexedDB.open('jam');
         opening.onsuccess = () => {
           const all = opening.result.transaction('sounds').objectStore('sounds').getAll();
           all.onsuccess = () => { opening.result.close(); done(all.result.map((one) => ({ name: one.name, hz: one.hz, seconds: one.pcm.length / one.rate }))); };
@@ -890,6 +890,81 @@ async function main() {
       await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 1);
       assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
       assert.deepEqual((await kept()).map((one) => one.name), ['Sound 1']);
+    }),
+
+    check('the music maker: recorded sounds follow the profile: sent to the server whole once and by name after, fetched on a device that has not got them, and gone where they were deleted', {}, async (page) => {
+      const { fakeMic } = require('./mic.cjs');
+      await page.addInitScript(fakeMic, 'hum');
+      // the server, as supabase/migrations/20261126000000_sounds.sql has it: what it keeps, and what it was asked
+      const there = new Map();
+      const asked = [];
+      const view = () => [...there.values()].map((one) => ({ id: one.id, name: one.name, at: one.at }));
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co/, (route) => {
+        const request = route.request();
+        if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+        const call = request.url().match(/\/rpc\/(\w+)/)?.[1];
+        if (!/^sounds_/.test(call ?? '')) return route.abort();
+        const args = JSON.parse(request.postData());
+        asked.push({ call, ...args });
+        if (call === 'sounds_put') there.set(args.p_id, args.p_pcm ? { id: args.p_id, name: args.p_name, rate: args.p_rate, hz: args.p_hz, pcm: args.p_pcm, at: 1795000000000 + there.size } : { ...there.get(args.p_id), name: args.p_name });
+        if (call === 'sounds_drop') there.delete(args.p_id);
+        return route.fulfill({ json: call === 'sounds_fetch' ? there.get(args.p_id) ?? null : view(), headers: cors });
+      });
+      const until = (what, test) => (async () => { for (let i = 0; i < 100 && !test(); i++) await sleep(50); assert.ok(test(), what); })();
+      const names = () => page.locator('.jam-sounds input').evaluateAll((all) => all.map((one) => one.value));
+      const layers = () => page.locator('.layer .name').allInnerTexts();
+      const open = async () => { await page.locator('#jam-mic').click(); await page.waitForSelector('dialog#jam-drawer[open]'); };
+      await page.goto(`${origin}/jam/`);
+      await page.waitForSelector('.jam-board .pad');
+      // recorded: the whole of it goes to the server
+      await open();
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('#jam-record.hearing');
+      await sleep(700);
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('.jam-sounds input');
+      await until('the sound was not sent', () => there.size === 1);
+      const [sent] = there.values();
+      assert.match(sent.id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+      assert.equal(sent.name, 'Sound 1');
+      assert.equal(sent.rate, 44100);
+      assert.ok(Math.abs(12 * Math.log2(sent.hz / 220)) < 0.5, `a hum at 220 hertz, sent as ${sent.hz}`);
+      assert.ok(sent.pcm.length > 40000 && sent.pcm.length < 180000, `${sent.pcm.length} letters of it`);
+      // named: only the name goes
+      await page.locator('.jam-sounds input').fill('Hum');
+      await page.locator('.jam-sounds input').press('Enter');
+      await until('the name was not sent', () => sent.id && there.get(sent.id).name === 'Hum');
+      const renaming = asked.filter((one) => one.call === 'sounds_put').pop();
+      assert.equal(renaming.p_pcm, undefined, 'the whole sound was sent again for a name');
+      assert.equal(asked.filter((one) => one.call === 'sounds_put' && one.p_pcm).length, 1, 'sent whole more than once');
+      // another device of the profile (this one, with its own copy gone): the sound is fetched, and plays where it did
+      await page.evaluate(() => new Promise((done) => { indexedDB.deleteDatabase('jam').onsuccess = done; }));
+      await page.reload();
+      await page.waitForFunction(() => document.querySelector('.layer .name')?.textContent === 'Hum', null, { timeout: 8000 });
+      await open();
+      assert.deepEqual(await names(), ['Hum']);
+      await page.locator('#jam-drawer-close').click();
+      // a second, made on another device, arrives; and one deleted on another device goes
+      there.set('7d1f1c1e-0000-4000-8000-000000000002', { ...there.get(sent.id), id: '7d1f1c1e-0000-4000-8000-000000000002', name: 'Elsewhere', at: 1795000009000 });
+      await page.reload();
+      await page.waitForSelector('.jam-board .pad');
+      await open();
+      await page.waitForFunction(() => document.querySelectorAll('.jam-sounds input').length === 2, null, { timeout: 8000 });
+      assert.deepEqual(await names(), ['Elsewhere', 'Hum']);
+      await page.locator('#jam-drawer-close').click();
+      there.delete(sent.id);
+      await page.reload();
+      await page.waitForSelector('.jam-board .pad');
+      await page.waitForFunction(() => document.querySelector('.layer .name')?.textContent === 'Bells', null, { timeout: 8000 });
+      await open();
+      assert.deepEqual(await names(), ['Elsewhere']);
+      // deleted here: the server is told
+      await page.locator('.jam-sounds button[aria-label="Delete Elsewhere"]').click();
+      await page.locator('dialog.ask button.yes').click();
+      await until('the server was not told of the deleting', () => there.size === 0);
+      assert.deepEqual(await names(), []);
+      assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
     }),
 
     check('the music maker: a microphone that is refused, or hears nothing, says so under the button, moves nothing above it and makes no sound', {}, async (page) => {

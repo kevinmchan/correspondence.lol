@@ -608,9 +608,19 @@ glass), the note is found and the sound is played in tune with the chords, in
 whichever octave leaves it nearest to how it was heard; a clap or a word has
 none, and is moved by as much. In the drums' place the rows are seven heights
 of the sound, and the chords leave them alone. A microphone that is refused,
-or hears nothing, says so under Record. The sounds are kept on this device
-only (the browser's own database, twenty-four at most) and belong to no beat:
-a beat that is saved or shared is its notes, and anywhere else the
+or hears nothing, says so under Record.
+
+**The sounds follow the account**, as saved beats do: twenty-four at most,
+kept on the server by profile (`sounds_get`, `sounds_fetch`, `sounds_put`,
+`sounds_drop`, in `supabase/migrations/20261126000000_sounds.sql`) as 16-bit
+samples, and a copy on the device (the browser's own database), so the drawer
+is there at once and offline. The two are brought into line when the screen
+opens, when the app is come back to, and after a sound is recorded, named or
+deleted: a new sound is sent whole, once, and only its name after that; one
+recorded offline is sent when it can be; one made on another device is
+fetched; one deleted on another device goes from this one too. Which sound is
+in which instrument's place is the device's own. The sounds belong to no
+beat: a beat that is saved or shared is its notes, and for anybody else the
 instruments play it themselves.
 
 A loop played here is played as it is written; the long form that Penny's

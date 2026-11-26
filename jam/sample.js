@@ -94,3 +94,27 @@ export function speed(kind, hz, chord, row) {
   const from = hz ? hz * 2 ** Math.round(Math.log2(middle / hz)) : middle;
   return pitch(kind.base, chord, row) / from;
 }
+
+// A sound as it is sent to the server and comes back from it: its samples as
+// whole numbers of sixteen bits, low byte first, written in base64.
+export function pack(pcm) {
+  const bytes = new Uint8Array(pcm.length * 2);
+  const view = new DataView(bytes.buffer);
+  for (let i = 0; i < pcm.length; i++) view.setInt16(i * 2, Math.round(Math.max(-1, Math.min(1, pcm[i])) * 32767), true);
+  let text = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(text);
+}
+// (null if it is not one)
+export function unpack(text) {
+  let raw;
+  try {
+    raw = atob(text);
+  } catch {
+    return null;
+  }
+  if (raw.length < 2 || raw.length % 2) return null;
+  const pcm = new Float32Array(raw.length / 2);
+  for (let i = 0; i < pcm.length; i++) pcm[i] = (((raw.charCodeAt(i * 2) | (raw.charCodeAt(i * 2 + 1) << 8)) << 16) >> 16) / 32767;
+  return pcm;
+}
