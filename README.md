@@ -3,6 +3,20 @@
 A static, no-build progressive web app served from the repository root at
 <https://correspondence.lol>.
 
+## What the app is
+
+**A network of clips, reached through portals, with games for pauses** (the
+owner, 26 November 2026: "The whole app is a network of interconnected,
+branching interactive media 'clips' as accessed via different portals,
+alongside story integrated minigames that create moments of pause in between
+story elements"). A clip is a piece of interactive story: the introduction,
+scene one and scene two of the film, the night through a room's portal. Clips
+join one another and branch, and a portal is how one is entered: the home
+page's, a room's, the one out of scene two. Between clips are games that
+belong to the story (the places on the walk, where Penny hears by holding
+still), and they are where the story pauses and breathes. So far the clips run
+mostly in a line; the branching is the shape they are growing into.
+
 ## Layout
 
 | Path | Purpose |
