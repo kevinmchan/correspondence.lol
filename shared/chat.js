@@ -38,7 +38,7 @@ export function createChat(root, { roomId, you, people, onSent, calm = false }) 
   input.type = 'text';
   input.maxLength = 500;
   input.autocomplete = 'off';
-  if (!calm) input.placeholder = 'Say something…';
+  input.placeholder = calm ? 'message…' : 'Say something…';
   input.setAttribute('aria-label', 'Message');
   const send = document.createElement('button');
   send.type = 'submit';

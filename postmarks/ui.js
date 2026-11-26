@@ -8,7 +8,7 @@ import { rpc } from '/shared/api.js';
 import { createChat } from '/shared/chat.js';
 import { UUID, gameUrl, load, myToken, roomUrl, save, setMyName } from '/shared/identity.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
-import { openHowTo, openTogether } from './howto.js';
+import { HOWTO_KEY, openHowTo, openTogether } from './howto.js';
 import { COLOUR_NAMES, findHint } from './hint.js';
 import { openFeedback, openFinale } from './finale.js';
 import { applyPatterns } from '/shared/profile.js';
@@ -28,7 +28,6 @@ export function mount(root, life) {
   // room (?game=<id>, stored on the server and open to everyone in that room).
 
   const GAME_KEY = 'postmarks:solo:v1';
-  const HOWTO_KEY = 'postmarks:howto:v1'; // the last room game this device showed the how-to for
   const SOLO_HOWTO_KEY = 'postmarks:howto-solo:v1'; // set once the how-to has been shown in solo play
   const DISTRICTS = COLOUR_NAMES;
   const ENVELOPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg>';
@@ -696,6 +695,7 @@ export function mount(root, life) {
             p_regions: board.regions, p_solution: board.solution, p_phrase: null,
           });
           watcher?.poke();
+          save(HOWTO_KEY, fresh.id); // (the same people, at the same board again: nobody needs telling what a game together is)
           if (!life.over) go(gameUrl('postmarks', fresh.id), { replace: true });
         } catch (failure) {
           await tell('Couldn’t start it again', { detail: failure.message });

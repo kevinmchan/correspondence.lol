@@ -98,7 +98,8 @@ home bar), and holds each to the same rules:
   named for it are entirely on the screen.
 
 The same suite can be pointed at any of the phones in `tests/browser/phone.cjs`:
-`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all`; and at one screen:
+`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all` (the mini in Safari and
+installed, and the Pro Max installed); and at one screen:
 `ONLY=radio npm run e2e:mini`. There is no WebKit where the suites run, only
 Chromium told to be a phone (its size, touch, a phone's viewport and the
 insets of the notch and the home bar): what is checked is the layout an
@@ -571,6 +572,15 @@ one that is up is pressed in and lit.
 Above both tabs is the one wide button of the page: play, a board of your own
 at once (`/postmarks/`). Your account is your face in the top right corner.
 
+**Play is the first places first, once, for everybody** (the owner, 26
+November 2026): until the five places have been walked on this device, the
+button leads through the portal to the walk with Penny (`/?walk`, "Walking the
+map"), where the rules are shown one at a time, and goes on leading there, to
+the place that had been reached, whatever has been played already. The last of
+them opens onto a board, and from then on play is a board and the walk is the
+portal's, at the foot of the page. Only this button is turned: a game somebody
+shared, or one in a room, still opens as itself.
+
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
 each room already tells its own page, so the server has nothing new: it asks
@@ -580,8 +590,15 @@ Without an account there are no tabs, only the two ways to get one.
 
 ## Loops, the music maker
 
+**Play is lit for a beat that has just arrived.** When a shared beat is
+opened by its link it is on the board, and silent: the play button wears a
+ring in the accent with a soft light that comes and goes slowly, until it is
+played. Not otherwise, and not on a first visit.
+
 `/jam/` (`jam/jam.js`) is a board of tiles, eight steps across and seven rows
-high, with four instruments that loop together. It is built on the same
+high, with four instruments that loop together. Its name is not written on
+the page (it was, over the board, until v1.1.82): it is the window's title,
+and is said to screen readers. It is built on the same
 things as the game's background music (`postmarks/sound.js`), so that what
 is made there sounds like it belongs with it:
 
@@ -605,12 +622,20 @@ on a snare or a clap, a hop on the beat itself where no drum marks it, a nod
 for a note that falls between, a jump when the four chords come round to the
 start, and a step to one side and back with each bar. Dot, once found, hops
 to the bells. Penny does not hum here: the music is yours. When the loop stops,
-so does it. As everywhere, it ducks down where something that can be pressed
-is under it.
+so does it. This page is longer than the window, and is scrolled under it,
+so here it looks again whenever the page moves or the list of beats grows:
+it comes only as far up as leaves every button to be seen (never more than
+half of one behind it, anywhere along the step it takes), and where there is
+no such place, as when the last saved beat lies along the bottom edge, it
+goes under the edge until there is room again (`clear()` in `penny/pal.js`).
+And on every screen a tap that lands on Penny where something of the page's
+can be pressed goes to that.
 
 **Saving and sharing a beat.** Save keeps the beat on the board under a name
 that can be changed by tapping it; each saved beat shows as a small picture of
-its board, and a tap on that puts it back on the board. Share hands over a
+its board, and a tap on that puts it back on the board. Each saved beat has
+its own share button, and that is the only one: a beat is saved, and then
+shared (there was a second at the top of the page until v1.1.80). Share hands over a
 link (through the phone's share sheet, or copied where there is none) with
 the whole beat written into it: 39 characters after `/jam/?b=`
 (`jam/beat.js`), so a link never stops working. Whoever opens it finds the
@@ -628,11 +653,78 @@ when the screen opens, when the app is come back to, and after anything is
 saved, renamed or deleted. A beat saved offline is sent when it can be; one
 deleted on another device goes from this one too.
 
+**The drawer of sounds.** The drawer, beside the bin (drawn as a drawer: it
+was a microphone until v1.1.81), opens on the sounds there are for the
+instrument that is chosen: the instrument itself, the other three
+instruments, and every sound that has been recorded, newest first. Any of
+the four instruments can be played in any place: the keys where the bass is,
+the drums in a fifth place. It sounds there as it does in its own place, the
+place's button wears its mark and its name, and the rows are its rows (kept
+for the place as `kind:0` to `kind:3`, in `jam:slots:v1`). Record, at the top of the drawer,
+makes a new sound each time and never takes the place of another
+(`jam/mic.js`): it listens for three seconds at most, or until it is pressed
+again, and the loop is quiet meanwhile. The new sound is called "Sound 1" (2,
+3…) until its name is changed, by tapping it, to anything of twelve letters or
+fewer; and it can be deleted. Pressing a sound in the drawer swaps it into the
+chosen instrument's place, and pressing the instrument itself swaps that back.
+The instrument's button on the board then wears the microphone and the
+sound's name, and the drawer beside the bin is lit in its colour. The same
+sound can be in more than one instrument's place.
+
+What was heard is cut to the sound itself, a second and a half at most, and
+is played faster for a higher row and slower for a lower one
+(`jam/sample.js`). If the sound has a note (a hum, a whistle, a struck
+glass), the note is found and the sound is played in tune with the chords, in
+whichever octave leaves it nearest to how it was heard; a clap or a word has
+none, and is moved by as much. In the drums' place the rows are seven heights
+of the sound, and the chords leave them alone. A microphone that is refused,
+or hears nothing, says so under Record.
+
+**The deck holds up to eight.** The four instruments are always on it, and
+beside them there is room for four sounds more. "Add", at the end of the deck,
+opens the drawer for a new place: a sound pressed or recorded there, or one
+of the four instruments, becomes a
+button of its own, in a colour of its own, with its own part on the board
+(in tune with the chords if the sound has a note, seven heights of it if it
+has none). In the drawer for such a place the first row is "None", which
+takes the place off the deck and its part with it. A beat with a part for
+any of those four is written the long way, 76 characters instead of 39
+(`jam/beat.js`); one without is written as it always was.
+
+**A shared beat brings the deck with it.** Where a place plays another of
+the instruments, the link says so after the beat, a letter for each of the
+eight places (`&o=--1-----`: the keys, where the bass is), and whoever opens
+it has the deck as it was shared.
+
+**A shared beat brings the deck's sounds with it.** When there are recorded
+sounds on the deck, sharing leaves a copy of them on the server (`share_put`,
+in `supabase/migrations/20261126010000_shares.sql`) and the link says where:
+`/jam/?b=…&s=…`. Whoever opens it gets the beat on their board, the sounds
+in their drawer (theirs from then on, kept in their own profile) and on
+their deck in the places they were in. The copy is the sounds as they were
+when shared: renaming or deleting one afterwards changes nothing shared. A
+profile's twenty most recent shares are kept; an older link, or one shared
+while the server could not be reached, still has its beat in it and is played
+by the instruments.
+
+**The sounds follow the account**, as saved beats do: twenty-four at most,
+kept on the server by profile (`sounds_get`, `sounds_fetch`, `sounds_put`,
+`sounds_drop`, in `supabase/migrations/20261126000000_sounds.sql`) as 16-bit
+samples, and a copy on the device (the browser's own database), so the drawer
+is there at once and offline. The two are brought into line when the screen
+opens, when the app is come back to, and after a sound is recorded, named or
+deleted: a new sound is sent whole, once, and only its name after that; one
+recorded offline is sent when it can be; one made on another device is
+fetched; one deleted on another device goes from this one too. Which sound is
+on which place of the deck is the device's own, and a saved beat is its
+notes: it is played by whatever is on the deck when it is opened.
+
 A loop played here is played as it is written; the long form that Penny's
 Radio gives a loop (`jam/form.js`) is for listening, not for composing.
 
 What it still does not have, next to the game's music: more than eight steps,
-notes of different lengths, and any way to choose the chords.
+notes of different lengths, any way to choose the chords, and a deck that
+is saved with each beat.
 
 ## Penny's Radio
 
@@ -1090,7 +1182,7 @@ soothing (CLAUDE.md, "Look and words").
 A tag is something hidden in the app, to be found and kept, as on a scavenger
 hunt (`penny/tags.js`). Nothing in the app says that there are any. Whoever
 notices one and touches it has found it: it is theirs from then on (on this
-device), and it is kept on the home page's map, in the corner across from the
+device), and it is kept on the home page's map, at its foot, beside the
 portal. There is one so far.
 
 **Where it hides.** On a screen, somewhere in what is empty of it, and
@@ -1334,12 +1426,27 @@ room are its content: names, notes, the code.
   under the question mark): one board for the whole room; take turns, after
   your move someone else goes next; three hearts, shared by everyone. Each is
   a picture on a tile of its colour and a line of words (the owner's choice).
+  Whoever started the game has just read those cards at the desk, so for them
+  it opens on its board: nobody is told twice.
 - **Energy in a room's games**: a game together earns for every post found on
   the room's board, by anyone, and for its finish; a time trial or a pass
   phrase, for your own run; a phrase's author's test run, nothing. In a game
   together the bar is shorter, beside the words of the turn.
-- **Outside**, for somebody who is not in it, the roof is on. Whoever is in
-  shows at the skylight, and the mat at the door is where to ask in.
+- **Outside**, for somebody who is not in it, it is the same building, as
+  it is inside (the owner's choice, 26 November 2026), so that somebody sent
+  a link knows the place when they are in it: its walls and floor, its table
+  with whoever is in at the head of it, each with their name, and a board on
+  the table. A link to a game lays that game's board there, under a lamp;
+  otherwise a board at rest (nobody outside is told what games a room has,
+  so it is a picture of what the room is for, not one of its games). At the
+  door is the mat, in one row as the code and the bell are inside: the face
+  whoever has come will go in with, their name to write beside it, and the
+  way in. The face is their profile's, or the one last chosen on the device;
+  for somebody new it is picked there, never one already at the table, and
+  it is theirs from then on. In the dark a low pool of warm light lies under
+  the door, as under the doors on the street. (There is no way to bring an
+  account from another device here: that is on the home page. The owner's
+  choice, 26 November 2026.)
 - **On the home page** your rooms are a street of little shops seen from in
   front, the last opened first: a strip of roof, a board over the window in
   the room's colour with the room's name lettered on it (two lines at most,

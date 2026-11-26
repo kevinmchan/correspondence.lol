@@ -4,13 +4,13 @@ import { rpc } from '/shared/api.js';
 import { go } from '/shared/nav.js';
 import { createChat } from '/shared/chat.js';
 import { pollDelay, watchRoom } from '/shared/live.js';
-import { avatar, openProfile, savedLook } from '/shared/profile.js';
+import { avatar, openProfile, paint, randomLook, saveLook, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { copyable } from '/shared/handoff.js';
-import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
+import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, save, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
-import { boardPreview, door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
-import { modeCards } from '/postmarks/howto.js';
+import { boardPreview, door, miniBoard, oops, roomClass } from '/shared/place.js';
+import { HOWTO_KEY, modeCards } from '/postmarks/howto.js';
 import { twoWorlds } from '/room/worlds.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
@@ -36,7 +36,7 @@ export function mount(root, life) {
   const el = {
     name: $('room-name'), nameError: $('name-error'), loading: $('loading'), roomError: $('room-error'),
     join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-    house: $('house'), room: $('room'), members: $('members'), profile: $('profile'), joinFaces: $('join-faces'),
+    house: $('house'), room: $('room'), members: $('members'), profile: $('profile'), joinFaces: $('join-faces'), joinTable: $('join-table'), joinYou: $('join-you'),
     notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), notifyError: $('notify-error'),
     roomCode: $('room-code'), shareButton: $('share-button'),
     games: $('games'), noGames: $('no-games'), tidy: $('tidy'), table: root.querySelector('.table'),
@@ -70,7 +70,11 @@ export function mount(root, life) {
   root.classList.toggle('meadow', wearing());
   // A portal in the top bar, for a member: the way into the room's other world, and back (room/worlds.js).
   const worlds = twoWorlds(root, life, $('worlds'));
-  el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
+  // Whoever has come to the door, as they will go in: the look their profile has, or the one last chosen on this device, or
+  // for somebody new one picked now (which is then theirs: see the door, below).
+  let myLook = savedLook();
+  const picked = !myLook; // (nobody's choice yet: it may be picked again, so as not to be a face already in the room)
+  paint(el.joinYou, myLook ??= randomLook());
 
   // A link that leads nowhere (or a room that could not be reached the first time): the empty plot, with what went wrong
   // in a short line of words in the middle of it; the arrow at the top is the way home. (The name over it is said to
@@ -234,13 +238,35 @@ export function mount(root, life) {
         el.joinName.value = myName();
         joining(false); // (the door: a name is there now)
       }
-      $('join-sign-in').href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
-      // whoever is in shows at the skylight (as many as it has room for)
-      el.joinFaces.replaceChildren(...room.people.filter((person) => !person.left).slice(0, 5).map((person) => avatar(person)));
-      el.joinFaces.hidden = n === 0;
+      // The room as it is inside: whoever is in at the head of its table, each with their name, and on the table a board
+      // (the game somebody was asked to, under a lamp; or else one at rest, which is what the room is for).
+      // (Laid again only when who is there has changed: the door is looked at every few seconds.)
+      const taken = room.people.filter((person) => !person.left).map((person) => person.avatar);
+      if (picked && taken.includes(myLook.avatar)) {
+        for (let tries = 0; tries < 40 && taken.includes(myLook.avatar); tries++) myLook = randomLook();
+        paint(el.joinYou, myLook);
+      }
+      const round = room.people.filter((person) => !person.left);
+      const laid = JSON.stringify(round.map((person) => [person.name, person.avatar, person.color]));
+      if (el.joinFaces.dataset.laid !== laid) {
+        el.joinFaces.dataset.laid = laid;
+        const seats = round.map((person) => {
+          const seat = document.createElement('span');
+          seat.className = 'seat';
+          const name = document.createElement('span');
+          name.className = 'name';
+          name.textContent = person.name;
+          seat.append(avatar(person), name);
+          return seat;
+        });
+        el.joinFaces.replaceChildren(...seats);
+        el.joinTable.replaceChildren(nextGame ? miniBoard({ id: nextGame, size: 6 }, 'go') : miniBoard({ id: roomId, size: 6, found: 2 }, 'wait'));
+        el.joinTable.classList.toggle('lit', Boolean(nextGame));
+      }
       // A device signed out of its profile cannot join as itself: home offers the ways back in.
       rpc('profile_get', { p_token: myToken() }).then((profile) => {
         if (profile.signed_out) go('/', { replace: true });
+        else if (profile.avatar && Number.isInteger(profile.color)) paint(el.joinYou, myLook = { avatar: profile.avatar, color: profile.color });
       }).catch(() => {});
       worlds.member(false);
       el.join.hidden = false;
@@ -417,9 +443,9 @@ export function mount(root, life) {
     try {
       room = await rpc('room_join', { p_room: roomId, p_name: name, p_token: myToken() });
       setMyName(name);
-      // bring along the look chosen in an earlier room, if any
-      const look = savedLook();
-      if (look) await saveProfile({ name, ...look }).catch(() => {});
+      // in with the face that stood on the mat: the look chosen in an earlier room, or for somebody new the one picked at
+      // the door, kept from now on
+      await saveProfile({ name, ...myLook }).then(() => saveLook(myLook.avatar, myLook.color)).catch(() => {});
       rememberRoom(room.id, room.name);
       if (nextGame) {
         go(gameUrl('postmarks', nextGame), { replace: true }); // the game they were invited to
@@ -659,6 +685,7 @@ export function mount(root, life) {
         p_regions: puzzle.regions, p_solution: puzzle.solution, p_phrase: mode === 'phrase' ? phrase : null,
       });
       watcher?.poke();
+      if (mode === 'coop') save(HOWTO_KEY, game.id); // (its cards were the desk's first step: the game does not show them again)
       go(gameUrl('postmarks', game.id));
     } catch (error) {
       oops(composing ? el.phraseError : el.gameError, error.message, { shake: composing ? el.phraseForm : el.modes });

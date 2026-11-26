@@ -300,8 +300,8 @@ export function play(name, options = {}) {
 
 // --- Background music ----------------------------------------------------------
 // Made up as it goes, so it never loops: four slow chords turning over, each
-// held as a soft pad with a low note under it, and a sparse tune picked from
-// the notes that suit the chord. It is pitched below the effects and kept
+// held as a soft pad with a low note under it, and now and then a single note
+// picked from the notes that suit the chord. It is pitched below the effects and kept
 // quiet, so the bells of the game still read clearly over it.
 
 const BEAT = 0.78; // seconds
@@ -326,6 +326,9 @@ try {
   /* no storage: start from the top */
 }
 let lastNote = 2; // where in the chord's notes the tune last was
+const REST = 3; // beats of quiet after a note of the tune, at the least
+const CHANCE = 0.2; // of a note on each beat after that
+let sinceNote = REST; // beats since the tune's last note
 
 function scheduleBeat(at, n) {
   const chord = CHORDS[Math.floor(n / BAR) % CHORDS.length];
@@ -338,9 +341,12 @@ function scheduleBeat(at, n) {
     }
     tone({ at: from, freq: chord.bass, dur: BEAT * BAR, type: 'triangle', gain: 0.07, attack: BEAT, into: band });
   }
-  // the tune: more likely on the strong beats, moving by small steps, sometimes resting
-  const chance = where % 4 === 0 ? 0.75 : where % 2 === 0 ? 0.5 : 0.22;
-  if (Math.random() < chance) {
+  // the tune: slow punctuations, not a melody. After a note it rests for a
+  // few beats, and then each beat is as likely as any other to bring the next:
+  // about one to a bar, falling where it falls, moving by small steps.
+  sinceNote += 1;
+  if (sinceNote > REST && Math.random() < CHANCE) {
+    sinceNote = 0;
     lastNote = Math.max(0, Math.min(chord.tune.length - 1, lastNote + Math.floor(Math.random() * 3) - 1));
     const freq = chord.tune[lastNote];
     tone({ at: from, freq, dur: BEAT * 1.9, type: 'sine', gain: 0.085, attack: 0.012, into: band });

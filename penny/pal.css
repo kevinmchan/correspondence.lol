@@ -15,6 +15,7 @@
   position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; height: 0;
   pointer-events: none;
   -webkit-tap-highlight-color: transparent;
+  scroll-margin-bottom: env(safe-area-inset-bottom, 0px); /* (nothing scrolls to it: this is how pal.js reads how far the home bar lifts it) */
 }
 :root[data-theme="dark"] .pal { --paper-pal: #ebe4d6; --foot: #3b4d63; } /* a cream block that size glares in the dark; ink feet vanish */
 

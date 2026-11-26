@@ -167,6 +167,16 @@ function build() {
     typing = false;
     layer.classList.remove('typing');
   });
+
+  // It is never in the way of the page: a tap that lands on it where
+  // something of the page's can be pressed goes to that instead, on every
+  // screen, whether or not the screen has anything for a tap on it to do.
+  layer.addEventListener('click', (event) => {
+    const under = beneath(event.clientX, event.clientY);
+    if (!under) return;
+    event.stopPropagation();
+    under.click();
+  }, true);
   return layer;
 }
 
@@ -177,14 +187,21 @@ const PRESSABLE = 'a[href], button:not([disabled]):not(.tag-hidden), input, text
 // The thing of the page's under a point of the window, if it can be pressed.
 const beneath = (x, y) => document.elementsFromPoint(x, y).find((element) => !element.closest('.pal'))?.closest(PRESSABLE) ?? null;
 // Would it, standing where it is with `share` of its drawing above the edge,
-// be over something to press?
-function crowded(penny, share) {
-  const box = penny.getBoundingClientRect();
-  const top = window.innerHeight - box.height * share;
+// be over something to press? (`span`: or standing anywhere from that left
+// edge to that right one, for a screen on which it steps about. `most`: how
+// much of a thing may be under it, as a share of that thing, before it counts;
+// by default any of it does.)
+function crowded(penny, share, span = null, most = 0) {
+  const at = penny.getBoundingClientRect();
+  const box = span ? { left: span[0], right: span[1], width: at.width, height: at.height } : at;
+  const lift = parseFloat(getComputedStyle(layer).scrollMarginBottom) || 0; // how far an iPhone's home bar lifts it (pal.css measures that)
+  const top = window.innerHeight - lift - box.height * share;
   const [left, right] = [box.left + box.width * 0.08 - 8, box.right - box.width * 0.08 + 8]; // its paper, and a little either side
   return [...document.querySelectorAll('#screens .screen:not(.leaving) :is(' + PRESSABLE + ')')].some((element) => {
     const it = element.getBoundingClientRect();
-    return it.width > 0 && it.bottom > top + 8 && it.top < window.innerHeight && it.right > left && it.left < right;
+    if (!(it.width > 0 && it.bottom > top + 8 && it.top < window.innerHeight && it.right > left && it.left < right)) return false;
+    const under = (Math.min(it.right, right) - Math.max(it.left, left)) * (Math.min(it.bottom, window.innerHeight) - Math.max(it.top, top));
+    return under > it.width * it.height * most;
   });
 }
 
@@ -296,6 +313,20 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
     settle(name = 'peek') {
       return handle.height(crowded(penny, SHOWING[name]) ? 'low' : name);
     },
+    // As far up as it can come, of the heights named (the highest first),
+    // with no more than half of anything there is to press under it: what
+    // it stands in front of can still be seen for what it is, and pressed
+    // (a tap on it goes through: build()). Under the edge altogether where
+    // even the last of them would hide something. For a screen whose page
+    // is scrolled under it (jam/jam.js). `between`: everywhere along the
+    // edge it stands on that screen, as [from, to] across the window;
+    // without it, where it is standing now.
+    clear(names, between = null) {
+      const half = penny.getBoundingClientRect().width / 2;
+      const middle = (x) => Math.max(half + 4, Math.min(window.innerWidth - half - 4, x * window.innerWidth)); // (as pal.css keeps it on the screen)
+      const span = between && [middle(between[0]) - half, middle(between[1]) + half];
+      return handle.height(names.find((name) => !crowded(penny, SHOWING[name], span, 0.5)) ?? 'gone');
+    },
     // Whether it is over something of the page's at the height it is at.
     get inTheWay() {
       return crowded(penny, SHOWING[root.dataset.height] ?? 0);
@@ -398,14 +429,11 @@ export function claim(life, { x = 0.7, height = 'peek', mood = 'calm', dot = fal
       return handle;
     },
     // What a tap on it, or on Dot, does while this screen has it.
-    // (It is never in the way of the page: a tap that lands on it where
-    // something of the page's can be pressed goes to that instead.)
+    // (Where something of the page's can be pressed under it, the tap never
+    // gets here: it goes to that instead. See build().)
     onTap(run, who = 'penny') {
       (who === 'dot' ? dotEl : penny).addEventListener('click', (event) => {
-        if (!mine()) return;
-        const under = beneath(event.clientX, event.clientY);
-        if (under) under.click();
-        else run(event);
+        if (mine()) run(event);
       }, { signal: ending.signal });
       return handle;
     },

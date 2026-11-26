@@ -29,14 +29,14 @@
 //   node tests/browser/mini.e2e.cjs --list     the test screens, as JSON, without a browser
 //
 // The same suite can be pointed at the other phones:
-//   PHONES=pro-app,pro-safari npm run e2e:mini      (all of them: PHONES=all)
+//   PHONES=pro-app,pro-safari npm run e2e:mini      (PHONES=all: the mini both ways, and the largest installed)
 // It needs Playwright with Chromium; where that is not installed it says so and
 // passes, unless REQUIRE_BROWSER is set (as it is where pull requests are
 // checked), when that is a failure. It serves the repository itself and talks
 // to no server.
 
 const assert = require('node:assert/strict');
-const { PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed } = require('./phone.cjs');
+const { PHONES, ENDS, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed } = require('./phone.cjs');
 
 const LISTING = process.argv.includes('--list');
 let chromium = null;
@@ -156,6 +156,40 @@ async function states() {
   assert.ok(stands(meters.underWay).stake > 1 && stands(meters.sunk).stake < 1 && stands(meters.reached).stake >= 20 && !stands(meters.underWay).significant, 'the meters are not where they should be');
   assert.ok(meters.carried.carried > 1 && meters.carried.trials.length === 3 && meters.carried.restarts.length === 1, 'the meter after starting over');
   assert.ok(meters.litCarried.carried < 20 && meters.litCarried.restarts[0].peak >= 20 && standing(meters.litCarried.trials, meters.litCarried.carried, meters.litCarried.restarts).significant, 'the meter lit after starting over below ×20');
+  // a microphone that hears a hum, and one that may not be used; and a sound recorded with the first
+  const { fakeMic } = require('./mic.cjs');
+  const [HUM, REFUSED] = [new Function(`(${fakeMic})('hum')`), new Function(`(${fakeMic})('refused')`)];
+  const drawer = async (page) => { await page.locator('#jam-mic').click(); await page.waitForSelector('dialog#jam-drawer[open]'); };
+  // (three sounds, the newest with the longest name there can be, which is then on the instrument's button)
+  const recorded = async (page) => {
+    await drawer(page);
+    for (let n = 1; n <= 3; n++) {
+      await page.locator('#jam-record').click();
+      await page.waitForSelector('#jam-record.hearing');
+      await sleep(600);
+      await page.locator('#jam-record').click();
+      await page.waitForSelector(`.jam-sounds li:nth-child(${n + 4})`); // (after the four instruments)
+    }
+    await page.locator('.jam-sounds input').first().fill('WWWWWWWWWWWW');
+    await page.locator('.jam-sounds input').first().press('Enter');
+  };
+  const eight = async (page) => {
+    for (let n = 5; n <= 8; n++) {
+      await page.locator('.layer.more').click();
+      await page.waitForSelector('dialog#jam-drawer[open]');
+      if (n === 5) {
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('#jam-record.hearing');
+        await sleep(600);
+        await page.locator('#jam-record').click();
+        await page.waitForSelector('.jam-sounds input');
+        await page.locator('.jam-sounds input').fill('WWWWWWWWWWWW');
+        await page.locator('.jam-sounds input').press('Enter');
+      } else await page.locator('.jam-sounds .tile').nth(n % 2 ? 5 : 2).click(); // (the same sound again; or one of the instruments, the keys)
+      await page.locator('#jam-drawer-close').click();
+      await page.locator('.jam-board .pad').nth(n).click(); // (a note for it, so its light is on the board)
+    }
+  };
   const PADS = ['^button\\.pad', 'eight tiles across a screen 375 wide, with the page\'s margins: 39 is the room there is', 38];
   const NIGHT = { 'tags:found:v1': ['night'] }; // somebody who has found the night
   // The night, once the way through to it is over: the only screen there is, with nothing left over it; and its picture drawn for the size it is shown at.
@@ -168,9 +202,28 @@ async function states() {
     });
     if (drawn.shown !== drawn.window || drawn.drawnFor !== drawn.shown) throw new Error(`the night is shown ${drawn.shown} in a window ${drawn.window}, and its picture is drawn for ${drawn.drawnFor}`);
   };
+  // The sleepy cone's stamp (styles.css): on the first screen, its words on it, and over none of the logo, the title, the face, or what is kept.
+  const coneClear = async (page) => {
+    const over = await page.evaluate(() => {
+      const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+      const cone = box('#building');
+      if (cone.top < 0 || cone.left < 0 || cone.right > window.innerWidth || cone.bottom > window.innerHeight) return ['the edge of the first screen'];
+      const words = box('.building-words');
+      if (words.left < cone.left || words.right > cone.right || words.top < cone.top || words.bottom > cone.bottom) return ['its own edge, with its words'];
+      return ['.screen-home .mark', '.screen-home h1', '#me-edit', '.tag-kept'].filter((selector) => {
+        if (!document.querySelector(selector)) return false;
+        const other = box(selector);
+        return cone.right > other.left && cone.left < other.right && cone.bottom > other.top && cone.top < other.bottom;
+      });
+    });
+    if (over.length) throw new Error(`the cone's stamp lies over ${over.join(', ')}`);
+  };
   return [
     { name: 'home, somebody new', screen: 'home', at: '/', ready: '#welcome-new' },
     { name: 'home, the lobby', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, ready: '#menu' },
+    // Still being built: a stamp in the top left corner with a sleepy cone on it, opposite the face, and clear of it and of the title.
+    { name: 'home, under construction, the cone in its corner, in the dark', screen: 'home', at: '/', storage: { ...ACCOUNT, 'correspondence:theme:v1': 'dark' }, ready: '#menu, .feed-item, #feed-empty',
+      then: coneClear },
     // (Play at the head of the page, the face in its corner, and the portal at its foot beside Penny: the lobby with a street of rooms is the longest the page gets)
     { name: 'home, the lobby, at its foot', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li', then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '#portal' },
     { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
@@ -204,6 +257,12 @@ async function states() {
     { name: 'a room, renaming it, the name cleared', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: GAMES }), ready: '#games li',
       then: async (page) => { await page.locator('#room-name button').click(); await page.locator('#room-name input').fill(''); }, settle: '#room-name input:placeholder-shown' },
     { name: 'a room, at its door, somebody with no name yet', screen: 'room', at: `/room/?id=${ROOM}`, server: room({ name: LONG_NAME, you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-name:placeholder-shown' },
+    // (five at the head of its table, the longest names among them, and all of the building on the screen at once)
+    { name: 'a room, at its door, a full table inside', screen: 'room', at: `/room/?id=${ROOM}`, server: room({ name: LONG_NAME, you: null, people: CROWD, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-faces .seat:nth-child(5)',
+      whole: ['#join .house', '#join-form'] },
+    // (somebody sent the link of a game: its board lies lit on the table, and theirs is a name already)
+    { name: 'a room, at its door, asked to a game', screen: 'room', at: `/room/?id=${ROOM}&game=33333333-3333-4333-8333-333333333333`, storage: { 'correspondence:name:v1': 'Kit' }, server: room({ you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-table.lit .mini',
+      whole: ['#join .house', '#join-form'] },
     // The room's two worlds (room/worlds.js): stepping through the portal in its top bar, and the room on the other side,
     // the drama, whole or split by a seam where the cartoon breaks back through (the first time 7 to 11 s after stepping in).
     { name: 'a room, stepping through the portal', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li',
@@ -321,7 +380,33 @@ async function states() {
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
     { name: 'the music maker, empty', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', small: [PADS] },
+    // (a beat that has just arrived by a link: it is on the board, the note under the board says so, and play is lit until it is played)
+    { name: 'the music maker, a shared beat just arrived', screen: 'jam', at: `/jam/?b=${beats[0].code}`, ready: '.jam-board .pad.on', settle: '#jam-play.lit', small: [PADS] },
+    // (playing: the first note has set the loop going, the hint above the board has gone, and Penny has come up to dance where there is room.
+    // No title is written over the board, since v1.1.82: its name is for screen readers.)
+    { name: 'the music maker, playing', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: (page) => page.locator('.jam-board .pad').nth(3).click(), settle: '#jam-play.playing', small: [PADS] },
     { name: 'the music maker, with beats saved', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li', small: [PADS] },
+    // (scrolled to its foot, where the last beat lies along the edge Penny stands on: each beat's own share button is
+    // the only one there is, and Penny goes under the edge for it: jam/jam.js)
+    { name: 'the music maker, at the foot of its saved beats', screen: 'jam', at: '/jam/', storage: { 'jam:saved:v1': beats }, ready: '.jam-saved li',
+      then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '.pal[data-height="gone"]', small: [PADS] },
+    // Sounds of your own (tests/browser/mic.cjs stands in for the microphone): the drawer with only the instrument in
+    // it; while it listens; with sounds recorded and named, one of them in the instrument's place; that instrument's
+    // button on the board, wearing the longest name there can be; a sound being deleted; and a microphone refused.
+    { name: 'the music maker, the drawer of sounds, empty', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: drawer, settle: 'dialog#jam-drawer[open]' },
+    { name: 'the music maker, the microphone listening', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('#jam-record').click(); }, settle: '#jam-record.hearing' },
+    { name: 'the music maker, the drawer with sounds recorded', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: recorded, settle: '.jam-sounds li:nth-child(7)' },
+    { name: 'the music maker, an instrument playing a recorded sound', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('#jam-drawer-close').click(); },
+      settle: '#jam-mic[aria-pressed="true"]', small: [PADS] },
+    { name: 'the music maker, a sound being deleted', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('.jam-sounds button.quiet').first().click(); }, settle: 'dialog.ask[open]' },
+    // (one of the four instruments in another's place: the bells' button wears the drums' mark and name, and the drawer's button is lit)
+    { name: 'the music maker, an instrument playing another instrument', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('.jam-sounds .tile').nth(3).click(); await page.locator('#jam-drawer-close').click(); },
+      settle: '.layer[data-wears="Drums"]', small: [PADS] },
+    // (the deck: a place being added to it, with nothing chosen yet; and all eight places taken, the last with the longest name)
+    { name: 'the music maker, a place being added to the deck', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: (page) => page.locator('.layer.more').click(), settle: 'dialog#jam-drawer[open]' },
+    { name: 'the music maker, a deck of eight', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: eight, settle: '.layer.more[hidden]', small: [PADS] },
+    { name: 'the music maker, the microphone refused', screen: 'jam', at: '/jam/', init: REFUSED, ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('#jam-record').click(); },
+      settle: '#jam-mic-error.oops:not(:empty)' },
     // Penny's Radio: a work in a gallery, played and read about. Its story is told once; these are its stills.
     // (told: nobody comes to show how, and nothing opens by itself.)
     { name: 'Penny’s Radio', screen: 'taste', at: '/jam/?taste', storage: told, ready: '.radio .dot', whole: SET },
@@ -375,6 +460,7 @@ async function states() {
     // ...what is kept of it on the home page once it has been found, across the map from the portal...
     { name: 'home, somebody new, with the night kept', screen: 'home', at: '/', storage: { ...NIGHT }, ready: '.tag-kept' },
     { name: 'home, the lobby, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', ...NIGHT }, ready: '.tag-kept' },
+    { name: 'home, the night kept at the foot beside the portal, the cone at the top', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, ready: '.tag-kept', then: coneClear },
     { name: 'home, the feed, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, server: rooms(GAMES), ready: '.tag-kept', settle: '.feed-item' },
     // ...the night as it is when it has been come to, by the tumble, from a page longer than the screen: the size of the screen, with
     // its picture drawn for that size (it was once drawn for the length of the page it was come to from, and squashed to fit)...
@@ -455,7 +541,7 @@ async function main() {
     console.log(JSON.stringify(names));
     return;
   }
-  const asked = process.env.PHONES === 'all' ? Object.keys(PHONES) : (process.env.PHONES ?? 'mini-safari,mini-app').split(',').map((name) => name.trim()).filter(Boolean);
+  const asked = process.env.PHONES === 'all' ? ENDS : (process.env.PHONES ?? 'mini-safari,mini-app').split(',').map((name) => name.trim()).filter(Boolean);
   for (const name of asked) assert.ok(PHONES[name], `No such phone: ${name}. There are: ${Object.keys(PHONES).join(', ')}`);
   const only = process.env.ONLY ? new RegExp(process.env.ONLY, 'i') : null; // ONLY=radio, to look at one screen
   const { origin, close } = await serve();

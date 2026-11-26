@@ -73,6 +73,21 @@
       </svg>
       <h1>correspondence<span>.lol</span></h1>
 
+      <!-- Still being built: a stamp in the top left corner, a sleepy cone on it, breathing, and the words. Nothing to press. -->
+      <p id="building" class="building">
+        <svg viewBox="22 12 76 96" aria-hidden="true">
+          <text class="z" x="72" y="34">z</text><text class="z two" x="72" y="34">z</text><text class="z three" x="72" y="34">z</text>
+          <g class="cone">
+            <path class="cone-body" d="M38 98 L54 30 Q60 21 66 30 L82 98 Z"/>
+            <path class="cone-stripes" d="M46.5 74 H73.5 M43 88 H77"/>
+            <path class="cone-eyes" d="M51 56 q3 2.8 6 0 M63 56 q3 2.8 6 0"/>
+            <path class="cone-cheeks" d="M50 63 h0.01 M70 63 h0.01"/>
+            <rect class="cone-foot" x="30" y="97" width="60" height="7" rx="3.5"/>
+          </g>
+        </svg>
+        <span class="building-words">under construction</span>
+      </p>
+
       <!-- Who this device is: a face in the top right corner, and nothing written beside it. -->
       <section id="me" class="me-corner" aria-label="Your account" hidden>
         <button type="button" id="me-edit" class="profile-button" aria-label="Edit your profile" title="Edit your profile"></button>
@@ -278,19 +293,31 @@
         <p id="loading" class="lede" role="status"><span class="sr-only">Opening room…</span></p>
         <p id="room-error" class="message bad" role="alert"></p>
 
-        <!-- Seen by somebody who is not in it: the roof is on, whoever is in shows at the skylight, and the mat at the door is where to ask. -->
+        <!-- Seen by somebody who is not in it: the same building, as it is inside, so that somebody sent a link knows the place when
+             they are in it. Its table, with whoever is in at the head of it, each with their name, and a board on it; and at the door the
+             mat, where whoever has come stands: the face they will go in with, their name to write beside it, and the way in. -->
         <div id="join" class="outside" hidden>
-          <div class="roof-big" aria-hidden="true"><span id="join-faces" class="skylight"></span></div>
-          <form id="join-form" class="card mat">
-            <p id="join-text" class="sr-only"></p>
-            <label class="field">
-              <span class="sr-only">Your name</span>
-              <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
-            </label>
-            <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
-            <p id="join-error" class="message bad" role="alert"></p>
-            <a id="join-sign-in" class="sync" href="/" aria-label="Already have an account on another device? Sync it"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 0 1 12.9-5.2L19.5 9M19.5 4.5V9H15M19.5 12a7.5 7.5 0 0 1-12.9 5.2L4.5 15M4.5 19.5V15H9"/></svg></a>
-          </form>
+          <div class="house peek">
+            <div class="house-floor" aria-hidden="true"></div>
+            <div class="house-walls" aria-hidden="true"></div>
+            <div class="inside">
+              <span id="join-faces" class="seats" aria-hidden="true"></span>
+              <span id="join-table" class="peek-table" aria-hidden="true"></span>
+              <form id="join-form" class="card mat">
+                <p id="join-text" class="sr-only"></p>
+                <div>
+                  <span id="join-you" class="avatar" aria-hidden="true"></span>
+                  <label class="field">
+                    <span class="sr-only">Your name</span>
+                    <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
+                  </label>
+                  <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
+                </div>
+                <p id="join-error" class="message bad" role="alert"></p>
+              </form>
+            </div>
+            <span class="yard" aria-hidden="true"><i></i><i></i></span>
+          </div>
         </div>
 
         <div id="house" class="house" hidden>
@@ -525,16 +552,16 @@
   <template id="screen-jam">
     <header class="topbar">
       <a href="/">← correspondence.lol</a>
-      <!-- Keeping a beat, and passing one on. -->
+      <!-- Keeping a beat. (Passing one on is done from the list of those kept, under the board: each has its own button.) -->
       <div class="top-actions">
         <button type="button" id="jam-lab" class="quiet round" aria-label="Penny’s Radio" title="Penny’s Radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></button>
         <button type="button" id="jam-save" class="quiet round" aria-label="Save this beat" title="Save this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5h11v15.5l-5.5-4-5.5 4z"/></svg></button>
-        <button type="button" id="jam-share" class="quiet round" aria-label="Share this beat" title="Share this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 7.5l4-4 4 4M5.5 12v7.5h13V12"/></svg></button>
       </div>
     </header>
 
     <main>
-      <h1>Loops</h1>
+      <!-- No title is written: the board says what this is. Its name is said to screen readers, and is the window's title. -->
+      <h1 class="sr-only">Loops</h1>
       <div class="jam">
         <p id="jam-hint" class="jam-hint">Tap the tiles, or drag across them. It plays round and round, through four chords.</p>
         <div id="jam-board" class="jam-board" role="group" aria-label="The loop: eight steps across, seven notes high"></div>
@@ -552,6 +579,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
           </button>
           <div class="side">
+            <!-- The drawer of sounds for the instrument that is chosen, drawn as a drawer: its own, the other instruments', and those recorded (jam/mic.js). -->
+            <button type="button" id="jam-mic" class="quiet" aria-label="Sounds" title="Sounds" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.4"/><path d="M4 12h16M10 8.6h4M10 15.6h4"/></svg>
+            </button>
             <button type="button" id="jam-clear" class="quiet" aria-label="Clear this instrument" title="Clear this instrument">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7M10.3 10.5v5M13.7 10.5v5"/></svg>
             </button>
@@ -562,6 +593,22 @@
           <h2>Your beats</h2>
           <ul></ul>
         </section>
+        <!-- The drawer: a button to record a new sound, and under it the instrument's own sound, the other three
+             instruments', and every one recorded, each to be pressed into the instrument's place; a recorded one can be named, or deleted. What went wrong with the
+             microphone is said under the button that was tried. -->
+        <dialog id="jam-drawer" class="jam-drawer" aria-labelledby="jam-drawer-title">
+          <header>
+            <h2 id="jam-drawer-title">Sounds</h2>
+            <button type="button" id="jam-drawer-close" class="quiet round" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+          </header>
+          <button type="button" id="jam-record" class="record">
+            <svg class="mic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/></svg>
+            <svg class="stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.4" fill="currentColor"/></svg>
+            <span>Record</span>
+          </button>
+          <p id="jam-mic-error" class="message bad" role="alert"></p>
+          <ul id="jam-sounds" class="jam-sounds"></ul>
+        </dialog>
       </div>
     </main>
   </template>
