@@ -199,6 +199,11 @@ async function states() {
     { name: 'a room, seen by somebody not in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, you: null, messages: null, games: null }), ready: '#join:not([hidden])' },
     { name: 'a room, renaming it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: GAMES }), ready: '#games li',
       then: (page) => page.locator('#room-name button').click(), settle: '#room-name input' },
+    // An empty name field says what it is for, in lower case and trailing off: the room's, emptied while renaming it, and
+    // the one at the door, for somebody this device has no name for yet.
+    { name: 'a room, renaming it, the name cleared', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: GAMES }), ready: '#games li',
+      then: async (page) => { await page.locator('#room-name button').click(); await page.locator('#room-name input').fill(''); }, settle: '#room-name input:placeholder-shown' },
+    { name: 'a room, at its door, somebody with no name yet', screen: 'room', at: `/room/?id=${ROOM}`, server: room({ name: LONG_NAME, you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-name:placeholder-shown' },
     // The room's two worlds (room/worlds.js): stepping through the portal in its top bar, and the room on the other side,
     // the drama, whole or split by a seam where the cartoon breaks back through (the first time 7 to 11 s after stepping in).
     { name: 'a room, stepping through the portal', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li',
