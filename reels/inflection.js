@@ -1,12 +1,14 @@
-// "The Inflection Point": a reel by marcy.pell, a paid partnership, and at its
-// end a sponsored clip for this app (the owner, 26 November 2026). A satire,
-// in the world of the app: a social post that is also an ad.
+// "The Inflection Point": a reel by marcus.pell, and at its end a sponsored
+// clip for this app (the owner, 26 November 2026). A satire, in the world of
+// the app: a social post that is also an ad. Nothing says it is a paid
+// partnership until the very end: that is the punchline, and it is not given
+// away early (no #ad, no label by his name).
 //
-// Marcy is sincere. She writes that the middle class must choose between
+// Marcus is sincere. He says that the middle class must choose between
 // outrunning the line of inequality and reaching back across it, and keeps
-// running without seeing it: her son's kindness is done again for the shot,
-// and the views are counted before Q1. Pressed, she answers well. The man she
-// made content of is the one who asks how she is. (The story doc: she is one
+// running without seeing it: his son's kindness is done again for the shot,
+// and the views are counted before Q1. Pressed, he answers well. The man he
+// made content of is the one who asks how he is. (The story doc: he is one
 // way the character who carries Goodhart's law could look outside the game.)
 //
 // The reel's people speak as Dot does: in a bubble, a few words at a time, a
@@ -21,42 +23,42 @@ export const AD_AT = 44; // where the sponsored clip begins
 
 // Who speaks, and how their bells sound. Notes are the five the app keeps to,
 // falling: a thing said comes down. `gap` is the time between one piece of a
-// line and the next. Marcy's are short and bright, and quick (hurry); R. A.'s
+// line and the next. Marcus's are short and bright, and quick (hurry); R. A.'s
 // are long and low, with an echo (it has come a long way and took its time).
 export const VOICES = {
-  marcy: { notes: [1046.5, 880, 783.99, 659.25], dur: 0.1, type: 'triangle', gain: 0.05, gap: 0.17 },
-  aside: { notes: [783.99, 659.25, 523.25], dur: 0.08, type: 'sine', gain: 0.025, gap: 0.22 }, // Marcy, under her breath
+  marcus: { notes: [1046.5, 880, 783.99, 659.25], dur: 0.1, type: 'triangle', gain: 0.05, gap: 0.17 },
+  aside: { notes: [783.99, 659.25, 523.25], dur: 0.08, type: 'sine', gain: 0.025, gap: 0.22 }, // Marcus, under his breath
   jordan: { notes: [587.33, 523.25, 440], dur: 0.14, type: 'sine', gain: 0.06, gap: 0.12 },
   priya: { notes: [880, 783.99, 659.25], dur: 0.1, type: 'sine', gain: 0.045, gap: 0.1 },
   ra: { notes: [261.63, 196, 130.81], dur: 0.9, type: 'sine', gain: 0.11, gap: 0.6, echo: true },
 };
 
-// What is said. `where` places the bubble: 'face' over Marcy's head in the
-// car, 'over' for her voice over a picture she is not in, 'aside' for what she
-// says off camera, under her breath.
+// What is said. `where` places the bubble: 'face' over Marcus's head in the
+// car, 'over' for his voice over a picture he is not in, 'aside' for what he
+// says off camera, under his breath.
 export const LINES = [
-  { at: 0.4, end: 2.6, who: 'marcy', where: 'face', said: ['I almost', 'didn’t', 'post this.'] },
-  { at: 2.8, end: 4.9, who: 'marcy', where: 'face', said: ['My son asked', 'why we have', 'two cars'] },
-  { at: 5.0, end: 7.0, who: 'marcy', where: 'face', said: ['and Mr. Alvarez', 'walks', 'in the rain.'] },
-  { at: 7.4, end: 9.6, who: 'marcy', where: 'over', said: ['So I made', 'a chart.'] },
-  { at: 10.6, end: 13.0, who: 'marcy', where: 'over', said: ['The line', 'keeps', 'climbing.'] },
-  { at: 13.4, end: 16.0, who: 'marcy', where: 'over', said: ['Faster', 'than us.'] },
-  { at: 16.3, end: 17.9, who: 'marcy', where: 'over', said: ['So the middle', 'gets a choice.'] },
-  { at: 20.6, end: 23.0, who: 'marcy', where: 'over', said: ['You can’t', 'do both.'] },
-  { at: 23.3, end: 25.1, who: 'marcy', where: 'face', said: ['Not choosing', 'is choosing', 'one.'] },
-  { at: 25.2, end: 27.0, who: 'marcy', where: 'face', said: ['This year', 'I’ll be', 'slower.'] },
-  { at: 28.0, end: 30.6, who: 'marcy', where: 'over', said: ['He’s seven.', 'He got there', 'before I did.'] },
+  { at: 0.4, end: 2.6, who: 'marcus', where: 'face', said: ['I almost', 'didn’t', 'post this.'] },
+  { at: 2.8, end: 4.9, who: 'marcus', where: 'face', said: ['My son asked', 'why we have', 'two cars'] },
+  { at: 5.0, end: 7.0, who: 'marcus', where: 'face', said: ['and Mr. Alvarez', 'walks', 'in the rain.'] },
+  { at: 7.4, end: 9.6, who: 'marcus', where: 'over', said: ['So I made', 'a chart.'] },
+  { at: 10.6, end: 13.0, who: 'marcus', where: 'over', said: ['The line', 'keeps', 'climbing.'] },
+  { at: 13.4, end: 16.0, who: 'marcus', where: 'over', said: ['Faster', 'than us.'] },
+  { at: 16.3, end: 17.9, who: 'marcus', where: 'over', said: ['So the middle', 'gets a choice.'] },
+  { at: 20.6, end: 23.0, who: 'marcus', where: 'over', said: ['You can’t', 'do both.'] },
+  { at: 23.3, end: 25.1, who: 'marcus', where: 'face', said: ['Not choosing', 'is choosing', 'one.'] },
+  { at: 25.2, end: 27.0, who: 'marcus', where: 'face', said: ['This year', 'I’ll be', 'slower.'] },
+  { at: 28.0, end: 30.6, who: 'marcus', where: 'over', said: ['He’s seven.', 'He got there', 'before I did.'] },
   { at: 30.9, end: 33.0, who: 'aside', where: 'aside', said: ['Okay buddy,', 'one more', 'time.'] },
-  { at: 33.2, end: 34.7, who: 'marcy', where: 'face', said: ['Repost', 'if this', 'moved you.'] },
+  { at: 33.2, end: 34.7, who: 'marcus', where: 'face', said: ['Repost', 'if this', 'moved you.'] },
   { at: 35.2, end: 37.9, who: 'aside', where: 'aside', said: ['Gotta keep', 'this going', 'till Q1.'] },
 ];
 
 // The comments, each come in with its writer's bells.
 export const COMMENTS = [
   { at: 38.2, who: 'jordan', name: 'jordan.t', face: 'JT', text: 'Easy to say with two cars.' },
-  { at: 39.4, who: 'marcy', name: 'marcy.pell', face: 'MP', text: 'If I stop running, who catches my kids?', reply: true, creator: true },
+  { at: 39.4, who: 'marcus', name: 'marcus.pell', face: 'MP', text: 'If I stop running, who catches my kids?', reply: true, creator: true },
   { at: 40.6, who: 'priya', name: 'priya.n', face: 'PN', text: 'Is the chart a course? 🙏' },
-  { at: 42.2, who: 'ra', name: 'r.a.', face: 'RA', text: 'Tell your boy thanks for the umbrella. You alright, Marcy?' },
+  { at: 42.2, who: 'ra', name: 'r.a.', face: 'RA', text: 'Tell your boy thanks for the umbrella. You alright, Marcus?' },
 ];
 
 // The sponsor's words, in the clip at the end: few, and slow.
@@ -68,7 +70,7 @@ export const CTA_AT = 53.4;
 export const DISCLOSE_AT = 54.6;
 
 // Sounds that are not anyone speaking. The beds (rain, and a clock that ticks
-// a little quicker as it goes) run under Marcy's part and stop at the cut.
+// a little quicker as it goes) run under Marcus's part and stop at the cut.
 export const CUES = [
   { at: 7.2, sound: 'rise' }, // the line on the chart, climbing
   { at: 18.0, sound: 'run' },
@@ -90,7 +92,7 @@ export const SHOTS = [
   { name: 'ad', ranges: [[44, 58]] },
 ];
 
-// The views on Marcy's insights card, while it is up.
+// The views on Marcus's insights card, while it is up.
 export const COUNT = { from: 34.6, to: 37.8, start: 12408, end: 1204331, shown: [34.6, 38] };
 
 const RAIN = (rows) => rows.map(([x, y]) => `<line x1="${x}" y1="${y}" x2="${x - 3}" y2="${y + 14}"/>`).join('');
@@ -101,18 +103,21 @@ export const DRAWINGS = {
       <defs>
         <linearGradient id="reel-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b9aa8"/><stop offset="1" stop-color="#5d6c79"/></linearGradient>
         <clipPath id="reel-window"><rect x="30" y="40" width="300" height="250" rx="34"/></clipPath>
+        <clipPath id="reel-face"><ellipse cx="180" cy="330" rx="64" ry="78"/></clipPath>
       </defs>
       <g class="sway">
         <rect x="-20" y="-20" width="400" height="680" fill="#353f4a"/>
         <rect x="30" y="40" width="300" height="250" rx="34" fill="url(#reel-glass)"/>
         <g clip-path="url(#reel-window)"><g class="rain" stroke="#dde6ee" stroke-opacity=".5" stroke-width="1.4" stroke-linecap="round">${RAIN([[50, 0], [90, 40], [130, 10], [170, 70], [210, 20], [250, 60], [290, 5], [320, 50], [60, 110], [110, 150], [150, 120], [200, 170], [240, 130], [280, 180], [70, 220], [130, 250], [190, 230], [260, 240], [310, 220], [40, 290], [160, 300], [300, 300]])}</g></g>
         <rect x="118" y="236" width="124" height="96" rx="42" fill="#232b33"/>
-        <path d="M30 660 Q50 452 180 440 Q310 452 330 660Z" fill="#8a7396"/>
-        <rect x="160" y="386" width="40" height="64" fill="#d6a385"/>
-        <path d="M104 336 Q98 440 126 470 L146 380Z" fill="#5a3b2a"/><path d="M256 336 Q262 440 234 470 L214 380Z" fill="#5a3b2a"/>
-        <ellipse cx="180" cy="330" rx="62" ry="76" fill="#e0b294"/>
-        <path d="M112 336 Q106 232 180 226 Q254 232 248 336 Q244 292 222 270 Q186 290 146 274 Q120 292 112 336Z" fill="#5a3b2a"/>
-        <path d="M146 312 q12 -6 24 0 M190 312 q12 -6 24 0" stroke="#5a3b2a" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <path d="M10 660 Q30 446 180 432 Q330 446 350 660Z" fill="#4f6078"/>
+        <path d="M150 436 L180 470 L210 436" fill="none" stroke="#3d4b5f" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="154" y="384" width="52" height="60" fill="#d6a385"/>
+        <ellipse cx="114" cy="334" rx="8" ry="14" fill="#d6a385"/><ellipse cx="246" cy="334" rx="8" ry="14" fill="#d6a385"/>
+        <ellipse cx="180" cy="330" rx="64" ry="78" fill="#e0b294"/>
+        <path clip-path="url(#reel-face)" d="M110 360 Q180 420 250 360 L250 420 L110 420Z" fill="#a87a5e" opacity=".3"/>
+        <path d="M116 318 Q110 240 180 236 Q252 240 244 318 Q240 284 218 272 Q182 284 148 270 Q124 282 116 318Z" fill="#4a3324"/>
+        <path d="M144 312 q13 -4 26 0 M190 312 q13 -4 26 0" stroke="#4a3324" stroke-width="4.6" fill="none" stroke-linecap="round"/>
         <g class="eyes" fill="#2a2320"><ellipse cx="158" cy="330" rx="5" ry="6"/><ellipse cx="202" cy="330" rx="5" ry="6"/></g>
         <path d="M178 340 q-5 16 2 20" stroke="#c48f72" stroke-width="2.4" fill="none" stroke-linecap="round"/>
         <ellipse class="mouth" cx="180" cy="372" rx="14" ry="4" fill="#8c4a46"/>
@@ -206,4 +211,4 @@ export const DRAWINGS = {
 };
 
 // The reel's own page, for those who cannot see it: what happens, in order.
-export const TOLD = 'A reel by marcy.pell, a paid partnership. In her car, in the rain, she talks to the camera. A chart of a line climbing faster than her. Run, or turn around. Phone footage of her son holding an umbrella over Mr. Alvarez at a bus stop. Her views climbing. Then the comments. Then a sponsored clip: Penny, a plain letter, left on a road as fast red mail streaks away, until the light warms and a far window is lit.';
+export const TOLD = 'A reel by marcus.pell. In his car, in the rain, he talks to the camera. A chart of a line climbing faster than him. Run, or turn around. Phone footage of his son holding an umbrella over Mr. Alvarez at a bus stop. His views climbing. Then the comments. Then a sponsored clip: Penny, a plain letter, left on a road as fast red mail streaks away, until the light warms and a far window is lit. It was a paid partnership.';

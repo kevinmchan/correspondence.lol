@@ -670,7 +670,11 @@ Without an account there are no tabs, only the two ways to get one.
 ## Reels
 
 **Reels are in the feed** (the owner, 26 November 2026), under what is
-waiting on you and never counted with it: a reel is not yours to do. Each is a
+waiting on you and never counted with it: a reel is not yours to do. A reel is
+met in one of two ways: it is shared with you (its link, opened, and it stays
+in your feed from then on), or your energy reaches the middle of a bar. The
+first is at the middle of the first bar, the next at the middle of the second
+(`shared/reels.js`); until then it is not there at all. Each is a
 tall tile that opens it at `/?reel=<name>` (`reels/reel.js`), a screen of its
 own, on a network of the app's world called Ladder. It plays by itself, with
 sound; a touch on the picture pauses it, and so does the button in the
@@ -680,21 +684,23 @@ and `&hold` starts it paused. It waits for the splash.
 **Its people speak as Dot does** (the owner, 26 November 2026): a bubble,
 filled a few words at a time, a bell for each, falling. The whole line goes
 to screen readers at once. Each speaker has bells of their own, from the five
-notes the app keeps to: Marcy's are short, bright and quick; R. A.'s are long
+notes the app keeps to: Marcus's are short, bright and quick; R. A.'s are long
 and low, with an echo. Penny cannot speak, and in a reel only hums.
 
 **The first is "The Inflection Point"** (`reels/inflection.js`; the owner, 26
-November 2026), a satire: a social post that is also an ad. marcy.pell, in a
-paid partnership, says sincerely that the middle must choose between
-outrunning the line of inequality and reaching back across it, and keeps
-running without seeing it: her son's kindness done again for the shot, her
-views counted before Q1. Pressed in the comments, she answers well; the man
-she made content of is the one who asks how she is. Then a sponsored clip for
+November 2026), a satire: a social post that is also an ad. marcus.pell says
+sincerely that the middle must choose between outrunning the line of
+inequality and reaching back across it, and keeps running without seeing it:
+his son's kindness done again for the shot, his views counted before Q1.
+Pressed in the comments, he answers well; the man he made content of is the
+one who asks how he is. That it is a paid partnership is the punchline, and is
+not given away early: no #ad, no label by his name, only the line at the very
+end ("Mr. Alvarez is not."). Then a sponsored clip for
 this app, in its own pace: the cuts stop, the express mail streaks off, the
 light warms, a window is lit, and Penny hums. Its words are few and slow, and
 the way to play (`playAt()`) is offered last. It is cold and quick until the
 cut, as "How a place says it" has hurry, and slow and warm after it. The
-story doc has Marcy as one way the character who carries Goodhart's law could
+story doc has Marcus as one way the character who carries Goodhart's law could
 look outside the game. A drawing is 360 by 640 and covers the screen, cut at
 its edges on a phone of another shape; what is said is kept inside what is
 seen (`--edge` in `reels/reel.css`).

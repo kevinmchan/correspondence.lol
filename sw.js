@@ -43,6 +43,7 @@ const PRECACHE = [
   '/shared/energy.js',
   '/shared/api.js',
   '/shared/feed.js',
+  '/shared/reels.js',
   '/shared/chat.js',
   '/shared/config.js',
   '/splash.js',

@@ -13,6 +13,7 @@
 import { audio, holdMusic, isMuted, noise, tone } from '/postmarks/sound.js';
 import { HELLO, createVoice, playAt } from '/penny/penny.js';
 import * as INFLECTION from './inflection.js';
+import { meet } from '/shared/reels.js';
 
 const REELS = { inflection: INFLECTION };
 const still = matchMedia('(prefers-reduced-motion: reduce)');
@@ -22,6 +23,7 @@ const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l1
 export function mount(root, life) {
   const url = new URL(location.href);
   const reel = REELS[url.searchParams.get('reel')] ?? INFLECTION;
+  meet(REELS[url.searchParams.get('reel')] ? url.searchParams.get('reel') : 'inflection'); // (shared with you, or come to from the feed: it is in your feed from now on)
   const main = root.querySelector('main.reel');
   const $ = (selector) => main.querySelector(selector);
   const [frame, stage, bar, bubble, said, pause, again, cta, adWords, comments] =
@@ -62,7 +64,7 @@ export function mount(root, life) {
 
   // --- Sound -----------------------------------------------------------------------------
   // One bus for the reel, so that a pause hushes it; an echo beside it; and
-  // two beds under Marcy's part: rain, and a clock.
+  // two beds under Marcus's part: rain, and a clock.
   holdMusic(true);
   let bus = null;
   let echo = null;
@@ -196,7 +198,7 @@ export function mount(root, life) {
       bubble.className = `reel-bubble${line ? ` on at-${line.where} in-${over?.name} by-${line.who}` : ''}`;
       bubble.replaceChildren(...(line ? line.said.flatMap((part, i) => { const span = document.createElement('span'); span.textContent = part; return i ? [' ', span] : [span]; }) : []));
       // (the whole line is said to screen readers once, as it comes)
-      if (line) said.textContent = `${line.who === 'aside' ? 'Marcy, under her breath' : 'Marcy'}: ${line.said.join(' ')}`;
+      if (line) said.textContent = `${line.who === 'aside' ? 'Marcus, under his breath' : 'Marcus'}: ${line.said.join(' ')}`;
     }
     if (line) {
       const gap = reel.VOICES[line.who].gap;

@@ -128,10 +128,11 @@
             <strong>All clear</strong>
             <span id="feed-empty-note">Nothing is waiting on you.</span>
           </div>
-          <!-- Reels: somebody else's feed, under what is waiting on you, and never counted with it (reels/reel.js). -->
-          <section class="reels" aria-labelledby="reels-title">
+          <!-- Reels: somebody else's feed, under what is waiting on you, and never counted with it (reels/reel.js). One comes in the
+               middle of each energy bar, or by being shared (shared/reels.js); until then, it is not here. -->
+          <section id="reels" class="reels" aria-labelledby="reels-title" hidden>
             <h2 id="reels-title" class="reels-title">Reels</h2>
-            <a class="reel-tile" href="/?reel=inflection" aria-label="A reel by marcy.pell">
+            <div class="reel-tiles"><div hidden><a class="reel-tile" data-reel="inflection" href="/?reel=inflection" aria-label="A reel by marcus.pell">
               <svg viewBox="0 0 90 160" aria-hidden="true">
                 <rect width="90" height="160" fill="#5f6e7a"/>
                 <rect y="118" width="90" height="42" fill="#4a5661"/>
@@ -141,8 +142,8 @@
                 <path d="M24 65 Q44 38 66 64 Q58 60 50 64 Q42 60 34 64 Q28 61 24 65Z" fill="#c8442e"/>
               </svg>
               <span class="reel-tile-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg></span>
-              <span class="reel-tile-who" aria-hidden="true">marcy.pell</span>
-            </a>
+              <span class="reel-tile-who" aria-hidden="true">marcus.pell</span>
+            </a></div></div>
           </section>
         </section>
 
@@ -971,8 +972,8 @@
           <span><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-6z"/></svg>12K</span>
         </div>
         <div class="reel-who">
-          <span class="reel-id"><span class="face">MP</span><b>marcy.pell</b><small>Paid partnership</small></span>
-          <span class="reel-caption">I almost didn’t post this. #ad</span>
+          <span class="reel-id"><span class="face">MP</span><b>marcus.pell</b></span>
+          <span class="reel-caption">I almost didn’t post this.</span>
         </div>
         <div class="reel-sponsor"><svg viewBox="0 0 24 24"><use href="#mini-envelope"/></svg><span><b>correspondence.lol</b><small>Sponsored</small></span></div>
         <p class="reel-disclose">Paid partnership with correspondence.lol. Mr. Alvarez is not.</p>

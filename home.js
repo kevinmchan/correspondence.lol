@@ -8,6 +8,7 @@ import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
+import { met as reelsMet, reelsFor } from '/shared/reels.js';
 import { BAR, ENERGY_KEY, held, read as readEnergy } from '/shared/energy.js';
 import { earned as meadowOwned, wear, wearing } from '/shared/meadow.js';
 import { ASK, BEGINNING, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached, playAt } from '/penny/penny.js';
@@ -76,6 +77,10 @@ export function mount(root, life) {
     meadowMark.disabled = !mine;
     meadowMark.setAttribute('aria-pressed', String(mine && wearing()));
     meadowMark.setAttribute('aria-label', mine ? 'The meadow, in rooms' : 'The meadow, when the bar is full');
+    // Reels come in the middle of the bars, or by being shared (shared/reels.js); they are in the feed, under what is waiting.
+    const reels = reelsFor(state.earned, reelsMet());
+    for (const tile of root.querySelectorAll('.reel-tile')) tile.parentElement.hidden = !reels.includes(tile.dataset.reel);
+    $('reels').hidden = reels.length === 0;
   }
   meadowMark.addEventListener('click', () => {
     if (meadowMark.disabled) return;
