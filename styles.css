@@ -725,6 +725,8 @@ body {
   .screen.opening main > *:nth-child(3) { animation-delay: 80ms; }
   .screen.opening main > *:nth-child(n + 4) { animation-delay: 120ms; }
   .screen.opening main > .version, .screen.opening main > .map-far { animation: none; }
+  /* (once it has arrived the home page keeps no transform, which would put all of it under the map's squares: the shops of the street are drawn over them, room/room.css) */
+  .screen-home.opening main > .stack { animation-fill-mode: backwards; }
 }
 /* (There is no "to": each thing rises to whatever it is by its own rules. With one, everything
    that arrived this way was left fully opaque and unmoved for good, whatever its own rules said:

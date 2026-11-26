@@ -168,7 +168,7 @@ export function mount(root, life) {
     form.className = 'rename';
     const input = document.createElement('input');
     input.type = 'text';
-    input.maxLength = 40;
+    input.maxLength = 24;
     input.required = true;
     input.autocomplete = 'off';
     input.enterKeyHint = 'done';

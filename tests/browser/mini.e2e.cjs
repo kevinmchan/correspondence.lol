@@ -58,7 +58,7 @@ const GAMES = [listed({ last_player: 1, found: 2, hearts: 2 }), listed({ mode: '
 const rooms = (games) => (name, args) => (name === 'room_get' ? roomSays(args.p_room, args.p_room === ROOM ? 'Book club' : 'Family', args.p_room === ROOM ? games : []) : undefined);
 // One room, as the server says it is, with whatever is different about it this time.
 const room = (over = {}) => (name, args) => (name === 'room_get' ? { ...roomSays(args.p_room, 'Book club', []), ...over } : undefined);
-const LONG_NAME = 'The Thursday Evening Correspondence Club'; // forty letters, which is as long as a room's name gets
+const LONG_NAME = 'The Thursday Evening Correspondence Club'; // forty letters, which is as long as a room's name can be on the server (a new one is 24 at most)
 // A game of every kind, in every state a room's table shows one in (gameStatus() in room/room.js).
 const TABLE = [
   ...GAMES,
@@ -189,6 +189,8 @@ async function states() {
     { name: 'opening a room', screen: 'open', at: '/?open', storage: ACCOUNT, ready: '#create-room' },
     { name: 'joining a room', screen: 'join', at: '/?join', storage: ACCOUNT, ready: '#join-room' },
     { name: 'home, the lobby, a street of rooms', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li' },
+    // (each room is a little shop, its name on the board over its window, two lines at most; in the dark, an evening street)
+    { name: 'home, the lobby, a street of rooms in the dark', screen: 'home', at: '/', storage: { ...STREET, 'correspondence:theme:v1': 'dark' }, ready: '#rooms .street li' },
     { name: 'a room, with games in it', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li' },
     { name: 'a room, empty', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room(), ready: '#no-games:not([hidden])' },
     { name: 'a room, a full table, a long name and a crowd', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: TABLE, people: CROWD }), ready: '#games li' },
@@ -297,7 +299,7 @@ async function states() {
     // A board played together: the first time, what is particular to playing together, in place of how to play; and its
     // energy, a shorter bar beside the words of the turn.
     { name: 'the game, energy, the meadow still to come', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 7, seed: 12, players: ['You'] }), 2), ...ENERGY(90) }, ready: '#energy:not([hidden]):not(.meadow)', whole: ['#board', '#tools', '#energy'] },
-    { name: 'the game, the second bar filled, the thanks', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 5, seed: 11, players: ['You'] }), 4), 'correspondence:energy:v1': { earned: 475, spent: 0, boards: [{ b: '5:11', p: 4, w: false }] } }, ready: '#energy:not([hidden])',
+    { name: 'the game, the second bar filled, the thanks', screen: 'game', at: '/postmarks/', storage: { ...played, 'postmarks:solo:v1': opened(newGame({ size: 5, seed: 11, players: ['You'] }), 4), 'correspondence:energy:v1': { earned: 275, spent: 0, boards: [{ b: '5:11', p: 4, w: false }] } }, ready: '#energy:not([hidden])',
       then: async (page) => { const game = await page.evaluate(() => JSON.parse(localStorage.getItem('postmarks:solo:v1'))); await page.locator(`#board .cell[data-cell="${4 * game.size + game.solution[4]}"]`).dblclick(); }, settle: 'dialog.thanks[open]', wait: 15000 },
     { name: 'the game, together, what is particular to it', screen: 'game', at: `/postmarks/?game=${TOGETHER_ID}`, storage: ACCOUNT, server: together, ready: 'dialog.together[open]' },
     { name: 'the game, together, energy beside the turn', screen: 'game', at: `/postmarks/?game=${TOGETHER_ID}`, storage: { ...ACCOUNT, 'postmarks:howto:v1': TOGETHER_ID }, server: together, ready: '#energy:not([hidden])' },

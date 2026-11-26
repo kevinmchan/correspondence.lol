@@ -16,7 +16,7 @@
 //     time passing, not from coming back.
 //   - The bar is everything earned, not one game (the owner, 25 November
 //     2026: "a global stat, not something that lasts for one game"): about
-//     twenty games fill it. The first time it is full, the meadow is yours: a
+//     ten games fill it. The first time it is full, the meadow is yours: a
 //     room can wear it (shared/meadow.js). What later fills are for is not
 //     decided; the bar begins again from what was left over.
 // And one of its own: a board earns once. The same board played again (it can
@@ -36,10 +36,10 @@ export const POST = 1; // each post found
 export const finish = (size) => (sized(size) ? size * POST : 0); // a board finished: its posts' worth again
 export const most = (size) => (sized(size) ? size * POST + finish(size) : 0); // all a board can earn
 
-// One bar: about twenty games. Boards are drawn at sizes 5 to 9, so a game
+// One bar: about ten games (the owner, 25 November 2026; twenty at first). Boards are drawn at sizes 5 to 9, so a game
 // finished earns 14 on average and one lost about half its posts; most are
-// finished. Twenty games of that are about 240.
-export const BAR = 240;
+// finished. Ten games of that are about 140.
+export const BAR = 140;
 // How full the bar is (0 up to, not reaching, 1), and how many times it has
 // been filled. Earned, not held: spending later takes nothing off it.
 export const bar = (state) => ({ fill: (state.earned % BAR) / BAR, fills: Math.floor(state.earned / BAR) });
