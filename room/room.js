@@ -7,10 +7,10 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { copyable } from '/shared/handoff.js';
-import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
+import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, save, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
 import { boardPreview, door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
-import { modeCards } from '/postmarks/howto.js';
+import { HOWTO_KEY, modeCards } from '/postmarks/howto.js';
 import { twoWorlds } from '/room/worlds.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
@@ -659,6 +659,7 @@ export function mount(root, life) {
         p_regions: puzzle.regions, p_solution: puzzle.solution, p_phrase: mode === 'phrase' ? phrase : null,
       });
       watcher?.poke();
+      if (mode === 'coop') save(HOWTO_KEY, game.id); // (its cards were the desk's first step: the game does not show them again)
       go(gameUrl('postmarks', game.id));
     } catch (error) {
       oops(composing ? el.phraseError : el.gameError, error.message, { shake: composing ? el.phraseForm : el.modes });
