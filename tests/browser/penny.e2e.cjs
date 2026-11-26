@@ -664,9 +664,39 @@ async function main() {
       await page.waitForURL(/\?office/);
     }),
 
+    check('the introduction: Penny walks, it does not slide or swell: it comes nearer a step at a time, still between steps, and nearer is always bigger and lower together, on the street', {}, async (page) => {
+      await page.goto(`${origin}/?hello`);
+      await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('comes out'), null, { timeout: 30000 });
+      // where it stands, as the page draws it, sampled through the first stretches up the street (asked of the page: not timed from here)
+      const seen = await page.evaluate(() => new Promise((done) => {
+        const out = [];
+        const started = performance.now();
+        const take = () => {
+          const at = document.querySelector('.h-penny').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/).slice(1).map(Number);
+          out.push(at);
+          if (performance.now() - started < 6000) requestAnimationFrame(take); else done(out);
+        };
+        requestAnimationFrame(take);
+      }));
+      const [, , first] = seen[0];
+      const [, , lastS] = seen.at(-1);
+      assert.ok(lastS > first * 1.3, `it came no nearer: from ${first} to ${lastS}`);
+      // on the street: its feet are where its size says (the horizon at 168, its eyes 18 of its units above its feet)
+      for (const [, y, scale] of seen) assert.ok(Math.abs(y - (168 + 18 * scale)) < 0.05, `off the street: at ${y} for a size of ${scale}`);
+      // still between steps: runs of frames where it does not move at all, and more than one of them
+      let stills = 0;
+      let run = 0;
+      for (let i = 1; i < seen.length; i++) {
+        const same = seen[i][0] === seen[i - 1][0] && seen[i][2] === seen[i - 1][2];
+        run = same ? run + 1 : 0;
+        if (run === 3) stills += 1;
+      }
+      assert.ok(stills >= 3, `it slid: only ${stills} moments of standing still in six seconds of coming nearer`);
+    }),
+
     check('the introduction, the other ways up the street, with less motion asked for: each gets to the glass and through the portal', { reducedMotion: 'reduce' }, async (page) => {
-      for (const gait of ['zigzag', 'edges', 'tiptoe']) {
-        await page.goto(`${origin}/?hello&gait=${gait}`);
+      for (const [gait, walk] of [['zigzag', ''], ['edges', '&walk=rock'], ['tiptoe', '&walk=hop']]) {
+        await page.goto(`${origin}/?hello&gait=${gait}${walk}`);
         await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('jumps in'), null, { timeout: 20000 });
         assert.equal(await page.locator('.hello').getAttribute('data-gait'), gait);
         assert.equal(await page.locator('#hello-portal').isDisabled(), false);

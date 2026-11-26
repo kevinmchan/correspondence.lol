@@ -43,6 +43,20 @@ edge, in at the other, then up from underneath, eyes first). On the way up a
 touch sends Penny back a step, twice at most; at the glass a touch is welcome.
 A beat can be gone to directly (`&at=glass`, `&at=portal`).
 
+**How Penny moves** (the owner, 26 November 2026: not floating, dragged or
+zoomed). Penny never slides and never simply grows: it moves by its own
+effort, a step at a time, and stands still between steps. How it moves is how
+it feels. Shy, it rocks on its corners: over onto one bottom corner, the other
+swung round, its feet tucked away, like a card edging along. Braver, it steps
+from foot to foot, its body swaying over the foot it stands on. Excited or
+startled, it hops: a crouch, a spring and a landing. Its paper bends and its
+corners curl as it goes, which is most of what it says: top corners folded
+forward when it is shy, flared when it is startled, lifted a little when it is
+glad; a corner lifts as it leaves the ground. The camera is at the height of
+Penny's eyes, so its eyes are always on the horizon: nearer is bigger and
+lower together, and only ever by walking. Each way of moving can be tried for
+the whole scene from the address (`&walk=feet`, `&walk=rock`, `&walk=hop`).
+
 The app is meant to become a film that is played. Its first scene, the Dead
 Letter Office (`/?office`, `penny/office.js`), is still being worked out, so
 nobody is taken there who has not asked: the app opens on the home page. The
