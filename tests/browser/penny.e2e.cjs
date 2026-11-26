@@ -214,7 +214,7 @@ async function main() {
     return { pal, feeling, board, centre, tap, twice, open, idle, until, says, portalOpen, through, stored, watch, seen, words, reading };
   };
 
-  // The question Penny's Radio asks, and what its reading is held to (README, "The question Penny's Radio asks"): it is
+  // The question Penny's Radio asks, and what its reading is held to (the doc "Penny's story", "The question Penny's Radio asks"): it is
   // met before the numbers and how it works; nothing right after it reads as a reply to it (a yes, a no, a "not yet", a
   // "significant"); and nothing after it answers it.
   const QUESTION = 'Is a radio that learns one person’s taste a defence of that taste, or one more step in the averaging?';

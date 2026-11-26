@@ -6,7 +6,7 @@
 // and asks for nothing else, so it can be rendered without a page or a
 // speaker and looked at. Every `when` is a time on that engine's own clock.
 //
-// The sounds are the two columns of "How a place says it" (README):
+// The sounds are the two columns of "How a place says it" (the doc "Penny's story"):
 //
 //   A dot is short and bright: a tap on glass, an octave up, and over.
 //   A star is long, and has come a long way. It is struck, and rings, and

@@ -24,8 +24,8 @@ are made.
   warm in the dark theme; generous space; soft shapes; slow, eased motion or
   none. Nothing is urgent unless it is truly yours to do, and even that is said
   gently. Soothing must not cost clarity: a person still sees what needs them.
-  The story may turn from soothing to wrestling with the dark (README,
-  "Penny"); that is the writing's choice, made on purpose in a scene, never a
+  The story may turn from soothing to wrestling with the dark (the doc
+  "Penny's story", linked from the README); that is the writing's choice, made on purpose in a scene, never a
   screen that happens to be harsh.
 - Few words. Words are allowed on a screen (the owner's choice, 26 November
   2026, in place of the rule against them), and kept to the fewest: a short

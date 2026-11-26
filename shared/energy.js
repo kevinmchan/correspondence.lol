@@ -1,5 +1,5 @@
 // Energy: what playing earns. The first of the campaign's two currencies
-// (README, "The adventure"): the one that is always accumulating, earned by
+// (README, "Energy and the meadow"): the one that is always accumulating, earned by
 // solving and spent, later, at places in the world. Nothing spends it yet.
 // This file is its rules and nothing else: no page, no storage, no clock.
 //
