@@ -277,19 +277,31 @@
         <p id="loading" class="lede" role="status"><span class="sr-only">Opening room…</span></p>
         <p id="room-error" class="message bad" role="alert"></p>
 
-        <!-- Seen by somebody who is not in it: the roof is on, whoever is in shows at the skylight, and the mat at the door is where to ask. -->
+        <!-- Seen by somebody who is not in it: the same building, as it is inside, so that somebody sent a link knows the place when
+             they are in it. Its table, with whoever is in at the head of it, each with their name, and a board on it; and at the door the
+             mat, where whoever has come stands: the face they will go in with, their name to write beside it, and the way in. -->
         <div id="join" class="outside" hidden>
-          <div class="roof-big" aria-hidden="true"><span id="join-faces" class="skylight"></span></div>
-          <form id="join-form" class="card mat">
-            <p id="join-text" class="sr-only"></p>
-            <label class="field">
-              <span class="sr-only">Your name</span>
-              <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
-            </label>
-            <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
-            <p id="join-error" class="message bad" role="alert"></p>
-            <a id="join-sign-in" class="sync" href="/" aria-label="Already have an account on another device? Sync it"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 0 1 12.9-5.2L19.5 9M19.5 4.5V9H15M19.5 12a7.5 7.5 0 0 1-12.9 5.2L4.5 15M4.5 19.5V15H9"/></svg></a>
-          </form>
+          <div class="house peek">
+            <div class="house-floor" aria-hidden="true"></div>
+            <div class="house-walls" aria-hidden="true"></div>
+            <div class="inside">
+              <span id="join-faces" class="seats" aria-hidden="true"></span>
+              <span id="join-table" class="peek-table" aria-hidden="true"></span>
+              <form id="join-form" class="card mat">
+                <p id="join-text" class="sr-only"></p>
+                <div>
+                  <span id="join-you" class="avatar" aria-hidden="true"></span>
+                  <label class="field">
+                    <span class="sr-only">Your name</span>
+                    <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
+                  </label>
+                  <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
+                </div>
+                <p id="join-error" class="message bad" role="alert"></p>
+              </form>
+            </div>
+            <span class="yard" aria-hidden="true"><i></i><i></i></span>
+          </div>
         </div>
 
         <div id="house" class="house" hidden>
