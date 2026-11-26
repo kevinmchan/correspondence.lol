@@ -311,9 +311,11 @@ async function states() {
     { name: 'the game, how to play', screen: 'game', at: '/postmarks/', ready: 'dialog.howto[open]' },
     { name: 'the walk, the first place', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 0 }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back'] },
     { name: 'the walk, the last place, with Dot', screen: 'walk', at: '/?walk', storage: { 'penny:place:v1': 4, 'penny:dot:v1': true, 'penny:walked:v1': true }, ready: '#walk-board .cell', whole: ['#walk-board', '.penny-back', '#walk-down'] },
-    // The introduction (penny/hello.js): Penny behind the mailbox; up against the glass, bigger than the screen; and the
+    // The introduction (penny/hello.js): Penny alone at first, going through what it feels, and with one feeling held; behind the mailbox; up against the glass, bigger than the screen; and the
     // portal, once Penny has gone through it, which is then the one thing there is to press.
-    { name: 'the introduction, behind the mailbox', screen: 'hello', at: '/?hello', ready: '.hello-far .h-penny', whole: ['.office-door'] },
+    { name: 'the introduction, at first: Penny alone, going through what it feels', screen: 'hello', at: '/?hello', ready: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
+    { name: 'the introduction, at first, one feeling held: excited', screen: 'hello', at: '/?hello&emote=excited', ready: '#hello-penny:not([hidden])', wait: 4000, whole: ['.office-door', '#hello-penny'] },
+    { name: 'the introduction, behind the mailbox', screen: 'hello', at: '/?hello&at=street', ready: '.hello-far .h-penny', whole: ['.office-door'] },
     { name: 'the introduction, up against the glass', screen: 'hello', at: '/?hello&at=glass', ready: '.h-penny.pressed', whole: ['.office-door'] },
     { name: 'the introduction, the portal left open', screen: 'hello', at: '/?hello&at=portal', ready: '#hello-portal:not([hidden]):not(:disabled)', wait: 15000, settle: '.h-penny.gone', whole: ['.office-door', '#hello-portal'] },
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },

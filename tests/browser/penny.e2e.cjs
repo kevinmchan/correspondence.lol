@@ -611,10 +611,18 @@ async function main() {
       });
       const said = (text, timeout = 30000) => page.waitForFunction((want) => document.querySelector('#hello-said')?.textContent.includes(want), text, { timeout });
       await page.goto(`${origin}/?hello`);
-      await page.waitForSelector('.hello-far .h-penny');
+      // first, alone and large in the middle of the screen, until it is touched
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      await sleep(600);
       assert.deepEqual(await h.words('main.hello'), [], 'no words');
       let now = await it();
-      assert.ok(now.behind && now.wide < 0.2, 'it begins small, behind the mailbox');
+      assert.ok(!now.behind && now.wide > 0.5 && now.wide < 0.75, `at first it is large: ${now.wide.toFixed(2)} of the screen wide`);
+      assert.ok(Math.abs((now.left + now.right) / 2 - PHONE.width / 2) < 4, 'and in the middle');
+      // touched: knocked back down the street, and it hides
+      await page.locator('#hello-penny').click();
+      await said('hides behind a mailbox');
+      now = await it();
+      assert.ok(now.behind && now.wide < 0.2, 'small, behind the mailbox');
       assert.equal(await page.locator('#hello-portal').isHidden(), true);
       // it looks out: part of it shows beside the mailbox
       await said('looks out');
@@ -664,8 +672,40 @@ async function main() {
       await page.waitForURL(/\?office/);
     }),
 
+    check('the introduction, at first: Penny alone, going through one feeling after another, its face, its eyes and its paper with each, until it is touched; one feeling can be held; and by keyboard, Penny can be pressed', {}, async (page) => {
+      const face = () => page.evaluate(() => { const it = document.querySelector('.h-penny'); return `${it.dataset.mood} ${it.dataset.eyes} ${it.dataset.mouth}`; });
+      await page.goto(`${origin}/?hello`);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      const faces = new Set();
+      const paper = new Set();
+      for (let i = 0; i < 40; i++) {
+        faces.add(await face());
+        paper.add(await page.evaluate(() => document.querySelector('.h-penny .paper').getAttribute('d')));
+        await sleep(500);
+      }
+      assert.ok(faces.size >= 6, `only ${faces.size} feelings: ${[...faces].join(', ')}`);
+      for (const one of ['happy', 'closed', 'half']) assert.ok([...faces].some((f) => f.includes(one)), `its eyes never ${one}`);
+      assert.ok(paper.size > 10, 'its paper never changed shape');
+      assert.ok(/\?hello/.test(page.url()) && await page.locator('.hello.in-street').count() === 0, 'nothing happens until it is touched');
+      // one feeling, held
+      await page.goto(`${origin}/?hello&emote=sad`);
+      await page.waitForSelector('#hello-penny:not([hidden])');
+      for (let i = 0; i < 6; i++) {
+        await sleep(800);
+        assert.equal(await face(), 'sad half frown');
+      }
+      // and by keyboard
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-penny');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.hello.in-street');
+      await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('hides behind a mailbox'), null, { timeout: 10000 });
+    }),
+
     check('the introduction: Penny walks, it does not slide or swell: it comes nearer a step at a time, still between steps, and nearer is always bigger and lower together, on the street', {}, async (page) => {
       await page.goto(`${origin}/?hello`);
+      await page.locator('#hello-penny').click();
       await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('comes out'), null, { timeout: 30000 });
       // where it stands, as the page draws it, sampled through the first stretches up the street (asked of the page: not timed from here)
       const seen = await page.evaluate(() => new Promise((done) => {
@@ -681,8 +721,8 @@ async function main() {
       const [, , first] = seen[0];
       const [, , lastS] = seen.at(-1);
       assert.ok(lastS > first * 1.3, `it came no nearer: from ${first} to ${lastS}`);
-      // on the street: its feet are where its size says (the horizon at 168, its eyes 18 of its units above its feet)
-      for (const [, y, scale] of seen) assert.ok(Math.abs(y - (168 + 18 * scale)) < 0.05, `off the street: at ${y} for a size of ${scale}`);
+      // on the street: it stands where its size says (the horizon at 168, its eyes 15.4 of its units above the ground)
+      for (const [, y, scale] of seen) assert.ok(Math.abs(y - (168 + 15.4 * scale)) < 0.1, `off the street: at ${y} for a size of ${scale}`);
       // still between steps: runs of frames where it does not move at all, and more than one of them
       let stills = 0;
       let run = 0;
@@ -697,12 +737,13 @@ async function main() {
     check('the introduction, the other ways up the street, with less motion asked for: each gets to the glass and through the portal', { reducedMotion: 'reduce' }, async (page) => {
       for (const [gait, walk] of [['zigzag', ''], ['edges', '&walk=rock'], ['tiptoe', '&walk=hop']]) {
         await page.goto(`${origin}/?hello&gait=${gait}${walk}`);
+        await page.locator('#hello-penny').click();
         await page.waitForFunction(() => document.querySelector('#hello-said')?.textContent.includes('jumps in'), null, { timeout: 20000 });
         assert.equal(await page.locator('.hello').getAttribute('data-gait'), gait);
         assert.equal(await page.locator('#hello-portal').isDisabled(), false);
       }
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Tab');
+      // (round from wherever the keys last were: Penny, pressed and gone)
+      for (let n = 0; n < 4 && await page.evaluate(() => document.activeElement.id) !== 'hello-portal'; n++) await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-portal', 'the portal can be reached by keyboard');
       await page.keyboard.press('Enter');
       await page.waitForURL(/\?office/);

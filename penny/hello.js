@@ -1,5 +1,14 @@
 // The introduction (/?hello): the first time Penny is seen. No words.
 //
+// It begins with Penny alone, on plain ground, large, in the middle of the
+// screen, going through what it can feel, one feeling after another: at
+// rest, curious, glad, shy, startled, sad, listening, excited. This is where
+// Penny's character is worked out (what each feeling does to its face, its
+// paper and how it moves), for use everywhere Penny goes; one feeling can be
+// held there to be looked at (/?hello&emote=sad). Nothing happens until Penny
+// is touched. A touch knocks it back, startled, all the way down the street,
+// and it hides; and the street is there.
+//
 // A quiet street, and a mailbox. Penny is behind it, and shy: it leans out
 // round one side, and back; then the other side, for longer. Then Penny
 // comes out, and comes towards you, cautious and curious at once, all the way
@@ -13,16 +22,16 @@
 // The portal stays; you are expected to follow, and nothing hurries you. It
 // leads to scene one (penny/office.js).
 //
-// HOW PENNY MOVES. It never slides and it never just grows. It moves by its
-// own effort, a step at a time, and is still between steps; and how it moves
-// is how it feels:
+// HOW PENNY MOVES. It has no legs (the owner, 26 November 2026: legs asked
+// for more realism than the rest of it has). It never slides and it never
+// just grows. It moves by its own effort, a step at a time, and is still
+// between steps; and how it moves is how it feels:
 //
 //   rock     shy: it tips onto one bottom corner, swings the other round,
-//            and lands; then the other corner. Its feet are tucked away. A
-//            card edging along.
-//   feet     getting braver: a step from one foot to the other, its body
-//            swaying over the foot it stands on, a little squash as the other
-//            comes down. (tiptoe is the same, smaller and quicker.)
+//            and lands; then the other corner. A card edging along. (edge is
+//            the same, smaller and quicker: creeping.)
+//   bounce   getting braver: a low spring off its bottom edge, a sway in the
+//            air, and its paper squashing as it lands.
 //   hop      excited, or startled: a crouch, a spring, and a landing.
 //
 // Its paper bends as it goes, and its corners curl, which is the most of what
@@ -31,7 +40,7 @@
 // in a rock lifts with it; it crouches before a hop and trails after it.
 //
 // Where it is, is on the street: the camera is at the height of Penny's
-// eyes, so its eyes are always on the horizon, and where its feet are follows
+// eyes, so its eyes are always on the horizon, and where it stands follows
 // from how near it is. Nearer is bigger and lower, together, and only ever
 // by walking.
 //
@@ -42,33 +51,37 @@
 //                 nerve once and going back a step before it comes on
 //   gait=zigzag   from one side of the street to the other, nearer each time
 //   gait=edges    round the outside of the screen itself
-//   walk=feet, walk=rock, walk=hop   every step that way, whatever it feels
+//   walk=rock, walk=bounce, walk=hop   every step that way, whatever it feels
 //
 // It is shy of being touched while it is on its way: a touch sends it back a
 // step (twice at most: after that it has got used to you). Up at the glass a
 // touch is welcome, and it comes to look at the finger.
 //
-// A beat can be gone to directly, for looking at it (/?hello&at=glass, or
-// &at=portal).
+// A beat can be gone to directly, for looking at it (/?hello&at=street,
+// &at=glass, or &at=portal).
 
 import { audio, isMuted, noise } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
 import { ASK, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice } from './penny.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
-// The horizon, in the scene's units: Penny's eyes are always on it. Its feet
-// are 18 of its own units below its eyes, so at size s they are at H + 18 s.
+// The horizon, in the scene's units: Penny's eyes are always on it. It stands
+// on the bottom edge of its paper, 15.4 of its own units below its eyes, so at
+// size s that is at H + 15.4 s.
 const H = 168;
-const ground = (s) => H + 18 * s;
+const EYE_HEIGHT = 15.4;
+const ground = (s) => H + EYE_HEIGHT * s;
 const HIDE = { x: 140, s: 0.33 }; // behind the mailbox
 const LEFT_EYE = { x: -12 };
-// Its paper, in its own units, its feet at 0, 0.
+// Its paper, in its own units (as it was drawn when it stood on feet, 2.6
+// below it; it stands on its bottom edge now, and is drawn 2.6 lower: draw()).
 const PAPER = { left: -30, right: 30, top: -44.6, bottom: -2.6 };
+const SINK = 2.6;
 // The ways it moves: how long a step takes, and how far it goes in one
 // (towards you, as a share of how near it is; across, in its own units).
 const STEP = {
-  feet: { ms: 420, depth: 0.17, stride: 26, gap: 50 },
-  tiptoe: { ms: 270, depth: 0.08, stride: 12, gap: 30 },
+  bounce: { ms: 400, depth: 0.17, stride: 26, gap: 70 },
+  edge: { ms: 300, depth: 0.08, stride: 10, gap: 40 },
   rock: { ms: 560, depth: 0.13, stride: 20, gap: 90 },
   hop: { ms: 600, depth: 0.24, stride: 34, gap: 140 },
 };
@@ -80,7 +93,22 @@ const SHAPES = {
   curious: { tl: -0.3, tr: -0.3, t: 0.7 },
   startled: { tl: -0.9, tr: -0.9, br: -0.5, bl: -0.5, t: 1.1, l: 0.5, r: 0.5 },
   glad: { tl: -0.35, tr: -0.35, bl: -0.15, br: -0.15, b: 0.3 },
+  sad: { tl: 0.22, tr: 0.22, t: -1, l: -0.35, r: -0.35, squash: 0.6 },
+  listening: { t: 0.35 },
+  excited: { tl: -0.65, tr: -0.65, bl: -0.3, br: -0.3, t: 0.9, l: 0.3, r: 0.3 },
 };
+// What it goes through, alone, at the start: each a face (mood, eyes, mouth),
+// where its eyes go, and a movement. (`watch`: its eyes are on your finger.)
+const EMOTES = [
+  { mood: 'calm', eyes: 'open', mouth: 'smile', watch: true, said: 'Penny, at rest' },
+  { mood: 'curious', eyes: 'open', mouth: 'o', look: [0.6, -0.6], move: 'tilt', said: 'Penny, curious' },
+  { mood: 'glad', eyes: 'happy', mouth: 'grin', move: 'bounce', said: 'Penny, glad' },
+  { mood: 'shy', eyes: 'open', mouth: 'wavy', look: [-1.2, 1.1], move: 'sway', said: 'Penny, shy' },
+  { mood: 'startled', eyes: 'open', mouth: 'o', move: 'start', said: 'Penny, startled' },
+  { mood: 'sad', eyes: 'half', mouth: 'frown', look: [0, 1.2], said: 'Penny, sad' },
+  { mood: 'listening', eyes: 'closed', mouth: 'o', move: 'tilt', said: 'Penny, listening' },
+  { mood: 'excited', eyes: 'happy', mouth: 'grin', watch: true, move: 'hops', said: 'Penny, excited' },
+];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = (p) => (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
@@ -144,17 +172,19 @@ export function mount(root, life) {
   const paper = penny.querySelector('.paper');
   const flap = penny.querySelector('.flap');
   const folds = [...penny.querySelectorAll('.fold')];
-  const feet = [...penny.querySelectorAll('.foot')];
   const shade = penny.querySelector('.shade');
   const seal = penny.querySelector('.seal');
   const glass = near.querySelector('.h-glass');
   const portal = root.querySelector('#hello-portal');
+  const tap = root.querySelector('#hello-penny');
   const said = root.querySelector('#hello-said');
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const query = new URLSearchParams(location.search);
   const gait = ['tiptoe', 'zigzag', 'edges'].includes(query.get('gait')) ? query.get('gait') : 'tiptoe';
-  const forced = ['feet', 'rock', 'hop'].includes(query.get('walk')) ? query.get('walk') : null;
-  const from = ['glass', 'portal'].includes(query.get('at')) ? query.get('at') : 'start';
+  const asked = query.get('walk') === 'feet' ? 'bounce' : query.get('walk'); // (feet are gone: their walk was the nearest thing to a bounce)
+  const forced = ['rock', 'bounce', 'hop'].includes(asked) ? asked : null;
+  const from = ['street', 'glass', 'portal'].includes(query.get('at')) ? query.get('at') : 'model';
+  const held = EMOTES.find((one) => one.mood === query.get('emote')) ?? null;
   main.dataset.gait = gait;
   if (forced) main.dataset.walk = forced;
 
@@ -210,21 +240,20 @@ export function mount(root, life) {
   // --- Its body: drawn afresh every frame ----------------------------------------------------
   // `pose` is what the step under way says, and is back at rest when it ends.
   // `feel` is what its feelings ask of its paper, and its lean, how hard it
-  // presses on the glass and whether its feet are tucked away: those are
-  // eased towards (`want`), never jumped to.
-  const pose = { x: HIDE.x, s: HIDE.s, y: null, lift: 0, rot: 0, pivot: 0, sx: 1, sy: 1, feet: [[-10, 0], [10, 0]], bend: {} };
-  const feel = { shape: { ...FLAT }, lean: 0, press: 0, tuck: 0 };
-  const want = { shape: { ...FLAT }, lean: 0, press: 0, tuck: 0 };
+  // presses on the glass and how heavily it sits: those are eased towards
+  // (`want`), never jumped to.
+  const pose = { x: HIDE.x, s: HIDE.s, y: null, lift: 0, rot: 0, pivot: 0, sx: 1, sy: 1, bend: {} };
+  const feel = { shape: { ...FLAT }, lean: 0, press: 0, squash: 0 };
+  const want = { shape: { ...FLAT }, lean: 0, press: 0, squash: 0 };
   let motion = null; // { start, ms, run(p), done }
   let last = performance.now();
   function draw() {
     const y = pose.y ?? ground(pose.s);
     penny.setAttribute('transform', `translate(${pt([pose.x, y])}) scale(${Math.round(pose.s * 1000) / 1000})`);
-    const sink = feel.tuck * 2.6; // feet tucked away, it stands on the bottom edge of its paper
     const leanAt = feel.lean < 0 ? PAPER.left : PAPER.right;
     const press = 1 + feel.press * 0.035;
-    body.setAttribute('transform', `translate(0 ${r2(sink - pose.lift)}) rotate(${r2(feel.lean)} ${leanAt} ${PAPER.bottom}) rotate(${r2(pose.rot)} ${pose.pivot} ${PAPER.bottom}) scale(${r2(pose.sx * press)} ${r2(pose.sy / press)})`);
-    pose.feet.forEach(([fx, fy], i) => feet[i].setAttribute('transform', `translate(${pt([fx, fy - feel.tuck * 4.5])})`));
+    const low = 1 + feel.squash * 0.07; // (heavy-hearted, it settles lower and wider)
+    body.setAttribute('transform', `translate(0 ${r2(SINK - pose.lift)}) rotate(${r2(feel.lean)} ${leanAt} ${PAPER.bottom}) rotate(${r2(pose.rot)} ${pose.pivot} ${PAPER.bottom}) translate(0 ${PAPER.bottom}) scale(${r2(pose.sx * press * low)} ${r2(pose.sy / press / low)}) translate(0 ${-PAPER.bottom})`);
     const shape = Object.fromEntries(Object.keys(FLAT).map((key) => [key, feel.shape[key] + (pose.bend[key] ?? 0)]));
     const drawn = paperOf(shape);
     paper.setAttribute('d', drawn.d);
@@ -250,7 +279,7 @@ export function mount(root, life) {
     }
     const k = 1 - Math.exp(-dt / 140);
     for (const key of Object.keys(FLAT)) feel.shape[key] += (want.shape[key] - feel.shape[key]) * k;
-    for (const key of ['lean', 'press', 'tuck']) feel[key] += (want[key] - feel[key]) * k;
+    for (const key of ['lean', 'press', 'squash']) feel[key] += (want[key] - feel[key]) * k;
     draw();
     requestAnimationFrame(frame);
   }
@@ -269,6 +298,7 @@ export function mount(root, life) {
         return;
       }
       penny.classList.add('moving');
+      if (motion) { motion.run(1); motion.done(); } // (one movement cut short by the next: it ends where it was going)
       motion = { start: performance.now(), ms, run, done };
     });
   }
@@ -280,65 +310,57 @@ export function mount(root, life) {
     s: a.s * (b.s / a.s) ** t,
     y: a.y == null && b.y == null ? null : lerp(a.y ?? ground(a.s), b.y ?? ground(b.s), t),
   });
-  const stand = (place) => Object.assign(pose, { y: null, ...place });
+  const stand = (place) => {
+    Object.assign(pose, { y: null, ...place });
+    if (pose.y != null && Math.abs(pose.y - ground(pose.s)) < 0.01) pose.y = null; // (landed on the street: it is on the street, and stays there)
+  };
 
   // One step, of one kind, from one place to the next.
   let paces = 0; // steps taken: which foot, or which corner, is next
-  function stride(kind, a, b, { height = 9, ms = STEP[kind].ms } = {}) {
+  function stride(kind, a, b, { height = 9, ms = STEP[kind].ms, tilt = 13 } = {}) {
     const side = paces++ % 2 ? 1 : -1;
-    want.tuck = kind === 'rock' ? 1 : 0;
     return animate(ms, (p) => {
       const arc = Math.sin(Math.PI * p);
       const bend = {};
-      if (kind === 'hop') {
-        // a crouch, a spring and a landing; it goes all the way in the air
-        const air = Math.min(1, Math.max(0, (p - 0.22) / 0.58));
+      if (kind === 'hop' || kind === 'bounce') {
+        // a crouch, a spring and a landing; it goes all the way in the air.
+        // (A bounce is a low one, quick, that sways as it goes.)
+        const low = kind === 'bounce';
+        const up0 = low ? 0.16 : 0.22;
+        const down = low ? 0.76 : 0.8;
+        const air = Math.min(1, Math.max(0, (p - up0) / (down - up0)));
         stand(between(a, b, ease(air)));
-        const crouch = p < 0.22 ? Math.sin((Math.PI / 2) * (p / 0.22)) : p < 0.32 ? 1 - (p - 0.22) / 0.1 : 0;
-        const land = p > 0.8 ? Math.sin(Math.PI * ((p - 0.8) / 0.2)) : 0;
+        const crouch = p < up0 ? Math.sin((Math.PI / 2) * (p / up0)) : p < up0 + 0.1 ? 1 - (p - up0) / 0.1 : 0;
+        const land = p > down ? Math.sin(Math.PI * ((p - down) / (1 - down))) : 0;
         const up = air > 0 && air < 1 ? 4 * air * (1 - air) : 0;
-        pose.lift = height * up;
-        const stretch = up > 0 ? Math.sin(Math.PI * Math.min(1, air * 1.6)) * 0.08 : 0;
-        pose.sy = 1 - crouch * 0.12 - land * 0.1 + stretch;
-        pose.sx = 1 + crouch * 0.07 + land * 0.06 - stretch * 0.6;
-        pose.rot = 0;
-        pose.feet = [[-10, -pose.lift + up * 1.6], [10, -pose.lift + up * 1.6]]; // they come with it, and dangle
+        pose.lift = (low ? 4 : height) * up;
+        const stretch = up > 0 ? Math.sin(Math.PI * Math.min(1, air * 1.6)) * (low ? 0.05 : 0.08) : 0;
+        pose.sy = 1 - crouch * (low ? 0.08 : 0.12) - land * (low ? 0.09 : 0.1) + stretch;
+        pose.sx = 1 + crouch * (low ? 0.05 : 0.07) + land * 0.06 - stretch * 0.6;
+        pose.pivot = 0;
+        pose.rot = low ? side * 5 * up : 0;
         bend.tl = crouch * 0.18;
         bend.tr = crouch * 0.18;
-        bend.bl = -up * 0.35; // its bottom corners trail
-        bend.br = -up * 0.35;
+        bend.bl = -up * (low ? 0.25 : 0.35); // its bottom corners trail
+        bend.br = -up * (low ? 0.25 : 0.35);
         bend.t = -crouch * 0.6 + up * 0.5;
-        bend.b = up * 0.6;
-      } else if (kind === 'rock') {
-        // over onto one bottom corner, the other swung round, and down
+        bend.b = up * 0.6 - land * 0.5; // and its bottom edge gives as it lands
+      } else {
+        // over onto one bottom corner, the other swung round, and down. (An edge is a small quick one.)
+        const small = kind === 'edge';
         stand(between(a, b, ease(p)));
         pose.lift = 0;
         pose.pivot = side * PAPER.right;
-        pose.rot = side * 13 * arc;
+        pose.rot = side * (small ? 6 : tilt) * arc;
         const land = p > 0.82 ? Math.sin(Math.PI * ((p - 0.82) / 0.18)) : 0;
         pose.sx = 1 + land * 0.03;
         pose.sy = 1 - land * 0.045;
-        pose.feet = [[-10, 0], [10, 0]];
-        bend[side > 0 ? 'bl' : 'br'] = -0.55 * arc; // the corner that leaves the ground lifts
+        bend[side > 0 ? 'bl' : 'br'] = -(small ? 0.3 : 0.55) * arc; // the corner that leaves the ground lifts
         bend[side > 0 ? 'tr' : 'tl'] = 0.12 * arc;
         bend.b = 0.35 * arc;
-      } else {
-        // a step: its weight onto one foot, the other lifted and set down
-        const toe = kind === 'tiptoe';
-        stand(between(a, b, ease(p)));
-        pose.lift = (toe ? 1.3 : 0) + arc * (toe ? 1.1 : 1.9);
-        pose.pivot = -side * 10;
-        pose.rot = -side * (toe ? 2.5 : 4.5) * arc;
-        const land = p > 0.78 ? Math.sin(Math.PI * ((p - 0.78) / 0.22)) : 0;
-        pose.sx = 1 + land * 0.035;
-        pose.sy = 1 - land * 0.05;
-        const toes = toe ? -1.3 : 0;
-        pose.feet = [[-10, toes], [10, toes]];
-        pose.feet[side < 0 ? 0 : 1] = [side * (10 + arc * 1.3), toes - arc * (toe ? 2.6 : 3.8)];
-        bend[side < 0 ? 'bl' : 'br'] = -0.22 * arc; // the corner over the lifted foot lifts with it
       }
       if (p >= 1) {
-        Object.assign(pose, { lift: 0, rot: 0, sx: 1, sy: 1, feet: [[-10, 0], [10, 0]], bend: {} });
+        Object.assign(pose, { lift: 0, rot: 0, sx: 1, sy: 1, bend: {} });
       } else {
         pose.bend = bend;
       }
@@ -346,8 +368,8 @@ export function mount(root, life) {
   }
   // From where it is to `to`, as many steps as it takes. How it moves is how
   // it feels, unless the address says otherwise.
-  async function travel(to, how = 'feet') {
-    const kind = forced ?? how;
+  async function travel(to, how = 'bounce') {
+    const kind = forced && how !== 'edge' ? forced : how; // (creeping behind the mailbox is always creeping)
     const a = here();
     const b = placed(to);
     const { depth, stride: reach, gap } = STEP[kind];
@@ -372,10 +394,13 @@ export function mount(root, life) {
   };
   const put = (to) => { stand(placed(to)); draw(); };
 
-  const mood = (name, mouth = 'smile') => {
+  const mood = (name, mouth = 'smile', eyes = 'open') => {
     penny.dataset.mood = name;
     penny.dataset.mouth = mouth;
-    want.shape = { ...FLAT, ...(SHAPES[name] ?? {}) };
+    penny.dataset.eyes = eyes;
+    const { squash = 0, ...shape } = SHAPES[name] ?? {};
+    want.shape = { ...FLAT, ...shape };
+    want.squash = squash;
   };
   const look = (x = 0, y = 0) => { penny.style.setProperty('--look-x', x); penny.style.setProperty('--look-y', y); };
   function gesture(name) {
@@ -458,17 +483,86 @@ export function mount(root, life) {
   });
 
   // --- The scene ---------------------------------------------------------------------------------
+  // At first: alone, on plain ground, large, in the middle of the screen,
+  // going through what it can feel, until it is touched.
+  const modelAt = () => {
+    const s = (edges().wide * 0.6) / 60; // three fifths of the screen wide
+    return { x: 100, s, y: 150 + 21 * s }; // the middle of its paper (21 of its units up) in the middle of the screen
+  };
+  // Where it is to be pressed: over it, and as big as it is.
+  function laid() {
+    const box = paper.getBoundingClientRect();
+    const frame = main.getBoundingClientRect();
+    Object.assign(tap.style, { left: `${box.left - frame.left}px`, top: `${box.top - frame.top}px`, width: `${box.width}px`, height: `${box.height}px` });
+  }
+  life.on(window, 'resize', () => { if (beat === 'model') { put(modelAt()); laid(); } });
+  async function emote(one) {
+    mood(one.mood, one.mouth, one.eyes);
+    watch(Boolean(one.watch));
+    if (!one.watch) look(...(one.look ?? [0, 0]));
+    say(one.said);
+    if (one.move === 'tilt') gesture('tilt');
+    else if (one.move === 'start') { gesture('start'); voice.sing(GASP, 0.4); }
+    else if (one.move === 'bounce') { await leap(here(), { height: 4, ms: 420 }); await leap(here(), { height: 4, ms: 420 }); }
+    else if (one.move === 'hops') { for (let n = 0; n < 3; n++) await leap(here(), { height: 11, ms: 520 }); }
+    else if (one.move === 'sway') { await stride('rock', here(), here(), { tilt: 7, ms: 700 }); await stride('rock', here(), here(), { tilt: 7, ms: 700 }); }
+  }
+  async function model() {
+    beat = 'model';
+    main.classList.remove('in-street');
+    comeOut();
+    put(modelAt());
+    tap.hidden = false;
+    laid();
+    for (let n = 0; beat === 'model'; n++) {
+      await emote(held ?? EMOTES[n % EMOTES.length]);
+      if (beat !== 'model') return;
+      await rest(held ? 3200 : 2400);
+    }
+  }
+  // Touched: it starts, is knocked back all the way down the street, and hides.
+  let knocked = null;
+  tap.addEventListener('click', (event) => {
+    if (beat !== 'model') return;
+    beat = 'knocked';
+    tap.hidden = true;
+    if (event.clientX || event.clientY) { const at = inScene(event.clientX, event.clientY); ring(at.x, at.y, 22); }
+    knocked?.();
+  });
+  async function knockedBack() {
+    watch(false);
+    mood('startled', 'o');
+    look(0, 0);
+    gesture('start');
+    voice.sing(GASP, 0.8);
+    say('Penny is knocked back, startled, all the way down the street');
+    await rest(260);
+    main.classList.add('in-street');
+    await leap({ x: 168, s: 0.4 }, { height: 30, ms: 1000 });
+    // and it scurries behind the mailbox
+    mood('shy', 'wavy');
+    look(-1.4, 0);
+    hide(); // (clear of the mailbox still, on its right: so nothing jumps as it goes behind)
+    await travel(HIDE, 'edge');
+    box.classList.add('bumped');
+    look(0, 0);
+    say('It hides behind a mailbox');
+  }
+
   // Behind the mailbox: it leans out round one side, and back; then the other side, for longer.
-  async function peeking() {
+  async function peeking(knocked = false) {
     beat = 'hiding';
+    main.classList.add('in-street');
     hide();
     mood('shy', 'o');
-    put(HIDE);
-    say('A quiet street, and a mailbox');
+    if (!knocked) {
+      put(HIDE);
+      say('A quiet street, and a mailbox');
+    }
     await rest(1500);
     look(-1.2, 0);
     want.lean = -9;
-    await travel({ x: 129, s: HIDE.s }, 'tiptoe');
+    await travel({ x: 129, s: HIDE.s }, 'edge');
     say('Somebody looks out from behind the mailbox, and hides again');
     await rest(900);
     want.lean = 0;
@@ -477,17 +571,17 @@ export function mount(root, life) {
     await rest(1100);
     look(1.2, 0);
     want.lean = 9;
-    await travel({ x: 152, s: HIDE.s }, 'tiptoe');
+    await travel({ x: 152, s: HIDE.s }, 'edge');
     voice.sing(ASK, 0.35);
     await rest(1500);
     look(0, 0);
     want.lean = 0;
     await rest(700);
     // out it comes, round the side, and stands where it can be seen
-    await travel({ x: 163, s: 0.36 }, 'tiptoe');
+    await travel({ x: 163, s: 0.36 }, 'edge');
     comeOut();
     mood('shy', 'wavy');
-    await travel({ x: 150, s: 0.42 }, 'tiptoe');
+    await travel({ x: 150, s: 0.42 }, 'edge');
     say('Penny, a letter, comes out, shyly');
     gesture('tilt');
     await rest(1300);
@@ -500,23 +594,23 @@ export function mount(root, life) {
     tiptoe: [
       { to: { x: 134, s: 0.52 }, how: 'rock', then: 'look' },
       { to: { x: 114, s: 0.74 }, how: 'rock', then: 'tilt' },
-      { to: { x: 100, s: 1.0 }, how: 'feet', then: 'look' },
+      { to: { x: 100, s: 1.0 }, how: 'bounce', then: 'look' },
       { to: { x: 104, s: 0.86 }, how: 'rock', then: 'nerve' }, // it loses its nerve, and goes back a step
-      { to: { x: 100, s: 1.45 }, how: 'feet', then: 'tilt' },
-      { to: { x: 100, s: 2.15 }, how: 'feet', then: 'look' },
+      { to: { x: 100, s: 1.45 }, how: 'bounce', then: 'tilt' },
+      { to: { x: 100, s: 2.15 }, how: 'bounce', then: 'look' },
     ],
     zigzag: [
-      { to: { across: 0.06, s: 0.5 }, how: 'feet', then: 'edge' },
-      { to: { across: 0.94, s: 0.74 }, how: 'feet', then: 'edge' },
-      { to: { across: 0.04, s: 1.05 }, how: 'feet', then: 'edge' },
-      { to: { across: 0.96, s: 1.5 }, how: 'feet', then: 'edge' },
-      { to: { across: 0.5, s: 2.15 }, how: 'feet', then: 'look' },
+      { to: { across: 0.06, s: 0.5 }, how: 'bounce', then: 'edge' },
+      { to: { across: 0.94, s: 0.74 }, how: 'bounce', then: 'edge' },
+      { to: { across: 0.04, s: 1.05 }, how: 'bounce', then: 'edge' },
+      { to: { across: 0.96, s: 1.5 }, how: 'bounce', then: 'edge' },
+      { to: { across: 0.5, s: 2.15 }, how: 'bounce', then: 'look' },
     ],
     edges: [
-      { to: { across: -0.3, s: 0.5 }, how: 'feet', then: 'gone' }, // off down the street, and out of sight
-      { jump: { across: 1.68, s: 1.5 }, to: { across: 1.2, s: 1.5 }, how: 'tiptoe', then: 'peep' }, // in at the right edge
+      { to: { across: -0.3, s: 0.5 }, how: 'bounce', then: 'gone' }, // off down the street, and out of sight
+      { jump: { across: 1.68, s: 1.5 }, to: { across: 1.2, s: 1.5 }, how: 'edge', then: 'peep' }, // in at the right edge
       { to: { across: 1.68, s: 1.5 }, how: 'hop', then: 'gone' },
-      { jump: { across: -0.88, s: 2.2 }, to: { across: -0.14, s: 2.2 }, how: 'tiptoe', then: 'peep' }, // in at the left, bigger
+      { jump: { across: -0.88, s: 2.2 }, to: { across: -0.14, s: 2.2 }, how: 'edge', then: 'peep' }, // in at the left, bigger
       { to: { across: -0.88, s: 2.2 }, how: 'hop', then: 'gone' },
       { jump: { across: 0.5, s: 3.2, y: 400 }, to: { across: 0.5, s: 3.2 }, how: 'rise', then: 'peep' }, // up from under the glass, eyes first
     ],
@@ -587,7 +681,7 @@ export function mount(root, life) {
     mood('curious', 'o');
     const GLASS = glassAt();
     if (straight) put(GLASS);
-    else await travel(GLASS, 'feet');
+    else await travel(GLASS, 'bounce');
     penny.classList.add('pressed');
     want.press = 1; // its paper flattens a little where it touches
     watch(true);
@@ -690,7 +784,14 @@ export function mount(root, life) {
 
   draw();
   (async () => {
-    if (from === 'start') {
+    if (from === 'model') {
+      const touched = new Promise((done) => { knocked = done; });
+      model().catch((error) => { if (!(error instanceof Left)) console.error(error); });
+      await touched;
+      await knockedBack();
+      await peeking(true);
+      await coming();
+    } else if (from === 'street') {
       await peeking();
       await coming();
     }
