@@ -135,11 +135,14 @@ export function mount(root, life) {
 
   // Its eyes follow a finger, or a pointer, when it is letting them.
   let watching = false;
+  const watch = (now) => { watching = now; main.toggleAttribute('data-watching', now); };
   let finger = null; // where the glass was last touched, in the scene's units
+  let followed = 0; // when its eyes last went after a finger
   const follow = (event) => {
     const point = inScene(event.clientX, event.clientY);
     finger = point;
     if (!watching) return;
+    followed = performance.now();
     const eyes = { x: at.x, y: at.y + EYES.y * at.s };
     const [dx, dy] = [point.x - eyes.x, point.y - eyes.y];
     const far = Math.hypot(dx, dy) || 1;
@@ -297,7 +300,7 @@ export function mount(root, life) {
   }
   async function coming() {
     beat = 'coming';
-    watching = false;
+    watch(false);
     const steps = GAITS[gait];
     const stood = [{ ...at }]; // where it has stopped, to go back to
     for (let i = 0; i < steps.length; i++) {
@@ -334,10 +337,10 @@ export function mount(root, life) {
     if (straight) put(GLASS, 0);
     else await walk(GLASS, 1500, 'walking');
     penny.classList.add('pressed');
-    watching = true;
+    watch(true);
     await rest(900);
     // one eye, up close: it looks all round the inside of the screen
-    watching = false;
+    watch(false);
     const close = GLASS.s * 1.75;
     await put({ x: 100 - LEFT_EYE.x * close, y: GLASS.y + EYES.y * GLASS.s - LEFT_EYE.y * close, s: close }, 1000);
     for (const [x, y] of [[-1.6, -0.6], [1.6, -0.4], [0.4, 1.2], [0, 0]]) {
@@ -356,14 +359,16 @@ export function mount(root, life) {
     }
     mood('glad', 'smile');
     voice.sing(HELLO, 0.7);
-    watching = true; // and now its eyes are yours: they follow a finger
+    watch(true); // and now its eyes are yours: they follow a finger
     await rest(3200);
+    // (for as long as there is a finger to follow it stays, a few seconds more at most: it is in no hurry to look away)
+    for (let more = 0; more < 6000 && performance.now() - followed < 1500; more += 300) await rest(300);
   }
 
   // The portal: heard, and its light seen round Penny's edges; then Penny jumps back, and there it is.
   async function opening(straight = false) {
     beat = 'portal';
-    watching = false;
+    watch(false);
     comeOut();
     if (straight) put(glassAt(), 0);
     portal.hidden = false;

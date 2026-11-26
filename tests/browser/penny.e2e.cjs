@@ -637,11 +637,14 @@ async function main() {
       now = await it();
       assert.ok(now.wide > 1.2, `at the glass Penny is ${now.wide.toFixed(2)} of the screen wide`);
       assert.ok(now.left < 0 && now.right > PHONE.width, 'it runs off both sides of the screen');
+      // (once it has looked you over and tapped: from then its eyes are yours, and it stays while there is a finger to follow)
+      await page.waitForSelector('.hello[data-watching] .h-penny[data-mood="glad"]', { timeout: 20000 });
+      const looks = (side) => page.waitForFunction((want) => Math.sign(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) === want && Math.abs(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) > 0.5, side, { timeout: 4000 });
       await page.mouse.move(20, 300);
       await page.mouse.move(30, 300);
-      assert.ok((await it()).lookX < -0.5, 'its eyes follow to the left');
+      await looks(-1); // its eyes follow to the left
       await page.mouse.move(370, 300);
-      assert.ok((await it()).lookX > 0.5, 'and to the right');
+      await looks(1); // and to the right
       // the portal: there, but behind Penny and not to be pressed, until Penny has gone through
       await said('A portal opens');
       assert.equal(await page.locator('#hello-portal').isDisabled(), true);
