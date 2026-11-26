@@ -9,7 +9,7 @@ import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js'
 import { copyable } from '/shared/handoff.js';
 import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
-import { boardPreview, door, miniBoard, oops, roof, roomClass } from '/shared/place.js';
+import { boardPreview, door, miniBoard, oops, roomClass } from '/shared/place.js';
 import { modeCards } from '/postmarks/howto.js';
 import { twoWorlds } from '/room/worlds.js';
 
@@ -36,7 +36,7 @@ export function mount(root, life) {
   const el = {
     name: $('room-name'), nameError: $('name-error'), loading: $('loading'), roomError: $('room-error'),
     join: $('join'), joinText: $('join-text'), joinForm: $('join-form'), joinName: $('join-name'), joinError: $('join-error'),
-    house: $('house'), room: $('room'), members: $('members'), profile: $('profile'), joinFaces: $('join-faces'), joinYou: $('join-you'),
+    house: $('house'), room: $('room'), members: $('members'), profile: $('profile'), joinFaces: $('join-faces'), joinTable: $('join-table'), joinYou: $('join-you'),
     notify: $('notify'), notifyText: $('notify-text'), notifyButton: $('notify-button'), notifyError: $('notify-error'),
     roomCode: $('room-code'), shareButton: $('share-button'),
     games: $('games'), noGames: $('no-games'), tidy: $('tidy'), table: root.querySelector('.table'),
@@ -70,7 +70,6 @@ export function mount(root, life) {
   root.classList.toggle('meadow', wearing());
   // A portal in the top bar, for a member: the way into the room's other world, and back (room/worlds.js).
   const worlds = twoWorlds(root, life, $('worlds'));
-  el.joinFaces.before(roof({ kind: 0, wide: 330, high: 180, bare: true }));
   // Whoever has come to the door, as they will go in: the look their profile has, or the one last chosen on this device, or
   // for somebody new one picked now (which is then theirs: see the door, below).
   let myLook = savedLook();
@@ -240,15 +239,15 @@ export function mount(root, life) {
         joining(false); // (the door: a name is there now)
       }
       $('join-sign-in').href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
-      // Under the skylight, the room's table with a board on it (the game somebody was asked to, lit; or else one at rest,
-      // which is what the room is for), and whoever is in sitting round it (as many as it has room for), each with their
-      // name. (Laid again only when who is there has changed: the door is looked at every few seconds.)
+      // The room as it is inside: whoever is in at the head of its table, each with their name, and on the table a board
+      // (the game somebody was asked to, under a lamp; or else one at rest, which is what the room is for).
+      // (Laid again only when who is there has changed: the door is looked at every few seconds.)
       const taken = room.people.filter((person) => !person.left).map((person) => person.avatar);
       if (picked && taken.includes(myLook.avatar)) {
         for (let tries = 0; tries < 40 && taken.includes(myLook.avatar); tries++) myLook = randomLook();
         paint(el.joinYou, myLook);
       }
-      const round = room.people.filter((person) => !person.left).slice(0, 4);
+      const round = room.people.filter((person) => !person.left);
       const laid = JSON.stringify(round.map((person) => [person.name, person.avatar, person.color]));
       if (el.joinFaces.dataset.laid !== laid) {
         el.joinFaces.dataset.laid = laid;
@@ -261,12 +260,9 @@ export function mount(root, life) {
           seat.append(avatar(person), name);
           return seat;
         });
-        const table = document.createElement('span');
-        table.className = 'tabletop';
-        table.append(nextGame ? miniBoard({ id: nextGame, size: 6 }, 'go') : miniBoard({ id: roomId, size: 6, found: 2 }, 'wait'));
-        seats.splice(Math.ceil(seats.length / 2), 0, table);
         el.joinFaces.replaceChildren(...seats);
-        el.joinFaces.classList.toggle('lit', Boolean(nextGame));
+        el.joinTable.replaceChildren(nextGame ? miniBoard({ id: nextGame, size: 6 }, 'go') : miniBoard({ id: roomId, size: 6, found: 2 }, 'wait'));
+        el.joinTable.classList.toggle('lit', Boolean(nextGame));
       }
       // A device signed out of its profile cannot join as itself: home offers the ways back in.
       rpc('profile_get', { p_token: myToken() }).then((profile) => {

@@ -204,12 +204,12 @@ async function states() {
     { name: 'a room, renaming it, the name cleared', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: room({ name: LONG_NAME, games: GAMES }), ready: '#games li',
       then: async (page) => { await page.locator('#room-name button').click(); await page.locator('#room-name input').fill(''); }, settle: '#room-name input:placeholder-shown' },
     { name: 'a room, at its door, somebody with no name yet', screen: 'room', at: `/room/?id=${ROOM}`, server: room({ name: LONG_NAME, you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-name:placeholder-shown' },
-    // (under the glass of its roof: as many as it shows round the table, the longest names among them, and all of the door on the screen at once)
-    { name: 'a room, at its door, a full table under the glass', screen: 'room', at: `/room/?id=${ROOM}`, server: room({ name: LONG_NAME, you: null, people: CROWD, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-faces .seat:nth-child(5)',
-      whole: ['#join .roof-big', '#join-faces', '#join-form'] },
+    // (five at the head of its table, the longest names among them, and all of the building on the screen at once)
+    { name: 'a room, at its door, a full table inside', screen: 'room', at: `/room/?id=${ROOM}`, server: room({ name: LONG_NAME, you: null, people: CROWD, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-faces .seat:nth-child(5)',
+      whole: ['#join .house', '#join-form'] },
     // (somebody sent the link of a game: its board lies lit on the table, and theirs is a name already)
-    { name: 'a room, at its door, asked to a game', screen: 'room', at: `/room/?id=${ROOM}&game=33333333-3333-4333-8333-333333333333`, storage: { 'correspondence:name:v1': 'Kit' }, server: room({ you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-faces.lit .mini',
-      whole: ['#join .roof-big', '#join-faces', '#join-form'] },
+    { name: 'a room, at its door, asked to a game', screen: 'room', at: `/room/?id=${ROOM}&game=33333333-3333-4333-8333-333333333333`, storage: { 'correspondence:name:v1': 'Kit' }, server: room({ you: null, messages: null, games: null }), ready: '#join:not([hidden])', settle: '#join-table.lit .mini',
+      whole: ['#join .house', '#join-form', '#join-sign-in'] },
     // The room's two worlds (room/worlds.js): stepping through the portal in its top bar, and the room on the other side,
     // the drama, whole or split by a seam where the cartoon breaks back through (the first time 7 to 11 s after stepping in).
     { name: 'a room, stepping through the portal', screen: 'room', at: `/room/?id=${ROOM}`, storage: ACCOUNT, server: rooms(GAMES), ready: '#games li',
