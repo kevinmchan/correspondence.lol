@@ -1133,8 +1133,8 @@ soothing (CLAUDE.md, "Look and words").
 A tag is something hidden in the app, to be found and kept, as on a scavenger
 hunt (`penny/tags.js`). Nothing in the app says that there are any. Whoever
 notices one and touches it has found it: it is theirs from then on (on this
-device), and it is kept on the home page's map, at the top, beside your face.
-There is one so far.
+device), and it is kept on the home page's map, at its foot, beside the
+portal. There is one so far.
 
 **Where it hides.** On a screen, somewhere in what is empty of it, and
 somewhere else each visit: a small mark, the picture described below, printed

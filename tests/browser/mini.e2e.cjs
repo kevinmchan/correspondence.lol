@@ -202,7 +202,7 @@ async function states() {
     });
     if (drawn.shown !== drawn.window || drawn.drawnFor !== drawn.shown) throw new Error(`the night is shown ${drawn.shown} in a window ${drawn.window}, and its picture is drawn for ${drawn.drawnFor}`);
   };
-  // The sleepy cone's stamp (styles.css): on the first screen, its words on it, and over none of the logo, the title, the face, or what is kept beside the face.
+  // The sleepy cone's stamp (styles.css): on the first screen, its words on it, and over none of the logo, the title, the face, or what is kept.
   const coneClear = async (page) => {
     const over = await page.evaluate(() => {
       const box = (selector) => document.querySelector(selector).getBoundingClientRect();
@@ -453,7 +453,7 @@ async function states() {
     // ...what is kept of it on the home page once it has been found, across the map from the portal...
     { name: 'home, somebody new, with the night kept', screen: 'home', at: '/', storage: { ...NIGHT }, ready: '.tag-kept' },
     { name: 'home, the lobby, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', ...NIGHT }, ready: '.tag-kept' },
-    { name: 'home, the night kept beside the face, the cone in the other corner', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, ready: '.tag-kept', then: coneClear },
+    { name: 'home, the night kept at the foot beside the portal, the cone at the top', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, ready: '.tag-kept', then: coneClear },
     { name: 'home, the feed, with the night kept', screen: 'home', at: '/', storage: { ...ACCOUNT, ...NIGHT }, server: rooms(GAMES), ready: '.tag-kept', settle: '.feed-item' },
     // ...the night as it is when it has been come to, by the tumble, from a page longer than the screen: the size of the screen, with
     // its picture drawn for that size (it was once drawn for the length of the page it was come to from, and squashed to fit)...
