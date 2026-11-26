@@ -49,7 +49,8 @@ home bar), and holds each to the same rules:
   named for it are entirely on the screen.
 
 The same suite can be pointed at any of the phones in `tests/browser/phone.cjs`:
-`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all`; and at one screen:
+`PHONES=pro-app,max-app npm run e2e:mini`, or `PHONES=all` (the mini in Safari and
+installed, and the Pro Max installed); and at one screen:
 `ONLY=radio npm run e2e:mini`. There is no WebKit where the suites run, only
 Chromium told to be a phone (its size, touch, a phone's viewport and the
 insets of the notch and the home bar): what is checked is the layout an
@@ -588,11 +589,67 @@ when the screen opens, when the app is come back to, and after anything is
 saved, renamed or deleted. A beat saved offline is sent when it can be; one
 deleted on another device goes from this one too.
 
+**Sounds of your own.** The microphone, beside the bin, opens a drawer of
+sounds for the instrument that is chosen: the instrument itself, and every
+sound that has been recorded, newest first. Record, at the top of the drawer,
+makes a new sound each time and never takes the place of another
+(`jam/mic.js`): it listens for three seconds at most, or until it is pressed
+again, and the loop is quiet meanwhile. The new sound is called "Sound 1" (2,
+3…) until its name is changed, by tapping it, to anything of twelve letters or
+fewer; and it can be deleted. Pressing a sound in the drawer swaps it into the
+chosen instrument's place, and pressing the instrument itself swaps that back.
+The instrument's button on the board then wears the microphone and the
+sound's name, and the microphone beside the bin is lit in its colour. The same
+sound can be in more than one instrument's place.
+
+What was heard is cut to the sound itself, a second and a half at most, and
+is played faster for a higher row and slower for a lower one
+(`jam/sample.js`). If the sound has a note (a hum, a whistle, a struck
+glass), the note is found and the sound is played in tune with the chords, in
+whichever octave leaves it nearest to how it was heard; a clap or a word has
+none, and is moved by as much. In the drums' place the rows are seven heights
+of the sound, and the chords leave them alone. A microphone that is refused,
+or hears nothing, says so under Record.
+
+**The deck holds up to eight.** The four instruments are always on it, and
+beside them there is room for four sounds more. "Add", at the end of the deck,
+opens the drawer for a new place: a sound pressed or recorded there becomes a
+button of its own, in a colour of its own, with its own part on the board
+(in tune with the chords if the sound has a note, seven heights of it if it
+has none). In the drawer for such a place the first row is "None", which
+takes the place off the deck and its part with it. A beat with a part for
+any of those four is written the long way, 76 characters instead of 39
+(`jam/beat.js`); one without is written as it always was.
+
+**A shared beat brings the deck's sounds with it.** When there are recorded
+sounds on the deck, sharing leaves a copy of them on the server (`share_put`,
+in `supabase/migrations/20261126010000_shares.sql`) and the link says where:
+`/jam/?b=…&s=…`. Whoever opens it gets the beat on their board, the sounds
+in their drawer (theirs from then on, kept in their own profile) and on
+their deck in the places they were in. The copy is the sounds as they were
+when shared: renaming or deleting one afterwards changes nothing shared. A
+profile's twenty most recent shares are kept; an older link, or one shared
+while the server could not be reached, still has its beat in it and is played
+by the instruments.
+
+**The sounds follow the account**, as saved beats do: twenty-four at most,
+kept on the server by profile (`sounds_get`, `sounds_fetch`, `sounds_put`,
+`sounds_drop`, in `supabase/migrations/20261126000000_sounds.sql`) as 16-bit
+samples, and a copy on the device (the browser's own database), so the drawer
+is there at once and offline. The two are brought into line when the screen
+opens, when the app is come back to, and after a sound is recorded, named or
+deleted: a new sound is sent whole, once, and only its name after that; one
+recorded offline is sent when it can be; one made on another device is
+fetched; one deleted on another device goes from this one too. Which sound is
+on which place of the deck is the device's own, and a saved beat is its
+notes: it is played by whatever is on the deck when it is opened.
+
 A loop played here is played as it is written; the long form that Penny's
 Radio gives a loop (`jam/form.js`) is for listening, not for composing.
 
 What it still does not have, next to the game's music: more than eight steps,
-notes of different lengths, and any way to choose the chords.
+notes of different lengths, any way to choose the chords, and a deck that
+is saved with each beat.
 
 ## Penny's Radio
 

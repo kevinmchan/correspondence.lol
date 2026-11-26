@@ -211,4 +211,8 @@ async function measure(page, { insets = null, ignore = '.pal, .map-far, .sr-only
   }, { safe: insets, skip: ignore });
 }
 
-module.exports = { ROOT, PHONES, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };
+// What "every phone" means (PHONES=all): the smallest both ways, and the largest installed. What is right at both ends
+// has been right in between; the others can still be asked for by name (the owner's choice, 26 November 2026).
+const ENDS = ['mini-safari', 'mini-app', 'max-app'];
+
+module.exports = { ROOT, PHONES, ENDS, serve, open, measure, ACCOUNT, ROOM, PEOPLE, listed, roomSays, radioPlayed };

@@ -13,8 +13,10 @@ are made.
   rules at the top of `tests/browser/mini.e2e.cjs`. Keep it up: a new screen,
   or a new state of one (a sheet, a list that can grow, a step of a lesson),
   gets a test screen in `states()` in the same change that adds it.
-- Before shipping a change to the interface, run it on every phone too:
-  `PHONES=all npm run e2e:mini`.
+- Before shipping a change to the interface, run it on the largest phone too:
+  `PHONES=all npm run e2e:mini`, which is the mini in Safari and installed,
+  and the Pro Max installed (the owner's choice, 26 November 2026). Any other
+  can be asked for by name (`PHONES=pro-app`).
 
 ## Look and words
 
