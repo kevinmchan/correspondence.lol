@@ -494,6 +494,37 @@ async function main() {
       assert.notEqual((await pal()).height, 'gone', 'and Penny is at home again');
     }),
 
+    check('play: the first places come first for everybody, every time until they have been walked, whatever has been played already; then a board, and the walk is the portal\'s', { storage: { ...ACCOUNT, 'postmarks:howto-solo:v1': true, 'correspondence:energy:v1': { earned: 5, spent: 0, boards: [] } } }, async (page) => {
+      const store = (values) => page.evaluate((all) => { for (const [key, value] of Object.entries(all)) localStorage.setItem(key, JSON.stringify(value)); }, values);
+      const home = async () => {
+        await page.goto(`${origin}/`);
+        await page.waitForSelector('#play:not([hidden])');
+      };
+      await home();
+      await page.locator('#play').click();
+      await page.waitForURL(/\?walk/);
+      await page.waitForSelector('#walk-board .cell');
+      // left before the end, and come back to: it is the walk again, at the place that had been reached
+      await store({ 'penny:place:v1': 2 });
+      await home();
+      assert.equal(await page.locator('#play').getAttribute('href'), '/?walk', 'not walked yet: play is still the walk');
+      await page.locator('#play').click();
+      await page.waitForURL(/\?walk/);
+      await page.waitForFunction(() => document.querySelectorAll('#walk-board .cell').length > 1);
+      // walked: a board
+      await store({ 'penny:walked:v1': true });
+      await home();
+      await page.locator('#play').click();
+      await page.waitForURL(/\/postmarks\/$/);
+      await page.waitForSelector('#board .cell');
+      // and from then on the walk is reached by the portal
+      await home();
+      assert.equal(await page.locator('#play').getAttribute('href'), '/postmarks/');
+      await page.waitForFunction(() => !document.querySelector('#splash')); // (what the app opens under has cleared)
+      await page.locator('#portal').click({ force: true });
+      await page.waitForURL(/\?walk/);
+      await page.waitForSelector('#walk-board .cell');
+    }),
     check('the first quarter, start to finish, by touch', {}, async (page, h) => {
       await page.goto(`${origin}/?walk`);
       await sleep(1600);

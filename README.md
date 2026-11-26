@@ -522,6 +522,15 @@ one that is up is pressed in and lit.
 Above both tabs is the one wide button of the page: play, a board of your own
 at once (`/postmarks/`). Your account is your face in the top right corner.
 
+**Play is the first places first, once, for everybody** (the owner, 26
+November 2026): until the five places have been walked on this device, the
+button leads through the portal to the walk with Penny (`/?walk`, "Walking the
+map"), where the rules are shown one at a time, and goes on leading there, to
+the place that had been reached, whatever has been played already. The last of
+them opens onto a board, and from then on play is a board and the walk is the
+portal's, at the foot of the page. Only this button is turned: a game somebody
+shared, or one in a room, still opens as itself.
+
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
 each room already tells its own page, so the server has nothing new: it asks

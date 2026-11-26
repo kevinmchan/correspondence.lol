@@ -55,6 +55,10 @@ export function mount(root, life) {
   // The lobby: big tiles. Opening and joining a room each have a screen of their own (rooms.js).
   const menu = $('menu');
   const play = $('play'); // the one wide button: a board of your own, at once
+  // But everybody goes through the first places once first (penny/walk.js),
+  // where the rules are shown one at a time: play leads there, every time,
+  // until they have been walked, and the last of them leads out to a board.
+  // After that the walk is the portal's, at the foot of the page.
   // Under it, energy: one bar for everything earned in every game, and the meadow at its end (shared/meadow.js).
   const energyRow = $('home-energy');
   const meadowMark = $('meadow');
@@ -93,6 +97,7 @@ export function mount(root, life) {
     me.card.hidden = none;
     menu.hidden = none;
     play.hidden = none;
+    play.setAttribute('href', hasWalked() ? '/postmarks/' : '/?walk');
     energyRow.hidden = none;
     if (!none) showEnergy();
     showTabs();
