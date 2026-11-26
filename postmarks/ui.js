@@ -420,7 +420,7 @@ export function mount(root, life) {
   // it lands; a board finished sends a shower of them. A bar filled flares, the
   // first time the meadow blooms in colour, and it begins again.
   let energy = readEnergy(load(ENERGY_KEY));
-  const THANKS_KEY = 'correspondence:thanks:v1'; // the third bar's thanks, once shown
+  const THANKS_KEY = 'correspondence:thanks:v1'; // the fourth bar's thanks, once shown
   const THANKS = 'Speedy! Thanks for being an early tester. We\u2019re working on your prize 🤍';
   const meter = { board: null, fill: 0 }; // what the meter shows now
   let landing = Promise.resolve(); // sparks land one after another
@@ -522,9 +522,10 @@ export function mount(root, life) {
       save(ENERGY_KEY, energy);
     }
     const count = held(energy);
-    // the third time the bar fills (the first is the meadow, the second wakes it: shared/meadow.js): a word of
-    // thanks, once (the owner's words, 25 November 2026, first said on the second, before that had a reward)
-    const second = now.gained && energy.earned - now.gained < 3 * BAR && energy.earned >= 3 * BAR && !load(THANKS_KEY);
+    // the fourth time the bar fills (the first three are the meadow and its folk, found and then woken:
+    // shared/meadow.js): a word of thanks, once (the owner's words, 25 November 2026, first said on the second, before
+    // that had a reward)
+    const second = now.gained && energy.earned - now.gained < 4 * BAR && energy.earned >= 4 * BAR && !load(THANKS_KEY);
     const still = quiet || meter.board !== board || matchMedia('(prefers-reduced-motion: reduce)').matches || !now.gained;
     meter.board = board;
     if (still) {
@@ -555,7 +556,7 @@ export function mount(root, life) {
     });
   }
 
-  // A sheet with the owner's thanks, for the third bar filled: words, by the owner's leave, and a heart to go on.
+  // A sheet with the owner's thanks, for the fourth bar filled: words, by the owner's leave, and a heart to go on.
   // Resolves when it is closed. Kept as seen at once, so it comes only the once.
   function thanks() {
     save(THANKS_KEY, true);

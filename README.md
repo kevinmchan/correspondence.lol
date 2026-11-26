@@ -271,50 +271,55 @@ the drama still. On the home page the glimpse is then a toggle (pressed, with a
 soft ring of light): it takes the meadow off and puts it back on, and the
 choice is kept on the device.
 
-**The second bar is the meadow coming alive** (the owner, 26 November 2026:
-"maybe this is the second reward"; "an associated progression that takes
-place in a meadow that then becomes alive"). This is the first stretch of the
-campaign with a shape of its own, and it is the campaign's rule in small: work
-is how Penny meets others.
+**The meadow comes alive in three stages, a bar each** (the owner, 26
+November 2026: "First, there are no characters for the buttons. Then Penny
+discovers there's an energy flowing through everything and the buttons are
+actually alive but they are asleep. More energy and wonder brings them alive
+in the next stage."). This is the first stretch of the campaign with a shape
+of its own (`folkOf` in `shared/energy.js`, `room/folk.js`).
 
-- *The first bar: arriving.* The work brings Penny somewhere. When the bar
-  fills, the map's squares are grass and the rooms stand in a meadow. It is
-  lovely and it is empty: a sun, tall flowers, a butterfly, and nobody home.
-- *The second bar: company, asleep.* As the work goes on, the meadow's folk
-  turn up, one kind at a time, evenly through the bar, and every one of them
-  arrives asleep (`folkOf` in `shared/energy.js`, `room/folk.js`). First the
-  flowers: the tiles that start a game put out petals and leaf hands, eyes
-  shut. Then a hedgehog curled under the room's code, a bluebell where the
-  bell is, butterflies at rest on the notes of the chat, a little bird on the
-  send button, feet under the people's tokens, and last the games' own boards,
-  which turn out to be little cartoons of the old rubber-hose kind (pie-cut
-  eyes over the top edge, a white glove, big shoes), and the field mouse who
-  holds up the room's name. Nobody is woken: they come because the work is
-  being done near them, and they sleep because they do not know Penny yet.
-- *The bar full: the meadow wakes.* With the second bar filled they open
-  their eyes, all of them, and from then on the meadow is alive: they blink
-  and breathe and look about, glance at each other and at whoever comes by,
-  fidget each in its own way, stop and look at a finger that comes near (and
-  never dodge it), and are glad of a press. The game that waits on you waves.
-  While anything is typed they hold still and watch. With reduced motion they
-  are drawn awake and at rest.
+- *The first bar: a meadow, and things in it.* The work brings Penny
+  somewhere. The map's squares are grass and the rooms stand in a meadow: a
+  sun, tall flowers, a butterfly. The things to press are things: tiles, a
+  button, a code on a mat.
+- *The second bar: the discovery.* Penny finds that the energy it has been
+  earning is not only its own: it runs through everything. A soft light goes
+  through the things of the room one after another, and by that light they
+  are seen for what they were all along: alive, and asleep. A tile that
+  starts a game is a flower with its eyes shut; there is a hedgehog curled
+  under the room's code, a bluebell where the bell is, butterflies at rest on
+  the notes of the chat, a little bird on the send button, feet under the
+  people's tokens; the games' own boards are little cartoons of the old
+  rubber-hose kind (pie-cut eyes over the top edge, a white glove, big
+  shoes), and a field mouse holds up the room's name. Nobody is woken. They
+  were here before Penny was.
+- *The third bar: more energy, and wonder.* They open their eyes, all of
+  them, and from then on the meadow is alive: they blink and breathe and look
+  about, glance at each other and at whoever comes by, fidget each in its own
+  way, stop and look at a finger that comes near (and never dodge it), and
+  are glad of a press. The game that waits on you waves. While anything is
+  typed they hold still and watch. The current has done its work and is not
+  seen again. With reduced motion they are drawn awake and at rest.
 
-They are the first of the "others" of the theme above: met at work, and alive
-because of it. What each of them is to Penny, and whether any of them knows
-anything of the sound, is not written. Like the meadow they are paint: drawn
-round the things of the room in layers that cannot be pressed, so that nothing
-that can be pressed moves or changes size; they are not in the night through
-the portal; and taking the meadow off on the home page takes them with it.
-Not brought over from the first sketches of this world: people walking about,
-and the things to press drifting on a leash.
+What wakes them is the energy and Penny's wonder at them together: attention
+is what the story is about, and here it is what brings a thing to life. They
+are the first of the "others" of the theme above. What each of them is to
+Penny, and whether any of them knows anything of the sound, is not written.
+Like the meadow they are paint: drawn round the things of the room in layers
+that cannot be pressed, so that nothing that can be pressed moves or changes
+size; they are not in the night through the portal; and taking the meadow off
+on the home page takes them with it. Not brought over from the first sketches
+of this world: people walking about, and the things to press drifting on a
+leash. The moment of each stage (the bar filling, in a game) has no scene of
+its own yet: the room is simply different the next time it is opened.
 
-The third time the bar fills, a sheet over the game says, in the owner's
+The fourth time the bar fills, a sheet over the game says, in the owner's
 words, "Speedy! Thanks for being an early tester. We're working on your
 prize 🤍", with the meadow over it and a heart to go on; once, and before the
 sheet at the end of the game. (The owner gave these words for the second bar,
-25 November 2026, before the second bar had a reward of its own; they have
-moved to the third, where they are still true.) What later bars are for is
-not decided.
+25 November 2026, before the bars after the first had rewards of their own;
+they have moved to the first bar that has none, where they are still true.)
+What later bars are for is not decided.
 
 A bigger board earns more; a faster one no more;
 hints are free; a board played again earns only for what it has not earned

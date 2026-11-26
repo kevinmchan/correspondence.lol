@@ -263,3 +263,15 @@ li.mine > p > .ff-note .ff-wing { fill: #f9c784; stroke: #c98d32; }
 
 /* In the room's other world (room/worlds.js) there are no folk: the night is live action. */
 [data-paint="serious"] .ff { display: none; }
+
+/* Asleep, before they are woken (shared/meadow.js): energy runs through every one of them, which is how it was found
+   that they are alive. A soft light goes through their bodies one after another, in the order they stand on the page,
+   slowly, and round again. With reduced motion it does not travel: each has a little of it, and keeps it. */
+[data-ff-current] [data-ff] > .ff { filter: drop-shadow(0 0 0.14rem rgb(255 214 110 / 0.5)); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ff-current] [data-ff] > .ff { filter: none; animation: ff-current 7.2s ease-in-out calc(var(--ff-i, 0) * 0.45s) infinite; }
+}
+@keyframes ff-current {
+  0%, 22%, 100% { filter: drop-shadow(0 0 0 rgb(255 214 110 / 0)); }
+  9% { filter: drop-shadow(0 0 0.32rem rgb(255 214 110 / 0.95)) drop-shadow(0 0 0.1rem rgb(255 244 200 / 0.9)); }
+}

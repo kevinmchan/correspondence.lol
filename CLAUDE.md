@@ -42,7 +42,7 @@ are made.
   2026). The others the owner has given (25 November 2026): the question
   at a pass phrase's desk ("What message would you like to deliver?"); the
   words Rename and Leave in a room's options; and the lines of the sheet that
-  says what is particular to a game together; and the thanks on the third bar
+  says what is particular to a game together; and the thanks on the fourth bar
   of energy filled ("Speedy! Thanks for being an early tester. We're working
   on your prize 🤍"). Any other place where only words will do is the owner's to allow.
 - An error line takes its own room: what is below it moves down for it, and

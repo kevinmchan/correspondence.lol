@@ -73,12 +73,13 @@ export function mount(root, life) {
   const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
 
-  // The meadow's folk (room/folk.js, shared/meadow.js): through the second bar of energy they turn up, a kind at a
-  // time, asleep: a tile that starts a game is a flower, the code a hedgehog, the bell a bluebell, a note a butterfly,
-  // the send button a bird, the people's tokens have feet, a game's board is a little cartoon with gloves and big
-  // shoes, and the name is held up by a field mouse. With the bar full they wake, and the meadow is alive. They are
-  // drawn on the page itself and only while it is the meadow that is seen: not in the night through the portal, nor
-  // while a passage is under way (room/worlds.js copies the page then, and would copy every blink).
+  // The meadow's folk (room/folk.js, shared/meadow.js). In the meadow of the first bar the things of a room are things.
+  // With the second bar filled it is found that energy runs through all of them and that they were alive all along,
+  // asleep: a tile that starts a game is a flower, the code a hedgehog, the bell a bluebell, a note a butterfly, the
+  // send button a bird, the people's tokens have feet, a game's board is a little cartoon with gloves and big shoes,
+  // and the name is held up by a field mouse; a current goes through them, one after another. The third bar wakes
+  // them. They are drawn on the page itself and only while it is the meadow that is seen: not in the night through
+  // the portal, nor while a passage is under way (room/worlds.js copies the page then, and would copy every blink).
   const meadow = meadowFolk();
   if (meadow.kinds.length) {
     const here = ':scope > main ';
@@ -101,7 +102,13 @@ export function mount(root, life) {
       if (life.over || !meadowSeen()) return;
       folk.scan(CAST);
       // (not yet awake: every one of them asleep, eyes shut, where it is)
-      if (!meadow.awake) for (const face of root.querySelectorAll(':scope > :is(header, main) [data-ff]')) face.dataset.ffMood = 'sleep';
+      if (!meadow.awake) {
+        // (and the current that goes through them takes them in the order they stand on the page: room/folk.css)
+        [...root.querySelectorAll(':scope > :is(header, main) [data-ff]')].forEach((face, i) => {
+          face.dataset.ffMood = 'sleep';
+          face.style.setProperty('--ff-i', i);
+        });
+      }
     };
     // (whenever the room draws something afresh; the folk's own layers going in and out do not count)
     const own = (node) => node.nodeType === 1 && node.classList.contains('ff');
@@ -118,6 +125,7 @@ export function mount(root, life) {
       requestAnimationFrame(beat);
     };
     if (meadow.awake) requestAnimationFrame(beat);
+    else root.setAttribute('data-ff-current', '');
     recast();
   }
 

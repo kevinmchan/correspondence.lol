@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ARRIVALS, BAR, LARGEST, POST, SMALLEST, bar, earnedOn, folkOf, meadowEarned, finish, fresh, held, most, played, read, spend, through } from '../shared/energy.js';
+import { BAR, FOLK, LARGEST, POST, SMALLEST, bar, earnedOn, folkOf, meadowEarned, finish, fresh, held, most, played, read, spend } from '../shared/energy.js';
 import { MAX_SIZE, MIN_SIZE } from '../postmarks/game.js';
 
 const at = (size, seed, found, status = 'playing') => ({ size, seed, found, status });
@@ -110,20 +110,9 @@ test('the bar is everything earned, about twenty games, and its first fill is th
   assert.equal(meadowEarned(spent), true, 'nor the meadow');
 });
 
-test('through the second bar the meadow\'s folk turn up one kind at a time, asleep, and wake when it is full', () => {
+test('the meadow\'s folk: none in the first bar\'s meadow, found asleep with the second bar, woken by the third', () => {
   const having = (earned) => ({ ...fresh(), earned });
-  assert.deepEqual(folkOf(having(BAR - 1)), { kinds: [], awake: false }, 'nobody before the meadow');
-  assert.deepEqual(folkOf(having(BAR)), { kinds: [], awake: false }, 'nor the moment it is earned');
-  assert.equal(through(having(BAR + BAR / 2), 2), 0.5);
-  let before = 0;
-  for (let earned = BAR; earned < 2 * BAR; earned++) {
-    const { kinds, awake } = folkOf(having(earned));
-    assert.equal(awake, false, 'asleep until the bar is full');
-    assert.ok(kinds.length === before || kinds.length === before + 1, 'one kind at a time');
-    assert.deepEqual(kinds, ARRIVALS.slice(0, kinds.length), 'in their order');
-    before = kinds.length;
-  }
-  assert.equal(before, ARRIVALS.length, 'all of them there before the bar is full');
-  assert.deepEqual(folkOf(having(2 * BAR)), { kinds: ARRIVALS, awake: true }, 'and awake with it');
-  assert.equal(folkOf(having(5 * BAR)).awake, true, 'for good');
+  for (const earned of [0, BAR - 1, BAR, 2 * BAR - 1]) assert.deepEqual(folkOf(having(earned)), { kinds: [], awake: false }, `nobody at ${earned}`);
+  for (const earned of [2 * BAR, 3 * BAR - 1]) assert.deepEqual(folkOf(having(earned)), { kinds: FOLK, awake: false }, `all of them, asleep, at ${earned}`);
+  for (const earned of [3 * BAR, 9 * BAR]) assert.deepEqual(folkOf(having(earned)), { kinds: FOLK, awake: true }, `awake at ${earned}, for good`);
 });

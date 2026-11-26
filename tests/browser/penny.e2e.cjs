@@ -2534,8 +2534,8 @@ async function main() {
       await sleep(1500);
       assert.deepEqual(await reads(), { count: 242, fill: 2 / 240, kept: 242, sparks: 0, meadow: true }, 'a post found again earns nothing');
     }),
-    // The third bar filled: the owner's thanks, in words, once, before the sheet at the end of the game.
-    check('energy: the third bar filled brings the owner\'s thanks, once, before the end of the game', { storage: { 'postmarks:howto:v1': true, 'correspondence:energy:v1': { earned: 712, spent: 0, boards: [] } } }, async (page) => {
+    // The fourth bar filled: the owner's thanks, in words, once, before the sheet at the end of the game.
+    check('energy: the fourth bar filled brings the owner\'s thanks, once, before the end of the game', { storage: { 'postmarks:howto:v1': true, 'correspondence:energy:v1': { earned: 952, spent: 0, boards: [] } } }, async (page) => {
       const { newGame } = await import('../../postmarks/game.js');
       const game = newGame({ size: 5, seed: 4, players: ['You'] });
       await page.goto(`${origin}/`);
@@ -2555,7 +2555,7 @@ async function main() {
       await page.waitForSelector('dialog.finale[open]', { timeout: 6000 });
       assert.equal(await page.locator('dialog.thanks').count(), 0);
       // and only the once
-      await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 712, spent: 0, boards: [] })));
+      await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 952, spent: 0, boards: [] })));
       await page.evaluate((saved) => localStorage.setItem('postmarks:solo:v1', JSON.stringify(saved)), game);
       await page.reload();
       await page.waitForSelector('#energy:not([hidden])');
@@ -2566,8 +2566,8 @@ async function main() {
     }),
     // At home, under the play button, the same bar; the meadow at its end grey until it is earned, then a toggle that a
     // room follows: worn from the moment it is earned, taken off and put back on, and kept on the device.
-    // The second bar: the meadow's folk turn up through it, asleep, and wake when it is full. Paint, as the meadow is.
-    check('the meadow\'s folk: nobody at first, then a kind at a time and asleep, awake with the second bar full; nothing moved by them; gone with the meadow', { storage: { ...ACCOUNT, 'correspondence:energy:v1': { earned: 250, spent: 0, boards: [] } } }, async (page) => {
+    // The meadow's folk: none in the meadow of the first bar; found, asleep, with the second; woken by the third. Paint, as the meadow is.
+    check('the meadow\'s folk: nobody in the first bar\'s meadow, found asleep with the second, awake with the third; nothing moved by them; gone with the meadow', { storage: { ...ACCOUNT, 'correspondence:energy:v1': { earned: 250, spent: 0, boards: [] } } }, async (page) => {
       const room = '11111111-1111-4111-8111-111111111111';
       const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
       const game = { id: '22222222-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 6, status: 'playing', players: ['Sam', 'Ada'], last_player: 1, found: 2, hearts: 3, moves: 4 };
@@ -2588,21 +2588,24 @@ async function main() {
       await having(250);
       assert.deepEqual(await kinds(), [], 'the meadow just earned: nobody in it yet');
       const empty = await boxes();
-      await having(300);
-      assert.deepEqual(await kinds(), ['code', 'tile'], 'a quarter of the way: the flowers and the hedgehog');
       await having(470);
+      assert.deepEqual(await kinds(), [], 'nor however near the second bar is to full');
+      await having(480);
       const all = await kinds();
-      for (const kind of ['board', 'code', 'send', 'tile', 'token']) assert.ok(all.includes(kind), `nearly full: the ${kind} is there`);
+      for (const kind of ['board', 'code', 'send', 'tile', 'token']) assert.ok(all.includes(kind), `the second bar full: the ${kind} is there`);
       assert.equal(await page.evaluate(() => [...document.querySelectorAll('.screen-room > main [data-ff]')].every((one) => one.dataset.ffMood === 'sleep')), true, 'every one of them asleep');
       assert.equal(await page.locator('.screen-room > main .mode[data-ff] .ff-eye').first().isVisible(), false, 'eyes shut');
+      assert.equal(await page.locator('.screen-room').getAttribute('data-ff-current'), '', 'and a current goes through them');
       assert.deepEqual((await boxes()).filter((one) => !empty.includes(one)), [], 'nothing moved or resized by them');
-      await having(480);
-      assert.equal(await page.evaluate(() => [...document.querySelectorAll('.screen-room > main [data-ff="tile"], .screen-room > main [data-ff="board"]')].some((one) => one.dataset.ffMood === 'sleep')), false, 'the bar full: awake');
+      await having(720);
+      assert.equal(await page.evaluate(() => [...document.querySelectorAll('.screen-room > main [data-ff="tile"], .screen-room > main [data-ff="board"]')].some((one) => one.dataset.ffMood === 'sleep')), false, 'the third bar full: awake');
       assert.equal(await page.locator('.screen-room > main .mode[data-ff] .ff-eye').first().isVisible(), true, 'eyes open');
       await page.waitForSelector('.screen-room > main .mode[data-ff][data-ff-seen]');
-      assert.deepEqual((await boxes()).filter((one) => !empty.includes(one)), [], 'nor awake');
+      // (awake, the picture of a board may be in the middle of a hop or a wave: it is a picture, and the link over it, which is what is pressed, stays)
+      assert.deepEqual((await boxes()).filter((one) => !one.startsWith('mini ') && !empty.includes(one)), [], 'nor awake: everything there is to press where it was');
       assert.equal(await page.evaluate(() => [...document.querySelectorAll('.ff')].every((layer) => getComputedStyle(layer).pointerEvents === 'none' && layer.closest('[aria-hidden="true"]'))), true, 'their bodies cannot be pressed, and are not read out');
-      await having(480, true);
+      assert.equal(await page.locator('.screen-room').getAttribute('data-ff-current'), null, 'the current has done its work');
+      await having(720, true);
       assert.deepEqual(await kinds(), [], 'the meadow taken off: its folk go with it');
     }),
     check('the meadow: grey at the end of the bar until it is earned; then worn by every room, and taken off and put back at home', { storage: { ...ACCOUNT, 'home:tab:v1': 'lobby', 'correspondence:energy:v1': { earned: 100, spent: 0, boards: [] } } }, async (page) => {
