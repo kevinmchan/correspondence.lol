@@ -8,7 +8,7 @@ A static, no-build progressive web app served from the repository root at
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -20,6 +20,28 @@ A static, no-build progressive web app served from the repository root at
 | `CNAME`, `.nojekyll` | GitHub Pages custom domain / serve files as-is |
 
 ## The film
+
+**The introduction** (`/?hello`, `penny/hello.js`; the owner, 26 November
+2026; a first draft, reached only by its address so far). The first time Penny
+is seen. A quiet street and a mailbox, and Penny behind it, shy: an eye round
+one side, and back; then the other side, for longer. Penny comes out and comes
+up the street towards you, cautious and curious at once, all the way to the
+glass, until Penny is wider than the screen, and looks you over from the other
+side of it: one eye up close, a breath that fogs the glass, a tap on it, and
+eyes that follow a finger. Then a portal opens behind Penny: it is heard, and
+its light comes round Penny's edges, because Penny is in the way. Penny
+starts, jumps back, and there it is; looks at it, and at you, and jumps in.
+The portal stays open, and you are expected to follow; nothing hurries you. It
+leads, for now, to scene one.
+
+How Penny comes up the street is still being played with, so there are three
+ways of it, chosen in the address (`/?hello&gait=zigzag`): `tiptoe` (as it is
+unless asked: straight up the middle a few steps at a time, losing its nerve
+once), `zigzag` (from one side of the street to the other, half out of sight
+at each edge) and `edges` (round the outside of the screen itself: in at one
+edge, in at the other, then up from underneath, eyes first). On the way up a
+touch sends Penny back a step, twice at most; at the glass a touch is welcome.
+A beat can be gone to directly (`&at=glass`, `&at=portal`).
 
 The app is meant to become a film that is played. Its first scene, the Dead
 Letter Office (`/?office`, `penny/office.js`), is still being worked out, so

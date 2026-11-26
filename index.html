@@ -33,6 +33,7 @@
   <link rel="stylesheet" href="/penny/walk.css">
   <link rel="stylesheet" href="/penny/pal.css">
   <link rel="stylesheet" href="/jam/taste.css">
+  <link rel="stylesheet" href="/penny/hello.css">
   <link rel="stylesheet" href="/penny/office.css">
   <link rel="stylesheet" href="/penny/slow.css">
   <link rel="stylesheet" href="/room/room.css">
@@ -46,7 +47,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -738,6 +739,57 @@
           </section>
           <footer class="sheet-foot"><button type="button" id="taste-presets-close" class="go shut" aria-label="Back to the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></footer>
         </dialog>
+    </main>
+  </template>
+
+  <template id="screen-hello">
+    <!-- The introduction: Penny, shy, behind a mailbox; then up against the glass; then a portal. No words: see penny/hello.js. -->
+    <main class="hello">
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
+      <p id="hello-said" class="sr-only" role="status"></p>
+      <!-- the street, and the mailbox it hides behind -->
+      <svg class="hello-stage hello-far" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A quiet street, and a mailbox. Somebody small is hiding behind it.">
+        <rect class="h-sky" x="-2000" y="-2000" width="4200" height="2190"/>
+        <circle class="h-sun" cx="52" cy="118" r="34"/>
+        <path class="h-hills" d="M-2000 190 V172 H-60 q40 -26 90 -10 q36 -24 78 -6 q40 -22 82 0 q30 -10 70 6 H2200 V190Z"/>
+        <rect class="h-ground" x="-2000" y="188" width="4200" height="2200"/>
+        <path class="h-path" d="M92 188 L20 420 H180 L108 188Z"/>
+        <g class="h-tufts"><path d="M34 214q3 -7 6 0M150 236q4 -9 8 0M170 204q2.5 -6 5 0M22 262q4 -9 8 0"/></g>
+        <g class="h-behind"></g>
+        <g class="h-box">
+          <ellipse class="shade" cx="140" cy="197" rx="17" ry="2.6"/>
+          <path class="legs" d="M131 184v13M149 184v13"/>
+          <path class="body" d="M126 186V163q0 -13 14 -13t14 13V186Z"/>
+          <path class="lid" d="M129 164q0 -10 11 -10t11 10"/>
+          <rect class="slot" x="131.5" y="166" width="17" height="3.6" rx="1.8"/>
+          <path class="mark" d="M135 174.5h10v6.5h-10zM135 174.5l5 3.6 5 -3.6"/>
+        </g>
+      </svg>
+      <!-- the portal that opens behind it: between the street and Penny, so that it is hidden until Penny jumps back -->
+      <div class="hello-light" aria-hidden="true"></div>
+      <button type="button" id="hello-portal" class="portal" aria-label="Follow Penny through the portal" hidden></button>
+      <!-- Penny, and the glass between you -->
+      <svg class="hello-stage hello-near" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g class="h-penny">
+          <ellipse class="shade" cx="0" cy="1.5" rx="27" ry="3"/>
+          <g class="act"><g class="idle"><g transform="translate(-90 -76.6)">
+            <path class="foot" d="M76 76.6 q4 -4 8 0z"/><path class="foot" d="M96 76.6 q4 -4 8 0z"/>
+            <rect class="paper" x="60" y="32" width="60" height="42" rx="5"/>
+            <path class="flap" d="M61.5 34 L90 55 L118.5 34"/>
+            <circle class="warmth" cx="90" cy="54.5" r="9.5"/><circle class="seal" cx="90" cy="54.5" r="4.6"/>
+            <circle class="cheek" cx="71" cy="62.6" r="3.4"/><circle class="cheek" cx="109" cy="62.6" r="3.4"/>
+            <g class="eyes">
+              <g class="eye"><ellipse class="ball" cx="78" cy="58.6" rx="2.4" ry="3"/><circle class="shine" cx="78.9" cy="57.3" r="0.8"/></g>
+              <g class="eye"><ellipse class="ball" cx="102" cy="58.6" rx="2.4" ry="3"/><circle class="shine" cx="102.9" cy="57.3" r="0.8"/></g>
+            </g>
+            <path class="mouth m-smile" d="M86.5 65.6 q3.5 3 7 0"/>
+            <path class="mouth m-grin" d="M85.6 64.9 q4.4 5.4 8.8 0 z"/>
+            <path class="mouth m-wavy" d="M86.2 66.7 q1.9 -1.9 3.8 0 t3.8 0"/>
+            <circle class="mouth m-o" cx="90" cy="66.5" r="1.7"/>
+          </g></g></g>
+        </g>
+        <g class="h-glass"></g>
+      </svg>
     </main>
   </template>
 
