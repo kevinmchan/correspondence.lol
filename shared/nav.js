@@ -53,7 +53,6 @@ const stage = document.getElementById('screens');
 let current = null; // { key, screen, root, life }
 let moving = false;
 let queued = null; // a move asked for while another was under way
-let heading = null; // the address of the screen being moved to, until it is up
 
 async function show(url, { announce }) {
   const screen = screenFor(url);
@@ -111,12 +110,10 @@ async function move(url, options) {
     return;
   }
   moving = true;
-  heading = keyOf(url);
   try {
     await show(url, options);
   } finally {
     moving = false;
-    heading = null;
     if (queued) {
       const [nextUrl, nextOptions] = queued;
       queued = null;
@@ -154,10 +151,7 @@ document.addEventListener('click', (event) => {
 // the address after # for a step of its own: that is not a move.)
 window.addEventListener('popstate', () => {
   const url = new URL(location.href);
-  // (Back, pressed while the next screen is still on its way: where it is
-  // heading is what counts, not what is still up, or the screen that then
-  // arrives would be left standing at the address of the one gone back to.)
-  if (current && keyOf(url) === (heading ?? current.key)) return;
+  if (current && keyOf(url) === current.key) return;
   move(url, { announce: true });
 });
 
