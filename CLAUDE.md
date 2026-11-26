@@ -14,9 +14,9 @@ are made.
   or a new state of one (a sheet, a list that can grow, a step of a lesson),
   gets a test screen in `states()` in the same change that adds it.
 - Before shipping a change to the interface, run it on the largest phone too:
-  `PHONES=all npm run e2e:mini`, which is the mini and the Pro Max, each in
-  Safari and installed (the owner's choice, 26 November 2026). A Pro can be
-  asked for by name (`PHONES=pro-app`).
+  `PHONES=all npm run e2e:mini`, which is the mini in Safari and installed,
+  and the Pro Max installed (the owner's choice, 26 November 2026). Any other
+  can be asked for by name (`PHONES=pro-app`).
 
 ## Look and words
 

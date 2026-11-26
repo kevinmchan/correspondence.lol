@@ -29,7 +29,7 @@
 //   node tests/browser/mini.e2e.cjs --list     the test screens, as JSON, without a browser
 //
 // The same suite can be pointed at the other phones:
-//   PHONES=pro-app,pro-safari npm run e2e:mini      (PHONES=all: the smallest and the largest, each both ways)
+//   PHONES=pro-app,pro-safari npm run e2e:mini      (PHONES=all: the mini both ways, and the largest installed)
 // It needs Playwright with Chromium; where that is not installed it says so and
 // passes, unless REQUIRE_BROWSER is set (as it is where pull requests are
 // checked), when that is a failure. It serves the repository itself and talks
