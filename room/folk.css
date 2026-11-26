@@ -235,7 +235,6 @@ li.mine > p > .ff-note .ff-wing { fill: #f9c784; stroke: #c98d32; }
 @keyframes ff-dangle { 0%, 100% { transform: rotate(-2.6deg); } 50% { transform: rotate(2.6deg); } }
 @keyframes ff-wave { 0%, 100% { transform: none; } 18%, 50% { transform: rotate(-44deg); } 34%, 66% { transform: rotate(-22deg); } 82% { transform: rotate(-40deg); } }
 @keyframes ff-wave-left { 0%, 100% { transform: none; } 20%, 52% { transform: rotate(38deg); } 36%, 68% { transform: rotate(14deg); } 84% { transform: rotate(28deg); } }
-@keyframes ff-wave-up { 0%, 100% { transform: none; } 20%, 52% { transform: rotate(-26deg); } 36%, 68% { transform: rotate(8deg); } 84% { transform: rotate(-18deg); } }
 @keyframes ff-flutter { 0%, 100% { transform: none; } 30% { transform: rotate(-10deg); } 65% { transform: rotate(6deg); } }
 @keyframes ff-ruffle { 0%, 100% { transform: none; } 25% { transform: rotate(-3deg); } 55% { transform: rotate(2.5deg); } 80% { transform: rotate(-1deg); } }
 @keyframes ff-nod { 0%, 100% { transform: none; } 35%, 55% { transform: translateY(2.2px); } }

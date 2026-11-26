@@ -1,4 +1,4 @@
-import { wearing } from '/shared/meadow.js';
+import { folk as meadowFolk, wearing } from '/shared/meadow.js';
 import { troupe } from '/room/folk.js';
 import { ask, tell } from '/shared/ask.js';
 import { rpc } from '/shared/api.js';
@@ -73,12 +73,14 @@ export function mount(root, life) {
   const worlds = twoWorlds(root, life, $('worlds'));
   el.joinFaces.before(roof({ kind: 0, wide: 330, high: 150, bare: true }));
 
-  // In the meadow the things of the room are alive (room/folk.js): a tile that starts a game is a flower, a game's
-  // board a little cartoon with gloves and big shoes, the send button a bird, a note a butterfly, the code a sleepy
-  // hedgehog, the bell a bluebell, the name held up by a field mouse, and the people's tokens have feet. They are
+  // The meadow's folk (room/folk.js, shared/meadow.js): through the second bar of energy they turn up, a kind at a
+  // time, asleep: a tile that starts a game is a flower, the code a hedgehog, the bell a bluebell, a note a butterfly,
+  // the send button a bird, the people's tokens have feet, a game's board is a little cartoon with gloves and big
+  // shoes, and the name is held up by a field mouse. With the bar full they wake, and the meadow is alive. They are
   // drawn on the page itself and only while it is the meadow that is seen: not in the night through the portal, nor
   // while a passage is under way (room/worlds.js copies the page then, and would copy every blink).
-  if (wearing()) {
+  const meadow = meadowFolk();
+  if (meadow.kinds.length) {
     const here = ':scope > main ';
     const CAST = [
       ['board', `${here}#games > li`, { face: (li) => li.querySelector('.mini'), key: (li) => `board:${li.querySelector('a.game')?.getAttribute('href')}` }],
@@ -89,14 +91,17 @@ export function mount(root, life) {
       ['sign', ':scope > header h1.sign:not(.sr-only), :scope > main h1.sign:not(.sr-only)', { key: () => 'sign' }],
       ['note', `${here}.rug .chat-log li:not(.note) > p`],
       ['token', `${here}#members .seat`, { face: (seat) => seat.querySelector('.avatar'), key: (seat) => `seat:${seat.dataset.seat}` }],
-    ];
+    ].filter(([kind]) => meadow.kinds.includes(kind));
     const typing = () => Boolean(document.activeElement?.matches?.('input:not([type="checkbox"]):not([type="radio"]), textarea'));
     const meadowSeen = () => root.dataset.world === 'playful' && !root.querySelector(':scope > .worlds-copy');
-    const folk = troupe({ root, life, calm: typing, sights: () => [...root.querySelectorAll(`${here}#members .seat .avatar`)] });
+    const folk = troupe({ root, life, calm: typing, ...(meadow.awake ? {} : { still: true }), sights: () => [...root.querySelectorAll(`${here}#members .seat .avatar`)] });
     let due = false;
     const recast = () => {
       due = false;
-      if (!life.over && meadowSeen()) folk.scan(CAST);
+      if (life.over || !meadowSeen()) return;
+      folk.scan(CAST);
+      // (not yet awake: every one of them asleep, eyes shut, where it is)
+      if (!meadow.awake) for (const face of root.querySelectorAll(':scope > :is(header, main) [data-ff]')) face.dataset.ffMood = 'sleep';
     };
     // (whenever the room draws something afresh; the folk's own layers going in and out do not count)
     const own = (node) => node.nodeType === 1 && node.classList.contains('ff');
@@ -112,7 +117,7 @@ export function mount(root, life) {
       if (meadowSeen()) folk.tick(now);
       requestAnimationFrame(beat);
     };
-    requestAnimationFrame(beat);
+    if (meadow.awake) requestAnimationFrame(beat);
     recast();
   }
 

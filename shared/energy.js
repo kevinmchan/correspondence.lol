@@ -45,6 +45,15 @@ export const BAR = 240;
 export const bar = (state) => ({ fill: (state.earned % BAR) / BAR, fills: Math.floor(state.earned / BAR) });
 // The meadow: the reward for the first bar.
 export const meadowEarned = (state) => state.earned >= BAR;
+// How far through the nth bar (0 before it is begun, up to 1 once it has been filled).
+export const through = (state, n) => Math.max(0, Math.min(1, (state.earned - (n - 1) * BAR) / BAR));
+// The second bar is the meadow coming alive (shared/meadow.js): which of its folk have turned up, in the order they
+// do, evenly through the bar, the last of them before it is full; and whether they are awake, which is the bar full.
+export const ARRIVALS = ['tile', 'code', 'bell', 'note', 'send', 'token', 'board', 'sign'];
+export function folkOf(state) {
+  const far = through(state, 2);
+  return { kinds: ARRIVALS.filter((_, i) => far >= (i + 1) / (ARRIVALS.length + 1)), awake: far >= 1 };
+}
 
 export const fresh = () => ({ earned: 0, spent: 0, boards: [] });
 
