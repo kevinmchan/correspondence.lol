@@ -1106,7 +1106,8 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 @keyframes feed-pip { from { transform: scale(0); } to { transform: none; } }
 
 /* --- Still being built: a stamp in the top left corner of the home page --------
-   Opposite the face in the other corner, at the same height. On it, a traffic
+   Opposite the face in the other corner, at the same height, after whatever
+   has been found and is kept there (--kept: penny/tags.js). On it, a traffic
    cone asleep: it breathes, and a z drifts up now and then. Nothing to press. */
 :root { --stamp: color-mix(in srgb, var(--paper), #ffffff 55%); }
 :root[data-theme="dark"] { --stamp: color-mix(in srgb, var(--paper), var(--ink) 13%); }
@@ -1114,7 +1115,7 @@ main:has(> .building) { position: relative; }
 .building {
   --r: 2.5px;
   position: absolute; z-index: 1; margin: 0;
-  left: calc(0.875rem + 3px);
+  left: calc(0.875rem + 3px + var(--kept, 0) * 3rem);
   top: max(calc(var(--map-y, 0px) + 1.75rem + 3px), calc(env(safe-area-inset-top) + 0.25rem));
   width: 3rem; aspect-ratio: 5 / 6; padding: calc(var(--r) * 1.6);
   background: var(--stamp);

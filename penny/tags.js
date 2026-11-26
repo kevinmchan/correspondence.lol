@@ -388,6 +388,8 @@ window.addEventListener('screen', (event) => {
 // top left corner, across from your face: a touch goes through it.
 export function showKept(root) {
   const main = root.querySelector('main');
+  // (how many are kept: what else is in that corner, the sleepy cone on its stamp, stands after them: styles.css)
+  main.style.setProperty('--kept', TAGS.filter((each) => hasFound(each.name)).length);
   for (const [index, tag] of TAGS.filter((each) => hasFound(each.name)).entries()) {
     const link = document.createElement('a');
     link.className = 'tag-kept';
