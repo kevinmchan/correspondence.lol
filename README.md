@@ -43,11 +43,15 @@ glass, until Penny is wider than the screen, and looks you over from the other
 side of it: one eye up close, a breath that fogs the glass, a tap on it, and
 eyes that follow a finger. And then, at its sweetest, the glimpse (the owner,
 27 November 2026; what it means is in the story doc, "The tone"): for a blink,
-not half a second, the light goes cold, the glass cracks where Penny tapped,
-its eyes go hollow, its seal goes out and its smile is too wide, and its hello
-is heard again, slow and far below; then it is Penny, glad as it was, as if
-nothing happened. It is a change of colour, not a flash, and it comes with
-less motion asked for too, without the jolt. It can be held to be looked at
+the screen breaks up, as if something corrupted were trying to get through
+it. The picture tears into bands that slip sideways and its colours come
+apart (an SVG filter, `#hello-tear`, on the street and on Penny's layer), and
+blocks and lines of it go dark or wrong (`.hello-static`); the sound crackles,
+and a scrap of Penny's hello sticks and stutters, crushed. It pushes twice, the
+second harder, and is gone. Penny itself is never changed (the owner: nothing
+that changes Penny's appearance), and carries on as if nothing happened. It
+only darkens, never flashes bright; with less motion asked for it is one still
+frame for each push. It can be held to be looked at
 (`/?hello&glimpse=hold`). Then a portal opens behind Penny: it is heard, and
 its light comes round Penny's edges, because Penny is in the way. Penny
 starts, jumps back, and there it is; looks at it, and at you, and jumps in.

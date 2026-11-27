@@ -16,10 +16,11 @@
 // the other side of it: one eye up close, a breath that fogs the glass, a tap
 // on it. Its eyes follow a finger.
 //
-// And then, at its sweetest, for a blink, it is not quite Penny: the light
-// goes cold, the glass cracks where it tapped, its eyes go hollow, its seal
-// goes out and its smile is too wide, and its hello is heard again, far
-// below. Then it is Penny, and carries on as if nothing happened. (The
+// And then, at its sweetest, for a blink, the screen breaks up, as if
+// something corrupted were trying to get through it: the picture tears into
+// bands that slip sideways, its colours come apart, blocks of it go dark or
+// wrong, and the sound crackles and stutters. It pushes twice, and is gone.
+// Penny itself is never changed, and carries on as if nothing happened. (The
 // glimpse: the app is a dark comedy, very cute, with the dark at its edges;
 // the owner, 27 November 2026. Held to be looked at: /?hello&glimpse=hold.)
 //
@@ -67,7 +68,7 @@
 // A beat can be gone to directly, for looking at it (/?hello&at=street,
 // &at=glass, or &at=portal).
 
-import { audio, isMuted, noise, tone } from '/postmarks/sound.js';
+import { audio, isMuted, noise } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
 import { ASK, D5, G5, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice, reach } from './penny.js';
 
@@ -473,37 +474,92 @@ export function mount(root, life) {
     tone.stop(ctx.currentTime + 1.4);
   }
 
-  // What is under it, heard: its own hello, slow, far below, and a rasp.
-  function undertow() {
-    if (!audio() || isMuted()) return;
-    tone({ freq: D5 / 4, to: D5 / 4.3, dur: 0.22, type: 'sawtooth', gain: 0.045, attack: 0.02 });
-    tone({ at: 0.2, freq: G5 / 4, to: G5 / 4.6, dur: 0.34, type: 'sawtooth', gain: 0.045, attack: 0.02 });
-    tone({ freq: D5 / 4 * 1.06, to: G5 / 4.7, dur: 0.54, type: 'sine', gain: 0.06, attack: 0.03 });
-    noise({ dur: 0.5, from: 300, to: 90, q: 0.8, gain: 0.05 });
+  // The glimpse: for a blink, something corrupted tries to break through the
+  // screen. Penny is not touched by it. Two pushes, the second harder, with a
+  // breath of the screen as it was between them.
+  const PUSHES = [
+    { at: 0, frames: 3, force: 0.6 },
+    { at: 300, frames: 4, force: 1 },
+  ];
+  const FRAME_MS = 70;
+  const noiseOf = root.querySelector('#hello-tear .tear-noise');
+  const shiftOf = root.querySelector('#hello-tear .tear-shift');
+  const splitOf = root.querySelector('#hello-tear .tear-split');
+  const staticLayer = root.querySelector('.hello-static');
+  // One frame of it: where the picture tears and how far it slips, how far its
+  // colours come apart, and which blocks of it go wrong.
+  function corrupt(force) {
+    const n = Math.random;
+    noiseOf.setAttribute('seed', String(Math.floor(n() * 1000)));
+    noiseOf.setAttribute('baseFrequency', `0 ${r2(0.012 + n() * 0.05)}`);
+    shiftOf.setAttribute('scale', String(Math.round((18 + n() * 40) * force)));
+    splitOf.setAttribute('dx', String(r2((n() < 0.5 ? -1 : 1) * (2 + n() * 6) * force)));
+    const bands = [];
+    const count = 2 + Math.floor(n() * 4 * force);
+    for (let i = 0; i < count; i++) {
+      const band = document.createElement('div');
+      band.className = `band ${['dark', 'wrong', 'smear', 'wrong'][Math.floor(n() * 4)]}`;
+      const tall = n() < 0.7 ? 0.4 + n() * 2.5 : 3 + n() * 9; // (mostly thin; now and then a block)
+      Object.assign(band.style, { top: `${r2(n() * 100)}%`, height: `${r2(tall)}%` });
+      if (n() < 0.45) Object.assign(band.style, { left: `${r2(n() * 60)}%`, right: `${r2(n() * 30)}%` });
+      bands.push(band);
+    }
+    staticLayer.replaceChildren(...bands);
   }
-  // A crack in the glass, where it tapped: there for the blink, and gone with it.
-  function crack(x, y) {
-    const line = document.createElementNS(SVG, 'path');
-    line.setAttribute('class', 'h-crack');
-    line.setAttribute('d', `M${x} ${y}l-5 -7 -3 -9M${x} ${y}l6 -5 9 -2M${x} ${y}l4 7 1 10M${x} ${y}l-7 3 -8 6M${x - 5} ${y - 7}l-6 1`);
-    glass.append(line);
-    return line;
+  // Heard: Penny's own notes, crushed and stuttering, falling away, under a
+  // crackle; in time with the pushes.
+  function breakingThrough() {
+    const live = audio();
+    if (!live || isMuted()) return;
+    const { ctx } = live;
+    const t0 = ctx.currentTime + 0.01;
+    const crush = ctx.createWaveShaper(); // (a few steps only, where a voice has hundreds: the sound of it gone wrong)
+    const curve = new Float32Array(512);
+    for (let i = 0; i < curve.length; i++) curve[i] = Math.round(((i / (curve.length - 1)) * 2 - 1) * 3) / 3;
+    crush.curve = curve;
+    const level = ctx.createGain();
+    level.gain.value = 0.06;
+    crush.connect(level).connect(live.mix);
+    const blip = (at, freq, dur, type = 'square') => {
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0 + at);
+      amp.gain.setValueAtTime(0.0001, t0 + at);
+      amp.gain.exponentialRampToValueAtTime(0.9, t0 + at + 0.004);
+      amp.gain.setValueAtTime(0.9, t0 + at + dur - 0.006);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      osc.connect(amp).connect(crush);
+      osc.start(t0 + at);
+      osc.stop(t0 + at + dur + 0.02);
+    };
+    for (const push of PUSHES) {
+      const at = push.at / 1000;
+      const long = (push.frames * FRAME_MS) / 1000;
+      // its hello, a scrap of it, stuck and repeating, a little lower each time
+      for (let k = 0, t = 0; t < long; k++, t += 0.045) blip(at + t, (k % 3 === 2 ? D5 : G5) / 2 ** (k * 0.35 * push.force), 0.032);
+      blip(at, 55 + Math.random() * 20, long, 'sawtooth'); // and something low under it
+      noise({ at, dur: long, from: 3200, to: 900, q: 0.5, gain: 0.05 * push.force });
+    }
   }
-  // The glimpse: for a blink, it is not quite Penny. A pause that is a pause
-  // whatever motion is asked for: it is a change of colour, not a movement.
+  // Wait, whatever motion is asked for (it is a moment, not a movement).
+  const blink = (ms) => new Promise((done, stop) => { life.setTimeout(done, ms); life.onEnd(() => stop(new Left())); });
   async function glimpse() {
-    const mark = crack(100, H + 6);
-    main.classList.add('glimpse');
-    undertow();
-    say('For a blink, something else looks out of Penny');
-    await new Promise((done, stop) => { if (!holdGlimpse) life.setTimeout(done, 420); life.onEnd(() => stop(new Left())); });
-    main.classList.remove('glimpse');
-    mark.remove();
-    // a blink, and it is Penny, glad as it was
-    mood('glad', 'smile', 'closed');
-    await rest(140);
-    mood('glad', 'smile');
-    say('Penny, glad');
+    say('For a blink, something breaks through the screen');
+    breakingThrough();
+    let was = 0;
+    for (const push of PUSHES) {
+      await blink(push.at - was);
+      main.classList.add('glimpse');
+      for (let f = 0; f < (still ? 1 : push.frames); f++) {
+        corrupt(push.force);
+        await blink(still ? push.frames * FRAME_MS : FRAME_MS);
+      }
+      if (holdGlimpse) { corrupt(1); await new Promise((done, stop) => life.onEnd(() => stop(new Left()))); }
+      main.classList.remove('glimpse');
+      staticLayer.replaceChildren();
+      was = push.at + push.frames * FRAME_MS;
+    }
   }
 
   // --- Being touched ---------------------------------------------------------------------------
@@ -750,7 +806,7 @@ export function mount(root, life) {
     voice.sing(HELLO, 0.7);
     watch(true); // and now its eyes are yours: they follow a finger
     await rest(holdGlimpse ? 300 : 1500);
-    await glimpse(); // (and, for a blink, something else's)
+    await glimpse(); // (and, for a blink, something tries to get through)
     await rest(1700);
     // (for as long as there is a finger to follow it stays, a few seconds more at most: it is in no hurry to look away)
     for (let more = 0; more < 6000 && performance.now() - followed < 1500; more += 300) await rest(300);

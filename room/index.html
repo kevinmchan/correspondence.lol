@@ -873,14 +873,25 @@
                 <path class="mouth m-wavy" d="M86.2 66.7 q1.9 -1.9 3.8 0 t3.8 0"/>
                 <path class="mouth m-frown" d="M87 67.5 q3 -2.4 6 0"/>
                 <circle class="mouth m-o" cx="90" cy="66.5" r="1.7"/>
-                <!-- what is under its smile, for a blink (the glimpse: penny/hello.js) -->
-                <path class="under" d="M77 63.6 q13 12.5 26 0 l-2.2 1.8 -2.1 -1.4 -2.1 2 -2.2 -1.6 -2.2 2.1 -2.2 -1.9 -2.2 2.1 -2.2 -1.9 -2.2 2.1 -2.2 -1.6 -2.1 2 -2.1 -1.4z"/>
               </g>
               <path class="fold"/><path class="fold"/><path class="fold"/><path class="fold"/>
             </g></g>
           </g>
         </g>
         <g class="h-glass"></g>
+      </svg>
+      <!-- The glimpse (penny/hello.js): for a blink, the screen breaks up, as if something were trying to get through it. Penny is untouched. -->
+      <div class="hello-static" aria-hidden="true"></div>
+      <svg class="hello-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <filter id="hello-tear" x="-5%" y="0" width="110%" height="100%" color-interpolation-filters="sRGB">
+          <feTurbulence class="tear-noise" type="fractalNoise" baseFrequency="0 0.04" numOctaves="1" seed="3" result="noise"/>
+          <feComponentTransfer in="noise" result="bands"><feFuncR type="discrete" tableValues="0.5 0.5 0.15 0.5 0.85 0.5 0.5 0.3"/><feFuncG type="linear" slope="0" intercept="0.5"/></feComponentTransfer>
+          <feDisplacementMap class="tear-shift" in="SourceGraphic" in2="bands" scale="36" xChannelSelector="R" yChannelSelector="G" result="torn"/>
+          <feColorMatrix in="torn" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red"/>
+          <feOffset class="tear-split" in="red" dx="5" result="red-off"/>
+          <feColorMatrix in="torn" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="rest"/>
+          <feComposite in="red-off" in2="rest" operator="arithmetic" k2="1" k3="1"/>
+        </filter>
       </svg>
       <!-- Penny, to be pressed: over it while it stands there to be looked at, and gone once it has been -->
       <button type="button" id="hello-penny" class="hello-tap" aria-label="Penny" hidden></button>

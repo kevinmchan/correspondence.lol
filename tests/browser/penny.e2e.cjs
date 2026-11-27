@@ -712,11 +712,15 @@ async function main() {
       assert.ok(now.left < 0 && now.right > PHONE.width, 'it runs off both sides of the screen');
       // (once it has looked you over and tapped: from then its eyes are yours, and it stays while there is a finger to follow)
       await page.waitForSelector('.hello[data-watching] .h-penny[data-mood="glad"]', { timeout: 20000 });
-      // and, for a blink, it is not quite Penny; then it is, glad as it was
+      // and, for a blink, something breaks through the screen; Penny itself is not changed by it
+      const face = () => page.evaluate(() => { const it = document.querySelector('.h-penny'); return [it.dataset.mood, it.dataset.eyes, it.dataset.mouth, getComputedStyle(it.querySelector('.seal')).fill, getComputedStyle(it.querySelector('.paper')).fill].join(' '); });
+      const was = await face();
       await page.waitForSelector('.hello.glimpse', { timeout: 6000 });
-      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.h-penny .under')).opacity), '1', 'its smile is too wide');
-      await page.waitForSelector('.hello:not(.glimpse) .h-penny[data-mood="glad"]', { timeout: 2000 });
-      assert.equal(await page.locator('.h-crack').count(), 0, 'and the glass is whole again');
+      assert.ok(await page.locator('.hello-static .band').count() > 0, 'blocks of the screen go wrong');
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.hello-near')).filter), 'url("#hello-tear")', 'the picture tears');
+      assert.equal(await face(), was, 'Penny is just as it was');
+      await page.waitForSelector('.hello:not(.glimpse)', { timeout: 2000 });
+      assert.equal(await page.locator('.hello-static .band').count(), 0, 'and it is gone');
       const looks = (side) => page.waitForFunction((want) => Math.sign(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) === want && Math.abs(Number(document.querySelector('.h-penny').style.getPropertyValue('--look-x'))) > 0.5, side, { timeout: 4000 });
       await page.mouse.move(20, 300);
       await page.mouse.move(30, 300);
