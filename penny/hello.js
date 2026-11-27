@@ -16,6 +16,13 @@
 // the other side of it: one eye up close, a breath that fogs the glass, a tap
 // on it. Its eyes follow a finger.
 //
+// And then, at its sweetest, for a blink, it is not quite Penny: the light
+// goes cold, the glass cracks where it tapped, its eyes go hollow, its seal
+// goes out and its smile is too wide, and its hello is heard again, far
+// below. Then it is Penny, and carries on as if nothing happened. (The
+// glimpse: the app is a dark comedy, very cute, with the dark at its edges;
+// the owner, 27 November 2026. Held to be looked at: /?hello&glimpse=hold.)
+//
 // Then a portal opens behind it. The sound is heard first, and its light
 // comes round Penny's edges, because Penny is in the way. Penny starts, and
 // jumps back, and there it is. Penny looks at it, and at you, and jumps in.
@@ -60,9 +67,9 @@
 // A beat can be gone to directly, for looking at it (/?hello&at=street,
 // &at=glass, or &at=portal).
 
-import { audio, isMuted, noise } from '/postmarks/sound.js';
+import { audio, isMuted, noise, tone } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice, reach } from './penny.js';
+import { ASK, D5, G5, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice, reach } from './penny.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 // The horizon, in the scene's units: Penny's eyes are always on it. It stands
@@ -186,6 +193,7 @@ export function mount(root, life) {
   const forced = ['rock', 'bounce', 'hop'].includes(asked) ? asked : null;
   const from = ['street', 'glass', 'portal'].includes(query.get('at')) ? query.get('at') : 'model';
   const held = EMOTES.find((one) => one.mood === query.get('emote')) ?? null;
+  const holdGlimpse = query.get('glimpse') === 'hold';
   main.dataset.gait = gait;
   if (forced) main.dataset.walk = forced;
 
@@ -465,6 +473,39 @@ export function mount(root, life) {
     tone.stop(ctx.currentTime + 1.4);
   }
 
+  // What is under it, heard: its own hello, slow, far below, and a rasp.
+  function undertow() {
+    if (!audio() || isMuted()) return;
+    tone({ freq: D5 / 4, to: D5 / 4.3, dur: 0.22, type: 'sawtooth', gain: 0.045, attack: 0.02 });
+    tone({ at: 0.2, freq: G5 / 4, to: G5 / 4.6, dur: 0.34, type: 'sawtooth', gain: 0.045, attack: 0.02 });
+    tone({ freq: D5 / 4 * 1.06, to: G5 / 4.7, dur: 0.54, type: 'sine', gain: 0.06, attack: 0.03 });
+    noise({ dur: 0.5, from: 300, to: 90, q: 0.8, gain: 0.05 });
+  }
+  // A crack in the glass, where it tapped: there for the blink, and gone with it.
+  function crack(x, y) {
+    const line = document.createElementNS(SVG, 'path');
+    line.setAttribute('class', 'h-crack');
+    line.setAttribute('d', `M${x} ${y}l-5 -7 -3 -9M${x} ${y}l6 -5 9 -2M${x} ${y}l4 7 1 10M${x} ${y}l-7 3 -8 6M${x - 5} ${y - 7}l-6 1`);
+    glass.append(line);
+    return line;
+  }
+  // The glimpse: for a blink, it is not quite Penny. A pause that is a pause
+  // whatever motion is asked for: it is a change of colour, not a movement.
+  async function glimpse() {
+    const mark = crack(100, H + 6);
+    main.classList.add('glimpse');
+    undertow();
+    say('For a blink, something else looks out of Penny');
+    await new Promise((done, stop) => { if (!holdGlimpse) life.setTimeout(done, 420); life.onEnd(() => stop(new Left())); });
+    main.classList.remove('glimpse');
+    mark.remove();
+    // a blink, and it is Penny, glad as it was
+    mood('glad', 'smile', 'closed');
+    await rest(140);
+    mood('glad', 'smile');
+    say('Penny, glad');
+  }
+
   // --- Being touched ---------------------------------------------------------------------------
   // On its way up the street it is shy of it: a touch sends it back a step,
   // twice at most. At the glass it is glad of it, and comes to look.
@@ -708,7 +749,9 @@ export function mount(root, life) {
     mood('glad', 'smile');
     voice.sing(HELLO, 0.7);
     watch(true); // and now its eyes are yours: they follow a finger
-    await rest(3200);
+    await rest(holdGlimpse ? 300 : 1500);
+    await glimpse(); // (and, for a blink, something else's)
+    await rest(1700);
     // (for as long as there is a finger to follow it stays, a few seconds more at most: it is in no hurry to look away)
     for (let more = 0; more < 6000 && performance.now() - followed < 1500; more += 300) await rest(300);
   }

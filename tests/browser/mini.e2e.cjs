@@ -411,6 +411,8 @@ async function states() {
       then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#portal').click({ force: true }); }, settle: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
     { name: 'the introduction, behind the mailbox', screen: 'hello', at: '/?hello&at=street', ready: '.hello-far .h-penny', whole: ['.office-door'] },
     { name: 'the introduction, up against the glass', screen: 'hello', at: '/?hello&at=glass', ready: '.h-penny.pressed', whole: ['.office-door'] },
+    // (and, for a blink, not quite Penny: the glimpse, held to be looked at)
+    { name: 'the introduction, the glimpse', screen: 'hello', at: '/?hello&at=glass&glimpse=hold', ready: '.hello.glimpse', whole: ['.office-door'] },
     { name: 'the introduction, the portal left open', screen: 'hello', at: '/?hello&at=portal', ready: '#hello-portal:not([hidden]):not(:disabled)', wait: 15000, settle: '.h-penny.gone', whole: ['.office-door', '#hello-portal'] },
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },
