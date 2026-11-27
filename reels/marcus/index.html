@@ -86,8 +86,8 @@
       </svg>
       <h1>correspondence<span>.lol</span></h1>
 
-      <!-- Still being built: a stamp in the top left corner, a sleepy cone on it, breathing, and the words. Nothing to press. -->
-      <p id="building" class="building">
+      <!-- Still being built: a stamp in the top left corner, a sleepy cone on it, breathing, and the words. Pressed, it opens what is still being built: scene one, the Dead Letter Office, out of the story until it is ready (penny/penny.js). -->
+      <a id="building" class="building" href="/?office" aria-label="Under construction: scene one, the Dead Letter Office">
         <svg viewBox="22 12 76 96" aria-hidden="true">
           <text class="z" x="72" y="34">z</text><text class="z two" x="72" y="34">z</text><text class="z three" x="72" y="34">z</text>
           <g class="cone">
@@ -98,8 +98,8 @@
             <rect class="cone-foot" x="30" y="97" width="60" height="7" rx="3.5"/>
           </g>
         </svg>
-        <span class="building-words">under construction</span>
-      </p>
+        <span class="building-words" aria-hidden="true">under construction</span>
+      </a>
 
       <!-- Who this device is: a face in the top right corner, and nothing written beside it. -->
       <section id="me" class="me-corner" aria-label="Your account" hidden>
@@ -981,7 +981,7 @@
         <button type="button" id="reel-next" class="reel-next" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>Swipe up</button>
         <p id="reel-said" class="reel-said" aria-live="polite"></p>
         <p id="reel-comment" class="reel-comment" hidden><i aria-hidden="true"></i><span>Go get that paper boiiiii!</span></p>
-        <p class="reel-who"><span class="reel-avatar" aria-hidden="true">MP</span><strong>marcus.pell</strong><span class="reel-follow" aria-hidden="true">Follow</span></p>
+        <p class="reel-who"><span class="reel-avatar" aria-hidden="true">MP</span><strong>marcus.pell</strong><button type="button" id="reel-follow" class="reel-follow" aria-pressed="false"><span>Follow</span></button></p>
         <p id="reel-paid" class="reel-paid" hidden>Paid partnership with Penny’s Energy</p>
         <div id="reel-cap" class="reel-cap">
           <p>Real talk about who gets to climb 🪜<span class="reel-cap-dots"> …</span><span class="reel-cap-rest" hidden> Not everyone starts on the same rung. Stay humble, stay hungry, stay hydrated. <span class="reel-tags">#Gratitude #Mindset #StepByStep #RiseAndGrind</span> <span class="reel-ad">#ad</span></span></p>

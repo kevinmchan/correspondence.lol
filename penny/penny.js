@@ -4,7 +4,7 @@
 // comes from its seal, on the five notes the rest of the app keeps to. Every
 // screen it is on (the home page, the map, its story) hums through here.
 
-import { WATCHED_KEY } from './marcus.js';
+import { FOLLOW_KEY, WATCHED_KEY } from './marcus.js';
 import { audio, holdMusic, isMuted, noise } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
 import { A4, A5, C5, C6, D5, E5, G4, G5 } from './notes.js';
@@ -55,11 +55,19 @@ export const setDot = () => save(DOT_KEY, true);
 // beginning; play goes on from here (home.js), and once the first places have
 // been walked, play is a board of your own.
 const STORY_KEY = 'penny:story:v1';
-export const STORY = ['hello', 'office', 'slow', 'walk'];
-const STORY_AT = { hello: '/?hello', office: '/?office', slow: '/?slow', walk: '/?walk' };
+// Scene one, the Dead Letter Office (/?office), is out of it for now: it is not
+// ready, and is reached from the stamp in the home page's corner (the owner, 27
+// November 2026: "remove office from the story flow. I don't think it's ready.
+// Make it accessible from somewhere else"). The introduction's portal leads
+// straight to scene two, and anybody left in the office goes on from there.
+export const STORY = ['hello', 'slow', 'walk'];
+const STORY_AT = { hello: '/?hello', slow: '/?slow', walk: '/?walk' };
 export const BEGINNING = STORY_AT.hello;
 // (somebody part of the way along the walk before this was kept is on the walk)
-export const storyReached = () => (STORY.includes(load(STORY_KEY)) ? load(STORY_KEY) : placeReached() > 0 ? 'walk' : null);
+export const storyReached = () => {
+  const kept = load(STORY_KEY) === 'office' ? 'slow' : load(STORY_KEY); // (left in the office when it was in the story: on from the scene after it)
+  return STORY.includes(kept) ? kept : placeReached() > 0 ? 'walk' : null;
+};
 export function reach(scene) {
   if (STORY.indexOf(scene) > STORY.indexOf(storyReached())) save(STORY_KEY, scene);
 }
@@ -78,6 +86,7 @@ const STORY_KEYS = [
   STORY_KEY, WALKED_KEY, PLACE_KEY, DOT_KEY, 'penny:sound:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1',
   'correspondence:energy:v1', 'correspondence:meadow:v1', 'correspondence:thanks:v1', // (the owner: "reset the energy too")
   WATCHED_KEY, // (Marcus Pell's reel, watched: with the energy gone, it is to be found again)
+  FOLLOW_KEY, // (and Marcus followed: he is met again before he is in the world)
 ];
 export const storyBegun = () => STORY_KEYS.some((key) => load(key) != null);
 export const forgetStory = () => STORY_KEYS.forEach((key) => save(key, null));

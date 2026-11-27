@@ -408,7 +408,7 @@ async function states() {
     { name: 'the profile, starting the story over: asked first', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'slow' }, ready: '#me-edit',
       then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#me-edit').click(); await page.locator('#story-again').click(); }, settle: 'dialog.ask[open]' },
     // How the story is reached (README): play part way through it goes on with it; the portal goes back to the beginning.
-    { name: 'home, part way through the story: play goes on with it', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'office' }, ready: '#play[href="/?office"]:not([hidden])' },
+    { name: 'home, part way through the story: play goes on with it', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'slow' }, ready: '#play[href="/?slow"]:not([hidden])' },
     { name: 'the introduction, come to through the portal on the home page', screen: 'hello', at: '/', ready: '#portal',
       then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#portal').click({ force: true }); }, settle: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
     { name: 'the introduction, behind the mailbox', screen: 'hello', at: '/?hello&at=street', ready: '.hello-far .h-penny', whole: ['.office-door'] },
@@ -532,6 +532,12 @@ async function states() {
     { name: 'Marcus Pell\'s reel, shared where there is no share sheet: the link copied, said beside the rail', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', settle: '#reel-shared:not(:empty)', whole: ['#reel-shared', '#reel-share'],
       init: () => { Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true }); },
       then: async (page) => { await lines(page, 3); await page.locator('#reel-share').click(); } },
+    // Following him (penny/reel.js): the chip beside his name, filled in; and him in the world, behind the home page (penny/wander.js).
+    { name: 'Marcus Pell\'s reel, followed', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: async (page) => { await lines(page, 2); await page.locator('#reel-follow').click(); }, settle: '#reel-follow[aria-pressed="true"]', whole: ['#reel-follow', '#reel-said', '#reel-more'] },
+    { name: 'home, the feed, with Marcus Pell followed and about on the map behind it', screen: 'home', at: '/', storage: { ...ACCOUNT, 'reel:marcus:follow:v1': true }, server: rooms([]), ready: '.wander.here', settle: '#feed-empty:not([hidden])' },
+    { name: 'home, the lobby, with Marcus Pell followed, in the dark', screen: 'home', at: '/', storage: { ...STREET, 'reel:marcus:follow:v1': true, 'correspondence:theme:v1': 'dark' }, ready: '.wander.here', settle: '#rooms .street li' },
+    // The home page with more air (the owner, 27 November 2026): the feed's tiles and the lobby's, each with room round it, on every phone.
+    { name: 'home, with air: the feed full, and the stamp in the corner that opens scene one', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR }, server: rooms(GAMES), ready: '.feed-reel', then: coneClear },
     { name: 'Marcus Pell\'s reel, the longest line said', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 12), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, its sponsor named, and the partnership said', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 10), settle: '#reel-paid:not([hidden])', whole: ['#reel-said', '#reel-paid', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, its caption opened, #ad and all', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: async (page) => { await lines(page, 10); await page.locator('#reel-more').click(); }, settle: '.reel-cap.open', whole: ['.reel-cap', '#reel-more'] },

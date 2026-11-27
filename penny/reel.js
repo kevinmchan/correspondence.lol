@@ -14,7 +14,9 @@
 // Swipe up (scroll, or the arrow keys) for each line. The last line, then the
 // comment under it; then from the top again. The share mark on the rail opens
 // the phone's share sheet with the reel's address (/reels/marcus/), whose
-// preview in a message is a frame of it (reels/reels.js).
+// preview in a message is a frame of it (reels/reels.js). Follow, beside his
+// name, puts him in the world: he wanders about behind the home page
+// (penny/wander.js) for as long as he is followed.
 //
 // Sound. Marcus speaks as the app's people do, without words: a babble shaped
 // by the vowels of what he says (an "a" opens his mouth, an "ee" thins it, a
@@ -26,8 +28,8 @@
 // app's own music stands aside while the reel is up.
 
 import { audio, holdMusic, isMusicOff, isMuted } from '/postmarks/sound.js';
-import { WATCHED_KEY, body, mouthPath } from './marcus.js';
-import { save } from '/shared/identity.js';
+import { FOLLOW_KEY, WATCHED_KEY, body, mouthPath } from './marcus.js';
+import { load, save } from '/shared/identity.js';
 
 // --- His room: cold, tidy, lit for camera. The chart on the wall is his. ----------------------
 // (The picture is 360 by 640 and fills the phone, cut at the sides on a tall one: what matters is in the middle.)
@@ -545,6 +547,19 @@ export function mount(root, life) {
     } catch {
       tell(address);
     }
+  });
+
+  // Follow: followed, he is in the world, wandering about behind the home page (penny/wander.js). Pressed again, he is not.
+  const follow = root.querySelector('#reel-follow');
+  const showFollow = () => {
+    const on = load(FOLLOW_KEY) === true;
+    follow.setAttribute('aria-pressed', String(on));
+    follow.firstElementChild.textContent = on ? 'Following' : 'Follow';
+  };
+  showFollow();
+  follow.addEventListener('click', () => {
+    save(FOLLOW_KEY, load(FOLLOW_KEY) === true ? null : true);
+    showFollow();
   });
 
   // His caption: its first line, and "more" for the rest (where the #ad is).

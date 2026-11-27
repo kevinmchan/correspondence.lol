@@ -1142,7 +1142,8 @@ html:has(.screen:not(.going) .tabs:not([hidden])) { scrollbar-gutter: stable; }
 /* --- Still being built: a stamp in the top left corner of the home page --------
    Opposite the face, at the same height, in the room left of the logo and
    above the title. On it, a traffic cone asleep (it breathes, and a z drifts
-   up now and then) and the words. Nothing to press. */
+   up now and then) and the words. Pressed, it opens what is still being built:
+   scene one, out of the story until it is ready (penny/penny.js). */
 :root { --stamp: color-mix(in srgb, var(--paper), #ffffff 55%); }
 :root[data-theme="dark"] { --stamp: color-mix(in srgb, var(--paper), var(--ink) 13%); }
 main:has(> .building) { position: relative; }
@@ -1160,7 +1161,9 @@ main:has(> .building) { position: relative; }
   transform: rotate(-4deg);
 }
 .building::before { content: ""; position: absolute; inset: calc(var(--r) * 1.6); border: 1px solid var(--line); border-radius: 3px; pointer-events: none; }
-.building { display: grid; grid-template-columns: 2.4rem 1fr; align-items: center; gap: 0.15rem; }
+.building { display: grid; grid-template-columns: 2.4rem 1fr; align-items: center; gap: 0.15rem; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; transition: transform 160ms ease; }
+.building:active { transform: rotate(-4deg) translateY(0.12rem); }
+.building:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .building svg { display: block; width: 100%; height: 3.4rem; overflow: visible; }
 .building-words {
   font-style: italic; font-family: var(--font-letter); font-size: var(--text-fine); line-height: var(--leading-tight);
@@ -1189,3 +1192,32 @@ main:has(> .building) { position: relative; }
   box-shadow: inset 0 -0.22rem 0 rgb(0 0 0 / 0.16); background: #c3cdd3;
 }
 .feed-reel .poster svg { display: block; width: 100%; height: 100%; }
+
+/* --- The home page, with air ------------------------------------------------------ */
+/* More room round everything on the home page (the owner, 27 November 2026: "give
+   the Home Screen some more air. It's a little cramped"): a wider margin at the
+   sides, more between the play button, the bar and the tabs, more between the tabs
+   and what is under them, and more between and inside the tiles. */
+.screen-home main {
+  padding-left: max(1.35rem, env(safe-area-inset-left));
+  padding-right: max(1.35rem, env(safe-area-inset-right));
+}
+.screen-home main > .stack { gap: 1.1rem; }
+.screen-home .play-wide { margin: 1rem 0 1rem; }
+.screen-home .home-energy { margin-bottom: 1.35rem; }
+.screen-home .tabs { gap: 0.9rem; margin-bottom: 0.5rem; }
+.screen-home .stack .stack { gap: 1.1rem; }
+.screen-home .feed { gap: 1rem; }
+.screen-home .feed-item { padding: 0.95rem 0.95rem; gap: 0.9rem; }
+.screen-home .menu { gap: 1rem; }
+.screen-home .menu-button { padding: 0.95rem 1.05rem; }
+
+/* Marcus Pell in the world, once followed (penny/wander.js): small, on the map
+   behind the home page, under everything on it. Nothing to press. */
+.wander { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
+.wander.here { opacity: 1; }
+.wander-marcus { position: absolute; left: 0; top: 0; width: 2.4rem; height: auto; aspect-ratio: 236 / 548; transform-origin: 50% 100%; overflow: visible; }
+:root[data-theme="dark"] .wander-marcus { filter: brightness(0.86); }
+@media (prefers-reduced-motion: no-preference) {
+  .screen.opening main > .wander { animation: none; }
+}

@@ -12,6 +12,11 @@ const range = (n) => [...Array(n).keys()];
 
 // Whether his reel has been watched to its end (penny/reel.js): until then it waits in the feed (home.js).
 export const WATCHED_KEY = 'reel:marcus:watched:v1';
+// Whether he is followed, from his reel (penny/reel.js): followed, he is in the world, wandering
+// about behind the home page (penny/wander.js). The owner, 27 November 2026: "add the ability to
+// follow Marcus from the reel. If you follow him, he gets added to the world and can roam about in
+// the background."
+export const FOLLOW_KEY = 'reel:marcus:follow:v1';
 
 // An eye that looks into the lens, with the ring light in it as a small ring; a lid to blink with.
 const eye = (x, y, r, id) => `
