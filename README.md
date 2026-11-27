@@ -47,6 +47,12 @@ starts, jumps back, and there it is; looks at it, and at you, and jumps in.
 The portal stays open, and you are expected to follow; nothing hurries you. It
 leads, for now, to scene one.
 
+**Its tempo** (the owner, 27 November 2026: a little quicker, above all on
+the way up the street; `PACE` in `penny/hello.js`). Every pause in the scene
+is a tenth shorter than it is written; from the mailbox to the glass, pauses
+are shorter by more than a quarter and steps by a seventh. With that, Penny
+gets from hiding to the glass in about 23 seconds where it took 29.
+
 **The glimpse** (the owner, 27 November 2026: not at the close-up, but
 earlier; what it means is in the story doc, "The tone"). Early on, while
 Penny is alone going through what it feels (just after it is glad), for a

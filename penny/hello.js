@@ -214,9 +214,16 @@ export function mount(root, life) {
 
   // A rest. Whatever was waiting on it when the scene is left never goes on.
   class Left extends Error {}
+  // The scene's tempo (the owner, 27 November 2026: a little quicker, above
+  // all on the way up the street). Every rest is a little shorter; from the
+  // mailbox to the glass, rests are shorter still and its steps quicker.
+  const PACE = { rest: 0.9, approachRest: 0.72, approachStep: 0.85 };
+  let restPace = PACE.rest;
+  let stepPace = 1;
+  const approaching = (now) => { restPace = now ? PACE.approachRest : PACE.rest; stepPace = now ? PACE.approachStep : 1; };
   const rest = (ms) => new Promise((done, stop) => {
     if (life.over) { stop(new Left()); return; }
-    life.setTimeout(done, still ? Math.min(ms, 60) : ms);
+    life.setTimeout(done, still ? Math.min(ms, 60) : ms * restPace);
     life.onEnd(() => stop(new Left()));
   });
 
@@ -331,7 +338,7 @@ export function mount(root, life) {
 
   // One step, of one kind, from one place to the next.
   let paces = 0; // steps taken: which foot, or which corner, is next
-  function stride(kind, a, b, { height = 9, ms = STEP[kind].ms, tilt = 13 } = {}) {
+  function stride(kind, a, b, { height = 9, ms = STEP[kind].ms * stepPace, tilt = 13 } = {}) {
     const side = paces++ % 2 ? 1 : -1;
     return animate(ms, (p) => {
       const arc = Math.sin(Math.PI * p);
@@ -898,11 +905,15 @@ export function mount(root, life) {
       model().catch((error) => { if (!(error instanceof Left)) console.error(error); });
       await touched;
       await knockedBack();
+      approaching(true);
       await peeking(true);
       await coming();
+      approaching(false);
     } else if (from === 'street') {
+      approaching(true);
       await peeking();
       await coming();
+      approaching(false);
     }
     if (from !== 'portal') await atGlass(from === 'glass');
     await opening(from === 'portal');
