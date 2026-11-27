@@ -21,12 +21,27 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
 
 /* The feed's marks: what people thought of it, down the right. */
 .reel-rail {
-  position: absolute; z-index: 2; right: max(0.6rem, env(safe-area-inset-right));
+  position: absolute; z-index: 3; /* (over the foot's box, which is as wide as the screen) */ right: max(0.6rem, env(safe-area-inset-right));
   bottom: calc(env(safe-area-inset-bottom, 0px) + 8.5rem);
   display: flex; flex-direction: column; align-items: center; gap: 1rem;
   font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-medium); line-height: var(--leading-none); text-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
 }
-.reel-rail span { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.reel-rail > span, .reel-rail button { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.reel-rail button {
+  min-width: 2.75rem; min-height: 2.75rem; padding: 0; border: 0; background: none; color: #fff; cursor: pointer;
+  font: inherit; text-shadow: inherit; -webkit-tap-highlight-color: transparent;
+}
+.reel-rail button:active svg { transform: scale(0.9); }
+.reel-rail button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 0.6rem; }
+/* What the share did, when there was no share sheet to show: a short line beside the rail, for a while. */
+.reel-shared {
+  position: absolute; z-index: 2; margin: 0; right: calc(max(0.6rem, env(safe-area-inset-right)) + 3.6rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8.9rem);
+  padding: 0.4rem 0.75rem; border-radius: 0.8rem; background: rgb(20 28 36 / 0.78); color: #fff;
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-medium); line-height: var(--leading-snug);
+  user-select: text; -webkit-user-select: text; max-width: 14rem; overflow-wrap: anywhere;
+}
+.reel-shared:empty { display: none; }
 .reel-rail svg { width: 1.9rem; height: 1.9rem; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.25)); }
 
 /* At the foot: what he says, who he is, his caption, his sound. */
@@ -37,14 +52,20 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
   font-family: var(--font-text); text-align: left; text-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
 }
 .reel-low p { margin: 0; }
-.reel-said, .reel-next, .reel-comment { align-self: center; margin-bottom: 0.6rem !important; }
+/* (the foot is a box as wide as the screen: only what is in it takes a touch, not the box) */
+.reel-low { pointer-events: none; }
+.reel-low button, .reel-low .reel-cap, .reel-low .reel-said { pointer-events: auto; }
+.reel-next, .reel-comment { align-self: center; margin-bottom: 0.6rem !important; }
+/* What he says: large, centred on the whole screen and clear of the rail, between his mouth and his name. */
 .reel-said {
-  max-width: 16rem; padding: 0.5rem 0.9rem; border-radius: 1rem;
+  position: absolute; left: max(1rem, env(safe-area-inset-left)); right: max(1rem, env(safe-area-inset-right)); bottom: calc(100% + 2.5rem);
+  width: fit-content; max-width: min(21rem, calc(100% - 2 * (max(0.6rem, env(safe-area-inset-right)) + 3.8rem))); margin: 0 auto !important; box-sizing: border-box; /* (clear of the rail on either side, so centred on the screen) */
+  padding: 0.65rem 1.1rem; border-radius: 1.2rem;
   background: rgb(255 253 248 / 0.93); color: #22303c; text-shadow: none; text-align: center; text-wrap: balance;
-  font-size: var(--text-small); font-weight: var(--weight-medium); line-height: var(--leading-snug);
+  font-size: var(--text-lead); font-weight: var(--weight-medium); line-height: var(--leading-snug);
 }
 .reel-said:empty { display: none; }
-.reel-said.big { font-family: var(--font-letter); font-size: var(--text-title); font-weight: var(--weight-regular); padding: 0.6rem 1.1rem; }
+.reel-said.big { font-family: var(--font-letter); font-size: var(--text-large); font-weight: var(--weight-regular); padding: 0.7rem 1.3rem; }
 .reel-said.in { animation: reel-rise 450ms cubic-bezier(0.2, 0.7, 0.2, 1); }
 @keyframes reel-rise { from { transform: translateY(1.6rem); opacity: 0; } to { transform: none; opacity: 1; } }
 .reel-next {

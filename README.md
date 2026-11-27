@@ -1198,6 +1198,11 @@ white. It is the same in the light and the dark. The words are the owner's, word
   the first, a "Swipe up" that can also be pressed. After the last line comes the comment under it, then the top again.
   "Paid partnership with Penny's Energy" is shown only once the sponsor is named (the punchline: nothing gives it
   away before). His caption shows its first line; "more" opens the rest, with the `#ad` at the end of it.
+- *Sharing.* The share mark on the rail (the one mark there that does something) opens the phone's own share sheet
+  with the reel's address, `/?reel`, which opens it directly for anyone, whatever their energy. Where there is no
+  share sheet (a computer, mostly) the address is copied and "Link copied" is said beside the rail for a while;
+  where it cannot be copied either, the line is the address itself, to be copied by hand. Sharing inside the app,
+  into a room, is not built.
 - *His voice.* No words: a babble shaped by the vowels of what he says (each syllable's vowel picks two formants and
   how open his mouth is; a "p" pops and an "s" hisses), sung to the line's feeling (`LINES`: pitch, pace, the shape
   of the line, a waver, breath), in a triangle wave that faintly rings, as aluminium would. His mouth follows the
