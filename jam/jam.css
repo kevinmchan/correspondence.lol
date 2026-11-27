@@ -201,6 +201,10 @@ dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
 @keyframes drawer-up { from { translate: 0 100%; } to { translate: 0 0; } }
 .jam-drawer header { flex: none; display: flex; align-items: center; justify-content: space-between; }
 .jam-drawer header button.quiet { width: 2.75rem; height: 2.75rem; }
+/* Its X, and the tick it turns into once another sound has been chosen: one fades into the other. */
+@media (prefers-reduced-motion: no-preference) { #jam-drawer-close path { transition: opacity 280ms ease; } }
+#jam-drawer-close .done, .jam-drawer.chosen #jam-drawer-close .shut { opacity: 0; }
+.jam-drawer.chosen #jam-drawer-close .done { opacity: 1; }
 .jam-drawer h2 { margin: 0; padding-left: 0.3rem; font-family: var(--font-letter); font-size: var(--text-lead); font-weight: var(--weight-regular); color: var(--ink); text-transform: none; letter-spacing: 0; }
 /* Record: while it listens it shows a square to stop it, and a ring in the instrument's colour goes once round it in
    the time it listens for. */

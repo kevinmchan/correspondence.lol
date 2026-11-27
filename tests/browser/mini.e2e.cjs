@@ -430,6 +430,7 @@ async function states() {
         list.scrollTop = top.offsetTop - rows[0].offsetTop;
       });
     }, settle: '.jam-sounds input:focus' },
+    { name: 'the music maker, another sound chosen in the drawer, its X a tick', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('.jam-sounds .own').nth(2).click(); }, settle: 'dialog#jam-drawer.chosen' },
     { name: 'the music maker, a sound being deleted', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('.jam-sounds button.quiet').first().click(); }, settle: 'dialog.ask[open]' },
     // (one of the four instruments in another's place: the bells' button wears the drums' mark and name, and the drawer's button is lit)
     { name: 'the music maker, an instrument playing another instrument', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('.jam-sounds .tile').nth(3).click(); await page.locator('#jam-drawer-close').click(); },

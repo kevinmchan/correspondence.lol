@@ -1105,11 +1105,15 @@ async function main() {
       await page.waitForSelector('dialog#jam-drawer[open]');
       assert.deepEqual(await page.locator('.jam-sounds .own').allInnerTexts(), ['Bells', 'Keys', 'Bass', 'Drums']);
       assert.deepEqual(await pressed(), [true, false, false, false]);
+      const close = page.locator('#jam-drawer-close');
+      assert.equal(await close.getAttribute('aria-label'), 'Close', 'nothing chosen yet: an X');
       // another instrument in the bells' place: the button wears its mark and its name, the rows are its rows, and the
       // drawer's own button is lit; and then the bells themselves again
       await page.locator('.jam-sounds .tile').nth(3).click();
       assert.deepEqual(await pressed(), [false, false, false, true]);
       assert.deepEqual(await layers(), ['Drums', 'Keys', 'Bass', 'Drums']);
+      assert.equal(await close.getAttribute('aria-label'), 'Done', 'another chosen: a tick');
+      assert.equal(await page.locator('dialog#jam-drawer.chosen').count(), 1);
       assert.equal(await page.locator('.layer').first().getAttribute('data-own'), 'false', 'an instrument is not a sound of your own');
       assert.equal(await page.locator('.layer').first().locator('svg').innerHTML(), await page.locator('.layer').nth(3).locator('svg').innerHTML(), 'the drums\' mark');
       assert.match(await page.locator('.jam-board .pad').nth(48).getAttribute('aria-label'), /^Kick/, 'the rows are the drums\' rows');
@@ -1118,6 +1122,7 @@ async function main() {
       await page.locator('.jam-sounds .tile').first().click();
       assert.deepEqual(await layers(), ['Bells', 'Keys', 'Bass', 'Drums']);
       assert.equal(await mic.getAttribute('aria-pressed'), 'false');
+      assert.equal(await close.getAttribute('aria-label'), 'Close', 'the one it opened with again: an X again');
       // recording: the loop stops to listen and goes on afterwards, and the new sound is in the bells' place
       await page.locator('#jam-record').click();
       await page.waitForSelector('#jam-record.hearing');

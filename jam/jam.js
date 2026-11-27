@@ -437,9 +437,13 @@ export function mount(root, life) {
   // The drawer: the instrument itself (or, for a place that is no instrument's, nothing), then the other
   // instruments, then every sound recorded, newest first. `one` is a recorded sound; or else `id` is what is kept
   // for the place (null for its own) and `plays` the instrument that is, if any.
+  let opened = null; // what was in the place when the drawer opened: anything else chosen, and its X is a tick
   function showSounds() {
     const kind = DECK[layer];
     el.drawer.style.setProperty('--c', kind.colour);
+    const chosen = el.drawer.open && slots[layer] !== opened;
+    el.drawer.classList.toggle('chosen', chosen);
+    $('jam-drawer-close').setAttribute('aria-label', chosen ? 'Done' : 'Close');
     const row = ({ one = null, id = one?.id ?? null, plays = null }) => {
       const li = document.createElement('li');
       const tile = document.createElement('button');
@@ -517,8 +521,9 @@ export function mount(root, life) {
   }
   const openDrawer = () => {
     oops(el.micError, '');
-    showSounds();
+    opened = slots[layer];
     el.drawer.showModal();
+    showSounds();
   };
   el.mic.addEventListener('click', openDrawer);
   more.addEventListener('click', () => {
