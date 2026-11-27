@@ -13,7 +13,7 @@ the story between them as pauses: see [the story](https://claude.ai/artifact/Duc
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/?reel` (`reel.js`, with Marcus himself in `marcus.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -1178,6 +1178,40 @@ their rule, as above):
 The rule is not to be tuned again on anyone's real picks. Many devices, or
 many strategies, each reaching ×20 now and then, are many tests: what is found
 by exploring is to be confirmed afresh on one device, from the start.
+
+## Reels
+
+What a reel means, and who Marcus Pell is, are in the story doc ("One way they could look outside the game"). How it is built:
+
+**Marcus Pell's reel** (`/?reel`, `penny/reel.js`, `penny/reel.css`; the owner, 27 November 2026). Marcus, an aluminium
+extension ladder with a face (`penny/marcus.js`), films himself in his home office. The whole phone is his video: his
+room is one picture, 360 by 640, cut to fill whatever phone it is on (`xMidYMax slice`: on a tall phone its sides go,
+never his face), and the feed's marks (what people thought of it, his name, his caption, his sound) lie over it in
+white. It is the same in the light and the dark. The words are the owner's, word for word, split only into beats.
+
+- *A line at a time.* Swipe up, scroll, or the arrow keys, for the next line; not quicker than one every 450 ms. Before
+  the first, a "Swipe up" that can also be pressed. After the last line comes the comment under it, then the top again.
+  "Paid partnership with Penny's Energy" is shown only once the sponsor is named (the punchline: nothing gives it
+  away before). His caption shows its first line; "more" opens the rest, with the `#ad` at the end of it.
+- *His voice.* No words: a babble shaped by the vowels of what he says (each syllable's vowel picks two formants and
+  how open his mouth is; a "p" pops and an "s" hisses), sung to the line's feeling (`LINES`: pitch, pace, the shape
+  of the line, a waver, breath), in a triangle wave that faintly rings, as aluminium would. His mouth follows the
+  syllables whether or not there is sound. The comment is in somebody else's voice.
+- *The score.* A small sound for each line, made for its feeling (`SCORE` in `soundsFor`): a shop door, a till that
+  sags, a sincere pad that stops dead before "Which is why I'm excited…", a drumroll, a jingle much too pleased with
+  itself, a drone under the small print, a can, a rimshot on the pun, and a wink. His voice and the little sounds are
+  the app's sound effects; the pad, drumroll, drone, riser and jingle are its music. Each follows its switch in the
+  profile (`isMuted`, `isMusicOff` in `postmarks/sound.js`), and the app's own music stands aside while the reel is
+  up (`holdMusic`). A line asked for before the first touch has woken the engine waits a moment for it.
+- *Alive.* He breathes, blinks, nods with his words, lifts his brows on the sincere lines, and the camera is held in a
+  hand. His tell, in the quiet between lines and never noticed: he looks down and hauls his lower section up after
+  him, with the slide and click of aluminium. With reduced motion he is drawn at rest and only his mouth moves.
+
+**Where it is found** (the owner, 27 November 2026: "it shouldn't be an interruption. I want the trigger for it
+showing up in your feed to be passing the energy threshold"). In the feed on the home page, under what is waiting
+on you and never counted with it, once half a bar of energy has been earned (`REEL_AT` and `reelFound` in
+`shared/energy.js`): a card with a tall poster of his face where the others have a square tile. Nothing else leads
+to it, and nothing announces it. Starting the story over forgets energy, and with it the card.
 
 ## Seasons
 

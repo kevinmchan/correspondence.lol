@@ -2832,6 +2832,40 @@ async function main() {
       assert.equal(await page.locator('.sky .penny-back').getAttribute('href'), '/', 'and from there the way back leads home');
     }),
 
+    check('Marcus Pell\'s reel: in the feed once half a bar of energy is earned and never counted with what is waiting; a line at a time, swiped up; the partnership said only once the sponsor is named; then the comment, then from the top', { storage: { ...ACCOUNT, 'home:tab:v1': 'feed', 'correspondence:energy:v1': { earned: 34, spent: 0, boards: [] } } }, async (page) => {
+      await page.goto(`${origin}/`);
+      await page.waitForSelector('#panel-feed:not([hidden])');
+      assert.equal(await page.locator('#feed-reels').isHidden(), true, 'not before half a bar');
+      await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 35, spent: 0, boards: [] })));
+      await page.reload();
+      await page.waitForSelector('.feed-reel');
+      assert.equal(await page.locator('#feed-count').isHidden(), true, 'it is not something waiting on you');
+      await page.locator('.feed-reel').click();
+      await page.waitForSelector('.screen-reel .reel-cam');
+      await page.waitForFunction(() => document.querySelectorAll('#screens .screen').length === 1);
+      assert.equal(await page.locator('#reel-said').textContent(), '', 'nothing said until it is asked for');
+      assert.equal(await page.locator('#reel-next').isVisible(), true, 'and the way on is shown');
+      const said = [];
+      const paidAt = [];
+      for (let i = 0; i < 19; i += 1) {
+        if (i === 0) await page.locator('#reel-next').click();
+        else if (i === 1) { await page.mouse.move(200, 300); await page.mouse.wheel(0, 120); } // (a scroll, as a swipe up)
+        else await page.keyboard.press('ArrowDown');
+        await page.waitForFunction((n) => document.querySelector('#reel-progress').style.transform.includes(`${n}`), String(((i % 18) + 1) / 18).slice(0, 5));
+        said.push(await page.locator('#reel-said').textContent());
+        if (await page.locator('#reel-paid').isVisible()) paidAt.push(i);
+        await page.waitForTimeout(470); // (one line at a time: not quicker than a line can start)
+      }
+      assert.equal(said[0], 'I opened up Wealthmart');
+      assert.equal(said[9], 'Penny’s Energy');
+      assert.equal(said[16], 'don’t fall out of step');
+      assert.equal(paidAt[0], 9, 'the partnership is said only once the sponsor is named');
+      assert.equal(said[17], '', 'after the last line, the comment');
+      assert.equal(said[18], 'I opened up Wealthmart', 'and then from the top');
+      await page.locator('.reel .penny-back').click();
+      await page.waitForSelector('.screen-home .feed-reel');
+    }),
+
     check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {
       await page.goto(`${origin}/?sky`);
       await page.waitForSelector('.sky-view');

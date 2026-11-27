@@ -52,6 +52,16 @@ if (!LISTING) {
 
 const PRESS = 44; // the least a thing to press may be, each way
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+// Half a bar of energy: what it takes for Marcus Pell's reel to be in the feed (shared/energy.js).
+const HALF_A_BAR = { 'correspondence:energy:v1': { earned: 35, spent: 0, boards: [] } };
+// His reel, a line at a time, as far as `n` (penny/reel.js: not quicker than a line can start).
+async function lines(page, n) {
+  await page.locator('.reel').focus();
+  for (let i = 0; i < n; i += 1) {
+    await page.keyboard.press('ArrowDown');
+    await sleep(480);
+  }
+}
 
 // What the server says, for the screens that ask it something.
 const GAMES = [listed({ last_player: 1, found: 2, hearts: 2 }), listed({ mode: 'trial', finished: 2 }), listed({ mode: 'phrase', mine: 'playing', finished: 1 }), listed({ last_player: 0 }), listed({ status: 'won', last_player: 1, moves: 9, found: 5 })];
@@ -231,6 +241,8 @@ async function states() {
     { name: 'home, the lobby, at its foot', screen: 'home', at: '/', storage: STREET, ready: '#rooms .street li', then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '#portal' },
     { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
     { name: 'home, the feed with nothing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
+    { name: 'home, the feed with things waiting, and Marcus Pell\'s reel under them', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR }, server: rooms(GAMES), ready: '.feed-item:not(.feed-reel)', settle: '.feed-reel' },
+    { name: 'home, the feed with nothing waiting but Marcus Pell\'s reel', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR }, server: rooms([]), ready: '#feed-empty:not([hidden])', settle: '.feed-reel' },
     // (with room above and below the play button, the first thing waiting on you is still on the first screen, unscrolled)
     { name: 'home, play with room round it, and the first thing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item',
       then: async (page) => {
@@ -491,6 +503,12 @@ async function states() {
       then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
+    { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/?reel', ready: '.reel-cam', whole: ['.penny-back', '#reel-next', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, a line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 1), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, the longest line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 12), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, its sponsor named, and the partnership said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 10), settle: '#reel-paid:not([hidden])', whole: ['#reel-said', '#reel-paid', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, its caption opened, #ad and all', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: async (page) => { await lines(page, 10); await page.locator('#reel-more').click(); }, settle: '.reel-cap.open', whole: ['.reel-cap', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, at its end: the comment under it', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 18), settle: '#reel-comment:not([hidden])', whole: ['#reel-comment', '#reel-more'] },
     { name: 'the night, left alone until the way back has gone', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky.idle', wait: 9000, whole: ['.penny-back'] },
     // ...what is kept of it on the home page once it has been found, across the map from the portal...
     { name: 'home, somebody new, with the night kept', screen: 'home', at: '/', storage: { ...NIGHT }, ready: '.tag-kept' },

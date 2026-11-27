@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BAR, FOLK, LARGEST, POST, SMALLEST, bar, earnedOn, folkOf, meadowEarned, finish, fresh, held, most, played, read, spend } from '../shared/energy.js';
+import { BAR, FOLK, LARGEST, POST, REEL_AT, SMALLEST, bar, earnedOn, folkOf, meadowEarned, finish, fresh, held, most, played, read, reelFound, spend } from '../shared/energy.js';
 import { MAX_SIZE, MIN_SIZE } from '../postmarks/game.js';
 
 const at = (size, seed, found, status = 'playing') => ({ size, seed, found, status });
@@ -89,6 +89,15 @@ test('what was saved is made safe: anything broken is a fresh start, never a deb
   }
   const kept = { b: '6:2', p: 3, w: false };
   assert.deepEqual(read({ earned: 4, spent: 1, boards: ['5:1', kept, { b: 7, p: 1, w: true }, { b: '5:2', p: -1, w: false }] }), { earned: 4, spent: 1, boards: [kept] });
+});
+
+test('Marcus Pell\'s reel is found in the feed once half a bar is earned, and stays found', () => {
+  assert.equal(REEL_AT, BAR / 2, 'the middle of the bar');
+  assert.equal(reelFound(fresh()), false);
+  assert.equal(reelFound({ ...fresh(), earned: REEL_AT - 1 }), false, 'not before');
+  assert.equal(reelFound({ ...fresh(), earned: REEL_AT }), true, 'passing it is all it takes');
+  assert.equal(reelFound(spend({ ...fresh(), earned: REEL_AT }, 10).state), true, 'spending does not take it away');
+  assert.equal(reelFound({ ...fresh(), earned: BAR * 3 }), true, 'nor do later bars');
 });
 
 test('the bar is everything earned, about five games for now, and its first fill is the meadow', () => {

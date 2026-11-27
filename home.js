@@ -8,7 +8,8 @@ import { avatar, openProfile, randomLook, savedLook } from '/shared/profile.js';
 import { roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
-import { BAR, ENERGY_KEY, held, read as readEnergy } from '/shared/energy.js';
+import { BAR, ENERGY_KEY, held, read as readEnergy, reelFound } from '/shared/energy.js';
+import { poster as marcusPoster } from '/penny/marcus.js';
 import { earned as meadowOwned, wear, wearing } from '/shared/meadow.js';
 import { ASK, BEGINNING, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached, playAt } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
@@ -136,7 +137,7 @@ export function mount(root, life) {
   const TAB_KEY = 'home:tab:v1';
   const FEED_KEY = 'home:feed:v1'; // the feed as it last was, to show at once
   const tabs = { bar: $('tabs'), feed: $('tab-feed'), lobby: $('tab-lobby'), feedPanel: $('panel-feed'), lobbyPanel: $('panel-lobby'), count: $('feed-count') };
-  const feed = { list: $('feed'), empty: $('feed-empty'), note: $('feed-empty-note') };
+  const feed = { list: $('feed'), empty: $('feed-empty'), note: $('feed-empty-note'), reels: $('feed-reels') };
   const MODE_TILES = { move: '#f08a76', running: '#7cc46a', invite: '#9ad3f7' };
   const modeIcon = (mode) => document.getElementById('screen-room').content.querySelector(`.mode[data-mode="${mode}"] svg`)?.cloneNode(true) ?? document.createElement('span');
   let tab = null;
@@ -206,6 +207,15 @@ export function mount(root, life) {
       return li;
     }));
     lightRooms();
+    // Marcus Pell's reel, once half a bar of energy is earned: under what is waiting, and not counted with it.
+    const reel = reelFound(readEnergy(load(ENERGY_KEY)));
+    feed.reels.hidden = !reel;
+    if (!reel) feed.reels.replaceChildren();
+    else if (!feed.reels.firstChild) {
+      feed.reels.innerHTML = `<li><a href="/?reel" class="feed-item feed-reel"><span class="poster" aria-hidden="true">${marcusPoster()}</span>`
+        + '<span class="words"><em>Reel</em><strong>marcus.pell</strong><span>Real talk about who gets to climb 🪜</span></span>'
+        + '<span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg></span></a></li>';
+    }
     feed.empty.hidden = items.length > 0;
     feed.note.textContent = recentRooms().length === 0 ? 'Open or join a room in the lobby to play with friends.'
       : loaded ? 'Nothing is waiting on you. Start a game in one of your rooms.' : 'Looking in your rooms…';
