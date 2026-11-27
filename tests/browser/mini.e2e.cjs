@@ -504,6 +504,8 @@ async function states() {
     { name: 'Penny’s Radio, reading about it, after starting over', screen: 'taste', at: '/jam/?taste', storage: { ...told, 'jam:taste:v1': meters.carried }, ready: '.radio .dot',
       then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
+    { name: 'the meadow\'s discovery, shot one: the meadow, before the spark', screen: 'wake', at: '/?wake', ready: '.wake-meadow', whole: ['.penny-back'] },
+    { name: 'the meadow\'s discovery, shot one, over: the stone breathing', screen: 'wake', at: '/?wake&at=after', ready: '.wake[data-shot="over"]', whole: ['.penny-back'] },
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
     { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', whole: ['.penny-back', '#reel-play', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, opened from a link to it, as its preview in a message leads to it', screen: 'reel', at: '/reels/marcus/', ready: '#reel-play', whole: ['#reel-play'],

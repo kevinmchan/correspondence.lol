@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="/penny/slow.css">
   <link rel="stylesheet" href="/room/room.css">
   <link rel="stylesheet" href="/penny/sky.css">
+  <link rel="stylesheet" href="/penny/wake.css">
   <link rel="stylesheet" href="/penny/tags.css">
   <link rel="stylesheet" href="/penny/reel.css">
   <link rel="stylesheet" href="/room/worlds.css">
@@ -60,7 +61,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky|wake)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -976,6 +977,47 @@
         <p class="reel-audio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg>marcus.pell · Original audio</p>
       </div>
       <div class="reel-bar" aria-hidden="true"><i id="reel-progress"></i></div>
+    </main>
+  </template>
+
+  <template id="screen-wake">
+    <!-- The discovery, shot one: the spark that got away. No words: see penny/wake.js. -->
+    <main class="wake">
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <p class="sr-only">Penny, in a meadow, watching a spark from its seal run through the grass to a stepping stone. Afterwards, hold a finger still on the stone to light it again.</p>
+      <svg class="wake-meadow" viewBox="0 0 200 400" preserveAspectRatio="xMidYMax slice" role="img" aria-label="A meadow in the sun, and a stepping stone in the grass. Penny stands at the edge of it.">
+        <defs>
+          <linearGradient id="wake-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sky-top"/><stop offset="1" class="sky-low"/></linearGradient>
+          <linearGradient id="wake-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="grass-far"/><stop offset="1" class="grass-near"/></linearGradient>
+          <radialGradient id="wake-sun"><stop offset="0" class="sun-in"/><stop offset="1" class="sun-out"/></radialGradient>
+          <filter id="wake-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+        </defs>
+        <rect class="wake-sky" x="-100" y="-200" width="400" height="420" fill="url(#wake-sky)"/>
+        <circle class="wake-sun-glow" cx="166" cy="92" r="40" fill="url(#wake-sun)"/>
+        <circle class="wake-sun" cx="166" cy="92" r="13"/>
+        <path class="wake-hill" d="M-100 214C-40 196 0 188 46 196S120 184 160 194S230 200 300 206V240H-100Z"/>
+        <rect class="wake-grass" x="-100" y="204" width="400" height="200" fill="url(#wake-grass)"/>
+        <ellipse class="wake-cloud-shade" cx="40" cy="300" rx="70" ry="16"/>
+        <g class="wake-tufts"><path d="M52 248l-1.6 -4.6M52 248l0.2 -5.6M52 248l1.8 -4.2"/><path d="M86 232l-1.6 -4.6M86 232l0.2 -5.6M86 232l1.8 -4.2"/><path d="M140 244l-1.6 -4.6M140 244l0.2 -5.6M140 244l1.8 -4.2"/><path d="M172 240l-1.6 -4.6M172 240l0.2 -5.6M172 240l1.8 -4.2"/><path d="M24 262l-1.6 -4.6M24 262l0.2 -5.6M24 262l1.8 -4.2"/><path d="M76 286l-1.6 -4.6M76 286l0.2 -5.6M76 286l1.8 -4.2"/><path d="M160 296l-1.6 -4.6M160 296l0.2 -5.6M160 296l1.8 -4.2"/><path d="M118 318l-1.6 -4.6M118 318l0.2 -5.6M118 318l1.8 -4.2"/><path d="M44 330l-1.6 -4.6M44 330l0.2 -5.6M44 330l1.8 -4.2"/><path d="M190 286l-1.6 -4.6M190 286l0.2 -5.6M190 286l1.8 -4.2"/><path d="M100 262l-1.6 -4.6M100 262l0.2 -5.6M100 262l1.8 -4.2"/><path d="M66 348l-1.6 -4.6M66 348l0.2 -5.6M66 348l1.8 -4.2"/><path d="M136 356l-1.6 -4.6M136 356l0.2 -5.6M136 356l1.8 -4.2"/></g>
+        <g class="wake-daisies"><g class="wake-daisy" transform="translate(40 236) scale(0.8)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(70 252) scale(0.9)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(160 228) scale(0.7)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(178 262) scale(1)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(96 312) scale(1.1)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(150 330) scale(1.2)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(30 300) scale(1.1)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(184 318) scale(1.2)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(58 214) scale(0.6)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g><g class="wake-daisy" transform="translate(110 224) scale(0.65)"><circle cx="0" cy="-2" r="1.6"/><circle cx="1.9" cy="-0.6" r="1.6"/><circle cx="1.2" cy="1.6" r="1.6"/><circle cx="-1.2" cy="1.6" r="1.6"/><circle cx="-1.9" cy="-0.6" r="1.6"/><circle class="heart" r="1.1"/></g></g>
+        <g class="wake-tall" transform="translate(22 0)"><g class="wake-sway"><path class="stem" d="M0 340C2 300 -3 262 2 226"/><path class="leaf" d="M1 290c-8 -2 -12 -8 -13 -14c7 0 12 5 13 14Z"/><g transform="translate(2 222)"><circle class="petal" cx="0" cy="-6" r="4.6"/><circle class="petal" cx="5.7" cy="-1.9" r="4.6"/><circle class="petal" cx="3.5" cy="4.9" r="4.6"/><circle class="petal" cx="-3.5" cy="4.9" r="4.6"/><circle class="petal" cx="-5.7" cy="-1.9" r="4.6"/><circle class="heart" r="3.4"/></g></g></g>
+        <g class="wake-tall b" transform="translate(186 0)"><g class="wake-sway"><path class="stem" d="M0 352C-2 316 3 284 -1 252"/><path class="leaf" d="M0 310c8 -2 12 -8 13 -14c-7 0 -12 5 -13 14Z"/><g transform="translate(-1 248)"><circle class="petal" cx="0" cy="-5" r="3.8"/><circle class="petal" cx="4.8" cy="-1.6" r="3.8"/><circle class="petal" cx="3" cy="4.1" r="3.8"/><circle class="petal" cx="-3" cy="4.1" r="3.8"/><circle class="petal" cx="-4.8" cy="-1.6" r="3.8"/><circle class="heart" r="2.8"/></g></g></g>
+        <path class="wake-trail-glow" filter="url(#wake-blur)" d="M0 0"/>
+        <path class="wake-trail" d="M0 0"/>
+        <g class="wake-stone" transform="translate(125 266) scale(1.2)">
+          <g class="wake-stone-body">
+            <ellipse class="wake-stone-shade" cx="0" cy="21" rx="27" ry="5"/>
+            <g class="wake-folk wake-folk-back"><g class="petals"><ellipse cx="28.0" cy="0.0" rx="7" ry="4.8" transform="rotate(0 28.0 0.0)"/><ellipse cx="26.3" cy="8.2" rx="7" ry="4.8" transform="rotate(23 26.3 8.2)"/><ellipse cx="21.4" cy="15.4" rx="7" ry="4.8" transform="rotate(44 21.4 15.4)"/><ellipse cx="14.0" cy="20.8" rx="7" ry="4.8" transform="rotate(64 14.0 20.8)"/><ellipse cx="4.9" cy="23.6" rx="7" ry="4.8" transform="rotate(81 4.9 23.6)"/><ellipse cx="-4.9" cy="23.6" rx="7" ry="4.8" transform="rotate(99 -4.9 23.6)"/><ellipse cx="-14.0" cy="20.8" rx="7" ry="4.8" transform="rotate(116 -14.0 20.8)"/><ellipse cx="-21.4" cy="15.4" rx="7" ry="4.8" transform="rotate(136 -21.4 15.4)"/><ellipse cx="-26.3" cy="8.2" rx="7" ry="4.8" transform="rotate(157 -26.3 8.2)"/><ellipse cx="-28.0" cy="0.0" rx="7" ry="4.8" transform="rotate(180 -28.0 0.0)"/><ellipse cx="-26.3" cy="-8.2" rx="7" ry="4.8" transform="rotate(-157 -26.3 -8.2)"/><ellipse cx="-21.4" cy="-15.4" rx="7" ry="4.8" transform="rotate(-136 -21.4 -15.4)"/><ellipse cx="-14.0" cy="-20.8" rx="7" ry="4.8" transform="rotate(-116 -14.0 -20.8)"/><ellipse cx="-4.9" cy="-23.6" rx="7" ry="4.8" transform="rotate(-99 -4.9 -23.6)"/><ellipse cx="4.9" cy="-23.6" rx="7" ry="4.8" transform="rotate(-81 4.9 -23.6)"/><ellipse cx="14.0" cy="-20.8" rx="7" ry="4.8" transform="rotate(-64 14.0 -20.8)"/><ellipse cx="21.4" cy="-15.4" rx="7" ry="4.8" transform="rotate(-44 21.4 -15.4)"/><ellipse cx="26.3" cy="-8.2" rx="7" ry="4.8" transform="rotate(-23 26.3 -8.2)"/></g><g class="hand"><path class="leaf" d="M-16 16c-6 0 -12 4 -14 10c7 1 12 -3 14 -10Z"/><path class="leaf" d="M16 16c6 0 12 4 14 10c-7 1 -12 -3 -14 -10Z"/></g></g>
+            <rect class="wake-stone-lip" x="-23" y="-17" width="46" height="38" rx="10"/>
+            <rect class="wake-stone-top" x="-23" y="-19" width="46" height="38" rx="10"/>
+            <g class="wake-stone-icon" transform="translate(0 -1)"><rect x="-8.5" y="-6" width="17" height="12" rx="2"/><path d="M-8 -5l8 6l8 -6"/></g>
+            <g class="wake-folk wake-folk-front"><ellipse class="cheek" cx="-14" cy="5" rx="3.2" ry="1.9"/><ellipse class="cheek" cx="14" cy="5" rx="3.2" ry="1.9"/><path class="shut" d="M-17.2 -1Q-14 2.2 -10.8 -1"/><path class="shut" d="M10.8 -1Q14 2.2 17.2 -1"/></g>
+          </g>
+          <rect class="wake-touch" x="-38" y="-34" width="76" height="66" rx="14"/>
+        </g>
+        <g class="wake-head" transform="translate(-40 -40)"><circle class="halo" r="5.2"/><path class="star" d="M0 -3.4L0.8 -0.8L3.4 0L0.8 0.8L0 3.4L-0.8 0.8L-3.4 0L-0.8 -0.8Z"/></g>
+      </svg>
+      <p id="wake-said" class="sr-only" role="status"></p>
     </main>
   </template>
 

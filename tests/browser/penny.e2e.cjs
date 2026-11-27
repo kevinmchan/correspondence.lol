@@ -2905,6 +2905,55 @@ async function main() {
       assert.match(await page.evaluate(() => window.copied), /\/reels\/marcus\/$/, 'and it is the reel\'s address that is copied');
     }),
 
+    check('the meadow\'s discovery, shot one: a spark off Penny\'s seal runs into a stone, which by its light is a flower asleep; then it breathes, and a finger held still on it lights it again', {}, async (page, h) => {
+      await page.goto(`${origin}/?wake`);
+      await page.waitForSelector('.wake-meadow');
+      const stone = () => page.evaluate(() => {
+        const it = document.querySelector('.wake-stone');
+        return { lit: it.classList.contains('lit'), held: it.classList.contains('held'), breathing: it.classList.contains('breathing'), folk: Number(getComputedStyle(it.querySelector('.wake-folk-front')).opacity) };
+      });
+      // Penny is at the edge, warm, and nothing has happened yet: the stone is a stone
+      assert.equal((await h.pal()).height, 'up');
+      assert.deepEqual(await stone(), { lit: false, held: false, breathing: false, folk: 0 });
+      // the spark falls, and runs to the stone; and by its light the stone has a face, with its eyes shut
+      await page.waitForSelector('.wake[data-shot="lit"]', { timeout: 15000 });
+      await sleep(1200);
+      assert.ok((await stone()).folk > 0.9, 'by the light, the flower is seen');
+      assert.equal((await h.pal()).mood, 'holding', 'and Penny holds its breath');
+      assert.match(await page.locator('#wake-said').textContent(), /flower, asleep/);
+      // then the light goes, the stone is a stone again, and breathes
+      await page.waitForSelector('.wake[data-shot="over"]', { timeout: 12000 });
+      await sleep(2600);
+      const after = await stone();
+      assert.ok(!after.lit && after.breathing && after.folk < 0.05, `a stone again, breathing: ${JSON.stringify(after)}`);
+      assert.equal(await page.locator('.wake-spark').count(), 0, 'the spark has gone into it');
+      // a finger held still on it lights it again, for as long as it is held
+      const box = await page.locator('.wake-touch').boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await sleep(900);
+      assert.ok((await stone()).held, 'held still, it is lit');
+      assert.equal((await h.pal()).mood, 'holding');
+      await page.mouse.up();
+      await sleep(100);
+      assert.ok(!(await stone()).held, 'let go, the light goes');
+      // a finger that wanders is not held still
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2, { steps: 3 });
+      await sleep(900);
+      assert.ok(!(await stone()).held, 'a finger that wanders lights nothing');
+      await page.mouse.up();
+    }),
+
+    check('the meadow\'s discovery, with less motion: nothing travels; the stone keeps a little light, and the flower in it can be seen', { reducedMotion: 'reduce' }, async (page) => {
+      await page.goto(`${origin}/?wake`);
+      await page.waitForSelector('.wake[data-shot="over"]', { timeout: 4000 });
+      assert.ok(await page.locator('.wake-stone.kept').count(), 'it keeps a little of the light');
+      assert.equal(await page.locator('.wake-spark').count(), 0);
+      assert.match(await page.locator('#wake-said').textContent(), /flower, asleep/);
+    }),
+
     check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {
       await page.goto(`${origin}/?sky`);
       await page.waitForSelector('.sky-view');

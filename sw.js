@@ -21,6 +21,8 @@ const PRECACHE = [
   '/penny/slow.css',
   '/penny/sky.js',
   '/penny/sky.css',
+  '/penny/wake.js',
+  '/penny/wake.css',
   '/penny/reel.js',
   '/penny/reel.css',
   '/penny/marcus.js',

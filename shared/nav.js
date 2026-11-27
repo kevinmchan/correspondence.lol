@@ -1,6 +1,6 @@
 // The app's one page, and the moves between its screens.
 //
-// The screens: the introduction to Penny (/?hello), scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), Marcus Pell's reel (/reels/marcus/), a room
+// The screens: the introduction to Penny (/?hello), scene one of the film (/?office) and scene two (/?slow), home (/), opening and joining a room (/?open, /?join), the map walked with Penny (/?walk), the night sky (/?sky), the meadow's discovery (/?wake), Marcus Pell's reel (/reels/marcus/), a room
 // (/room/?id=…), a game (/postmarks/…) the music maker (/jam/) and its radio (/jam/?taste). Each is a template in the page and a module with a
 // mount(root, life) function. Going from one to another swaps what is on the
 // page without loading a new one, so the music keeps playing, and the two
@@ -28,6 +28,7 @@ const SCREENS = [
   { name: 'slow', depth: 1, match: (path, url) => asks(url, 'slow'), load: () => import('/penny/slow.js') },
   { name: 'walk', depth: 1, match: (path, url) => asks(url, 'walk'), load: () => import('/penny/walk.js') },
   { name: 'sky', depth: 1, match: (path, url) => asks(url, 'sky'), load: () => import('/penny/sky.js') },
+  { name: 'wake', depth: 1, match: (path, url) => asks(url, 'wake'), load: () => import('/penny/wake.js') },
   { name: 'reel', depth: 1, match: (path) => path.startsWith('/reels/'), load: () => import('/penny/reel.js') }, // (each reel at an address of its own: reels/reels.js)
   { name: 'home', depth: 0, match: isHome, load: () => import('/home.js') },
   { name: 'room', depth: 1, match: (path) => path.startsWith('/room'), load: () => import('/room/room.js') },

@@ -13,7 +13,7 @@ the story between them as pauses: see [the story](https://claude.ai/artifact/Duc
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`), the first shot of the meadow's discovery at `/?wake` (`wake.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -337,6 +337,21 @@ in its own time, while its own box and plate stay where they are; with a
 finger near, it is still. And the portal is a caterpillar curled into a ring
 (it is not there in the night). The moment of each stage (the bar filling, in a game) has no scene of
 its own yet: the room is simply different the next time it is opened.
+
+**The discovery, shot one: the spark that got away** (`/?wake`,
+`penny/wake.js`, `penny/wake.css`; a first draft, written by a Claude session
+on 27 November 2026 for the owner to look at, and not yet decided). The second
+bar's moment, which has had no scene, begins here. A meadow in the sun, a
+stepping stone in the grass, and Penny at the edge, its seal warm with what it
+has earned. After a while a spark (the bar's own) slips off its seal, falls
+into the grass, and does not go out: it runs, winding, to the stone, and the
+stone lights from inside. By that light it has petals, leaf hands, cheeks and
+shut eyes, the tile's flower from `room/folk.js` drawn asleep; then the light
+fades and it is a stone again, breathing. Afterwards a finger held still on the
+stone lights it again while it is held. Nobody is woken. With reduced motion
+nothing travels: the stone keeps a little light and the flower can be seen.
+`&at=after` goes to the end of the shot. It is reached only by its address for
+now: nothing in the story or the bar leads to it yet.
 
 The fourth time the bar fills, a sheet over the game says, in the owner's
 words, "Speedy! Thanks for being an early tester. We're working on your

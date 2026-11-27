@@ -1,0 +1,112 @@
+/* The discovery, shot one: the spark that got away (penny/wake.js).
+
+   A meadow in the sun, drawn as one picture that fills the screen from its
+   foot (it is cut at the sides on a wide screen and at the top on a short
+   one, never squashed), and a stepping stone in it. Penny is not in the
+   picture: it stands at the edge, in the viewer's own space (penny/pal.js).
+
+   In the dark the meadow is in the evening: deep, warm and low, the sun gone
+   down to a glow on the hill. Soft colour; slow, eased motion; with reduced
+   motion nothing moves at all. */
+
+.screen-wake main.wake {
+  --sky-top: #cfe6ef; --sky-low: #f7f0dc;
+  --sun: #fff3c4; --sun-glow: rgb(255 228 150 / 0.55);
+  --hill: #cfe5b2; --grass-far: #bde3a0; --grass-near: #9fd384; --tuft: #7fb866;
+  --daisy: #fffdf8; --daisy-heart: #f3c94a;
+  --petal: #f4b6a6; --heart: #f8d95a; --stem: #6aa955;
+  --stone: #f1ebdd; --stone-lip: #a9b98e; --stone-ink: #8a8170;
+  --folk-petal: #fbe1d4; --folk-petal-line: #d79a84; --leaf: #74b95f; --leaf-line: #4f8f3f;
+  --ink: #22303c; --cheek: #f27d8a;
+  --spark: #fbe27a; --spark-glow: rgb(248 217 90 / 0.65);
+  position: relative; padding: 0; overflow: clip;
+  background: var(--grass-near);
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+:root[data-theme="dark"] .screen-wake main.wake {
+  --sky-top: #1d2330; --sky-low: #4a3a36;
+  --sun: #f2b878; --sun-glow: rgb(226 150 90 / 0.4);
+  --hill: #33402f; --grass-far: #2f4a32; --grass-near: #243b28; --tuft: #3f6a40;
+  --daisy: #cfc8b8; --daisy-heart: #c9a14a;
+  --petal: #b97f73; --heart: #c9a94e; --stem: #4f7f44;
+  --stone: #4a4640; --stone-lip: #2c3a2a; --stone-ink: #b8ad98;
+  --folk-petal: #8a6a60; --folk-petal-line: #b88a78; --leaf: #5e9c50; --leaf-line: #3c6e33;
+  --ink: #efe6d2; --cheek: #e2707e;
+  --spark: #f6d670; --spark-glow: rgb(240 200 100 / 0.55);
+}
+
+.wake .wake-meadow { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.wake .penny-back { z-index: 3; }
+
+/* the sky and the ground */
+.wake .sky-top { stop-color: var(--sky-top); }
+.wake .sky-low { stop-color: var(--sky-low); }
+.wake .sun-in { stop-color: var(--sun-glow); }
+.wake .sun-out { stop-color: var(--sun-glow); stop-opacity: 0; }
+.wake .wake-sun { fill: var(--sun); }
+:root[data-theme="dark"] .wake .wake-sun { cy: 206; opacity: 0.85; } /* (gone down behind the hill) */
+:root[data-theme="dark"] .wake .wake-sun-glow { cy: 206; r: 70; }
+.wake .wake-hill { fill: var(--hill); }
+.wake .grass-far { stop-color: var(--grass-far); }
+.wake .grass-near { stop-color: var(--grass-near); }
+.wake .wake-tufts path { fill: none; stroke: var(--tuft); stroke-width: 0.9; stroke-linecap: round; }
+.wake .wake-daisy circle { fill: var(--daisy); }
+.wake .wake-daisy .heart { fill: var(--daisy-heart); }
+.wake .wake-cloud-shade { fill: rgb(40 80 30 / 0.08); }
+:root[data-theme="dark"] .wake .wake-cloud-shade { display: none; }
+
+/* two tall flowers, swaying */
+.wake .wake-tall .stem { fill: none; stroke: var(--stem); stroke-width: 1.6; stroke-linecap: round; }
+.wake .wake-tall .leaf { fill: var(--stem); }
+.wake .wake-tall .petal { fill: var(--petal); }
+.wake .wake-tall .heart { fill: var(--heart); }
+.wake .wake-sway { transform-box: view-box; transform-origin: 0 340px; }
+
+/* The trail the spark leaves through the grass, and the spark itself (the energy's own: postmarks.css) */
+.wake .wake-trail { fill: none; stroke: var(--spark); stroke-width: 1.4; stroke-linecap: round; opacity: 0.9; }
+.wake .wake-trail-glow { fill: none; stroke: var(--spark-glow); stroke-width: 5; stroke-linecap: round; }
+.wake .wake-trail, .wake .wake-trail-glow { transition: opacity 2400ms ease; }
+.wake .trail-gone :is(.wake-trail, .wake-trail-glow) { opacity: 0; }
+.wake .wake-head { opacity: 0; transition: opacity 400ms ease; }
+.wake .wake-head.on { opacity: 1; }
+.wake .wake-head .halo { fill: var(--spark-glow); }
+.wake .wake-head .star { fill: #fff6c4; }
+.wake-spark { left: 0; top: 0; }
+
+/* The stepping stone, and the flower it is by its own light */
+.wake .wake-stone-shade { fill: rgb(30 60 20 / 0.16); }
+.wake .wake-stone-lip { fill: var(--stone-lip); }
+.wake .wake-stone-top { fill: var(--stone); stroke: rgb(255 255 255 / 0.3); stroke-width: 0.6; }
+.wake .wake-stone-icon rect, .wake .wake-stone-icon path { fill: none; stroke: var(--stone-ink); stroke-width: 1.3; stroke-linejoin: round; stroke-linecap: round; }
+.wake .wake-stone-body { transform-box: fill-box; transform-origin: 50% 100%; transition: filter 2400ms ease; }
+.wake .wake-folk { opacity: 0; transition: opacity 2400ms ease; }
+.wake .petals ellipse { fill: var(--folk-petal); stroke: var(--folk-petal-line); stroke-width: 0.6; }
+.wake .hand .leaf { fill: var(--leaf); stroke: var(--leaf-line); stroke-width: 0.6; }
+.wake .wake-folk .cheek { fill: var(--cheek); opacity: 0.55; }
+.wake .wake-folk .shut { fill: none; stroke: var(--ink); stroke-width: 1.3; stroke-linecap: round; }
+.wake .wake-touch { fill: transparent; cursor: pointer; }
+
+/* lit from inside: the light comes quickly and goes slowly */
+.wake .wake-stone.lit .wake-stone-body, .wake .wake-stone.held .wake-stone-body {
+  filter: drop-shadow(0 0 3px rgb(255 214 110 / 0.95)) drop-shadow(0 0 1px rgb(255 244 200 / 0.9));
+  transition-duration: 700ms;
+}
+.wake .wake-stone.lit .wake-folk { opacity: 1; transition-duration: 900ms; }
+.wake .wake-stone.held .wake-folk { opacity: 0.85; transition-duration: 900ms; }
+/* (with reduced motion, it keeps a little of the light, and the flower in it can be seen) */
+.wake .wake-stone.kept .wake-stone-body { filter: drop-shadow(0 0 2px rgb(255 214 110 / 0.6)); }
+.wake .wake-stone.kept .wake-folk { opacity: 0.6; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .wake .wake-sway { animation: wake-sway 7s ease-in-out infinite; }
+  .wake .wake-tall.b .wake-sway { animation-duration: 8.6s; animation-delay: -3s; }
+  .wake .wake-cloud-shade { animation: wake-cloud 60s linear infinite; }
+  /* now it breathes, slowly, as something asleep does */
+  .wake .wake-stone.breathing .wake-stone-body { animation: wake-breathe 5.2s ease-in-out infinite; }
+}
+@keyframes wake-sway { 0%, 100% { rotate: -1.6deg; } 50% { rotate: 1.6deg; } }
+@keyframes wake-cloud { from { translate: -140px 0; } to { translate: 320px 0; } }
+@keyframes wake-breathe { 0%, 100% { scale: 1 1; } 45% { scale: 1.015 1.04; } }
+
+/* (The screen the app opens on raises its contents into place. Not here: the meadow is already there.) */
+.screen.opening main.wake > * { animation: none; }
