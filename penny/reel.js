@@ -6,9 +6,10 @@
 // gives it away before the end (the story doc, "One way they could look
 // outside the game"; the words are the owner's, 27 November 2026).
 //
-// It is found in the feed on the home page, once half a bar of energy has been
-// earned (shared/energy.js, `reelAt`); it never interrupts, and it is never
-// counted with what is waiting on you.
+// It turns up in the feed on the home page once half a bar of energy has been
+// earned (shared/energy.js, `reelFound`), as one more thing waiting on you, and
+// leaves it once it has been watched to its end; it never interrupts. It can
+// be watched at any time from Reels on the home page's menu.
 //
 // Swipe up (scroll, or the arrow keys) for each line. The last line, then the
 // comment under it; then from the top again.
@@ -23,7 +24,8 @@
 // app's own music stands aside while the reel is up.
 
 import { audio, holdMusic, isMusicOff, isMuted } from '/postmarks/sound.js';
-import { LID, body, mouthPath } from './marcus.js';
+import { WATCHED_KEY, body, mouthPath } from './marcus.js';
+import { save } from '/shared/identity.js';
 
 // --- His room: cold, tidy, lit for camera. The chart on the wall is his. ----------------------
 // (The picture is 360 by 640 and fills the phone, cut at the sides on a tall one: what matters is in the middle.)
@@ -454,6 +456,7 @@ export function mount(root, life) {
       said.classList.add('in');
     } else said.textContent = '';
     comment.hidden = index !== LINES.length;
+    if (index === LINES.length) save(WATCHED_KEY, true); // watched to its end: it leaves the feed
     paid.hidden = index < PAID_FROM;
     if (!next.hidden) {
       if (document.activeElement === next) main.focus({ preventScroll: true }); // (the focus does not go with it)

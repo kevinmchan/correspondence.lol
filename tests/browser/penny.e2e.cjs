@@ -2832,14 +2832,15 @@ async function main() {
       assert.equal(await page.locator('.sky .penny-back').getAttribute('href'), '/', 'and from there the way back leads home');
     }),
 
-    check('Marcus Pell\'s reel: in the feed once half a bar of energy is earned and never counted with what is waiting; a line at a time, swiped up; the partnership said only once the sponsor is named; then the comment, then from the top', { storage: { ...ACCOUNT, 'home:tab:v1': 'feed', 'correspondence:energy:v1': { earned: 34, spent: 0, boards: [] } } }, async (page) => {
+    check('Marcus Pell\'s reel: in the feed once half a bar of energy is earned, waiting like anything else; a line at a time, swiped up; the partnership said only once the sponsor is named; then the comment, then from the top; watched, it leaves the feed, and Reels on the menu still has it', { storage: { ...ACCOUNT, 'home:tab:v1': 'feed', 'correspondence:energy:v1': { earned: 34, spent: 0, boards: [] } } }, async (page) => {
       await page.goto(`${origin}/`);
       await page.waitForSelector('#panel-feed:not([hidden])');
       assert.equal(await page.locator('#feed-reels').isHidden(), true, 'not before half a bar');
       await page.evaluate(() => localStorage.setItem('correspondence:energy:v1', JSON.stringify({ earned: 35, spent: 0, boards: [] })));
       await page.reload();
       await page.waitForSelector('.feed-reel');
-      assert.equal(await page.locator('#feed-count').isHidden(), true, 'it is not something waiting on you');
+      assert.equal(await page.locator('#feed-count').textContent(), '1', 'it is waiting on you, like anything else');
+      assert.equal(await page.locator('#feed-empty').isHidden(), true, 'and the feed is not all clear');
       await page.locator('.feed-reel').click();
       await page.waitForSelector('.screen-reel .reel-cam');
       await page.waitForFunction(() => document.querySelectorAll('#screens .screen').length === 1);
@@ -2863,7 +2864,12 @@ async function main() {
       assert.equal(said[17], '', 'after the last line, the comment');
       assert.equal(said[18], 'I opened up Wealthmart', 'and then from the top');
       await page.locator('.reel .penny-back').click();
-      await page.waitForSelector('.screen-home .feed-reel');
+      await page.waitForSelector('.screen-home #feed-empty:not([hidden])');
+      assert.equal(await page.locator('.feed-reel').count(), 0, 'watched to its end, it has left the feed');
+      assert.equal(await page.locator('#feed-count').isHidden(), true, 'and nothing is waiting');
+      await page.locator('#tab-lobby').click();
+      await page.locator('#menu-reels').click();
+      await page.waitForSelector('.screen-reel .reel-cam');
     }),
 
     check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {

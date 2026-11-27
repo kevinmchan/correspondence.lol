@@ -4,6 +4,7 @@
 // comes from its seal, on the five notes the rest of the app keeps to. Every
 // screen it is on (the home page, the map, its story) hums through here.
 
+import { WATCHED_KEY } from './marcus.js';
 import { audio, holdMusic, isMuted, noise } from '/postmarks/sound.js';
 import { load, save } from '/shared/identity.js';
 import { A4, A5, C5, C6, D5, E5, G4, G5 } from './notes.js';
@@ -76,6 +77,7 @@ export const playAt = () => (hasWalked() ? '/postmarks/' : STORY_AT[storyReached
 const STORY_KEYS = [
   STORY_KEY, WALKED_KEY, PLACE_KEY, DOT_KEY, 'penny:sound:v1', 'tags:found:v1', 'radio:taught:v1', 'radio:story:v1', 'postmarks:howto-solo:v1',
   'correspondence:energy:v1', 'correspondence:meadow:v1', 'correspondence:thanks:v1', // (the owner: "reset the energy too")
+  WATCHED_KEY, // (Marcus Pell's reel, watched: with the energy gone, it is to be found again)
 ];
 export const storyBegun = () => STORY_KEYS.some((key) => load(key) != null);
 export const forgetStory = () => STORY_KEYS.forEach((key) => save(key, null));

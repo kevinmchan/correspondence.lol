@@ -242,7 +242,9 @@ async function states() {
     { name: 'home, the feed with things waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item' },
     { name: 'home, the feed with nothing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms([]), ready: '#feed-empty:not([hidden])' },
     { name: 'home, the feed with things waiting, and Marcus Pell\'s reel under them', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR }, server: rooms(GAMES), ready: '.feed-item:not(.feed-reel)', settle: '.feed-reel' },
-    { name: 'home, the feed with nothing waiting but Marcus Pell\'s reel', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR }, server: rooms([]), ready: '#feed-empty:not([hidden])', settle: '.feed-reel' },
+    { name: 'home, the feed with nothing waiting but Marcus Pell\'s reel', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR }, server: rooms([]), ready: '.feed-reel' },
+    { name: 'home, the feed once Marcus Pell\'s reel has been watched: all clear', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'feed', ...HALF_A_BAR, 'reel:marcus:watched:v1': true }, server: rooms([]), ready: '#feed-empty:not([hidden])' },
+    { name: 'home, the lobby, with Reels on the menu where Museum was', screen: 'home', at: '/', storage: { ...ACCOUNT, 'home:tab:v1': 'lobby' }, server: rooms([]), ready: '#menu-reels' },
     // (with room above and below the play button, the first thing waiting on you is still on the first screen, unscrolled)
     { name: 'home, play with room round it, and the first thing waiting', screen: 'home', at: '/', storage: ACCOUNT, server: rooms(GAMES), ready: '.feed-item',
       then: async (page) => {

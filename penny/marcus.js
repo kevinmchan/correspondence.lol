@@ -10,6 +10,9 @@
 
 const range = (n) => [...Array(n).keys()];
 
+// Whether his reel has been watched to its end (penny/reel.js): until then it waits in the feed (home.js).
+export const WATCHED_KEY = 'reel:marcus:watched:v1';
+
 // An eye that looks into the lens, with the ring light in it as a small ring; a lid to blink with.
 const eye = (x, y, r, id) => `
   <g${id ? ` id="${id}"` : ''}>

@@ -586,9 +586,13 @@ one that is up is pressed in and lit.
   you have not finished. Moves come first, then what you have begun, then
   what is new. Each is a tile that opens the game. The number waiting sits on
   the tab. Games that are over, games you are waiting on someone else in, and
-  phrases you wrote yourself are left out.
+  phrases you wrote yourself are left out. Marcus Pell's reel waits here too,
+  like anything else, once it has been earned and until it has been watched
+  (see "Reels").
 - **Lobby**: everything else. Your rooms, and the tiles for opening or
-  joining a room, Liv Radio (making music) and Museum (the radio).
+  joining a room, Liv Radio (making music) and Reels (Marcus Pell's reel; it
+  has Museum's place for now, the owner, 27 November 2026, and the museum is
+  still reached through the radio at the top of Liv Radio).
 
 Above both tabs is the one wide button of the page: play, a board of your own
 at once (`/postmarks/`). Your account is your face in the top right corner.
@@ -749,8 +753,9 @@ is saved with each beat.
 
 ## Liv Radio
 
-`/jam/?taste` (`jam/taste.js`), "Museum" on the home page's menu and a
-radio at the top of the music maker, is a work in a gallery. To whoever plays
+`/jam/?taste` (`jam/taste.js`), the radio at the top of the music maker
+(it was "Museum" on the home page's menu until Reels took that place), is a
+work in a gallery. To whoever plays
 it, it is a radio; behind that, it is an experiment: can a model of what you
 like in a loop predict your choices, and can that be shown to be more than
 chance? It is played, and it is read about. Playing it has no words in it but
@@ -1208,10 +1213,14 @@ white. It is the same in the light and the dark. The words are the owner's, word
   him, with the slide and click of aluminium. With reduced motion he is drawn at rest and only his mouth moves.
 
 **Where it is found** (the owner, 27 November 2026: "it shouldn't be an interruption. I want the trigger for it
-showing up in your feed to be passing the energy threshold"). In the feed on the home page, under what is waiting
-on you and never counted with it, once half a bar of energy has been earned (`REEL_AT` and `reelFound` in
-`shared/energy.js`): a card with a tall poster of his face where the others have a square tile. Nothing else leads
-to it, and nothing announces it. Starting the story over forgets energy, and with it the card.
+showing up in your feed to be passing the energy threshold"; and "It leaves the feed once you've watched it. The feed
+isn't considered empty if you haven't watched it. It's just like any other item in the feed."). In the feed on the
+home page once half a bar of energy has been earned (`REEL_AT` and `reelFound` in `shared/energy.js`), as one more
+thing waiting on you: counted on the tab, after the games, a card with a tall poster of his face where the others
+have a square tile; while it is there the feed is not all clear. Watched to its end (the comment under it is
+reached), it leaves the feed (`WATCHED_KEY` in `penny/marcus.js`). Nothing announces it. And at any time, Reels on
+the home page's menu (where Museum was). Starting the story over forgets energy and whether it was watched, so it is
+to be found again.
 
 ## Seasons
 
