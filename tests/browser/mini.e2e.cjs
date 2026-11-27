@@ -507,6 +507,17 @@ async function states() {
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
     { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/?reel', ready: '.reel-cam', whole: ['.penny-back', '#reel-next', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, a line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 1), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, a line said large, centred on the screen and clear of the rail', screen: 'reel', at: '/?reel', ready: '.reel-cam', settle: '#reel-said:not(:empty)', whole: ['#reel-said'],
+      then: async (page) => {
+        await lines(page, 14);
+        const { off, apart } = await page.evaluate(() => {
+          const said = document.querySelector('#reel-said').getBoundingClientRect();
+          const rail = document.querySelector('.reel-rail').getBoundingClientRect();
+          return { off: Math.abs((said.left + said.right) / 2 - innerWidth / 2), apart: rail.left - said.right };
+        });
+        assert.ok(off <= 2, `what he says is centred on the screen (it is ${off}px off)`);
+        assert.ok(apart >= 0, `and clear of the rail (it runs ${-apart}px into it)`);
+      } },
     { name: 'Marcus Pell\'s reel, the longest line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 12), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, its sponsor named, and the partnership said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 10), settle: '#reel-paid:not([hidden])', whole: ['#reel-said', '#reel-paid', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, its caption opened, #ad and all', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: async (page) => { await lines(page, 10); await page.locator('#reel-more').click(); }, settle: '.reel-cap.open', whole: ['.reel-cap', '#reel-more'] },
