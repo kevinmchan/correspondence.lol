@@ -31,7 +31,8 @@
 // comes round Penny's edges, because Penny is in the way. Penny starts, and
 // jumps back, and there it is. Penny looks at it, and at you, and jumps in.
 // The portal stays; you are expected to follow, and nothing hurries you. It
-// leads to scene one (penny/office.js).
+// leads to scene two (penny/slow.js); scene one (penny/office.js) is out of
+// the story for now, and is found from the stamp in the home page's corner.
 //
 // HOW PENNY MOVES. It has no legs (the owner, 26 November 2026: legs asked
 // for more realism than the rest of it has). It never slides and it never
@@ -895,7 +896,7 @@ export function mount(root, life) {
   }, 1000);
   portal.addEventListener('click', () => {
     if (portal.disabled || beat !== 'waiting') return;
-    go('/?office');
+    go('/?slow'); // scene two: scene one is out of the story for now (penny/penny.js)
   });
 
   draw();

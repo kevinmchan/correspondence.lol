@@ -8,7 +8,8 @@
 // map, a long way off, and Penny knows it is meant for it. It answers, and
 // waits, as it always has. And then, for the first time, it turns away from
 // the map and looks at whoever is watching. One square of the map lights. That
-// square is the way on, to scene two (penny/slow.js), and after it the walk.
+// square is the way on: for now, home, where the scene is found (it is out of
+// the story until it is ready: penny/penny.js); in the story, scene two.
 //
 // The scene is a handful of screens, and each of them is a loop: it plays,
 // and plays again, for as long as it is left up. No two turns of a loop are
@@ -37,7 +38,7 @@
 
 import { audio, isMuted } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, TRILL, createVoice, reach } from './penny.js';
+import { ASK, HELLO, PLEASE, SAG, SIGH, THIS_WAY, TRILL, createVoice } from './penny.js';
 import { playMail, remembered } from './mail.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -48,7 +49,7 @@ const square = (col, row) => ({ x: MAP.x + col * MAP.pitch + MAP.side / 2, y: MA
 
 export function mount(root, life) {
   document.title = 'correspondence.lol';
-  reach('office'); // (where play goes on from: penny/penny.js)
+  // (Not part of the story for now, so it is not where play goes on from: penny/penny.js.)
   const main = root.querySelector('.office');
   const stage = root.querySelector('.office-stage');
   const penny = stage.querySelector('.p-penny');
@@ -443,7 +444,7 @@ export function mount(root, life) {
   const LEFT = Symbol('left');
   let at = 0;
   let run = 0;
-  const leave = () => go('/?slow', { quiet: true }); // scene two (penny/slow.js)
+  const leave = () => go('/', { quiet: true }); // home: out of the story for now, it leads back to where it was found (penny/penny.js)
   async function show(index) {
     run += 1;
     const mine = run;

@@ -13,7 +13,7 @@ the story between them as pauses: see [the story](https://claude.ai/artifact/Duc
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`, and in your rooms once followed in `wander.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -45,7 +45,7 @@ eyes that follow a finger. Then a portal opens behind Penny: it is heard, and
 its light comes round Penny's edges, because Penny is in the way. Penny
 starts, jumps back, and there it is; looks at it, and at you, and jumps in.
 The portal stays open, and you are expected to follow; nothing hurries you. It
-leads, for now, to scene one.
+leads to scene two (scene one is out of the story for now: below).
 
 **Its tempo** (the owner, 27 November 2026: a little quicker, above all on
 the way up the street; `PACE` in `penny/hello.js`). Every pause in the scene
@@ -72,10 +72,11 @@ looked at (`/?hello&glimpse=hold`).
 
 **How the story is reached** (the owner, 26 November 2026). Two ways, and they
 differ on purpose. The portal on the home page always goes back to the
-beginning: the introduction, then the film, then the first places, in order.
+beginning: the introduction, then scene two of the film, then the first places, in order.
 Play goes on from where you are: the first time, that is the beginning too;
-after that, the furthest scene reached (the introduction, scene one, scene
-two or the walk, at the place it had got to). Once the first places have been
+after that, the furthest scene reached (the introduction, scene two or the
+walk, at the place it had got to; somebody left in scene one when it was in
+the story goes on from scene two). Once the first places have been
 walked, play is a board of your own, and the story is the portal's. How far
 the story has got is kept on the device (`penny/penny.js`: `reach()`,
 `playAt()`); seeing an earlier scene again does not lose the place. A tap on
@@ -122,8 +123,14 @@ five mouths (a smile, a grin, an o, a wobble and a frown); sad, it also sits
 lower and wider, and its seal all but goes out.
 
 The app is meant to become a film that is played. Its first scene, the Dead
-Letter Office (`/?office`, `penny/office.js`), is still being worked out. The
-app opens on the home page, never in the film: the film is reached through
+Letter Office (`/?office`, `penny/office.js`), is still being worked out, and
+is **out of the story for now** (the owner, 27 November 2026: "remove office
+from the story flow. I don't think it's ready. Make it accessible from
+somewhere else"): the introduction's portal leads straight to scene two, play
+never goes on from scene one, and it is found from the stamp in the top left
+corner of the home page, the sleepy cone that says "under construction",
+which is now a link to it. Its lit square, at its end, leads back home.
+The app opens on the home page, never in the film: the film is reached through
 the introduction, by the portal or by play, and a door in its corner leads
 back.
 
@@ -629,6 +636,13 @@ the place that had been reached, whatever has been played already. The last of
 them opens onto a board, and from then on play is a board and the walk is the
 portal's, at the foot of the page. Only this button is turned: a game somebody
 shared, or one in a room, still opens as itself.
+
+**Air** (the owner, 27 November 2026: "give the Home Screen some more air. It's a
+little cramped"). The home page has a wider margin at its sides than other
+pages, more room between the play button, the bar and the tabs, and between the
+tabs and what is under them, and more between and inside its tiles (the end of
+`styles.css`, "The home page, with air"). It is held to one limit: on a mini in
+Safari, the first thing waiting in the feed is still on the first screen.
 
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
@@ -1225,7 +1239,19 @@ white. It is the same in the light and the dark. The words are the owner's, word
   every 450 ms. After the last line comes the comment under it, then the top again.
   "Paid partnership with Penny's Energy" is shown only once the sponsor is named (the punchline: nothing gives it
   away before). His caption shows its first line; "more" opens the rest, with the `#ad` at the end of it.
-- *Sharing.* The share mark on the rail (the one mark there that does something) opens the phone's own share sheet
+- *Following.* "Follow", beside his name, is a button (the owner, 27 November 2026: "add the ability to follow
+  Marcus from the reel. If you follow him, he gets added to the world and can roam about in the background").
+  Pressed, it reads "Following", filled in, and he is followed (`FOLLOW_KEY` in `penny/marcus.js`); pressed again,
+  he is not. Nothing else is said. Followed, he is in the world: in your rooms (the owner, 27 November 2026: "add
+  the ladder to the Room rather than the Home Screen"), small, on the floor of the house and behind everything in it
+  (`penny/wander.js`, a layer of the house over its floor and the meadow's ground, under the table, the tiles and the
+  rug). A house is mostly furniture, so where he stops only his face has to be clear: he stands behind the table or
+  the rug and looks over it, beside the people at its head, or in a corner. He goes from one such place to another,
+  mostly where he can be seen, rocking from rail to rail as a ladder is walked, at a stroll. At each stop he rests,
+  blinks, and now and then does his tell. He still has his phone. Nothing to press. He is in the room's own world
+  only: through its portal, in the night, he is not. With reduced motion he stands still somewhere clear. Starting
+  the story over forgets that he was followed.
+- *Sharing.* The share mark on the rail (the mark there for sharing) opens the phone's own share sheet
   with the reel's address, `/reels/marcus/`, which opens it directly for anyone, whatever their energy. Where there is no
   share sheet (a computer, mostly) the address is copied and "Link copied" is said beside the rail for a while;
   where it cannot be copied either, the line is the address itself, to be copied by hand. Sharing inside the app,

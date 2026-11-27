@@ -101,7 +101,19 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
   width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; flex: none;
   background: #d8c3ad; color: #2a3540; border: 2px solid #fff; font-size: var(--text-fine); font-weight: var(--weight-bold); text-shadow: none;
 }
-.reel-follow { padding: 0.25rem 0.6rem; border: 1.5px solid rgb(255 255 255 / 0.8); border-radius: 0.5rem; font-size: var(--text-caption); font-weight: var(--weight-medium); }
+/* Follow: a small chip in a button big enough for a finger. Followed, it is filled in, and he is in the world (penny/wander.js). */
+.reel-follow {
+  min-width: 2.75rem; min-height: 2.75rem; margin: -0.6rem 0; padding: 0 0.1rem; display: grid; place-items: center;
+  border: 0; background: none; color: inherit; font: inherit; text-shadow: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.reel-follow span {
+  padding: 0.25rem 0.6rem; border: 1.5px solid rgb(255 255 255 / 0.8); border-radius: 0.5rem;
+  font-size: var(--text-caption); font-weight: var(--weight-medium);
+  transition: background-color 400ms ease, color 400ms ease, border-color 400ms ease;
+}
+.reel-follow[aria-pressed="true"] span { background: rgb(255 255 255 / 0.88); border-color: transparent; color: #2a3540; text-shadow: none; }
+.reel-follow:focus-visible { outline: none; }
+.reel-follow:focus-visible span { outline: 2px solid #fff; outline-offset: 2px; }
 .reel-paid { font-size: var(--text-fine); opacity: 0.9; margin-top: -0.25rem !important; }
 .reel-paid[hidden] { display: none; }
 .reel-cap { display: flex; align-items: center; gap: 0.15rem; width: 100%; font-size: var(--text-caption); line-height: var(--leading-snug); border-radius: 0.7rem; }

@@ -396,7 +396,7 @@ async function main() {
       assert.equal((await turned(3, 0, 2000)).lit, false); // (lit 3.4 s into this turn: not to be asked after)
       assert.equal((await turned(3, 1)).lit, true, 'the square lit');
       await swipe(600, 300);
-      await page.waitForURL(/\?slow/, { timeout: 5000 }); // on, to scene two
+      await page.waitForURL((url) => url.pathname === '/' && url.search === '', { timeout: 5000 }); // on: home, where it was found (it is out of the story for now)
     }),
 
     check('scene two: what is drawn fast is gone, what is drawn slowly stays, and then there is a way on', {}, async (page) => {
@@ -512,14 +512,14 @@ async function main() {
       // still the beginning, if that is as far as it got
       await home();
       assert.equal(await playGoes(), '/?hello');
-      // through the introduction's portal to scene one, and left there: play goes on from scene one
+      // through the introduction's portal to scene two (scene one is out of the story for now), and left there: play goes on from scene two
       await page.goto(`${origin}/?hello&at=portal`);
       await page.waitForSelector('#hello-portal:not([hidden]):not(:disabled)', { timeout: 15000 });
       await page.locator('#hello-portal').click({ force: true });
-      await page.waitForURL(/\?office/);
-      await page.waitForSelector('.screen-office .office-stage');
+      await page.waitForURL(/\?slow/);
+      await page.waitForSelector('.slow-keep');
       await home();
-      assert.equal(await playGoes(), '/?office', 'play goes on from where the story was left');
+      assert.equal(await playGoes(), '/?slow', 'play goes on from where the story was left');
       // the portal, though, is always the beginning
       assert.equal(await page.locator('#portal').getAttribute('href'), '/?hello');
       // and from scene two, and from the walk: on from there
@@ -739,7 +739,7 @@ async function main() {
       assert.equal(await page.locator('#hello-portal').isDisabled(), false);
       assert.deepEqual(await h.words('main.hello'), []);
       await page.locator('#hello-portal').click({ force: true }); // (it breathes: it is never quite still)
-      await page.waitForURL(/\?office/);
+      await page.waitForURL(/\?slow/); // (scene two: scene one is out of the story for now)
     }),
 
     check('the introduction, at first: Penny alone, going through one feeling after another, its face, its eyes and its paper with each, until it is touched; one feeling can be held; and by keyboard, Penny can be pressed', {}, async (page) => {
@@ -748,10 +748,24 @@ async function main() {
       await page.waitForSelector('#hello-penny:not([hidden])');
       // early on, just after it is glad: for a blink, something breaks through the screen; Penny itself is not changed by it
       const looks = () => page.evaluate(() => { const it = document.querySelector('.h-penny'); return [it.dataset.mood, it.dataset.eyes, it.dataset.mouth, getComputedStyle(it.querySelector('.seal')).fill, getComputedStyle(it.querySelector('.paper')).fill].join(' '); });
-      await page.waitForSelector('.hello.glimpse', { timeout: 15000 });
-      const was = await looks();
-      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.hello-near')).filter), 'url("#hello-tear")', 'the picture tears');
-      assert.ok(await page.locator('.hello-static .band').count() > 0, 'blocks of the screen go wrong');
+      // (the page is asked what it showed as the glimpse began: it is a fifth of a second, and a look from here can come too late for it)
+      const { was, tear, bands } = await page.evaluate(() => new Promise((done) => {
+        const main = document.querySelector('main.hello');
+        const seen = () => {
+          const it = document.querySelector('.h-penny');
+          done({
+            was: [it.dataset.mood, it.dataset.eyes, it.dataset.mouth, getComputedStyle(it.querySelector('.seal')).fill, getComputedStyle(it.querySelector('.paper')).fill].join(' '),
+            tear: getComputedStyle(document.querySelector('.hello-near')).filter,
+            bands: document.querySelectorAll('.hello-static .band').length,
+          });
+        };
+        if (main.classList.contains('glimpse')) return seen();
+        const watch = new MutationObserver(() => { if (main.classList.contains('glimpse')) { watch.disconnect(); seen(); } });
+        watch.observe(main, { attributes: true, attributeFilter: ['class'] });
+        setTimeout(() => done({ was: 'no glimpse in 15 s' }), 15000);
+      }));
+      assert.equal(tear, 'url("#hello-tear")', 'the picture tears');
+      assert.ok(bands > 0, 'blocks of the screen go wrong');
       assert.ok(was.startsWith('glad'), `it comes just after Penny is glad, not ${was}`);
       await page.waitForSelector('.hello:not(.glimpse) #hello-broke:empty', { timeout: 2000 }); // (both pushes over)
       assert.equal(await looks(), was, 'Penny is just as it was');
@@ -826,7 +840,7 @@ async function main() {
       for (let n = 0; n < 4 && await page.evaluate(() => document.activeElement.id) !== 'hello-portal'; n++) await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement.id), 'hello-portal', 'the portal can be reached by keyboard');
       await page.keyboard.press('Enter');
-      await page.waitForURL(/\?office/);
+      await page.waitForURL(/\?slow/); // (scene two: scene one is out of the story for now)
     }),
 
     check('back, pressed while the next screen is still on its way, goes back: the screen that is up is the one the address names', {}, async (page) => {
@@ -2284,6 +2298,7 @@ async function main() {
         const box = document.querySelector(part).getBoundingClientRect();
         return [box.left, box.top, box.width, box.height].map(Math.round).join(' ');
       }));
+      await page.waitForFunction(() => !document.querySelector('#splash')); // (what the app opens under has cleared: a tab pressed under it is only reached by scrolling)
       await sleep(700); // (the page the app opens on rises into place: measured once it has)
       const onFeed = await placed();
       await page.locator('#tab-lobby').click();
@@ -2918,6 +2933,90 @@ async function main() {
       await page.waitForSelector('#reel-shared:not(:empty)');
       assert.equal(await page.locator('#reel-shared').textContent(), 'Link copied');
       assert.match(await page.evaluate(() => window.copied), /\/reels\/marcus\/$/, 'and it is the reel\'s address that is copied');
+    }),
+
+    check('Marcus Pell, followed from his reel: he is in your rooms, wandering on the floor behind everything, not on the home page, and goes when he is no longer followed', { storage: ACCOUNT }, async (page) => {
+      const roomId = '11111111-1111-4111-8111-111111111111';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      const game = { id: '22222222-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 6, status: 'playing', players: ['Sam', 'Ada'], last_player: 1, found: 2, hearts: 3, moves: 4 };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => (route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: cors })
+        : route.fulfill({ json: { id: roomId, name: 'Book club', code: 'K7M2QP', you: 0, members: ['Sam', 'Ada'], people: [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }], messages: [], games: [game] }, headers: cors })));
+      const inRoom = async () => {
+        await page.goto(`${origin}/room/?id=${roomId}`);
+        await page.waitForSelector('#house:not([hidden]) .table');
+      };
+      await inRoom();
+      await sleep(600);
+      assert.equal(await page.locator('.wander-marcus').count(), 0, 'not followed: not in the world');
+      await page.goto(`${origin}/reels/marcus/`);
+      await page.waitForSelector('.reel-cam');
+      assert.equal(await page.locator('#reel-follow').getAttribute('aria-pressed'), 'false');
+      await page.locator('#reel-follow').click();
+      assert.equal(await page.locator('#reel-follow').getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('#reel-follow').textContent(), 'Following');
+      assert.equal(await page.locator('#reel-said').textContent(), '', 'and the reel is not moved on by it');
+      await page.locator('.reel .penny-back').click();
+      await page.waitForSelector('.screen-home #play:not([hidden])');
+      await sleep(600);
+      assert.equal(await page.locator('.wander-marcus').count(), 0, 'not on the home page');
+      await inRoom();
+      await page.waitForSelector('#house > .wander.here .wander-marcus');
+      const where = () => page.evaluate(() => {
+        const him = document.querySelector('.wander-marcus').getBoundingClientRect();
+        const house = document.querySelector('#house').getBoundingClientRect();
+        const face = { top: him.top, bottom: him.top + him.height * 0.42, left: him.left, right: him.right };
+        const over = [...document.querySelectorAll('#house :is(.table, .modes, .rug, .share, #members .seat)')].map((one) => one.getBoundingClientRect())
+          .some((b) => face.left < b.right && face.right > b.left && face.top < b.bottom && face.bottom > b.top);
+        return { x: him.left, y: him.top, w: him.width, inside: him.left >= house.left && him.right <= house.right && him.top >= house.top && him.bottom <= house.bottom, over };
+      });
+      const first = await where();
+      assert.ok(first.inside, 'in the house');
+      assert.ok(first.w > 20 && first.w < 60, 'small');
+      assert.equal(first.over, false, 'where he stops, his face is clear of the furniture: he looks over it');
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.wander')).pointerEvents), 'none', 'nothing to press');
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.wander')).zIndex), '-1', 'behind everything in the room');
+      await page.waitForFunction((from) => { const b = document.querySelector('.wander-marcus').getBoundingClientRect(); return Math.hypot(b.left - from.x, b.top - from.y) > 4; }, first, { timeout: 15000 });
+      // followed no longer: gone from the world
+      await page.goto(`${origin}/reels/marcus/`);
+      await page.waitForSelector('.reel-cam');
+      assert.equal(await page.locator('#reel-follow').getAttribute('aria-pressed'), 'true', 'still followed, when the reel is come back to');
+      await page.locator('#reel-follow').click();
+      assert.equal(await page.locator('#reel-follow').textContent(), 'Follow');
+      await inRoom();
+      await sleep(600);
+      assert.equal(await page.locator('.wander-marcus').count(), 0);
+    }),
+
+    check('Marcus Pell, followed, with less motion asked for: standing somewhere in the room, and still', { storage: { ...ACCOUNT, 'reel:marcus:follow:v1': true }, reducedMotion: 'reduce' }, async (page) => {
+      const roomId = '11111111-1111-4111-8111-111111111111';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => (route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: cors })
+        : route.fulfill({ json: { id: roomId, name: 'Book club', code: 'K7M2QP', you: 0, members: ['Sam'], people: [{ name: 'Sam', avatar: '🦊', color: 1, left: false }], messages: [], games: [] }, headers: cors })));
+      await page.goto(`${origin}/room/?id=${roomId}`);
+      await page.waitForSelector('#house > .wander.here .wander-marcus');
+      const at = () => page.evaluate(() => { const b = document.querySelector('.wander-marcus').getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top)]; });
+      const first = await at();
+      await sleep(4000);
+      assert.deepEqual(await at(), first, 'he does not walk');
+    }),
+
+    check('scene one is out of the story for now: it is found from the stamp in the home page\'s corner, it is not where play goes on from, and it leads back home', { storage: ACCOUNT }, async (page) => {
+      await page.goto(`${origin}/`);
+      await page.waitForSelector('#play:not([hidden])');
+      assert.equal(await page.locator('#building').getAttribute('href'), '/?office');
+      await page.locator('#building').click();
+      await page.waitForURL(/\?office/);
+      await page.waitForSelector('.screen-office .office-stage');
+      await page.goto(`${origin}/`);
+      await page.waitForSelector('#play:not([hidden])');
+      assert.equal(await page.locator('#play').getAttribute('href'), '/?hello', 'seeing it does not move the story on');
+      // somebody left in the office when it was in the story goes on from the scene after it
+      await page.evaluate(() => localStorage.setItem('penny:story:v1', JSON.stringify('office')));
+      await page.goto(`${origin}/`);
+      await page.waitForSelector('#play:not([hidden])');
+      assert.equal(await page.locator('#play').getAttribute('href'), '/?slow');
     }),
 
     check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {
