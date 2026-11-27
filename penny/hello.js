@@ -9,20 +9,23 @@
 // is touched. A touch knocks it back, startled, all the way down the street,
 // and it hides; and the street is there.
 //
+// THE GLIMPSE. Early on, while Penny is alone going through what it feels
+// (just after it is glad), for a blink the screen breaks up, as if something
+// corrupted were trying to get through it: the picture tears into bands that
+// slip sideways, its colours come apart, blocks of it go dark or wrong, and
+// the sound crackles and stutters. It pushes twice, and is gone. Penny itself
+// is never changed, and carries on as if nothing happened. It comes once: if
+// Penny is touched before it, it comes as Penny sets off up the street, and
+// Penny does not stop for it. Never at the glass. (The app is a dark comedy,
+// very cute, with the dark at its edges; the owner, 27 November 2026. Held to
+// be looked at: /?hello&glimpse=hold.)
+//
 // A quiet street, and a mailbox. Penny is behind it, and shy: it leans out
 // round one side, and back; then the other side, for longer. Then Penny
 // comes out, and comes towards you, cautious and curious at once, all the way
 // up to the glass, until it is wider than the screen, and looks you over from
 // the other side of it: one eye up close, a breath that fogs the glass, a tap
 // on it. Its eyes follow a finger.
-//
-// And then, at its sweetest, for a blink, the screen breaks up, as if
-// something corrupted were trying to get through it: the picture tears into
-// bands that slip sideways, its colours come apart, blocks of it go dark or
-// wrong, and the sound crackles and stutters. It pushes twice, and is gone.
-// Penny itself is never changed, and carries on as if nothing happened. (The
-// glimpse: the app is a dark comedy, very cute, with the dark at its edges;
-// the owner, 27 November 2026. Held to be looked at: /?hello&glimpse=hold.)
 //
 // Then a portal opens behind it. The sound is heard first, and its light
 // comes round Penny's edges, because Penny is in the way. Penny starts, and
@@ -187,6 +190,7 @@ export function mount(root, life) {
   const portal = root.querySelector('#hello-portal');
   const tap = root.querySelector('#hello-penny');
   const said = root.querySelector('#hello-said');
+  const broke = root.querySelector('#hello-broke'); // (the glimpse's own line, so it never talks over the scene's)
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const query = new URLSearchParams(location.search);
   const gait = ['tiptoe', 'zigzag', 'edges'].includes(query.get('gait')) ? query.get('gait') : 'tiptoe';
@@ -544,8 +548,11 @@ export function mount(root, life) {
   }
   // Wait, whatever motion is asked for (it is a moment, not a movement).
   const blink = (ms) => new Promise((done, stop) => { life.setTimeout(done, ms); life.onEnd(() => stop(new Left())); });
+  let glimpsed = false;
   async function glimpse() {
-    say('For a blink, something breaks through the screen');
+    if (glimpsed) return;
+    glimpsed = true;
+    broke.textContent = 'For a blink, something breaks through the screen';
     breakingThrough();
     let was = 0;
     for (const push of PUSHES) {
@@ -560,6 +567,7 @@ export function mount(root, life) {
       staticLayer.replaceChildren();
       was = push.at + push.frames * FRAME_MS;
     }
+    broke.textContent = '';
   }
 
   // --- Being touched ---------------------------------------------------------------------------
@@ -613,8 +621,10 @@ export function mount(root, life) {
     tap.hidden = false;
     laid();
     for (let n = 0; beat === 'model'; n++) {
+      if (holdGlimpse && n === 0) glimpse().catch(() => {}); // (held: at once, to be looked at)
       await emote(held ?? EMOTES[n % EMOTES.length]);
       if (beat !== 'model') return;
+      if (n === 2) { await rest(700); if (beat !== 'model') return; await glimpse(); } // (just after it is glad)
       await rest(held ? 3200 : 2400);
     }
   }
@@ -743,6 +753,7 @@ export function mount(root, life) {
   }
   async function coming() {
     beat = 'coming';
+    if (!glimpsed && from === 'model') life.setTimeout(() => glimpse().catch(() => {}), 900); // (touched before it came: it comes now, and Penny walks on through it)
     watch(false);
     const steps = GAITS[gait];
     const stood = [here()]; // where it has stopped, to go back to
@@ -805,9 +816,7 @@ export function mount(root, life) {
     mood('glad', 'smile');
     voice.sing(HELLO, 0.7);
     watch(true); // and now its eyes are yours: they follow a finger
-    await rest(holdGlimpse ? 300 : 1500);
-    await glimpse(); // (and, for a blink, something tries to get through)
-    await rest(1700);
+    await rest(3200);
     // (for as long as there is a finger to follow it stays, a few seconds more at most: it is in no hurry to look away)
     for (let more = 0; more < 6000 && performance.now() - followed < 1500; more += 300) await rest(300);
   }
