@@ -62,7 +62,8 @@ const LINES = [
   { text: 'Now, I get why this deal makes sense from a business perspective.', mood: { pitch: 0.86, rate: 0.85, contour: 'hat' }, before: (s) => s.penClick(0) },
   { text: 'But man, it got me thinking,', mood: { pitch: 0.9, rate: 0.7, contour: 'fall', breath: 0.3, vib: 8, gain: 0.9 }, sincere: true,
     before: (s) => s.bed('pad', [261.63, 329.63, 392, 493.88], { gain: 0.03, attack: 1.6, cutoff: 1200 }) },
-  { text: 'it sure does pay to have money.', mood: { pitch: 0.86, rate: 0.7, contour: 'fall', breath: 0.25, vib: 16, lastHold: 2.4, lastGlide: 0.9 }, sincere: true, after: (s, e) => s.warmBell(e) },
+  // (his voice cannot say ⚡️: where the word would be, a small crackle of it; the owner, 27 November 2026)
+  { text: 'it sure does pay to have ⚡️.', mood: { pitch: 0.86, rate: 0.7, contour: 'fall', breath: 0.25, vib: 16, lastHold: 1.3, lastGlide: 0.95 }, sincere: true, after: (s, e) => { s.zap(e + 0.06); s.warmBell(e + 0.6); } },
   { text: 'Am I a little salty that I didn’t have the credits to accept the offer.', mood: { pitch: 1.14, rate: 1.4, contour: 'hat', vib: 22, vibRate: 7.5, gain: 0.65 }, sincere: true },
   { text: 'Maybe?', mood: { pitch: 1.22, rate: 0.85, contour: 'flat', lastHold: 2.6, lastGlide: 1.55, gain: 0.6 }, sincere: true, after: (s, e) => s.squeak(e + 0.35) },
   // (the sincere music stops dead, and a drumroll begins)
@@ -279,6 +280,13 @@ function soundsFor(life) {
       tone(m, { at: at + 0.25, freq: 233, to: 150, dur: 0.7, type: 'triangle', gain: 0.07 });
     },
     penClick(at) { const m = effects(); if (m) { hiss(m, { at, dur: 0.018, type: 'highpass', freq: 4000, gain: 0.09 }); hiss(m, { at: at + 0.09, dur: 0.015, type: 'highpass', freq: 3500, gain: 0.07 }); } },
+    zap(at) { // ⚡️, said: a short crackle with a buzz under it
+      const m = effects();
+      if (!m) return;
+      for (const [t, f, g] of [[0, 5200, 0.1], [0.05, 3800, 0.08], [0.09, 6400, 0.07], [0.16, 4600, 0.09], [0.21, 3000, 0.05]]) hiss(m, { at: at + t, dur: 0.035, type: 'highpass', freq: f, gain: g });
+      tone(m, { at, freq: 120, to: 60, dur: 0.3, type: 'sawtooth', gain: 0.045 });
+      tone(m, { at: at + 0.02, freq: 1760, to: 2640, dur: 0.12, type: 'square', gain: 0.012 });
+    },
     warmBell(at) { const m = effects(); if (m) { bell(m, at, 523.25, 0.05, 2.6); bell(m, at + 0.02, 659.25, 0.03, 2.4); } },
     squeak(at) { const m = effects(); if (m) tone(m, { at, freq: 1500, to: 2400, dur: 0.12, gain: 0.03 }); },
     drumroll(at, dur) { // music: a snare that gathers itself
@@ -403,6 +411,7 @@ export function mount(root, life) {
   const scene = root.querySelector('.reel-scene');
   const said = root.querySelector('#reel-said');
   const next = root.querySelector('#reel-next');
+  const play = root.querySelector('#reel-play');
   const comment = root.querySelector('#reel-comment');
   const paid = root.querySelector('#reel-paid');
   const progress = root.querySelector('#reel-progress');
@@ -459,16 +468,24 @@ export function mount(root, life) {
     comment.hidden = index !== LINES.length;
     if (index === LINES.length) save(WATCHED_KEY, true); // watched to its end: it leaves the feed
     paid.hidden = index < PAID_FROM;
-    if (!next.hidden) {
-      if (document.activeElement === next) main.focus({ preventScroll: true }); // (the focus does not go with it)
-      next.hidden = true;
-    }
+    // (the play button goes once it has begun; "Swipe up" is shown after the first line, to say how it goes on)
+    for (const gone of [play, next]) if (document.activeElement === gone) main.focus({ preventScroll: true }); // (the focus does not go with it)
+    play.hidden = true;
+    next.hidden = index !== 0;
     progress.style.transform = `scaleX(${(index + 1) / STEPS})`;
   }
   const advance = () => say(at + 1 >= STEPS ? 0 : at + 1);
 
   // Swipe up, scroll, or a key, for the next line. Not quicker than a line can start.
+  // It begins with a tap on the play button (or a key): a phone lets sound start only on a tap, and a swipe is not
+  // one, so a reel begun by a swipe would be silent to its end. A swipe before then nudges the play button instead.
   let last = -Infinity; // (the first swipe always counts, however soon after the screen came up)
+  const nudge = () => {
+    play.classList.remove('nudge');
+    void play.offsetWidth;
+    play.classList.add('nudge');
+  };
+  const swiped = () => (at < 0 ? nudge() : go());
   const go = () => {
     const now = performance.now();
     if (now - last < 450) return;
@@ -481,7 +498,7 @@ export function mount(root, life) {
     wheel = Math.max(0, wheel + event.deltaY);
     if (wheel > 40) {
       wheel = 0;
-      go();
+      swiped();
     }
   }, { passive: false });
   let from = null;
@@ -490,7 +507,7 @@ export function mount(root, life) {
   life.on(main, 'touchend', (event) => {
     const up = from === null ? 0 : from - event.changedTouches[0].clientY;
     from = null;
-    if (up > 30) go();
+    if (up > 30) swiped();
   });
   life.on(document, 'keydown', (event) => { // (anywhere on the screen: whatever has the focus, so long as it is not a thing to press)
     if (event.target.closest?.('button, a, input, textarea')) return;
@@ -500,6 +517,7 @@ export function mount(root, life) {
     }
   });
   next.addEventListener('click', go);
+  play.addEventListener('click', go);
 
   // Share: the phone's own share sheet, with the reel's address. Where there is none (a computer, mostly), the address
   // is copied, and a short line beside the rail says so; where it cannot be copied either, the line is the address.

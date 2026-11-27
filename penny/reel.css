@@ -55,7 +55,22 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
 /* (the foot is a box as wide as the screen: only what is in it takes a touch, not the box) */
 .reel-low { pointer-events: none; }
 .reel-low button, .reel-low .reel-cap, .reel-low .reel-said { pointer-events: auto; }
+/* How it begins: a tap on play, in the middle of the screen, over his chest. */
+.reel-play {
+  position: absolute; z-index: 3; left: 50%; top: 66%; translate: -50% -50%;
+  width: 5.5rem; height: 5.5rem; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
+  background: rgb(255 253 248 / 0.92); color: #22303c; box-shadow: 0 0.4rem 1.6rem rgb(20 28 36 / 0.28);
+  -webkit-tap-highlight-color: transparent;
+}
+.reel-play[hidden] { display: none; }
+.reel-play svg { width: 2.4rem; height: 2.4rem; fill: currentColor; } /* (the triangle a little right of the middle, where a play mark looks centred) */
+.reel-play:active { scale: 0.94; }
+.reel-play:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+/* (a swipe before it is tapped: a gentle nudge, to say this first) */
+.reel-play.nudge { animation: reel-play-nudge 700ms ease-in-out; }
+@keyframes reel-play-nudge { 0%, 100% { scale: 1; } 30% { scale: 1.12; } 60% { scale: 0.96; } }
 .reel-next, .reel-comment { align-self: center; margin-bottom: 0.6rem !important; }
+.reel-next[hidden] { display: none; }
 /* What he says: large, centred on the whole screen and clear of the rail, between his mouth and his name. */
 .reel-said {
   position: absolute; left: max(1rem, env(safe-area-inset-left)); right: max(1rem, env(safe-area-inset-right)); bottom: calc(100% + 2.5rem);
@@ -109,6 +124,6 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
 .reel-bar i { display: block; height: 100%; background: rgb(255 255 255 / 0.9); transform: scaleX(0); transform-origin: left; transition: transform 450ms ease; }
 
 @media (prefers-reduced-motion: reduce) {
-  .reel-said.in, .reel-next svg { animation: none; }
+  .reel-said.in, .reel-next svg, .reel-play.nudge { animation: none; }
   .reel-bar i { transition: none; }
 }

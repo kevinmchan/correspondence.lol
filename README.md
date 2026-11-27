@@ -1194,8 +1194,11 @@ room is one picture, 360 by 640, cut to fill whatever phone it is on (`xMidYMax 
 never his face), and the feed's marks (what people thought of it, his name, his caption, his sound) lie over it in
 white. It is the same in the light and the dark. The words are the owner's, word for word, split only into beats.
 
-- *A line at a time.* Swipe up, scroll, or the arrow keys, for the next line; not quicker than one every 450 ms. Before
-  the first, a "Swipe up" that can also be pressed. After the last line comes the comment under it, then the top again.
+- *A line at a time.* It begins with a tap on the play button in the middle (or a key): a phone lets sound start only
+  on a tap, and a swipe is not one, so a reel begun by a swipe was silent to its end when opened from a link (the owner,
+  27 November 2026). A swipe before then gently nudges the play button. After the first line, "Swipe up" (which can
+  also be pressed) says how it goes on; then swipe up, scroll, or the arrow keys, for each line, not quicker than one
+  every 450 ms. After the last line comes the comment under it, then the top again.
   "Paid partnership with Penny's Energy" is shown only once the sponsor is named (the punchline: nothing gives it
   away before). His caption shows its first line; "more" opens the rest, with the `#ad` at the end of it.
 - *Sharing.* The share mark on the rail (the one mark there that does something) opens the phone's own share sheet
