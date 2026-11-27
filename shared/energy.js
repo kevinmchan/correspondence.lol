@@ -43,6 +43,11 @@ export const BAR = 70;
 // How full the bar is (0 up to, not reaching, 1), and how many times it has
 // been filled. Earned, not held: spending later takes nothing off it.
 export const bar = (state) => ({ fill: (state.earned % BAR) / BAR, fills: Math.floor(state.earned / BAR) });
+// Marcus Pell's reel (penny/reel.js) turns up in the feed once half a bar has been earned: passing it is all it takes,
+// and it never interrupts (the owner, 27 November 2026: "I want the trigger for it showing up in your feed to be passing
+// the energy threshold"; the doc had it met "in the middle of an energy bar").
+export const REEL_AT = BAR / 2;
+export const reelFound = (state) => state.earned >= REEL_AT;
 // The meadow: the reward for the first bar.
 export const meadowEarned = (state) => state.earned >= BAR;
 // The meadow's folk (shared/meadow.js, room/folk.js): the things of a room, alive. There are three stages, a bar

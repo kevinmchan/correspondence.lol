@@ -1,0 +1,93 @@
+/* A reel (penny/reel.js): Marcus Pell's video, the whole phone, as a feed shows
+   one. The picture is his room, cut to fill whatever phone it is on; the
+   feed's own marks lie over it in white, as they do over anyone's video. It is
+   the same in the light and in the dark: it is a picture of his room. */
+.screen-reel main.reel {
+  position: relative; padding: 0; overflow: clip; outline: none;
+  background: #b3bec6; color: #fff;
+  touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none; }
+.screen.opening main.reel > * { animation: none; }
+.reel .reel-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.reel .reel-cam { transform-box: view-box; transform-origin: 180px 320px; }
+/* (a soft shade at the foot, so that white words read on the picture) */
+.reel::after {
+  content: ''; position: absolute; inset: 45% 0 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0), rgb(0 0 0 / 0.5));
+}
+.reel .penny-back { z-index: 3; background: rgb(20 28 36 / 0.32); color: #fff; }
+.reel .penny-back:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* The feed's marks: what people thought of it, down the right. */
+.reel-rail {
+  position: absolute; z-index: 2; right: max(0.6rem, env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8.5rem);
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-medium); line-height: var(--leading-none); text-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+}
+.reel-rail span { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.reel-rail svg { width: 1.9rem; height: 1.9rem; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.25)); }
+
+/* At the foot: what he says, who he is, his caption, his sound. */
+.reel-low {
+  position: absolute; z-index: 2; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.45rem;
+  padding: 0 calc(max(0.6rem, env(safe-area-inset-right)) + 3.4rem) calc(env(safe-area-inset-bottom, 0px) + 1.1rem) max(1rem, env(safe-area-inset-left));
+  font-family: var(--font-text); text-align: left; text-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+}
+.reel-low p { margin: 0; }
+.reel-said, .reel-next, .reel-comment { align-self: center; margin-bottom: 0.6rem !important; }
+.reel-said {
+  max-width: 16rem; padding: 0.5rem 0.9rem; border-radius: 1rem;
+  background: rgb(255 253 248 / 0.93); color: #22303c; text-shadow: none; text-align: center; text-wrap: balance;
+  font-size: var(--text-small); font-weight: var(--weight-medium); line-height: var(--leading-snug);
+}
+.reel-said:empty { display: none; }
+.reel-said.big { font-family: var(--font-letter); font-size: var(--text-title); font-weight: var(--weight-regular); padding: 0.6rem 1.1rem; }
+.reel-said.in { animation: reel-rise 450ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes reel-rise { from { transform: translateY(1.6rem); opacity: 0; } to { transform: none; opacity: 1; } }
+.reel-next {
+  display: grid; justify-items: center; gap: 0.1rem; min-width: 5.5rem; min-height: 3.4rem; padding: 0.2rem 0.6rem;
+  border: 0; background: none; color: #fff; font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-medium); line-height: var(--leading-none); letter-spacing: var(--track-open);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.35); cursor: pointer;
+}
+.reel-next svg { width: 1.8rem; height: 1.8rem; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; animation: reel-nudge 2.4s ease-in-out infinite; }
+@keyframes reel-nudge { 0%, 100% { transform: translateY(0.25rem); opacity: 0.6; } 50% { transform: translateY(-0.25rem); opacity: 1; } }
+.reel-next:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.6rem; }
+.reel-comment { display: flex; align-items: center; gap: 0.5rem; }
+.reel-comment[hidden] { display: none; }
+.reel-comment i { flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid #fff; background: linear-gradient(135deg, #c9b8a6, #a9b9c4); }
+.reel-comment span { padding: 0.45rem 0.8rem; border-radius: 0.9rem; background: rgb(20 28 36 / 0.72); font-size: var(--text-caption); font-weight: var(--weight-medium); text-shadow: none; }
+.reel-who { display: flex; align-items: center; gap: 0.55rem; }
+.reel-who strong { font-size: var(--text-small); }
+.reel-avatar {
+  width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: #d8c3ad; color: #2a3540; border: 2px solid #fff; font-size: var(--text-fine); font-weight: var(--weight-bold); text-shadow: none;
+}
+.reel-follow { padding: 0.25rem 0.6rem; border: 1.5px solid rgb(255 255 255 / 0.8); border-radius: 0.5rem; font-size: var(--text-caption); font-weight: var(--weight-medium); }
+.reel-paid { font-size: var(--text-fine); opacity: 0.9; margin-top: -0.25rem !important; }
+.reel-paid[hidden] { display: none; }
+.reel-cap { display: flex; align-items: center; gap: 0.15rem; width: 100%; font-size: var(--text-caption); line-height: var(--leading-snug); border-radius: 0.7rem; }
+.reel-cap p { flex: 0 1 auto; min-width: 0; }
+.reel-cap button {
+  flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.3rem; margin: -0.8rem 0;
+  border: 0; background: none; color: rgb(255 255 255 / 0.75); font-family: var(--font-text); font-size: var(--text-caption); font-weight: var(--weight-bold); line-height: var(--leading-none); cursor: pointer;
+}
+.reel-cap button:focus-visible { outline: 2px solid #fff; outline-offset: -4px; border-radius: 0.6rem; }
+.reel-cap.open { display: block; background: rgb(20 28 36 / 0.9); padding: 0.7rem 0.8rem 0.3rem; box-sizing: border-box; text-shadow: none; }
+.reel-cap.open button { margin: 0 0 0 -0.3rem; }
+.reel-tags { color: #cfe0ef; font-weight: var(--weight-medium); }
+.reel-ad { opacity: 0.65; }
+.reel.captioned .reel-said { visibility: hidden; }
+.reel-audio { display: flex; align-items: center; gap: 0.4rem; font-size: var(--text-fine); opacity: 0.85; }
+.reel-audio svg { width: 0.95rem; height: 0.95rem; fill: none; stroke: #fff; stroke-width: 2; }
+
+/* How far through it is, along the very foot. */
+.reel-bar { position: absolute; z-index: 2; left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0px); height: 3px; background: rgb(255 255 255 / 0.25); }
+.reel-bar i { display: block; height: 100%; background: rgb(255 255 255 / 0.9); transform: scaleX(0); transform-origin: left; transition: transform 450ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-said.in, .reel-next svg { animation: none; }
+  .reel-bar i { transition: none; }
+}

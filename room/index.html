@@ -39,6 +39,7 @@
   <link rel="stylesheet" href="/room/room.css">
   <link rel="stylesheet" href="/penny/sky.css">
   <link rel="stylesheet" href="/penny/tags.css">
+  <link rel="stylesheet" href="/penny/reel.css">
   <link rel="stylesheet" href="/room/worlds.css">
   <link rel="stylesheet" href="/room/meadow.css">
   <link rel="stylesheet" href="/room/folk.css">
@@ -48,7 +49,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky|reel)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -175,9 +176,10 @@
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.8" cy="17.5" r="2.2"/><circle cx="16.8" cy="15.5" r="2.2"/></svg></span>
             <span class="words"><strong>Liv Radio</strong></span>
           </a>
-          <a href="/jam/?taste" class="menu-button" style="--tile: #2aa198">
-            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></span>
-            <span class="words"><strong>Museum</strong></span>
+          <!-- (Reels has Museum's place for now, the owner, 27 November 2026; the museum is still reached through Liv Radio's radio) -->
+          <a href="/?reel" id="menu-reels" class="menu-button" style="--tile: #c9b8f0">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.5 9.2v5.6l4.5-2.8z"/></svg></span>
+            <span class="words"><strong>Reels</strong></span>
           </a>
         </nav>
         </div>
@@ -933,6 +935,32 @@
       <p class="sr-only">A picture of the night, come to life. Its five lights twinkle and wander, and each has a note. Touch one to hear it, or anywhere else and the nearest answers; a finger held near them stirs them. With a keyboard, the keys 1 to 5 are the five lights, and the space bar is each of them in turn.</p>
       <canvas class="sky-view" role="img" aria-label="Five dim lights on black. Three stars with four points fall in a line from the top left, each bigger than the last, with two small round lights beside them."></canvas>
       <p id="sky-said" class="sr-only" role="status"></p>
+    </main>
+  </template>
+
+  <template id="screen-reel">
+    <!-- A reel: Marcus Pell, an extension ladder, says something heartfelt, and then something else. Swipe up for each line: see penny/reel.js. -->
+    <main class="reel" tabindex="-1" aria-label="A reel from marcus.pell. Swipe up, or press the down arrow, for each line.">
+      <svg class="reel-scene" viewBox="0 0 360 640" preserveAspectRatio="xMidYMax slice" role="img" aria-label="An aluminium extension ladder with a friendly face films himself in a tidy home office. A chart on the wall shows one line climbing away from another."></svg>
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <div class="reel-rail" aria-hidden="true">
+        <span><svg viewBox="0 0 24 24"><path d="M12 20.5l-1.4-1.3C5.4 14.6 2 11.5 2 7.8 2 4.8 4.4 2.5 7.4 2.5c1.7 0 3.4.8 4.6 2.1 1.2-1.3 2.9-2.1 4.6-2.1 3 0 5.4 2.3 5.4 5.3 0 3.7-3.4 6.8-8.6 11.4z"/></svg>48.1K</span>
+        <span><svg viewBox="0 0 24 24"><path d="M3.5 11.5a8.5 8 0 1 1 4.2 6.9L3 20l1.4-4.3a7.8 7.8 0 0 1-.9-4.2z"/></svg>611</span>
+        <span><svg viewBox="0 0 24 24"><path d="M21 3L3 10.5l7 2.5 2.5 7z M10 13l5-5"/></svg>1,209</span>
+      </div>
+      <div class="reel-low">
+        <button type="button" id="reel-next" class="reel-next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>Swipe up</button>
+        <p id="reel-said" class="reel-said" aria-live="polite"></p>
+        <p id="reel-comment" class="reel-comment" hidden><i aria-hidden="true"></i><span>Go get that paper boiiiii!</span></p>
+        <p class="reel-who"><span class="reel-avatar" aria-hidden="true">MP</span><strong>marcus.pell</strong><span class="reel-follow" aria-hidden="true">Follow</span></p>
+        <p id="reel-paid" class="reel-paid" hidden>Paid partnership with Penny’s Energy</p>
+        <div id="reel-cap" class="reel-cap">
+          <p>Real talk about who gets to climb 🪜<span class="reel-cap-dots"> …</span><span class="reel-cap-rest" hidden> Not everyone starts on the same rung. Stay humble, stay hungry, stay hydrated. <span class="reel-tags">#Gratitude #Mindset #StepByStep #RiseAndGrind</span> <span class="reel-ad">#ad</span></span></p>
+          <button type="button" id="reel-more" aria-expanded="false">more</button>
+        </div>
+        <p class="reel-audio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg>marcus.pell · Original audio</p>
+      </div>
+      <div class="reel-bar" aria-hidden="true"><i id="reel-progress"></i></div>
     </main>
   </template>
 
