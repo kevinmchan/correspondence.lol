@@ -827,6 +827,7 @@
     <main class="hello">
       <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
       <p id="hello-said" class="sr-only" role="status"></p>
+      <p id="hello-broke" class="sr-only" role="status"></p>
       <!-- the street, and the mailbox it hides behind -->
       <svg class="hello-stage hello-far" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A quiet street, and a mailbox. Somebody small is hiding behind it.">
         <rect class="h-sky" x="-2000" y="-2000" width="4200" height="2190"/>
@@ -879,6 +880,19 @@
           </g>
         </g>
         <g class="h-glass"></g>
+      </svg>
+      <!-- The glimpse (penny/hello.js): for a blink, the screen breaks up, as if something were trying to get through it. Penny is untouched. -->
+      <div class="hello-static" aria-hidden="true"></div>
+      <svg class="hello-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <filter id="hello-tear" x="-5%" y="0" width="110%" height="100%" color-interpolation-filters="sRGB">
+          <feTurbulence class="tear-noise" type="fractalNoise" baseFrequency="0 0.04" numOctaves="1" seed="3" result="noise"/>
+          <feComponentTransfer in="noise" result="bands"><feFuncR type="discrete" tableValues="0.5 0.5 0.15 0.5 0.85 0.5 0.5 0.3"/><feFuncG type="linear" slope="0" intercept="0.5"/></feComponentTransfer>
+          <feDisplacementMap class="tear-shift" in="SourceGraphic" in2="bands" scale="36" xChannelSelector="R" yChannelSelector="G" result="torn"/>
+          <feColorMatrix in="torn" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red"/>
+          <feOffset class="tear-split" in="red" dx="5" result="red-off"/>
+          <feColorMatrix in="torn" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="rest"/>
+          <feComposite in="red-off" in2="rest" operator="arithmetic" k2="1" k3="1"/>
+        </filter>
       </svg>
       <!-- Penny, to be pressed: over it while it stands there to be looked at, and gone once it has been -->
       <button type="button" id="hello-penny" class="hello-tap" aria-label="Penny" hidden></button>

@@ -9,6 +9,17 @@
 // is touched. A touch knocks it back, startled, all the way down the street,
 // and it hides; and the street is there.
 //
+// THE GLIMPSE. Early on, while Penny is alone going through what it feels
+// (just after it is glad), for a blink the screen breaks up, as if something
+// corrupted were trying to get through it: the picture tears into bands that
+// slip sideways, its colours come apart, blocks of it go dark or wrong, and
+// the sound crackles and stutters. It pushes twice, and is gone. Penny itself
+// is never changed, and carries on as if nothing happened. It comes once: if
+// Penny is touched before it, it comes as Penny sets off up the street, and
+// Penny does not stop for it. Never at the glass. (The app is a dark comedy,
+// very cute, with the dark at its edges; the owner, 27 November 2026. Held to
+// be looked at: /?hello&glimpse=hold.)
+//
 // A quiet street, and a mailbox. Penny is behind it, and shy: it leans out
 // round one side, and back; then the other side, for longer. Then Penny
 // comes out, and comes towards you, cautious and curious at once, all the way
@@ -62,7 +73,7 @@
 
 import { audio, isMuted, noise } from '/postmarks/sound.js';
 import { go } from '/shared/nav.js';
-import { ASK, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice, reach } from './penny.js';
+import { ASK, D5, G5, GASP, HELLO, PLEASE, THIS_WAY, YES, createVoice, reach } from './penny.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 // The horizon, in the scene's units: Penny's eyes are always on it. It stands
@@ -179,6 +190,7 @@ export function mount(root, life) {
   const portal = root.querySelector('#hello-portal');
   const tap = root.querySelector('#hello-penny');
   const said = root.querySelector('#hello-said');
+  const broke = root.querySelector('#hello-broke'); // (the glimpse's own line, so it never talks over the scene's)
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const query = new URLSearchParams(location.search);
   const gait = ['tiptoe', 'zigzag', 'edges'].includes(query.get('gait')) ? query.get('gait') : 'tiptoe';
@@ -186,6 +198,7 @@ export function mount(root, life) {
   const forced = ['rock', 'bounce', 'hop'].includes(asked) ? asked : null;
   const from = ['street', 'glass', 'portal'].includes(query.get('at')) ? query.get('at') : 'model';
   const held = EMOTES.find((one) => one.mood === query.get('emote')) ?? null;
+  const holdGlimpse = query.get('glimpse') === 'hold';
   main.dataset.gait = gait;
   if (forced) main.dataset.walk = forced;
 
@@ -465,6 +478,98 @@ export function mount(root, life) {
     tone.stop(ctx.currentTime + 1.4);
   }
 
+  // The glimpse: for a blink, something corrupted tries to break through the
+  // screen. Penny is not touched by it. Two pushes, the second harder, with a
+  // breath of the screen as it was between them.
+  const PUSHES = [
+    { at: 0, frames: 3, force: 0.6 },
+    { at: 300, frames: 4, force: 1 },
+  ];
+  const FRAME_MS = 70;
+  const noiseOf = root.querySelector('#hello-tear .tear-noise');
+  const shiftOf = root.querySelector('#hello-tear .tear-shift');
+  const splitOf = root.querySelector('#hello-tear .tear-split');
+  const staticLayer = root.querySelector('.hello-static');
+  // One frame of it: where the picture tears and how far it slips, how far its
+  // colours come apart, and which blocks of it go wrong.
+  function corrupt(force) {
+    const n = Math.random;
+    noiseOf.setAttribute('seed', String(Math.floor(n() * 1000)));
+    noiseOf.setAttribute('baseFrequency', `0 ${r2(0.012 + n() * 0.05)}`);
+    shiftOf.setAttribute('scale', String(Math.round((18 + n() * 40) * force)));
+    splitOf.setAttribute('dx', String(r2((n() < 0.5 ? -1 : 1) * (2 + n() * 6) * force)));
+    const bands = [];
+    const count = 2 + Math.floor(n() * 4 * force);
+    for (let i = 0; i < count; i++) {
+      const band = document.createElement('div');
+      band.className = `band ${['dark', 'wrong', 'smear', 'wrong'][Math.floor(n() * 4)]}`;
+      const tall = n() < 0.7 ? 0.4 + n() * 2.5 : 3 + n() * 9; // (mostly thin; now and then a block)
+      Object.assign(band.style, { top: `${r2(n() * 100)}%`, height: `${r2(tall)}%` });
+      if (n() < 0.45) Object.assign(band.style, { left: `${r2(n() * 60)}%`, right: `${r2(n() * 30)}%` });
+      bands.push(band);
+    }
+    staticLayer.replaceChildren(...bands);
+  }
+  // Heard: Penny's own notes, crushed and stuttering, falling away, under a
+  // crackle; in time with the pushes.
+  function breakingThrough() {
+    const live = audio();
+    if (!live || isMuted()) return;
+    const { ctx } = live;
+    const t0 = ctx.currentTime + 0.01;
+    const crush = ctx.createWaveShaper(); // (a few steps only, where a voice has hundreds: the sound of it gone wrong)
+    const curve = new Float32Array(512);
+    for (let i = 0; i < curve.length; i++) curve[i] = Math.round(((i / (curve.length - 1)) * 2 - 1) * 3) / 3;
+    crush.curve = curve;
+    const level = ctx.createGain();
+    level.gain.value = 0.06;
+    crush.connect(level).connect(live.mix);
+    const blip = (at, freq, dur, type = 'square') => {
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0 + at);
+      amp.gain.setValueAtTime(0.0001, t0 + at);
+      amp.gain.exponentialRampToValueAtTime(0.9, t0 + at + 0.004);
+      amp.gain.setValueAtTime(0.9, t0 + at + dur - 0.006);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      osc.connect(amp).connect(crush);
+      osc.start(t0 + at);
+      osc.stop(t0 + at + dur + 0.02);
+    };
+    for (const push of PUSHES) {
+      const at = push.at / 1000;
+      const long = (push.frames * FRAME_MS) / 1000;
+      // its hello, a scrap of it, stuck and repeating, a little lower each time
+      for (let k = 0, t = 0; t < long; k++, t += 0.045) blip(at + t, (k % 3 === 2 ? D5 : G5) / 2 ** (k * 0.35 * push.force), 0.032);
+      blip(at, 55 + Math.random() * 20, long, 'sawtooth'); // and something low under it
+      noise({ at, dur: long, from: 3200, to: 900, q: 0.5, gain: 0.05 * push.force });
+    }
+  }
+  // Wait, whatever motion is asked for (it is a moment, not a movement).
+  const blink = (ms) => new Promise((done, stop) => { life.setTimeout(done, ms); life.onEnd(() => stop(new Left())); });
+  let glimpsed = false;
+  async function glimpse() {
+    if (glimpsed) return;
+    glimpsed = true;
+    broke.textContent = 'For a blink, something breaks through the screen';
+    breakingThrough();
+    let was = 0;
+    for (const push of PUSHES) {
+      await blink(push.at - was);
+      main.classList.add('glimpse');
+      for (let f = 0; f < (still ? 1 : push.frames); f++) {
+        corrupt(push.force);
+        await blink(still ? push.frames * FRAME_MS : FRAME_MS);
+      }
+      if (holdGlimpse) { corrupt(1); await new Promise((done, stop) => life.onEnd(() => stop(new Left()))); }
+      main.classList.remove('glimpse');
+      staticLayer.replaceChildren();
+      was = push.at + push.frames * FRAME_MS;
+    }
+    broke.textContent = '';
+  }
+
   // --- Being touched ---------------------------------------------------------------------------
   // On its way up the street it is shy of it: a touch sends it back a step,
   // twice at most. At the glass it is glad of it, and comes to look.
@@ -516,8 +621,10 @@ export function mount(root, life) {
     tap.hidden = false;
     laid();
     for (let n = 0; beat === 'model'; n++) {
+      if (holdGlimpse && n === 0) glimpse().catch(() => {}); // (held: at once, to be looked at)
       await emote(held ?? EMOTES[n % EMOTES.length]);
       if (beat !== 'model') return;
+      if (n === 2) { await rest(700); if (beat !== 'model') return; await glimpse(); } // (just after it is glad)
       await rest(held ? 3200 : 2400);
     }
   }
@@ -646,6 +753,7 @@ export function mount(root, life) {
   }
   async function coming() {
     beat = 'coming';
+    if (!glimpsed && from === 'model') life.setTimeout(() => glimpse().catch(() => {}), 900); // (touched before it came: it comes now, and Penny walks on through it)
     watch(false);
     const steps = GAITS[gait];
     const stood = [here()]; // where it has stopped, to go back to

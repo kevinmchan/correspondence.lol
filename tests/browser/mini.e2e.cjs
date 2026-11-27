@@ -398,6 +398,8 @@ async function states() {
     // portal, once Penny has gone through it, which is then the one thing there is to press.
     { name: 'the introduction, at first: Penny alone, going through what it feels', screen: 'hello', at: '/?hello', ready: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
     { name: 'the introduction, at first, one feeling held: excited', screen: 'hello', at: '/?hello&emote=excited', ready: '#hello-penny:not([hidden])', wait: 4000, whole: ['.office-door', '#hello-penny'] },
+    // (and early on, for a blink, something breaks through the screen: the glimpse, held to be looked at)
+    { name: 'the introduction, at first, the glimpse', screen: 'hello', at: '/?hello&glimpse=hold', ready: '.hello.glimpse', whole: ['.office-door', '#hello-penny'] },
     // The profile sheet, part way through the story: the way to start it over at its foot; and the question asked before.
     { name: 'the profile, with the story begun: start it over', screen: 'home', at: '/', storage: { ...ACCOUNT, 'penny:story:v1': 'slow' }, ready: '#me-edit',
       small: [['^input$', 'a switch is drawn 46 by 27, but it sits in a label that is the whole row of its setting, and a touch anywhere on the row turns it', 27],
@@ -411,6 +413,7 @@ async function states() {
       then: async (page) => { await page.waitForFunction(() => !document.querySelector('#splash')); await page.locator('#portal').click({ force: true }); }, settle: '#hello-penny:not([hidden])', whole: ['.office-door', '#hello-penny'] },
     { name: 'the introduction, behind the mailbox', screen: 'hello', at: '/?hello&at=street', ready: '.hello-far .h-penny', whole: ['.office-door'] },
     { name: 'the introduction, up against the glass', screen: 'hello', at: '/?hello&at=glass', ready: '.h-penny.pressed', whole: ['.office-door'] },
+
     { name: 'the introduction, the portal left open', screen: 'hello', at: '/?hello&at=portal', ready: '#hello-portal:not([hidden]):not(:disabled)', wait: 15000, settle: '.h-penny.gone', whole: ['.office-door', '#hello-portal'] },
     { name: 'the film, scene one', screen: 'office', at: '/?office', ready: '.office-stage', whole: ['.office-door'] },
     { name: 'the film, scene two', screen: 'slow', at: '/?slow', ready: '.slow-keep', whole: ['.office-door'] },

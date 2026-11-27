@@ -73,6 +73,24 @@
 .hello .h-penny .seal.sound { animation: p-sound-still var(--d, 400ms) ease-out; }
 .hello .h-penny.gone { opacity: 0; }
 
+/* --- The glimpse ----------------------------------------------------------------------
+   For a blink, the screen breaks up, as if something were trying to get
+   through it (penny/hello.js): the picture tears into bands that slip
+   sideways, its colours come apart, and blocks of it go wrong. Penny itself
+   is not changed. It only ever darkens: nothing flashes bright. */
+.hello-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.hello-static { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; display: none; }
+.hello.glimpse .hello-static { display: block; }
+.hello.glimpse :is(.hello-stage, .hello-plain) { filter: url(#hello-tear); }
+.hello-static::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(to bottom, rgb(12 10 16 / 0.16) 0 1px, transparent 1px 3px);
+}
+.hello-static .band { position: absolute; left: 0; right: 0; }
+.hello-static .band.dark { background: rgb(14 11 18 / 0.88); }
+.hello-static .band.wrong { -webkit-backdrop-filter: hue-rotate(150deg) saturate(2.6) brightness(0.72); backdrop-filter: hue-rotate(150deg) saturate(2.6) brightness(0.72); }
+.hello-static .band.smear { -webkit-backdrop-filter: blur(1px) contrast(1.6) brightness(0.8); backdrop-filter: blur(1px) contrast(1.6) brightness(0.8); background: repeating-linear-gradient(to right, rgb(20 16 24 / 0.35) 0 2px, transparent 2px 9px); }
+
 /* --- At first: Penny alone, on plain ground --------------------------------------------
    Soft light, the colour of the sky; it lifts away as Penny is knocked back
    into the street. */
