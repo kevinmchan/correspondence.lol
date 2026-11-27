@@ -201,6 +201,10 @@ dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
 @keyframes drawer-up { from { translate: 0 100%; } to { translate: 0 0; } }
 .jam-drawer header { flex: none; display: flex; align-items: center; justify-content: space-between; }
 .jam-drawer header button.quiet { width: 2.75rem; height: 2.75rem; }
+/* Its X, and the tick it turns into once another sound has been chosen: one fades into the other. */
+@media (prefers-reduced-motion: no-preference) { #jam-drawer-close path { transition: opacity 280ms ease; } }
+#jam-drawer-close .done, .jam-drawer.chosen #jam-drawer-close .shut { opacity: 0; }
+.jam-drawer.chosen #jam-drawer-close .done { opacity: 1; }
 .jam-drawer h2 { margin: 0; padding-left: 0.3rem; font-family: var(--font-letter); font-size: var(--text-lead); font-weight: var(--weight-regular); color: var(--ink); text-transform: none; letter-spacing: 0; }
 /* Record: while it listens it shows a square to stop it, and a ring in the instrument's colour goes once round it in
    the time it listens for. */
@@ -227,9 +231,12 @@ dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
 }
 @keyframes mic-ring { from { --mic-turn: 0deg; } to { --mic-turn: 360deg; } }
 .jam-drawer .message.bad { flex: none; }
-/* The sounds: each a tile to press into the instrument's place (lit when it is the one there), its name, and a bin. */
+/* The sounds: each a row to press into the instrument's place (lit when it is the one there), its name (underlined, to
+   rename it), and a bin. */
 .jam-sounds { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; margin: 0; padding: 0 0 0.3rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .jam-sounds li { flex: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 1.1rem; background: var(--card); box-shadow: 0 0.22rem 0 var(--lip); }
+.jam-sounds li { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.jam-sounds li:active:not(:has(button.rename:active, button.quiet:active, input)) .tile { transform: translateY(0.12rem); }
 .jam-sounds li:has(.tile[aria-pressed="true"]) { box-shadow: 0 0.22rem 0 var(--c), inset 0 0 0 2px var(--c); }
 .jam-sounds .tile {
   flex: none; width: 3rem; height: 3rem; padding: 0; border: 0; border-radius: 26%; display: grid; place-items: center;
@@ -244,6 +251,14 @@ dialog.jam-drawer::backdrop { background: rgb(20 26 32 / 0.45); }
   flex: 1; min-width: 0; min-height: 2.75rem; padding: 0.45rem 0.5rem; border-color: transparent; background: transparent; box-shadow: none;
   font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--ink);
 }
+.jam-sounds button.rename {
+  flex: 0 1 auto; min-width: 0; min-height: 2.75rem; margin: 0; padding: 0.45rem 0.5rem; border: 0; background: none; box-shadow: none; text-align: left;
+  overflow-wrap: anywhere; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-text); font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--ink);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.28em;
+  text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.jam-sounds button.rename + button.quiet { margin-left: auto; }
 .jam-sounds input[type="text"]:hover { border-color: color-mix(in srgb, var(--ink) 14%, var(--paper)); }
 .jam-sounds input[type="text"]:focus-visible { border-color: var(--accent); background: var(--paper); }
 .jam-sounds button.quiet { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; display: grid; place-items: center; }

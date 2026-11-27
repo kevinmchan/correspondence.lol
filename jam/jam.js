@@ -437,9 +437,13 @@ export function mount(root, life) {
   // The drawer: the instrument itself (or, for a place that is no instrument's, nothing), then the other
   // instruments, then every sound recorded, newest first. `one` is a recorded sound; or else `id` is what is kept
   // for the place (null for its own) and `plays` the instrument that is, if any.
+  let opened = null; // what was in the place when the drawer opened: anything else chosen, and its X is a tick
   function showSounds() {
     const kind = DECK[layer];
     el.drawer.style.setProperty('--c', kind.colour);
+    const chosen = el.drawer.open && slots[layer] !== opened;
+    el.drawer.classList.toggle('chosen', chosen);
+    $('jam-drawer-close').setAttribute('aria-label', chosen ? 'Done' : 'Close');
     const row = ({ one = null, id = one?.id ?? null, plays = null }) => {
       const li = document.createElement('li');
       const tile = document.createElement('button');
@@ -450,6 +454,8 @@ export function mount(root, life) {
       tile.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${one ? MIC : plays ? plays.icon : '<path d="M7 12h10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'}</svg>`;
       if (plays) tile.style.setProperty('--c', plays.colour); // (an instrument is known by its colour, whose place it is in)
       tile.addEventListener('click', () => swap(id));
+      // (the whole row is pressed to choose it; its name and its bin are buttons of their own)
+      li.addEventListener('click', (event) => { if (!event.target.closest('button, input')) swap(id); });
       li.append(tile);
       if (!one) {
         const own = document.createElement('span');
@@ -458,22 +464,40 @@ export function mount(root, life) {
         li.append(own);
         return li;
       }
+      // Its name: underlined, to press to rename it, when it becomes a box to type in until it is let go of.
+      const label = document.createElement('button');
+      label.type = 'button';
+      label.className = 'rename';
+      label.textContent = one.name;
+      label.setAttribute('aria-label', `Rename ${one.name}`);
       const name = document.createElement('input');
       name.type = 'text';
-      name.value = one.name;
       name.maxLength = MOST_NAME;
       name.autocomplete = 'off';
       name.enterKeyHint = 'done';
       name.setAttribute('aria-label', 'Name of this sound');
-      name.addEventListener('change', () => {
-        one.name = name.value.trim() || one.name;
+      label.addEventListener('click', () => {
         name.value = one.name;
+        label.replaceWith(name);
+        name.focus({ preventScroll: true }); // (it is where its name was, which was in sight to be pressed)
+        name.select();
+      });
+      name.addEventListener('blur', () => {
+        const now = name.value.trim() || one.name;
+        name.replaceWith(label);
+        if (now === one.name) return;
+        one.name = now;
+        label.textContent = now;
         renameSound(one, one.name).then(drawerSync);
+        label.setAttribute('aria-label', `Rename ${one.name}`);
         tile.setAttribute('aria-label', `Play ${one.name} here`);
         bin.setAttribute('aria-label', `Delete ${one.name}`);
         render();
       });
-      name.addEventListener('keydown', (event) => { if (event.key === 'Enter') name.blur(); });
+      name.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); name.value = one.name; }
+        if (event.key === 'Enter' || event.key === 'Escape') name.blur();
+      });
       const bin = document.createElement('button');
       bin.type = 'button';
       bin.className = 'quiet';
@@ -486,7 +510,7 @@ export function mount(root, life) {
         dropSound(one).then(drawerSync);
         fit();
       });
-      li.append(name, bin);
+      li.append(label, bin);
       return li;
     };
     el.sounds.replaceChildren(
@@ -497,8 +521,9 @@ export function mount(root, life) {
   }
   const openDrawer = () => {
     oops(el.micError, '');
-    showSounds();
+    opened = slots[layer];
     el.drawer.showModal();
+    showSounds();
   };
   el.mic.addEventListener('click', openDrawer);
   more.addEventListener('click', () => {

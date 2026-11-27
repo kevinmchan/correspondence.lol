@@ -170,8 +170,10 @@ async function states() {
       await page.locator('#jam-record').click();
       await page.waitForSelector(`.jam-sounds li:nth-child(${n + 4})`); // (after the four instruments)
     }
-    await page.locator('.jam-sounds input').first().fill('WWWWWWWWWWWW');
-    await page.locator('.jam-sounds input').first().press('Enter');
+    await page.locator('.jam-sounds .rename').first().click();
+    await page.locator('.jam-sounds input').fill('WWWWWWWWWWWW');
+    await page.locator('.jam-sounds input').press('Enter');
+    await page.locator('.jam-sounds').evaluate((list) => { list.scrollTop = 0; }); // (pressing the name brought it into sight: the list as it opens)
   };
   const eight = async (page) => {
     for (let n = 5; n <= 8; n++) {
@@ -182,7 +184,8 @@ async function states() {
         await page.waitForSelector('#jam-record.hearing');
         await sleep(600);
         await page.locator('#jam-record').click();
-        await page.waitForSelector('.jam-sounds input');
+        await page.waitForSelector('.jam-sounds .rename');
+        await page.locator('.jam-sounds .rename').click();
         await page.locator('.jam-sounds input').fill('WWWWWWWWWWWW');
         await page.locator('.jam-sounds input').press('Enter');
       } else await page.locator('.jam-sounds .tile').nth(n % 2 ? 5 : 2).click(); // (the same sound again; or one of the instruments, the keys)
@@ -410,12 +413,24 @@ async function states() {
       then: (page) => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)), settle: '.pal[data-height="gone"]', small: [PADS] },
     // Sounds of your own (tests/browser/mic.cjs stands in for the microphone): the drawer with only the instrument in
     // it; while it listens; with sounds recorded and named, one of them in the instrument's place; that instrument's
-    // button on the board, wearing the longest name there can be; a sound being deleted; and a microphone refused.
+    // button on the board, wearing the longest name there can be; a sound being renamed; a sound being deleted; and a microphone refused.
     { name: 'the music maker, the drawer of sounds, empty', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: drawer, settle: 'dialog#jam-drawer[open]' },
     { name: 'the music maker, the microphone listening', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('#jam-record').click(); }, settle: '#jam-record.hearing' },
     { name: 'the music maker, the drawer with sounds recorded', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: recorded, settle: '.jam-sounds li:nth-child(7)' },
     { name: 'the music maker, an instrument playing a recorded sound', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('#jam-drawer-close').click(); },
       settle: '#jam-mic[aria-pressed="true"]', small: [PADS] },
+    { name: 'the music maker, a sound being renamed', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => {
+      await recorded(page);
+      await page.locator('.jam-sounds .rename').first().click();
+      // (the list scrolled to a row's edge with the one being renamed in sight, as a person would leave it: not a tile half under the button above)
+      await page.locator('.jam-sounds').evaluate((list) => {
+        const rows = [...list.children];
+        const want = document.activeElement.closest('li');
+        const top = rows.find((row) => want.offsetTop + want.offsetHeight - row.offsetTop <= list.clientHeight);
+        list.scrollTop = top.offsetTop - rows[0].offsetTop;
+      });
+    }, settle: '.jam-sounds input:focus' },
+    { name: 'the music maker, another sound chosen in the drawer, its X a tick', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('.jam-sounds .own').nth(2).click(); }, settle: 'dialog#jam-drawer.chosen' },
     { name: 'the music maker, a sound being deleted', screen: 'jam', at: '/jam/', init: HUM, ready: '.jam-board .pad', then: async (page) => { await recorded(page); await page.locator('.jam-sounds button.quiet').first().click(); }, settle: 'dialog.ask[open]' },
     // (one of the four instruments in another's place: the bells' button wears the drums' mark and name, and the drawer's button is lit)
     { name: 'the music maker, an instrument playing another instrument', screen: 'jam', at: '/jam/', ready: '.jam-board .pad', then: async (page) => { await drawer(page); await page.locator('.jam-sounds .tile').nth(3).click(); await page.locator('#jam-drawer-close').click(); },
