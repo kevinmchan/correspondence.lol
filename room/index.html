@@ -3,9 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- preview: what a link to this address shows (reels/reels.js; written by npm run shell) -->
   <title>correspondence.lol</title>
   <meta name="description" content="Open a room, invite your friends, play and chat.">
   <link rel="canonical" href="https://correspondence.lol/">
+  <meta property="og:site_name" content="correspondence.lol">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://correspondence.lol/">
+  <meta property="og:title" content="correspondence.lol">
+  <meta property="og:description" content="Open a room, invite your friends, play and chat.">
+  <meta property="og:image" content="https://correspondence.lol/icons/preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- /preview -->
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#f6f1e7">
   <script>
@@ -49,7 +60,7 @@
     // loads nothing, so it never plays then.) An address that opens a room, a
     // game or one of the other screens skips it, and so does anyone who has
     // asked their device for less motion.
-    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky|reel)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.documentElement.classList.add('no-splash');
     }
   </script>
@@ -177,7 +188,7 @@
             <span class="words"><strong>Liv Radio</strong></span>
           </a>
           <!-- (Reels has Museum's place for now, the owner, 27 November 2026; the museum is still reached through Liv Radio's radio) -->
-          <a href="/?reel" id="menu-reels" class="menu-button" style="--tile: #c9b8f0">
+          <a href="/reels/marcus/" id="menu-reels" class="menu-button" style="--tile: #c9b8f0">
             <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.5 9.2v5.6l4.5-2.8z"/></svg></span>
             <span class="words"><strong>Reels</strong></span>
           </a>

@@ -1,4 +1,4 @@
-// A reel (/?reel): Marcus Pell, an aluminium extension ladder, films himself
+// A reel (/reels/marcus/): Marcus Pell, an aluminium extension ladder, films himself
 // in his home office and says something heartfelt, and then something else.
 // It is satire: a sincere post about the line between those whose money makes
 // money and those whose money makes rent, that turns into an advert for an
@@ -13,7 +13,8 @@
 //
 // Swipe up (scroll, or the arrow keys) for each line. The last line, then the
 // comment under it; then from the top again. The share mark on the rail opens
-// the phone's share sheet with the reel's address (/?reel).
+// the phone's share sheet with the reel's address (/reels/marcus/), whose
+// preview in a message is a frame of it (reels/reels.js).
 //
 // Sound. Marcus speaks as the app's people do, without words: a babble shaped
 // by the vowels of what he says (an "a" opens his mouth, an "ee" thins it, a
@@ -30,7 +31,7 @@ import { save } from '/shared/identity.js';
 
 // --- His room: cold, tidy, lit for camera. The chart on the wall is his. ----------------------
 // (The picture is 360 by 640 and fills the phone, cut at the sides on a tall one: what matters is in the middle.)
-const ROOM = `
+export const ROOM = `
   <defs>
     <linearGradient id="reel-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdd6dc"/><stop offset="1" stop-color="#b3bec6"/></linearGradient>
     <linearGradient id="reel-window" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef4f8"/><stop offset="1" stop-color="#c9d7e1"/></linearGradient>
@@ -523,7 +524,7 @@ export function mount(root, life) {
   // is copied, and a short line beside the rail says so; where it cannot be copied either, the line is the address.
   const share = root.querySelector('#reel-share');
   const shared = root.querySelector('#reel-shared');
-  const address = `${location.origin}/?reel`;
+  const address = `${location.origin}/reels/marcus/`; // (its own address, with its own preview: reels/reels.js)
   let sharedTimer = 0;
   const tell = (words) => {
     shared.textContent = words;

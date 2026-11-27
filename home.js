@@ -177,7 +177,7 @@ export function mount(root, life) {
   const reelWaiting = () => reelFound(readEnergy(load(ENERGY_KEY))) && !load(MARCUS_WATCHED);
   function reelItem() {
     const li = document.createElement('li');
-    li.innerHTML = `<a href="/?reel" class="feed-item feed-reel"><span class="poster" aria-hidden="true">${marcusPoster()}</span>`
+    li.innerHTML = `<a href="/reels/marcus/" class="feed-item feed-reel"><span class="poster" aria-hidden="true">${marcusPoster()}</span>`
       + '<span class="words"><em>Reel</em><strong>marcus.pell</strong><span>Real talk about who gets to climb 🪜</span></span>'
       + '<span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg></span></a>';
     return li;

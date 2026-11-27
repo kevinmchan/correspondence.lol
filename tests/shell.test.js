@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { HOME, PREVIEW, REELS, SITE, preview } from '../reels/reels.js';
 
 // The app is one page, served at several addresses so that each opens directly.
 // The copies are made with `npm run shell`; this catches a forgotten run.
@@ -9,11 +10,46 @@ test('every address serves the same page', () => {
   for (const copy of ['../room/index.html', '../postmarks/index.html', '../jam/index.html']) {
     assert.equal(readFileSync(new URL(copy, import.meta.url), 'utf8'), shell, `${copy} differs from index.html: run npm run shell`);
   }
+  // a reel's page is the same page, but for what a link to it shows (reels/reels.js)
+  for (const reel of REELS) {
+    const own = readFileSync(new URL(`..${reel.path}index.html`, import.meta.url), 'utf8');
+    assert.equal(own, shell.replace(PREVIEW, preview(reel)), `${reel.path}index.html is not index.html with its own preview: run npm run shell`);
+  }
 });
+
+// A link to the app, or to a reel, shows a picture, a title and a line: a messaging app reads them from the page at
+// that address (it does not run the app). Each says its own address, and its picture is there, at the size it says,
+// and small enough for WhatsApp to show (which shows none over about 300 KB).
+test('a link to the app, or to each reel, shows its own picture, title and line', () => {
+  for (const one of [HOME, ...REELS]) {
+    const page = readFileSync(new URL(`..${one.path}index.html`, import.meta.url), 'utf8');
+    const tag = (property) => page.match(new RegExp(`<meta property="og:${property}" content="([^"]*)">`))?.[1];
+    assert.equal(tag('url'), SITE + one.path, `${one.path}: its own address`);
+    assert.equal(tag('title'), one.title, `${one.path}: its title`);
+    assert.equal(tag('description'), one.description, `${one.path}: its line`);
+    assert.equal(tag('image'), SITE + one.image, `${one.path}: its picture, whole address and all`);
+    const picture = new URL(`..${one.image}`, import.meta.url);
+    assert.ok(existsSync(picture), `${one.image} is there`);
+    const bytes = readFileSync(picture);
+    assert.ok(bytes.length < 300 * 1024, `${one.image} is under 300 KB (it is ${Math.round(bytes.length / 1024)})`);
+    const size = one.image.endsWith('.png') ? [bytes.readUInt32BE(16), bytes.readUInt32BE(20)] : jpegSize(bytes);
+    assert.deepEqual(size, [1200, 630], `${one.image} is 1200 by 630`);
+  }
+});
+// (a JPEG's size, from its frame header)
+function jpegSize(bytes) {
+  for (let at = 2; at < bytes.length;) {
+    const marker = bytes[at + 1];
+    const length = bytes.readUInt16BE(at + 2);
+    if (marker >= 0xc0 && marker <= 0xc2) return [bytes.readUInt16BE(at + 7), bytes.readUInt16BE(at + 5)];
+    at += 2 + length;
+  }
+  return null;
+}
 
 test('the page has a template for each screen', () => {
   const shell = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  for (const name of ['home', 'open', 'join', 'hello', 'office', 'slow', 'walk', 'sky', 'room', 'game', 'jam', 'taste']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
+  for (const name of ['home', 'open', 'join', 'hello', 'office', 'slow', 'walk', 'sky', 'reel', 'room', 'game', 'jam', 'taste']) assert.ok(shell.includes(`<template id="screen-${name}">`), name);
 });
 
 // The version names the offline cache and is shown on the home page. A release
@@ -83,7 +119,7 @@ test('everything the app loads is kept for offline, and everything kept is there
   for (const url of kept) assert.ok(existsSync(fileOf(url)), `${url} is on the list, and there is no such file`);
 
   const shell = read('index.html');
-  const loaded = new Set(['/', '/room/', '/postmarks/', '/jam/']); // the addresses the page is served at
+  const loaded = new Set(['/', '/room/', '/postmarks/', '/jam/', ...REELS.map((reel) => reel.path)]); // the addresses the page is served at
   for (const [, url] of shell.matchAll(/<(?:link|script)\b[^>]*?\b(?:href|src)="(\/[^"]+)"/g)) loaded.add(url);
   // every script, and whatever it brings in: by name, and when it is asked to
   const follow = (url) => {
