@@ -13,10 +13,11 @@ the story between them as pauses: see [the story](https://claude.ai/artifact/Duc
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/?reel` (`reel.js`, with Marcus himself in `marcus.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
+| `reels/` | Each reel at an address of its own, so a link to it shows a frame of it: the list and what a link to each shows (`reels.js`), the copies of the page (`marcus/index.html`, written by `npm run shell` with `shell.js`), and the frames (`marcus/preview.jpg`, made by `frame.cjs`) |
 | `vendor/` | Third-party code committed as-is (the Supabase Realtime client) |
 | `supabase/migrations/` | Database schema (Supabase project `correspondence`) |
 | `tests/` | Tests for the game rules, the puzzle generator, Penny's places and the night's rules (`npm test`, needs only Node); `tests/browser/` plays Penny's part of the app in a real browser (`npm run e2e`, needs Playwright and takes a couple of minutes) and puts every screen on an iPhone mini (`npm run e2e:mini`); `tests/pr-control.cjs` is the control on pull requests |
@@ -1188,7 +1189,7 @@ by exploring is to be confirmed afresh on one device, from the start.
 
 What a reel means, and who Marcus Pell is, are in the story doc ("One way they could look outside the game"). How it is built:
 
-**Marcus Pell's reel** (`/?reel`, `penny/reel.js`, `penny/reel.css`; the owner, 27 November 2026). Marcus, an aluminium
+**Marcus Pell's reel** (`/reels/marcus/`, `penny/reel.js`, `penny/reel.css`; the owner, 27 November 2026). Marcus, an aluminium
 extension ladder with a face (`penny/marcus.js`), films himself in his home office. The whole phone is his video: his
 room is one picture, 360 by 640, cut to fill whatever phone it is on (`xMidYMax slice`: on a tall phone its sides go,
 never his face), and the feed's marks (what people thought of it, his name, his caption, his sound) lie over it in
@@ -1202,7 +1203,7 @@ white. It is the same in the light and the dark. The words are the owner's, word
   "Paid partnership with Penny's Energy" is shown only once the sponsor is named (the punchline: nothing gives it
   away before). His caption shows its first line; "more" opens the rest, with the `#ad` at the end of it.
 - *Sharing.* The share mark on the rail (the one mark there that does something) opens the phone's own share sheet
-  with the reel's address, `/?reel`, which opens it directly for anyone, whatever their energy. Where there is no
+  with the reel's address, `/reels/marcus/`, which opens it directly for anyone, whatever their energy. Where there is no
   share sheet (a computer, mostly) the address is copied and "Link copied" is said beside the rail for a while;
   where it cannot be copied either, the line is the address itself, to be copied by hand. Sharing inside the app,
   into a room, is not built.
@@ -1219,6 +1220,19 @@ white. It is the same in the light and the dark. The words are the owner's, word
 - *Alive.* He breathes, blinks, nods with his words, lifts his brows on the sincere lines, and the camera is held in a
   hand. His tell, in the quiet between lines and never noticed: he looks down and hauls his lower section up after
   him, with the slide and click of aluminium. With reduced motion he is drawn at rest and only his mouth moves.
+
+**Each reel at an address of its own, with a preview** (the owner, 27 November 2026: "Will other reels get their own
+preview with this link structure?"). A messaging app shows a link as a picture, a title and a line, which it reads
+from the page at that address; it does not run the app, and GitHub Pages ignores what follows a "?". So each reel has
+an address of its own, `/reels/<id>/`, served by its own copy of the app's one page, the same but for the block at the
+top that says what a link to it shows (`<!-- preview: … -->`). The reels, and what a link to each shows, are listed in
+`reels/reels.js`; `npm run shell` (`reels/shell.js`) writes each copy, as it writes the room's, the game's and the music
+maker's, and fills the home page's own block. Each picture is a frame of the reel, 1200 by 630 and under 300 KB
+(WhatsApp shows none bigger), drawn from the app's own drawings by `node reels/frame.cjs` and kept in the repository:
+Marcus's is him in his room, saying "it sure does pay to have ⚡️." (`reels/marcus/preview.jpg`); the home page's is the
+app's mark, name and line (`icons/preview.png`). A new reel is an entry in the list, a frame, and `npm run shell`.
+(`/?reel`, its first address, is gone: the owner did not need it kept.) A messaging app keeps what it has read of a
+link for a while, so a changed picture may take time to show where the link was sent before.
 
 **Where it is found** (the owner, 27 November 2026: "it shouldn't be an interruption. I want the trigger for it
 showing up in your feed to be passing the energy threshold"; and "It leaves the feed once you've watched it. The feed

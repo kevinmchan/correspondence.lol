@@ -506,6 +506,13 @@ async function states() {
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
     { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', whole: ['.penny-back', '#reel-play', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, opened from a link to it, as its preview in a message leads to it', screen: 'reel', at: '/reels/marcus/', ready: '#reel-play', whole: ['#reel-play'],
+      then: async (page) => {
+        const said = await page.evaluate(() => ({ title: document.title, image: document.querySelector('meta[property="og:image"]')?.content, url: document.querySelector('meta[property="og:url"]')?.content }));
+        assert.equal(said.title, 'marcus.pell · correspondence.lol');
+        assert.equal(said.url, 'https://correspondence.lol/reels/marcus/', 'its own address');
+        assert.equal(said.image, 'https://correspondence.lol/reels/marcus/preview.jpg', 'and its own picture');
+      } },
     { name: 'Marcus Pell\'s reel, its first line said, and how it goes on: swipe up', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => page.locator('#reel-play').click(), settle: '#reel-next:not([hidden])', whole: ['#reel-said', '#reel-next', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, a line said', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 1), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, a line said large, centred on the screen and clear of the rail', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', settle: '#reel-said:not(:empty)', whole: ['#reel-said'],
