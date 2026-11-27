@@ -63,7 +63,7 @@ html:has(.screen-reel), html:has(.screen-reel) body { overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }
 .reel-play[hidden] { display: none; }
-.reel-play svg { width: 2.4rem; height: 2.4rem; margin-left: 0.3rem; fill: currentColor; }
+.reel-play svg { width: 2.4rem; height: 2.4rem; fill: currentColor; } /* (the triangle a little right of the middle, where a play mark looks centred) */
 .reel-play:active { scale: 0.94; }
 .reel-play:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 /* (a swipe before it is tapped: a gentle nudge, to say this first) */
