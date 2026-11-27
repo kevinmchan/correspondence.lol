@@ -1212,12 +1212,11 @@ main:has(> .building) { position: relative; }
 .screen-home .menu { gap: 1rem; }
 .screen-home .menu-button { padding: 0.95rem 1.05rem; }
 
-/* Marcus Pell in the world, once followed (penny/wander.js): small, on the map
-   behind the home page, under everything on it. Nothing to press. */
-.wander { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
+/* Marcus Pell in the world, once followed (penny/wander.js): small, on the
+   floor of a room's house, behind everything in it. Nothing to press. Only in
+   the room's own world: through its portal, in the night, he is not there. */
+.wander { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
 .wander.here { opacity: 1; }
-.wander-marcus { position: absolute; left: 0; top: 0; width: 2.4rem; height: auto; aspect-ratio: 236 / 548; transform-origin: 50% 100%; overflow: visible; }
+.wander-marcus { position: absolute; left: 0; top: 0; width: 2.1rem; height: auto; aspect-ratio: 236 / 548; transform-origin: 50% 100%; overflow: visible; }
 :root[data-theme="dark"] .wander-marcus { filter: brightness(0.86); }
-@media (prefers-reduced-motion: no-preference) {
-  .screen.opening main > .wander { animation: none; }
-}
+.screen-room main[data-paint="serious"] .wander { visibility: hidden; }

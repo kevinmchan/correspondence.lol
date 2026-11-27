@@ -9,8 +9,7 @@ import { roomLook } from '/shared/place.js';
 import { cachedProfile, fetchProfile, saveProfile, startAfresh } from '/shared/account.js';
 import { load, save } from '/shared/identity.js';
 import { BAR, ENERGY_KEY, held, read as readEnergy, reelFound } from '/shared/energy.js';
-import { FOLLOW_KEY as MARCUS_FOLLOWED, WATCHED_KEY as MARCUS_WATCHED, poster as marcusPoster } from '/penny/marcus.js';
-import { wander } from '/penny/wander.js';
+import { WATCHED_KEY as MARCUS_WATCHED, poster as marcusPoster } from '/penny/marcus.js';
 import { earned as meadowOwned, wear, wearing } from '/shared/meadow.js';
 import { ASK, BEGINNING, HELLO, PLEASE, SIGH, THIS_WAY, TRILL, hasDot, hasWalked, placeReached, playAt } from '/penny/penny.js';
 import { claim as callPal } from '/penny/pal.js';
@@ -423,7 +422,6 @@ export function mount(root, life) {
     return (at.right + wide / 2 + 10) / window.innerWidth;
   };
   showKept(root); // tags that have been found in the game are kept on this map (penny/tags.js)
-  if (load(MARCUS_FOLLOWED) === true) wander(root, life); // Marcus Pell, followed from his reel: about on the map, behind the page
   // The page is the map from far up: line its squares up with the dots behind
   // the page, and note where the portal is, for the way through it (walk.css).
   const map = root.querySelector('.home-map');

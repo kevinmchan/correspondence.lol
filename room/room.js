@@ -9,11 +9,13 @@ import { pollDelay, watchRoom } from '/shared/live.js';
 import { avatar, openProfile, paint, randomLook, saveLook, savedLook } from '/shared/profile.js';
 import { enablePush, pushState, syncPush, watchPresence } from '/shared/push.js';
 import { copyable } from '/shared/handoff.js';
-import { UUID, forgetRoom, gameUrl, myName, myToken, rememberRoom, save, setMyName } from '/shared/identity.js';
+import { UUID, forgetRoom, gameUrl, load, myName, myToken, rememberRoom, save, setMyName } from '/shared/identity.js';
 import { generatePuzzle, phraseBoardSize, phraseProblem, randomSize, tidyPhrase, tokenize } from '/postmarks/game.js';
 import { boardPreview, door, miniBoard, oops, roomClass } from '/shared/place.js';
 import { HOWTO_KEY, modeCards } from '/postmarks/howto.js';
 import { twoWorlds } from '/room/worlds.js';
+import { FOLLOW_KEY as MARCUS_FOLLOWED } from '/penny/marcus.js';
+import { wander } from '/penny/wander.js';
 
 // A room's screen. mount() puts it to work in `root`, a fresh copy of its
 // template; everything it starts ends with `life` (see shared/screen.js).
@@ -77,6 +79,12 @@ export function mount(root, life) {
   let myLook = savedLook();
   const picked = !myLook; // (nobody's choice yet: it may be picked again, so as not to be a face already in the room)
   paint(el.joinYou, myLook ??= randomLook());
+
+  // Marcus Pell, followed from his reel: about on the floor of the house, behind everything in it (penny/wander.js).
+  if (load(MARCUS_FOLLOWED) === true) {
+    wander({ root, life, place: el.house, after: el.house.querySelector('.meadow-bits') ?? el.house.querySelector('.house-walls'),
+      solid: '#compose:not([hidden]), #members .seat, .table, .modes, .rug, .share, .notify:not([hidden]), .message:not(:empty)' });
+  }
 
   // The meadow's folk (room/folk.js, shared/meadow.js). In the meadow of the first bar the things of a room are things.
   // With the second bar filled it is found that energy runs through all of them and that they were alive all along,

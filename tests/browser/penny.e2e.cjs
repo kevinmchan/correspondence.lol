@@ -2935,9 +2935,19 @@ async function main() {
       assert.match(await page.evaluate(() => window.copied), /\/reels\/marcus\/$/, 'and it is the reel\'s address that is copied');
     }),
 
-    check('Marcus Pell, followed from his reel: he is in the world, wandering behind the home page, and goes when he is no longer followed', { storage: ACCOUNT }, async (page) => {
-      await page.goto(`${origin}/`);
-      await page.waitForSelector('#play:not([hidden])');
+    check('Marcus Pell, followed from his reel: he is in your rooms, wandering on the floor behind everything, not on the home page, and goes when he is no longer followed', { storage: ACCOUNT }, async (page) => {
+      const roomId = '11111111-1111-4111-8111-111111111111';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      const game = { id: '22222222-3333-4333-8333-333333333333', kind: 'postmarks', mode: 'coop', size: 6, status: 'playing', players: ['Sam', 'Ada'], last_player: 1, found: 2, hearts: 3, moves: 4 };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => (route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: cors })
+        : route.fulfill({ json: { id: roomId, name: 'Book club', code: 'K7M2QP', you: 0, members: ['Sam', 'Ada'], people: [{ name: 'Sam', avatar: '🦊', color: 1, left: false }, { name: 'Ada', avatar: '🐼', color: 2, left: false }], messages: [], games: [game] }, headers: cors })));
+      const inRoom = async () => {
+        await page.goto(`${origin}/room/?id=${roomId}`);
+        await page.waitForSelector('#house:not([hidden]) .table');
+      };
+      await inRoom();
+      await sleep(600);
       assert.equal(await page.locator('.wander-marcus').count(), 0, 'not followed: not in the world');
       await page.goto(`${origin}/reels/marcus/`);
       await page.waitForSelector('.reel-cam');
@@ -2947,22 +2957,25 @@ async function main() {
       assert.equal(await page.locator('#reel-follow').textContent(), 'Following');
       assert.equal(await page.locator('#reel-said').textContent(), '', 'and the reel is not moved on by it');
       await page.locator('.reel .penny-back').click();
-      await page.waitForSelector('.screen-home .wander-marcus');
+      await page.waitForSelector('.screen-home #play:not([hidden])');
+      await sleep(600);
+      assert.equal(await page.locator('.wander-marcus').count(), 0, 'not on the home page');
+      await inRoom();
+      await page.waitForSelector('#house > .wander.here .wander-marcus');
       const where = () => page.evaluate(() => {
         const him = document.querySelector('.wander-marcus').getBoundingClientRect();
-        const frame = document.querySelector('.screen-home main').getBoundingClientRect();
-        return { x: him.left, y: him.top, w: him.width, inside: him.left >= frame.left && him.right <= frame.right && him.top >= frame.top && him.bottom <= frame.bottom };
+        const house = document.querySelector('#house').getBoundingClientRect();
+        const face = { top: him.top, bottom: him.top + him.height * 0.42, left: him.left, right: him.right };
+        const over = [...document.querySelectorAll('#house :is(.table, .modes, .rug, .share, #members .seat)')].map((one) => one.getBoundingClientRect())
+          .some((b) => face.left < b.right && face.right > b.left && face.top < b.bottom && face.bottom > b.top);
+        return { x: him.left, y: him.top, w: him.width, inside: him.left >= house.left && him.right <= house.right && him.top >= house.top && him.bottom <= house.bottom, over };
       });
       const first = await where();
-      assert.ok(first.inside, 'on the page');
+      assert.ok(first.inside, 'in the house');
       assert.ok(first.w > 20 && first.w < 60, 'small');
+      assert.equal(first.over, false, 'where he stops, his face is clear of the furniture: he looks over it');
       assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.wander')).pointerEvents), 'none', 'nothing to press');
-      // under everything on the page: whatever is at his middle is the page's, not him
-      const under = await page.evaluate(() => {
-        const layer = document.querySelector('.wander');
-        return getComputedStyle(layer).zIndex;
-      });
-      assert.equal(under, '-1', 'behind the page');
+      assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.wander')).zIndex), '-1', 'behind everything in the room');
       await page.waitForFunction((from) => { const b = document.querySelector('.wander-marcus').getBoundingClientRect(); return Math.hypot(b.left - from.x, b.top - from.y) > 4; }, first, { timeout: 15000 });
       // followed no longer: gone from the world
       await page.goto(`${origin}/reels/marcus/`);
@@ -2970,15 +2983,19 @@ async function main() {
       assert.equal(await page.locator('#reel-follow').getAttribute('aria-pressed'), 'true', 'still followed, when the reel is come back to');
       await page.locator('#reel-follow').click();
       assert.equal(await page.locator('#reel-follow').textContent(), 'Follow');
-      await page.goto(`${origin}/`);
-      await page.waitForSelector('#play:not([hidden])');
+      await inRoom();
       await sleep(600);
       assert.equal(await page.locator('.wander-marcus').count(), 0);
     }),
 
-    check('Marcus Pell, followed, with less motion asked for: standing somewhere on the home page, and still', { storage: { ...ACCOUNT, 'reel:marcus:follow:v1': true }, reducedMotion: 'reduce' }, async (page) => {
-      await page.goto(`${origin}/`);
-      await page.waitForSelector('.screen-home .wander-marcus');
+    check('Marcus Pell, followed, with less motion asked for: standing somewhere in the room, and still', { storage: { ...ACCOUNT, 'reel:marcus:follow:v1': true }, reducedMotion: 'reduce' }, async (page) => {
+      const roomId = '11111111-1111-4111-8111-111111111111';
+      const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+      await page.route(/supabase\.co\/rest\/v1\/rpc\/room_get/, (route) => (route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: cors })
+        : route.fulfill({ json: { id: roomId, name: 'Book club', code: 'K7M2QP', you: 0, members: ['Sam'], people: [{ name: 'Sam', avatar: '🦊', color: 1, left: false }], messages: [], games: [] }, headers: cors })));
+      await page.goto(`${origin}/room/?id=${roomId}`);
+      await page.waitForSelector('#house > .wander.here .wander-marcus');
       const at = () => page.evaluate(() => { const b = document.querySelector('.wander-marcus').getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top)]; });
       const first = await at();
       await sleep(4000);

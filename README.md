@@ -13,7 +13,7 @@ the story between them as pauses: see [the story](https://claude.ai/artifact/Duc
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `home.js`, `styles.css`, `app.js` | Home page (open a room, your rooms) and shared styles |
-| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`, and out in the world once followed in `wander.js`), and the tags hidden in the app (`tags.js`) |
+| `penny/` | Penny: the introduction at `/?hello` (`hello.js`), scene two of the film, where you draw, at `/?slow` (`slow.js`); its voice (`penny.js`), Penny at life size (`pal.js`), the first quarter of the adventure at `/?walk` (`walk.js`, `places.js`), the sounds in the posts (`mail.js`), scene one of the film at `/?office` (`office.js`), the night at `/?sky` (`sky.js`, with its rules in `stars.js` and its sounds in `chimes.js`), Marcus Pell's reel at `/reels/marcus/` (`reel.js`, with Marcus himself in `marcus.js`, and in your rooms once followed in `wander.js`), and the tags hidden in the app (`tags.js`) |
 | `room/` | A room, drawn as a building on the map (`room.css`): members, invitation code, games, chat; and its other world, through a portal (`worlds.js`, `worlds.css`); the meadow it wears once earned (`meadow.css`), and the meadow's folk (`folk.js`, `folk.css`) and its people walking about (`roam.js`) |
 | `postmarks/` | Postmarks, a co-operative logic puzzle (`game.js` is the rules, `ui.js` the page) |
 | `shared/` | Server calls (`api.js`, `config.js`), device identity (`identity.js`), profiles and avatars (`profile.js`), chat (`chat.js`), live updates (`live.js`), a room's colour, roof and the small boards on its table (`place.js`), energy (`energy.js`) and the meadow it earns (`meadow.js`) |
@@ -644,8 +644,6 @@ tabs and what is under them, and more between and inside its tiles (the end of
 `styles.css`, "The home page, with air"). It is held to one limit: on a mini in
 Safari, the first thing waiting in the feed is still on the first screen.
 
-**Marcus Pell, followed, is about on the map behind it** (see "Reels").
-
 Someone with rooms starts on the feed; after that the tab last up is
 remembered. The feed is worked out in the browser (`shared/feed.js`) from what
 each room already tells its own page, so the server has nothing new: it asks
@@ -1244,11 +1242,15 @@ white. It is the same in the light and the dark. The words are the owner's, word
 - *Following.* "Follow", beside his name, is a button (the owner, 27 November 2026: "add the ability to follow
   Marcus from the reel. If you follow him, he gets added to the world and can roam about in the background").
   Pressed, it reads "Following", filled in, and he is followed (`FOLLOW_KEY` in `penny/marcus.js`); pressed again,
-  he is not. Nothing else is said. Followed, he is in the world: on the map behind the home page
-  (`penny/wander.js`), small, under everything on the page, wandering from one clear patch of ground to another,
+  he is not. Nothing else is said. Followed, he is in the world: in your rooms (the owner, 27 November 2026: "add
+  the ladder to the Room rather than the Home Screen"), small, on the floor of the house and behind everything in it
+  (`penny/wander.js`, a layer of the house over its floor and the meadow's ground, under the table, the tiles and the
+  rug). A house is mostly furniture, so where he stops only his face has to be clear: he stands behind the table or
+  the rug and looks over it, beside the people at its head, or in a corner. He goes from one such place to another,
   mostly where he can be seen, rocking from rail to rail as a ladder is walked, at a stroll. At each stop he rests,
-  blinks, and now and then does his tell. He still has his phone. Nothing to press. With reduced motion he stands
-  still somewhere clear. Starting the story over forgets that he was followed.
+  blinks, and now and then does his tell. He still has his phone. Nothing to press. He is in the room's own world
+  only: through its portal, in the night, he is not. With reduced motion he stands still somewhere clear. Starting
+  the story over forgets that he was followed.
 - *Sharing.* The share mark on the rail (the mark there for sharing) opens the phone's own share sheet
   with the reel's address, `/reels/marcus/`, which opens it directly for anyone, whatever their energy. Where there is no
   share sheet (a computer, mostly) the address is copied and "Link copied" is said beside the rail for a while;
