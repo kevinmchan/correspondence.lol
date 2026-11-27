@@ -2888,12 +2888,12 @@ async function main() {
         else Object.defineProperty(navigator, 'share', { value: (what) => { window.shared.push(what); return Promise.resolve(); }, configurable: true });
         Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (text) => { window.copied = text; } }, configurable: true });
       });
-      await page.goto(`${origin}/?reel`);
+      await page.goto(`${origin}/reels/marcus/`);
       await page.waitForSelector('.reel-cam');
       await page.locator('#reel-share').click();
       const sent = await page.evaluate(() => window.shared);
       assert.equal(sent.length, 1, 'the share sheet, once');
-      assert.equal(new URL(sent[0].url).pathname + new URL(sent[0].url).search, '/?reel', 'with the reel\'s address');
+      assert.equal(new URL(sent[0].url).pathname + new URL(sent[0].url).search, '/reels/marcus/', 'with the reel\'s own address, which has its own preview');
       assert.equal(await page.locator('#reel-said').textContent(), '', 'and the reel is not moved on by it');
       assert.equal(await page.locator('#reel-shared').textContent(), '', 'the sheet says what happened: the page says nothing');
       await page.evaluate(() => sessionStorage.setItem('no-sheet', '1'));
@@ -2902,7 +2902,7 @@ async function main() {
       await page.locator('#reel-share').click();
       await page.waitForSelector('#reel-shared:not(:empty)');
       assert.equal(await page.locator('#reel-shared').textContent(), 'Link copied');
-      assert.match(await page.evaluate(() => window.copied), /\/\?reel$/, 'and it is the reel\'s address that is copied');
+      assert.match(await page.evaluate(() => window.copied), /\/reels\/marcus\/$/, 'and it is the reel\'s address that is copied');
     }),
 
     check('the night: the picture, far dimmer, comes to life a light at a time; nothing is added to it, and Penny is not in it', {}, async (page, h) => {

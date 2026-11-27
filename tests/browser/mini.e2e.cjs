@@ -505,10 +505,17 @@ async function states() {
       then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
-    { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/?reel', ready: '.reel-cam', whole: ['.penny-back', '#reel-play', '#reel-more'] },
-    { name: 'Marcus Pell\'s reel, its first line said, and how it goes on: swipe up', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => page.locator('#reel-play').click(), settle: '#reel-next:not([hidden])', whole: ['#reel-said', '#reel-next', '#reel-more'] },
-    { name: 'Marcus Pell\'s reel, a line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 1), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
-    { name: 'Marcus Pell\'s reel, a line said large, centred on the screen and clear of the rail', screen: 'reel', at: '/?reel', ready: '.reel-cam', settle: '#reel-said:not(:empty)', whole: ['#reel-said'],
+    { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', whole: ['.penny-back', '#reel-play', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, opened from a link to it, as its preview in a message leads to it', screen: 'reel', at: '/reels/marcus/', ready: '#reel-play', whole: ['#reel-play'],
+      then: async (page) => {
+        const said = await page.evaluate(() => ({ title: document.title, image: document.querySelector('meta[property="og:image"]')?.content, url: document.querySelector('meta[property="og:url"]')?.content }));
+        assert.equal(said.title, 'marcus.pell · correspondence.lol');
+        assert.equal(said.url, 'https://correspondence.lol/reels/marcus/', 'its own address');
+        assert.equal(said.image, 'https://correspondence.lol/reels/marcus/preview.jpg', 'and its own picture');
+      } },
+    { name: 'Marcus Pell\'s reel, its first line said, and how it goes on: swipe up', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => page.locator('#reel-play').click(), settle: '#reel-next:not([hidden])', whole: ['#reel-said', '#reel-next', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, a line said', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 1), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, a line said large, centred on the screen and clear of the rail', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', settle: '#reel-said:not(:empty)', whole: ['#reel-said'],
       then: async (page) => {
         await lines(page, 14);
         const { off, apart } = await page.evaluate(() => {
@@ -519,13 +526,13 @@ async function states() {
         assert.ok(off <= 2, `what he says is centred on the screen (it is ${off}px off)`);
         assert.ok(apart >= 0, `and clear of the rail (it runs ${-apart}px into it)`);
       } },
-    { name: 'Marcus Pell\'s reel, shared where there is no share sheet: the link copied, said beside the rail', screen: 'reel', at: '/?reel', ready: '.reel-cam', settle: '#reel-shared:not(:empty)', whole: ['#reel-shared', '#reel-share'],
+    { name: 'Marcus Pell\'s reel, shared where there is no share sheet: the link copied, said beside the rail', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', settle: '#reel-shared:not(:empty)', whole: ['#reel-shared', '#reel-share'],
       init: () => { Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true }); },
       then: async (page) => { await lines(page, 3); await page.locator('#reel-share').click(); } },
-    { name: 'Marcus Pell\'s reel, the longest line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 12), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
-    { name: 'Marcus Pell\'s reel, its sponsor named, and the partnership said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 10), settle: '#reel-paid:not([hidden])', whole: ['#reel-said', '#reel-paid', '#reel-more'] },
-    { name: 'Marcus Pell\'s reel, its caption opened, #ad and all', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: async (page) => { await lines(page, 10); await page.locator('#reel-more').click(); }, settle: '.reel-cap.open', whole: ['.reel-cap', '#reel-more'] },
-    { name: 'Marcus Pell\'s reel, at its end: the comment under it', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 18), settle: '#reel-comment:not([hidden])', whole: ['#reel-comment', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, the longest line said', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 12), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, its sponsor named, and the partnership said', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 10), settle: '#reel-paid:not([hidden])', whole: ['#reel-said', '#reel-paid', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, its caption opened, #ad and all', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: async (page) => { await lines(page, 10); await page.locator('#reel-more').click(); }, settle: '.reel-cap.open', whole: ['.reel-cap', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, at its end: the comment under it', screen: 'reel', at: '/reels/marcus/', ready: '.reel-cam', then: (page) => lines(page, 18), settle: '#reel-comment:not([hidden])', whole: ['#reel-comment', '#reel-more'] },
     { name: 'the night, left alone until the way back has gone', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky.idle', wait: 9000, whole: ['.penny-back'] },
     // ...what is kept of it on the home page once it has been found, across the map from the portal...
     { name: 'home, somebody new, with the night kept', screen: 'home', at: '/', storage: { ...NIGHT }, ready: '.tag-kept' },

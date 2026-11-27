@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- preview: what a link to this address shows (reels/reels.js; written by npm run shell) -->
+  <title>marcus.pell · correspondence.lol</title>
+  <meta name="description" content="Real talk about who gets to climb 🪜">
+  <link rel="canonical" href="https://correspondence.lol/reels/marcus/">
+  <meta property="og:site_name" content="correspondence.lol">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://correspondence.lol/reels/marcus/">
+  <meta property="og:title" content="marcus.pell">
+  <meta property="og:description" content="Real talk about who gets to climb 🪜">
+  <meta property="og:image" content="https://correspondence.lol/reels/marcus/preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- /preview -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#f6f1e7">
+  <script>
+    // Light or dark: the choice made in the profile menu, or else whatever the
+    // device says. Set before anything is painted; kept up to date by
+    // shared/profile.js.
+    (function () {
+      var choice = null;
+      try { choice = JSON.parse(localStorage.getItem('correspondence:theme:v1')); } catch (e) {}
+      var dark = choice === 'dark' || (choice !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.querySelector('meta[name="theme-color"]').content = dark ? '#161d24' : '#f6f1e7';
+    })();
+  </script>
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Correspondence">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/postmarks/postmarks.css">
+  <link rel="stylesheet" href="/jam/jam.css">
+  <link rel="stylesheet" href="/penny/story.css">
+  <link rel="stylesheet" href="/penny/walk.css">
+  <link rel="stylesheet" href="/penny/pal.css">
+  <link rel="stylesheet" href="/jam/taste.css">
+  <link rel="stylesheet" href="/penny/hello.css">
+  <link rel="stylesheet" href="/penny/office.css">
+  <link rel="stylesheet" href="/penny/slow.css">
+  <link rel="stylesheet" href="/room/room.css">
+  <link rel="stylesheet" href="/penny/sky.css">
+  <link rel="stylesheet" href="/penny/tags.css">
+  <link rel="stylesheet" href="/penny/reel.css">
+  <link rel="stylesheet" href="/room/worlds.css">
+  <link rel="stylesheet" href="/room/meadow.css">
+  <link rel="stylesheet" href="/room/folk.css">
+  <script>
+    // The splash plays whenever the page is loaded on the home screen: opening
+    // the app, a new tab, or a refresh. (Moving between screens inside the app
+    // loads nothing, so it never plays then.) An address that opens a room, a
+    // game or one of the other screens skips it, and so does anyone who has
+    // asked their device for less motion.
+    if ((location.pathname !== '/' && location.pathname !== '/index.html') || /[?&](open|join|penny|hello|walk|office|slow|sky)\b/.test(location.search) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('no-splash');
+    }
+  </script>
+</head>
+<body>
+  <!--
+    The whole app is this one page. Its screens are the templates below;
+    shared/nav.js puts the right one on stage for the address and swaps them as
+    people move about. /room/, /postmarks/ and /jam/ serve copies of this same file
+    (npm run shell), so every address opens directly.
+  -->
+  <div id="splash" aria-hidden="true"><canvas></canvas></div>
+  <div id="screens"></div>
+
+  <template id="screen-home">
+    <main>
+      <svg class="mark" viewBox="0 0 512 512" width="80" height="80" role="img" aria-label="correspondence.lol">
+        <rect class="tile" width="512" height="512" rx="112.6" fill="#22303c"/>
+        <rect x="116" y="166" width="280" height="180" rx="14" fill="#f6f1e7"/>
+        <path class="flap" d="M122 176 L256 276 L390 176" fill="none" stroke="#22303c" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle class="ring" cx="256" cy="290" r="30" fill="none" stroke="#c8442e" stroke-width="10"/>
+        <circle class="seal" cx="256" cy="290" r="30" fill="#c8442e"/>
+      </svg>
+      <h1>correspondence<span>.lol</span></h1>
+
+      <!-- Still being built: a stamp in the top left corner, a sleepy cone on it, breathing, and the words. Nothing to press. -->
+      <p id="building" class="building">
+        <svg viewBox="22 12 76 96" aria-hidden="true">
+          <text class="z" x="72" y="34">z</text><text class="z two" x="72" y="34">z</text><text class="z three" x="72" y="34">z</text>
+          <g class="cone">
+            <path class="cone-body" d="M38 98 L54 30 Q60 21 66 30 L82 98 Z"/>
+            <path class="cone-stripes" d="M46.5 74 H73.5 M43 88 H77"/>
+            <path class="cone-eyes" d="M51 56 q3 2.8 6 0 M63 56 q3 2.8 6 0"/>
+            <path class="cone-cheeks" d="M50 63 h0.01 M70 63 h0.01"/>
+            <rect class="cone-foot" x="30" y="97" width="60" height="7" rx="3.5"/>
+          </g>
+        </svg>
+        <span class="building-words">under construction</span>
+      </p>
+
+      <!-- Who this device is: a face in the top right corner, and nothing written beside it. -->
+      <section id="me" class="me-corner" aria-label="Your account" hidden>
+        <button type="button" id="me-edit" class="profile-button" aria-label="Edit your profile" title="Edit your profile"></button>
+        <span class="sr-only"><strong id="me-name"></strong> <span id="me-kind"></span></span>
+      </section>
+
+      <div class="stack">
+        <!-- Play: one wide button, before anything else on the page. A board of your own, at once (postmarks/ui.js). -->
+        <a href="/postmarks/" id="play" class="play-wide" aria-label="Play" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z" fill="currentColor"/></svg></a>
+        <!-- Energy, everything earned in every game: one bar, about twenty games long (shared/energy.js), and at its end
+             what the first bar is for, the meadow (shared/meadow.js), still in grey until it is full. Once it is yours, the
+             meadow is a toggle: a room wears it, or not. No number, and no words: what is held is said to screen readers. -->
+        <div id="home-energy" class="home-energy" hidden>
+          <p id="home-bar" class="energy" role="img"><span class="bar" aria-hidden="true"><i></i></span></p>
+          <button type="button" id="meadow" class="meadow-mark" aria-label="The meadow" aria-pressed="false" disabled>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#meadow-glimpse"/></svg>
+          </button>
+        </div>
+
+        <!-- Two tabs: what is waiting on you, and everything else. -->
+        <div id="tabs" class="tabs" role="tablist" aria-label="Home" hidden>
+          <button type="button" role="tab" id="tab-feed" class="tab" aria-controls="panel-feed" aria-selected="false" style="--tile: #f8d95a">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 13.5h6L10 21l9-11.5h-6z"/></svg>
+            <span>Feed</span><b id="feed-count" class="pip" hidden></b>
+          </button>
+          <button type="button" role="tab" id="tab-lobby" class="tab" aria-controls="panel-lobby" aria-selected="true" style="--tile: #9ad3f7">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 4.5l8 7M6.5 10v9.5h11V10"/></svg>
+            <span>Lobby</span>
+          </button>
+        </div>
+
+        <section id="panel-feed" class="stack" role="tabpanel" aria-labelledby="tab-feed" hidden>
+          <ul id="feed" class="feed"></ul>
+          <div id="feed-empty" class="feed-empty" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#mini-envelope"/></svg>
+            <strong>All clear</strong>
+            <span id="feed-empty-note">Nothing is waiting on you.</span>
+          </div>
+        </section>
+
+        <div id="panel-lobby" class="stack" role="tabpanel" aria-labelledby="tab-lobby">
+        <section id="welcome" class="stack" hidden aria-label="Set up your account">
+          <p id="welcome-note" class="hint" hidden>You’re signed out on this device.</p>
+          <form id="welcome-new" class="card">
+            <fieldset>
+              <legend>New player</legend>
+              <label class="field">
+                <span>Your name</span>
+                <input type="text" id="welcome-name" maxlength="20" required autocomplete="off">
+              </label>
+              <button type="submit">Start playing</button>
+              <p id="welcome-new-error" class="message bad" role="alert"></p>
+            </fieldset>
+          </form>
+          <form id="welcome-code" class="card">
+            <fieldset>
+              <legend>Returning player</legend>
+              <label class="field">
+                <span>Account code from your other device (there: tap your avatar, then Get account code)</span>
+                <input type="text" id="welcome-code-text" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+              </label>
+              <button type="submit">Sync account</button>
+              <p id="welcome-code-note" class="message bad" role="alert"></p>
+            </fieldset>
+          </form>
+        </section>
+
+        <!-- Each room is a building on the map: its roof, in its colour, among the others (home.js, room/room.css). -->
+        <div id="rooms" class="stack" hidden>
+          <h2 class="sr-only">Your rooms</h2>
+          <ul class="street"></ul>
+        </div>
+
+        <nav id="menu" class="menu" aria-label="Play" hidden>
+          <a href="/?open" id="menu-open" class="menu-button" style="--tile: #f08a76">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg></span>
+            <span class="words"><strong>Open a room</strong></span>
+          </a>
+          <a href="/?join" id="menu-join" class="menu-button" style="--tile: #9ad3f7">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15.5" r="4"/><path d="M11 12.5L20 3.5M16.5 7l2.5 2.5M14 9.5l2 2"/></svg></span>
+            <span class="words"><strong>Join a room</strong></span>
+          </a>
+          <a href="/jam/" class="menu-button" style="--tile: #f3b3e6">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.8" cy="17.5" r="2.2"/><circle cx="16.8" cy="15.5" r="2.2"/></svg></span>
+            <span class="words"><strong>Liv Radio</strong></span>
+          </a>
+          <!-- (Reels has Museum's place for now, the owner, 27 November 2026; the museum is still reached through Liv Radio's radio) -->
+          <a href="/reels/marcus/" id="menu-reels" class="menu-button" style="--tile: #c9b8f0">
+            <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.5 9.2v5.6l4.5-2.8z"/></svg></span>
+            <span class="words"><strong>Reels</strong></span>
+          </a>
+        </nav>
+        </div>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </div>
+      <p id="version" class="version"></p>
+      <!-- The page is a map seen from very far up, and one place is marked on it, at the foot of the page where Penny stands: the portal Penny wants to take you through (penny/walk.js). It itself is not on the page: see penny/pal.js. -->
+      <div class="map-far home-map" aria-hidden="true"></div>
+      <a href="/?hello" id="portal" class="portal home-portal" aria-label="The story, from the beginning"></a>
+    </main>
+  </template>
+
+  <template id="screen-open">
+    <header class="topbar">
+      <a href="/" class="home-link" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+    </header>
+
+    <main>
+      <!-- Opening a room is choosing a plot on the map: staked out, with a board planted in it to write the name on (room/room.css). Nothing on it is written: the plot and the board say it. -->
+      <h1 class="sign sr-only">Open a room</h1>
+      <div class="plot">
+        <div class="map-far plot-map" aria-hidden="true"></div>
+        <div class="plot-path" aria-hidden="true"></div>
+        <div class="lot">
+          <span class="lot-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <p id="open-how" class="sr-only">A place for you and your friends to play.</p>
+          <form id="create-room" class="card stack placard">
+            <fieldset>
+              <label class="field">
+                <span class="sr-only">Room name</span>
+                <input type="text" id="room-name" maxlength="24" placeholder="room name…" autocomplete="off" enterkeyhint="go" aria-describedby="open-how" required>
+              </label>
+              <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg><span class="sr-only">Open room</span></button>
+              <p id="create-error" class="message bad" role="alert"></p>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </main>
+  </template>
+
+  <template id="screen-join">
+    <header class="topbar">
+      <a href="/" class="home-link" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+    </header>
+
+    <main>
+      <!-- Joining is finding a door by its code: a building with its roof on, and the mat at its door to write the code on. -->
+      <h1 class="sign sr-only">Join a room</h1>
+      <div class="plot">
+        <div class="map-far plot-map" aria-hidden="true"></div>
+        <div class="plot-path" aria-hidden="true"></div>
+        <div class="outside">
+          <div class="roof-big" aria-hidden="true"></div>
+          <form id="join-room" class="card stack mat">
+            <fieldset>
+              <p id="join-how" class="sr-only">Ask a friend in the room for its code.</p>
+              <label class="field">
+                <span class="sr-only">Room code</span>
+                <!-- (no example in it, only the shape of a code, three and three, as it is written on every room's mat) -->
+                <input type="text" id="join-code" class="code-input" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="•••-•••" enterkeyhint="go" aria-describedby="join-how" required>
+              </label>
+              <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
+              <p id="join-error" class="message bad" role="alert"></p>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </main>
+  </template>
+
+  <template id="screen-room">
+    <header class="topbar">
+      <a href="/" class="home-link" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <div class="top-actions">
+        <!-- Two worlds (room/worlds.js): a portal, a ring of light like the home page's, into the room's other self (the same room as a drama at night), and from there the way back. Every visit starts outside. -->
+        <button type="button" id="worlds" class="portal worlds-portal" aria-label="The other world" aria-pressed="false" hidden></button>
+        <div class="more-wrap">
+          <button type="button" id="more" class="quiet round" aria-label="Room options" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor"/></svg>
+          </button>
+          <div id="more-menu" class="pop-menu" role="menu" hidden>
+            <!-- (a pencil, and a door with the way out of it, each with its word: the owner's choice, 25 November 2026) -->
+            <button type="button" id="rename" role="menuitem" aria-label="Rename room"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5l4 4M4.5 19.5l1-4.5L15.8 4.7a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L9 18.5z"/></svg><span aria-hidden="true">Rename</span></button>
+            <button type="button" id="leave" role="menuitem" class="danger" aria-label="Leave room"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4H6.5A1.5 1.5 0 0 0 5 5.5v13A1.5 1.5 0 0 0 6.5 20H10M20 12H10M16 8l4 4-4 4"/></svg><span aria-hidden="true">Leave</span></button>
+          </div>
+        </div>
+        <button type="button" id="profile" class="profile-button" aria-label="Your profile" hidden></button>
+      </div>
+    </header>
+
+    <main>
+      <!--
+        A room is a building on the map, seen from above like everything else
+        here, with its roof off (room/room.css). Its name is the map's label
+        for it. Inside: the people in it, as tokens at the head of a table; the
+        games, laid on the table as small boards; three tiles to start a game
+        from; the chat, as notes passed across a rug; and at the door the mat,
+        which has the code friends join with, and the bell.
+
+        It is a quiet room. Only what is waiting on you is lit: its board lies
+        nearest, bright, under a lamp, with its seal breathing. Everything else
+        rests. Nothing here is a description: the room says what it is by its
+        form, and the words are kept for screen readers. (What went wrong is
+        said in a short line of words beside it, while it stands.)
+      -->
+      <h1 id="room-name" class="sign" aria-busy="true"></h1>
+      <div class="plot">
+        <!-- (what went wrong with the name lies under it, over the top of the building, which does not move for it) -->
+        <p id="name-error" class="message bad" role="alert"></p>
+        <div class="map-far plot-map" aria-hidden="true"></div>
+        <div class="plot-path" aria-hidden="true"></div>
+        <p id="loading" class="lede" role="status"><span class="sr-only">Opening room…</span></p>
+        <p id="room-error" class="message bad" role="alert"></p>
+
+        <!-- Seen by somebody who is not in it: the same building, as it is inside, so that somebody sent a link knows the place when
+             they are in it. Its table, with whoever is in at the head of it, each with their name, and a board on it; and at the door the
+             mat, where whoever has come stands: the face they will go in with, their name to write beside it, and the way in. -->
+        <div id="join" class="outside" hidden>
+          <div class="house peek">
+            <div class="house-floor" aria-hidden="true"></div>
+            <div class="house-walls" aria-hidden="true"></div>
+            <div class="inside">
+              <span id="join-faces" class="seats" aria-hidden="true"></span>
+              <span id="join-table" class="peek-table" aria-hidden="true"></span>
+              <form id="join-form" class="card mat">
+                <p id="join-text" class="sr-only"></p>
+                <div>
+                  <span id="join-you" class="avatar" aria-hidden="true"></span>
+                  <label class="field">
+                    <span class="sr-only">Your name</span>
+                    <input type="text" id="join-name" maxlength="20" placeholder="your name…" required autocomplete="off" aria-describedby="join-text">
+                  </label>
+                  <button type="submit" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h3.5A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14M4 12h10M10 8l4 4-4 4"/></svg><span class="sr-only">Join room</span></button>
+                </div>
+                <p id="join-error" class="message bad" role="alert"></p>
+              </form>
+            </div>
+            <span class="yard" aria-hidden="true"><i></i><i></i></span>
+          </div>
+        </div>
+
+        <div id="house" class="house" hidden>
+          <div class="house-floor" aria-hidden="true"></div>
+          <div class="house-walls" aria-hidden="true"></div>
+          <!-- The meadow, when the room wears it (shared/meadow.js, room/meadow.css): what grows and flies there, behind everything. -->
+          <div class="meadow-bits" aria-hidden="true">
+            <div class="ground"></div>
+            <div class="clouds"><i></i><i></i></div>
+            <div class="blooms"></div>
+            <div class="tall one"><svg viewBox="0 0 22 46"><path class="stalk" d="M11 46C11 34 12 24 11 12"/><path class="leaf" d="M11 33C4 30 2 25 3 22C8 23 11 27 11 33Z"/><path class="leaf" d="M11.4 26C17 24 20 19 19.5 16C15 17 12 21 11.4 26Z"/><g class="petal"><circle cx="11" cy="4.2" r="4.2"/><circle cx="17.2" cy="8.8" r="4.2"/><circle cx="14.8" cy="15.6" r="4.2"/><circle cx="7.2" cy="15.6" r="4.2"/><circle cx="4.8" cy="8.8" r="4.2"/></g><circle class="heart" cx="11" cy="10.4" r="3.8"/></svg></div>
+            <div class="tall two"><svg viewBox="0 0 22 46"><path class="stalk" d="M11 46C11 34 12 24 11 12"/><path class="leaf" d="M11 33C4 30 2 25 3 22C8 23 11 27 11 33Z"/><g class="petal"><circle cx="11" cy="4.2" r="4.2"/><circle cx="17.2" cy="8.8" r="4.2"/><circle cx="14.8" cy="15.6" r="4.2"/><circle cx="7.2" cy="15.6" r="4.2"/><circle cx="4.8" cy="8.8" r="4.2"/></g><circle class="heart" cx="11" cy="10.4" r="3.8"/></svg></div>
+            <div class="sun"><svg viewBox="0 0 60 60">
+              <circle class="disc day" cx="30" cy="30" r="24"/>
+              <path class="disc night" d="M30.74 6.01A24 24 0 1 0 53.05 36.69A19 19 0 1 1 30.74 6.01Z"/>
+              <g class="day"><circle class="cheek" cx="18.5" cy="35" r="4"/><circle class="cheek" cx="41.5" cy="35" r="4"/><path class="eye" d="M19.5 27.5q3-4 6 0M34.5 27.5q3-4 6 0"/><path class="mouth" d="M23 35.5q7 7 14 0"/></g>
+              <g class="night"><path class="eye" d="M14 30.5q3 2.6 6 0M23.5 31q3 2.6 6 0"/><path class="mouth" d="M18 38.5q3.5 2.6 7 0"/></g>
+            </svg></div>
+            <div class="fly"><svg viewBox="-16 -14 32 28">
+              <g class="wing l"><path d="M-1 -1C-6 -13 -16 -12 -14 -3C-13 2 -6 3 -1 1Z"/><path d="M-1 1C-7 3 -12 9 -8 12C-4 14 -1 8 -1 3Z"/><circle class="spot" cx="-8.5" cy="-4" r="2.2"/></g>
+              <g class="wing r"><path d="M1 -1C6 -13 16 -12 14 -3C13 2 6 3 1 1Z"/><path d="M1 1C7 3 12 9 8 12C4 14 1 8 1 3Z"/><circle class="spot" cx="8.5" cy="-4" r="2.2"/></g>
+              <rect class="body" x="-1.4" y="-6" width="2.8" height="15" rx="1.4"/><circle class="lamp" cx="0" cy="7" r="3"/>
+            </svg></div>
+            <div class="glow"><i></i><i></i><i></i><i></i></div>
+          </div>
+
+          <!-- Setting up a game: the same room, at its desk, the same two steps for every kind of game (room.js openDesk). First,
+               how it is played: a few cards, a picture and a line of words each (the owner's choice, 25 November 2026), and the
+               way on. Then the board it will be played on, drawn ahead, to be drawn again or taken; for a pass phrase, with
+               the message to deliver above it, or a die for one picked at random. Nobody is told until it starts. -->
+          <div id="compose" class="stack" hidden>
+            <!-- the way back, a step at a time: at the desk's top left, level with the kind of game -->
+            <button type="button" id="phrase-back" class="quiet round" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></button>
+            <h2 class="desk-head"><span id="desk-icon" class="desk-icon"></span><span id="desk-name" class="sr-only"></span></h2>
+            <div id="desk-how" class="desk-step">
+              <ul id="mode-cards" class="mode-cards"></ul>
+              <button type="button" id="desk-next" class="icon-button desk-next" aria-label="On to the board"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13.5M13 6l6 6-6 6"/></svg></button>
+            </div>
+            <div id="desk-board" class="desk-step">
+              <p id="phrase-ask" class="desk-ask">What message would you like to deliver?</p>
+              <p id="phrase-how" class="sr-only">Write a phrase for others to uncover, or throw the die for one picked at random, kept secret from you too.</p>
+              <form id="phrase-form" class="card desk">
+                <div class="phrase-row" id="phrase-field">
+                  <label class="field">
+                    <span class="sr-only">Your phrase</span>
+                    <input type="text" id="phrase-text" maxlength="60" autocomplete="off" spellcheck="false" aria-describedby="phrase-how">
+                  </label>
+                  <!-- a phrase picked at random: lit while the box is empty, which is when a random one is used -->
+                  <button type="button" id="random-phrase" class="quiet round random-phrase" aria-label="A phrase picked at random" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="8.6" cy="8.6" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+                </div>
+                <div id="tokens" class="phrase" aria-live="polite" aria-label="How your phrase will be hidden"></div>
+                <p id="token-note" class="sr-only" aria-live="polite"></p>
+                <!-- the board it will be played on, and the way to draw another -->
+                <div class="preview">
+                  <span id="preview-board" class="mini" aria-hidden="true"></span>
+                  <button type="button" id="redraw" class="quiet round redraw" aria-label="Draw another board"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5a7.5 7.5 0 0 1 13.2-3.2L19.5 8.5M19.5 4v4.5H15M19.5 14.5a7.5 7.5 0 0 1-13.2 3.2L4.5 15.5M4.5 20v-4.5H9"/></svg></button>
+                </div>
+                <button type="submit" class="icon-button start-phrase" aria-label="Start game"><svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4l9.8-6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+                <p id="phrase-error" class="message bad" role="alert"></p>
+              </form>
+            </div>
+          </div>
+
+          <div id="room" class="inside" hidden>
+            <ul id="members" class="seats" aria-label="In this room"></ul>
+
+            <section class="table" aria-labelledby="games-heading">
+              <h2 id="games-heading" class="sr-only">Games</h2>
+              <ul id="games"></ul>
+              <p id="no-games" class="sr-only">No games yet.</p>
+              <!-- One way to put games away, for all of them: the table is tidied, and then each board goes with a tap. -->
+              <button type="button" id="tidy" class="tidy" aria-pressed="false" aria-label="Put games away" hidden>
+                <svg class="off" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.5h9.4L17.5 7M10 11v5M14 11v5"/></svg>
+                <svg class="on" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 12.5l4.2 4.2L18.5 8"/></svg>
+              </button>
+            </section>
+
+            <section class="start" aria-labelledby="new-heading">
+              <h2 id="new-heading" class="sr-only">Start a new game</h2>
+              <!-- One tap on a tile goes to its desk, which tells nobody: the game is started from there, and then the whole room is told. -->
+              <div id="modes" class="modes" role="group" aria-labelledby="new-heading">
+                <button type="button" class="mode" data-mode="coop">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="3"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M2.8 19c.5-3.3 2.8-5.2 5.7-5.2s5.2 1.9 5.7 5.2M15.2 14.3c.4-.1.9-.2 1.3-.2 2.3 0 4.2 1.5 4.7 4.4"/></svg>
+                  <span class="sr-only">Together</span>
+                </button>
+                <button type="button" class="mode" data-mode="trial">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7"/><path d="M12 9.5v4l2.5 2M10 3h4M12 3v3.5M18.2 7.3l1.3-1.3"/></svg>
+                  <span class="sr-only">Time trial</span>
+                </button>
+                <button type="button" class="mode" data-mode="phrase">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15.5" r="4"/><path d="M11 12.5L20 3.5M16.5 7l2.5 2.5M14 9.5l2 2"/></svg>
+                  <span class="sr-only">Pass phrase</span>
+                </button>
+              </div>
+              <p id="mode-note" class="sr-only" aria-live="polite"></p>
+              <p id="game-error" class="message bad" role="alert"></p>
+            </section>
+
+            <section class="rug" aria-labelledby="chat-heading">
+              <h2 id="chat-heading" class="sr-only">Chat</h2>
+              <div id="chat"></div>
+            </section>
+
+            <div class="share mat">
+              <span id="share-label" class="sr-only">Friends join this room with its code</span>
+              <div>
+                <button type="button" id="room-code" class="code" aria-describedby="share-label"></button>
+                <button type="button" id="share-button" class="quiet round" aria-label="Share the room’s code" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 7.5l4-4 4 4M5.5 11.5v7a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-7"/></svg></button>
+                <!-- the bell, while notifications are not on (room.js renderNotify) -->
+                <span id="notify" class="notify" hidden>
+                  <button type="button" id="notify-button" class="quiet round bell" aria-describedby="notify-text"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14zM10 20.5h4M12 3.5v2"/><path class="strike" d="M4.5 4.5l15 15"/></svg></button>
+                  <span id="notify-text" class="sr-only"></span>
+                </span>
+              </div>
+              <p id="notify-error" class="message bad" role="alert"></p>
+            </div>
+          </div>
+          <!-- a bush either side of the door -->
+          <span class="yard" aria-hidden="true"><i></i><i></i></span>
+        </div>
+      </div>
+    </main>
+  </template>
+
+  <template id="screen-game">
+    <header class="topbar">
+      <a id="back" href="/">← correspondence.lol</a>
+      <div class="top-actions">
+        <!-- Start over, and a new game: only for a game played alone (postmarks/ui.js). -->
+        <button type="button" id="restart" class="quiet round" aria-label="Start over" title="Start over" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a7 7 0 1 0 2.2-5.1"/><path d="M5 4.5v4h4"/></svg>
+        </button>
+        <button type="button" id="new-game" class="quiet round" aria-label="New game" title="New game" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>
+        </button>
+        <div class="sound-wrap">
+          <button type="button" id="sound" class="quiet round" aria-label="Sound" title="Sound" aria-haspopup="true" aria-expanded="false" aria-controls="sound-menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4z"/><path class="waves" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="slash" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+          </button>
+          <div id="sound-menu" class="sound-menu" role="group" aria-label="Sound" hidden>
+            <label class="setting"><span>Sound effects</span><input type="checkbox" role="switch" id="sound-fx"></label>
+            <label class="setting"><span>Music</span><input type="checkbox" role="switch" id="sound-music"></label>
+          </div>
+        </div>
+        <button type="button" id="help" class="quiet round" aria-label="How to play" title="How to play">?</button>
+        <button type="button" id="share-game" class="quiet round" aria-label="Share this game" title="Share this game" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M8 7l4-4 4 4M7 10.5H5.5v9.5h13v-9.5H17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" id="profile" class="profile-button" aria-label="Your profile" title="Your profile" hidden></button>
+      </div>
+    </header>
+
+    <main>
+      <!-- The rest of the map, faint, all round the board (postmarks/ui.js). -->
+      <div class="map-far game-map" aria-hidden="true" hidden></div>
+      <h1 class="sr-only">Postmarks</h1>
+      <p id="loading" class="lede" hidden>Opening game…</p>
+
+      <div id="trial" class="stack" hidden>
+        <p id="trial-title" class="lede">Time trial</p>
+        <p id="trial-hint" class="hint"></p>
+        <div id="trial-phrase" class="phrase" hidden></div>
+        <ol id="trial-runs" class="runs"></ol>
+        <div class="row">
+          <button type="button" id="trial-start" class="go">Start</button>
+          <button type="button" id="trial-share" class="quiet">Share this game</button>
+        </div>
+        <p id="trial-error" class="message bad" role="alert"></p>
+      </div>
+
+      <div id="play" class="stack" hidden>
+        <div class="hud">
+          <p id="turn" class="turn"></p>
+          <!-- Energy: one bar for everything earned in every game, with a current running through it, and the meadow at its end (shared/energy.js, shared/meadow.js); each post found adds to it, and finishing the board adds more. No number: what is held in all is said only to screen readers. -->
+          <p id="energy" class="energy" role="img" hidden><span class="bar" aria-hidden="true"><i></i></span><span class="meadow-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="#meadow-glimpse"/></svg></span></p>
+          <p class="tallies">
+            <span id="hearts"></span>
+            <span id="found"></span>
+          </p>
+        </div>
+
+        <ul id="roster" class="people roster" aria-label="Players" hidden></ul>
+
+        <div id="phrase" class="phrase" hidden></div>
+        <p id="phrase-note" class="hint" hidden></p>
+
+        <div id="board" class="board" role="group" aria-label="Puzzle grid"></div>
+
+        <p id="hint-note" class="hint-note" role="status" hidden></p>
+        <div class="toolbar">
+          <!-- A tap crosses a square and a double tap opens it, so there is nothing to switch between; only the pass phrase has a button of its own. -->
+          <div id="tools" class="tools">
+            <button type="button" data-tool="phrase" aria-pressed="false" hidden>
+              <span class="glyph" aria-hidden="true">Aa</span> Phrase
+            </button>
+          </div>
+          <button type="button" id="chat-toggle" class="hint-button chat-button" aria-label="Room chat" title="Room chat" aria-expanded="false" aria-controls="chat-box" hidden>
+            <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5h14v9.5H11l-4 3.2V16H5z"/></svg>
+            <span id="chat-count" class="count" hidden></span>
+          </button>
+          <button type="button" id="hint" class="hint-button" aria-label="Hint" title="Hint">
+            <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17.5h6M10 20.5h4M8.2 14.2A6 6 0 1 1 15.8 14.2c-.6.6-.9 1.3-.9 2.1v1.2H9.1v-1.2c0-.8-.3-1.5-.9-2.1z"/></svg>
+          </button>
+          <button type="button" id="submit" class="go" disabled hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Submit
+          </button>
+        </div>
+        <form id="phrase-entry" class="row phrase-entry" hidden>
+          <input type="text" id="phrase-input" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false"
+                 placeholder="Type the whole phrase" aria-label="Your guess at the phrase" required>
+          <button type="submit">Guess</button>
+        </form>
+        <p id="narration" class="sr-only" role="status" aria-live="polite"></p>
+        <p id="message" class="message bad" role="alert"></p>
+
+        <div id="lost-choice" class="row lost-choice" hidden>
+          <button type="button" id="reveal-run" class="quiet">Reveal the phrase</button>
+          <button type="button" id="retry-run" class="go">Try again</button>
+        </div>
+        <ol id="runs" class="runs" hidden></ol>
+
+        <details id="chat-box" class="panel" hidden>
+          <summary>Room chat <span id="chat-unread"></span></summary>
+          <div id="chat"></div>
+        </details>
+      </div>
+
+    </main>
+  </template>
+
+  <template id="screen-jam">
+    <header class="topbar">
+      <a href="/">← correspondence.lol</a>
+      <!-- Keeping a beat. (Passing one on is done from the list of those kept, under the board: each has its own button.) -->
+      <div class="top-actions">
+        <button type="button" id="jam-lab" class="quiet round" aria-label="Liv Radio" title="Liv Radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="11" rx="2.2"/><path d="M7 8.5l9-4.5"/><circle cx="8.5" cy="14" r="2.3"/><path d="M14 12.5h3.5M14 15.5h3.5"/></svg></button>
+        <button type="button" id="jam-save" class="quiet round" aria-label="Save this beat" title="Save this beat"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5h11v15.5l-5.5-4-5.5 4z"/></svg></button>
+      </div>
+    </header>
+
+    <main>
+      <!-- No title is written: the board says what this is. Its name is said to screen readers, and is the window's title. -->
+      <h1 class="sr-only">Loops</h1>
+      <div class="jam">
+        <p id="jam-hint" class="jam-hint">Tap the tiles, or drag across them. It plays round and round, through four chords.</p>
+        <div id="jam-board" class="jam-board" role="group" aria-label="The loop: eight steps across, seven notes high"></div>
+        <div id="jam-layers" class="jam-layers" role="radiogroup" aria-label="Instrument"></div>
+        <div class="jam-controls">
+          <div class="side">
+            <button type="button" id="jam-play" class="quiet" aria-label="Play" aria-pressed="false">
+              <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
+              <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" id="jam-tempo" class="quiet" aria-label="Tempo" title="Tempo"></button>
+          </div>
+          <!-- The dice, biggest and in the middle: the quickest way to something worth hearing. -->
+          <button type="button" id="jam-dice" aria-label="Surprise me" title="Surprise me">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.1" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
+          </button>
+          <div class="side">
+            <!-- The drawer of sounds for the instrument that is chosen, drawn as a drawer: its own, the other instruments', and those recorded (jam/mic.js). -->
+            <button type="button" id="jam-mic" class="quiet" aria-label="Sounds" title="Sounds" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.4"/><path d="M4 12h16M10 8.6h4M10 15.6h4"/></svg>
+            </button>
+            <button type="button" id="jam-clear" class="quiet" aria-label="Clear this instrument" title="Clear this instrument">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7M10.3 10.5v5M13.7 10.5v5"/></svg>
+            </button>
+          </div>
+        </div>
+        <p id="jam-note" class="jam-note" role="status"></p>
+        <section id="jam-saved" class="jam-saved" aria-label="Your beats" hidden>
+          <h2>Your beats</h2>
+          <ul></ul>
+        </section>
+        <!-- The drawer: a button to record a new sound, and under it the instrument's own sound, the other three
+             instruments', and every one recorded, each to be pressed into the instrument's place; a recorded one can be named, or deleted. Its X is a tick once
+             another sound has been chosen. What went wrong with the
+             microphone is said under the button that was tried. -->
+        <dialog id="jam-drawer" class="jam-drawer" aria-labelledby="jam-drawer-title">
+          <header>
+            <h2 id="jam-drawer-title">Sounds</h2>
+            <button type="button" id="jam-drawer-close" class="quiet round" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path class="shut" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/><path class="done" d="M5.5 12.5l4.2 4.2 8.8-9.4"/></svg></button>
+          </header>
+          <button type="button" id="jam-record" class="record">
+            <svg class="mic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/></svg>
+            <svg class="stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.4" fill="currentColor"/></svg>
+            <span>Record</span>
+          </button>
+          <p id="jam-mic-error" class="message bad" role="alert"></p>
+          <ul id="jam-sounds" class="jam-sounds"></ul>
+        </dialog>
+      </div>
+    </main>
+  </template>
+
+  <template id="screen-taste">
+    <!-- Penny's Radio: a work in a gallery that keeps music. It stands on a pale plinth under a light, with its label on the plinth; it is played, and read about.
+         Who shows how it works, and what Penny and Dot make of it, is in jam/taste.js. -->
+    <main class="radio-world">
+      <!-- The room is part of the world, at dusk: the map's squares faint on its wall, a light from above that falls on the work,
+           and the floor, which is the map laid flat and going away from you. -->
+      <div class="map-far" aria-hidden="true"></div>
+      <div class="gallery-room" aria-hidden="true"><i class="gallery-light cold"></i><i class="gallery-light warm"></i><i class="gallery-floor"></i></div>
+      <a href="/jam/" class="penny-back" aria-label="Back to the music maker"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <h1 class="sr-only">Liv Radio</h1>
+      <figure class="radio-ground">
+        <!-- The floor in front of the plinth, where it stands (drawn over the foot of the plinth: it is nearer). -->
+        <i class="gallery-floor near" aria-hidden="true"></i>
+        <div id="taste-card" class="radio taste-card" tabindex="0" role="group">
+          <span class="antenna" aria-hidden="true"><i></i></span>
+          <span class="handle" aria-hidden="true"></span>
+          <div class="body">
+            <div class="top-row">
+              <span class="plate">Liv Radio</span>
+              <!-- The speaker, and set into its end a panel meter with a lamp beside it: the stake of the test behind the radio, as a
+                   needle (drawn by jam/taste.js, from the picks already made). It moves only after a station is kept. -->
+              <span class="speaker">
+                <span class="grille" aria-hidden="true"></span>
+                <span id="radio-meter" class="gauge warming" role="meter" aria-label="Evidence" aria-valuemin="0" aria-valuemax="20" aria-valuenow="1"></span>
+              </span>
+            </div>
+            <div class="band" aria-hidden="true">
+              <span class="ticks"></span>
+              <i class="mark front"></i>
+              <i class="mark back"></i>
+              <i class="needle"></i>
+            </div>
+            <div class="display">
+              <div class="face front"><div class="pic"></div></div>
+              <div class="face back"><div class="pic"></div></div>
+              <span class="static" aria-hidden="true"></span>
+              <i class="cue" aria-hidden="true"></i>
+              <i class="reticle" aria-hidden="true"></i>
+            </div>
+            <div class="readout">
+              <span class="freq"><b id="radio-freq"></b><small>FM</small></span>
+              <span id="radio-tag" class="tag"></span>
+              <span id="radio-signal" class="signal" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
+            <div class="controls">
+              <button type="button" id="taste-flip" class="knob" aria-label="Tune to the other station" title="Tune"><i></i></button>
+              <button type="button" id="taste-play" class="power" aria-label="Play" aria-pressed="false">
+                <svg class="go-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6l11-6.8z" fill="currentColor"/></svg>
+                <svg class="pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v13H7zM13.4 5.5H17v13h-3.6z" fill="currentColor"/></svg>
+              </button>
+              <!-- Stations kept five times running are saved as presets: five lamps on the set, and a press shows them. -->
+              <button type="button" id="taste-presets-open" class="presets" aria-label="Presets"><i></i><i></i><i></i><i></i><i></i></button>
+              <button type="button" id="taste-pick" class="keep">Keep</button>
+            </div>
+          </div>
+          <span class="feet" aria-hidden="true"></span>
+          <!-- A lab's tag, riveted to the side of the set: not the gallery's, and not on its label. It is in plain sight from the start, and opens the reading.
+               (Its name says what pressing it does, and nothing of what the reading will say.) -->
+          <button type="button" id="taste-behind-open" class="lab-tag" aria-label="Read about this radio"><span class="lab-plate" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4h5M10.5 4v5.5L5.5 18.5a1.2 1.2 0 0 0 1 1.8h11a1.2 1.2 0 0 0 1-1.8L13.5 9.5V4M8 14.5h8"/></svg></span></button>
+        </div>
+        <!-- The plinth it stands on, and on its face the gallery's label: what is read first, and the radio's caption. It says what the
+             gallery says, and leaves out the tag. While the attendant is here, its sign of the moment hangs over the label (its how
+             over the gallery's what), and goes when it goes: a picture, so it is hidden from a screen reader, which has #dash-says. -->
+        <figcaption class="plinth">
+          <div class="gallery-label">
+            <p class="label-title"><cite>Liv Radio</cite></p>
+            <p>Steel, enamel</p>
+            <p>Two stations, one listener</p>
+            <p>Anonymous loan</p>
+          </div>
+          <span id="dash-sign" class="dash-sign" aria-hidden="true"></span>
+        </figcaption>
+      </figure>
+      <p id="taste-note" class="taste-note sr-only" role="status"></p>
+      <!-- The one who shows how, and never why: an express letter in an attendant's cap, standing by the work until the first station is kept. -->
+      <div id="radio-dash" class="dash" aria-hidden="true" hidden>
+        <svg viewBox="0 0 52 100">
+          <ellipse class="d-shade" cx="27" cy="97" rx="15" ry="2.6"/>
+          <g class="d-body">
+            <path class="d-leg" d="M19 80v15h-5M33 80v15h5"/>
+            <rect class="d-paper" x="8" y="5" width="36" height="76" rx="1.2"/>
+            <rect class="d-stripe" x="11.6" y="8.6" width="28.8" height="68.8"/>
+            <rect class="d-stripe blue" x="11.6" y="8.6" width="28.8" height="68.8"/>
+            <g class="d-cap"><path class="d-crown" d="M11.5 5.5L13.2-1.6Q26-6 38.8-1.6L40.5 5.5z"/><rect class="d-band" x="11.6" y="2.2" width="28.8" height="3.3"/><path class="d-peak" d="M9.5 5.2h33l-3.4 3.6H12.9z"/><circle class="d-badge" cx="26" cy="-0.9" r="1.8"/></g>
+            <path class="d-brow" d="M15 19.5l10-3.2"/>
+            <g class="d-eyes"><rect x="15.3" y="24" width="6.4" height="2.3"/><rect x="29.3" y="24" width="6.4" height="2.3"/></g>
+            <path class="d-mouth" d="M17 35h15l3-2.2"/>
+            <rect class="d-window" x="15" y="44" width="22" height="10" rx="0.8"/>
+            <path class="d-tick" d="M21 49l3.2 3 6.5-6"/>
+            <path class="d-code" d="M16 62v10M19.5 62v10M22 62v10M26.5 62v10M29 62v10M33.5 62v10M36 62v10"/>
+          </g>
+        </svg>
+      </div>
+      <!-- Still being built: the cone from the home page's stamp, off its stamp and in the room, asleep on its feet. It strolls the floor by the work, now and then, and dozes where it stops. Nothing to press. -->
+      <div class="gallery-cone" aria-hidden="true">
+        <div class="c-walk">
+          <svg viewBox="22 12 76 96">
+            <ellipse class="c-shade" cx="60" cy="102" rx="34" ry="4"/>
+            <g class="c-zs"><text class="z" x="72" y="34">z</text><text class="z two" x="72" y="34">z</text><text class="z three" x="72" y="34">z</text></g>
+            <g class="c-waddle">
+              <g class="c-cone">
+                <path class="c-body" d="M38 98 L54 30 Q60 21 66 30 L82 98 Z"/>
+                <path class="c-stripes" d="M46.5 74 H73.5 M43 88 H77"/>
+                <path class="c-eyes" d="M51 56 q3 2.8 6 0 M63 56 q3 2.8 6 0"/>
+                <path class="c-cheeks" d="M50 63 h0.01 M70 63 h0.01"/>
+                <rect class="c-foot" x="30" y="97" width="60" height="7" rx="3.5"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <!-- Its orders, in words, for a screen reader: what the sign over the label shows. How, and never why. -->
+      <p id="dash-says" class="sr-only" role="status"></p>
+      <!-- What Dot says, when Dot says it: an empty line until then. -->
+      <p id="dot-says" class="dot-says" role="status"></p>
+      <i id="radio-ray" class="radio-ray" aria-hidden="true"></i>
+      <p id="radio-story" class="sr-only" role="status"></p>
+      <!-- The reading: the gallery's entry for the work, and what the tag on its side adds. Out of sight until the tag is pressed (or
+           Dot says it); it opens at its title. With the label, the one place on this screen where words are welcome. It asks the piece's question
+           before anything of how the experiment stands, and nothing after the question answers it. -->
+        <dialog id="taste-behind" class="behind reading" aria-labelledby="reading-title">
+          <section class="taste-lab">
+          <header class="entry">
+            <p class="gallery-name">The Gallery of Kept Music</p>
+            <h2 id="reading-title" tabindex="-1" autofocus><cite>Liv Radio</cite></h2>
+            <p class="tombstone">Steel, enamel<br>Two stations, one listener<br>Anonymous loan</p>
+          </header>
+          <!-- The audio guide's stop: what Dot said for Penny, once Dot has said it. -->
+          <figure id="dot-told" class="dot-told" hidden><svg viewBox="13 40 40 40" aria-hidden="true"><rect x="17" y="43" width="32" height="34" rx="3" fill="#2aa198"/><rect x="19.5" y="45.5" width="27" height="29" rx="1.5" fill="none" stroke="#f6f1e7" stroke-width="1.2" stroke-dasharray="0.1 2.6" stroke-linecap="round"/><circle cx="28" cy="58" r="1.9" fill="#22303c"/><circle cx="38" cy="58" r="1.9" fill="#22303c"/><path d="M30 63.5q3 2.6 6 0" fill="none" stroke="#22303c" stroke-width="1.6" stroke-linecap="round"/></svg><blockquote>“You’re part of an experiment.”</blockquote><figcaption><b>Audio guide</b> Dot, for Penny, who saw it first and had no words for it.</figcaption></figure>
+          <p class="what">The tag on its side, in plain sight all along, is not the gallery’s: this radio is also an experiment. From the stations you keep, a model learns what you like, to see whether it can call your next choice.</p>
+          <!-- The question the piece asks, in the exhibit's own words, and left open. -->
+          <div class="asks">
+            <p>The gallery keeps music for a world afraid of losing it, as taste is averaged ever more efficiently.</p>
+            <p class="question">Is a radio that learns one person’s taste a defence of that taste, or one more step in the averaging?</p>
+          </div>
+          <!-- Where the experiment stands, and how it works: under a heading of its own, so that nothing after the question reads as its answer. -->
+          <figure class="evidence">
+            <h3>Where the test stands</h3>
+            <div id="lab-meter" class="meter" role="img" aria-label="How far the stake has got towards ×20"><i></i></div>
+            <figcaption id="lab-verdict" class="verdict"></figcaption>
+          </figure>
+          <dl>
+            <div><dt>Picks</dt><dd id="lab-picks"></dd></div>
+            <div><dt>Stake</dt><dd id="lab-stake"></dd></div>
+            <div id="lab-carried-row" hidden><dt>Carried over, on starting over</dt><dd id="lab-carried"></dd></div>
+            <div><dt>Called right by the model</dt><dd id="lab-called"></dd></div>
+            <div><dt>Called right by habit alone</dt><dd id="lab-habits"></dd></div>
+            <div><dt>Beat the phantoms</dt><dd id="lab-coin"></dd></div>
+          </dl>
+          <p id="lab-likes" class="likes"></p>
+          <!-- The phantoms, drawn: the station kept, a challenger that is heard, and its twins, made with it and never heard: a stack of them. -->
+          <figure class="phantom">
+            <svg viewBox="0 0 300 72" aria-hidden="true">
+              <path class="bracket" d="M150 15v-6h105v6M202.5 9V3"/>
+              <g class="station kept"><rect x="20" y="18" width="70" height="44" rx="7"/><path class="notes" d="M32 48h8M46 38h8M60 30h8M74 42h4"/></g>
+              <g class="station"><rect x="115" y="18" width="70" height="44" rx="7"/><path class="notes" d="M127 42h8M141 32h8M155 46h8M169 36h4"/></g>
+              <g class="station unheard behind"><rect x="228" y="26" width="70" height="44" rx="7"/></g>
+              <g class="station unheard behind"><rect x="224" y="22" width="70" height="44" rx="7"/></g>
+              <g class="station unheard"><rect x="220" y="18" width="70" height="44" rx="7"/><path class="notes" d="M232 42h8M246 32h8M260 46h8M274 36h4"/></g>
+            </svg>
+            <figcaption><span>The station you kept<span class="sr-only">;</span></span><span>A challenger, heard<span class="sr-only">;</span></span><span>Its eight twins, never heard: the phantoms</span></figcaption>
+          </figure>
+          <details>
+            <summary>How it works</summary>
+            <p>Every station you keep is written down. A model learns from them what you go for: how fast, how busy each instrument is, how high the tune sits, and a dozen things more. From the tenth pick on it says in advance which station you will keep. What the model thinks never changes what the radio plays.</p>
+            <p>Being called right is not proof of taste: someone who always keeps the station they already had is easy to call. So each time a challenger is needed, nine are made in the same way and eight are thrown away unheard, the phantoms. If the music made no difference to your picks, the real challenger would be no better a guide to them than any phantom. The model is asked about all nine before you pick, and a stake is bet on how much likelier your pick was with the real one.</p>
+            <p>If the music made no difference, the stake would reach ×20 less than one time in twenty, however long you play and however often you look. So ×20 is significance at the 5% level, and there is no number of picks to decide beforehand.</p>
+            <p>The meter on the radio is that stake, on a scale from ×1 to ×20 and a little past it; its lamp lights at ×20. It moves only after you keep a station, never while you choose, since what the model expects of the pair in front of you is not shown anywhere. Starting over carries the stake on, so that starting over never wipes out a loss: the experiments, one after another, are one test, so once the lamp has lit it stays lit, whatever the stake is carried at. Picks made before there were eight phantoms keep the rule they were made under.</p>
+            <p>“Habit alone” is what can be called from which side of the dial a station is on, which one you already had, and which you heard first, knowing nothing about the music.</p>
+          </details>
+          <div class="taste-row end">
+            <button type="button" id="taste-copy" class="quiet">Copy the data</button>
+            <button type="button" id="taste-reset" class="quiet">Start over</button>
+          </div>
+          <button type="button" id="taste-again" class="quiet">Show me how again</button>
+          </section>
+          <!-- (always in reach, however far the reading has been scrolled) -->
+          <footer class="sheet-foot"><button type="button" id="taste-behind-close" class="go">Back to the radio</button></footer>
+        </dialog>
+        <!-- The presets: part of what is played, not of the reading, so without words. The five lamps, as on the set, lit for the
+             stations saved; and each station saved, as its picture and its place on the dial, to be opened in the music maker. What
+             they are and where they go is said to a screen reader. -->
+        <dialog id="taste-presets" class="behind presets-sheet" aria-labelledby="presets-title">
+          <section class="taste-lab">
+            <h2 id="presets-title" class="sr-only">Presets</h2>
+            <div class="preset-lamps" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <p id="presets-none" class="sr-only">None yet. A station you keep five times running is saved here.</p>
+            <ul id="lab-hall" class="preset-list"></ul>
+          </section>
+          <footer class="sheet-foot"><button type="button" id="taste-presets-close" class="go shut" aria-label="Back to the radio"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></footer>
+        </dialog>
+    </main>
+  </template>
+
+  <template id="screen-hello">
+    <!-- The introduction: Penny, shy, behind a mailbox; then up against the glass; then a portal. No words: see penny/hello.js. -->
+    <main class="hello">
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
+      <p id="hello-said" class="sr-only" role="status"></p>
+      <!-- the street, and the mailbox it hides behind -->
+      <svg class="hello-stage hello-far" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A quiet street, and a mailbox. Somebody small is hiding behind it.">
+        <rect class="h-sky" x="-2000" y="-2000" width="4200" height="2190"/>
+        <!-- (the street is drawn 20 lower than it stands: its horizon is at 168, the height of Penny's eyes, where the camera is) -->
+        <g transform="translate(0 -20)">
+          <circle class="h-sun" cx="52" cy="118" r="34"/>
+          <path class="h-hills" d="M-2000 190 V172 H-60 q40 -26 90 -10 q36 -24 78 -6 q40 -22 82 0 q30 -10 70 6 H2200 V190Z"/>
+          <rect class="h-ground" x="-2000" y="188" width="4200" height="2200"/>
+          <path class="h-path" d="M92 188 L20 420 H180 L108 188Z"/>
+          <g class="h-tufts"><path d="M34 214q3 -7 6 0M150 236q4 -9 8 0M170 204q2.5 -6 5 0M22 262q4 -9 8 0"/></g>
+        </g>
+        <g class="h-behind"></g>
+        <g transform="translate(0 -20)"><g class="h-box">
+          <ellipse class="shade" cx="140" cy="197" rx="17" ry="2.6"/>
+          <path class="legs" d="M131 189v8M149 189v8"/>
+          <path class="body" d="M126 191V163q0 -13 14 -13t14 13V191Z"/>
+          <path class="lid" d="M129 164q0 -10 11 -10t11 10"/>
+          <rect class="slot" x="131.5" y="166" width="17" height="3.6" rx="1.8"/>
+          <path class="mark" d="M135 174.5h10v6.5h-10zM135 174.5l5 3.6 5 -3.6"/>
+        </g></g>
+      </svg>
+      <!-- At first there is no street: Penny alone on plain ground, as large as life, going through what it can feel. -->
+      <div class="hello-plain" aria-hidden="true"></div>
+      <!-- the portal that opens behind it: between the street and Penny, so that it is hidden until Penny jumps back -->
+      <div class="hello-light" aria-hidden="true"></div>
+      <button type="button" id="hello-portal" class="portal" aria-label="Follow Penny through the portal" hidden></button>
+      <!-- Penny, and the glass between you. Penny's body is drawn afresh as it moves (penny/hello.js): its paper bends, and its corners curl. -->
+      <svg class="hello-stage hello-near" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g class="h-penny">
+          <ellipse class="shade" cx="0" cy="1.5" rx="27" ry="3"/>
+          <g class="act">
+            <g class="body"><g class="idle">
+              <path class="paper"/>
+              <path class="flap"/>
+              <g transform="translate(-90 -76.6)">
+                <circle class="warmth" cx="90" cy="54.5" r="9.5"/><circle class="seal" cx="90" cy="54.5" r="4.6"/>
+                <circle class="cheek" cx="71" cy="62.6" r="3.4"/><circle class="cheek" cx="109" cy="62.6" r="3.4"/>
+                <g class="eyes">
+                  <g class="eye"><ellipse class="ball" cx="78" cy="58.6" rx="2.4" ry="3"/><circle class="shine" cx="78.9" cy="57.3" r="0.8"/><path class="lid happy" d="M75.3 59.8q2.7 -3.8 5.4 0"/><path class="lid closed" d="M75.3 58.4q2.7 3 5.4 0"/></g>
+                  <g class="eye"><ellipse class="ball" cx="102" cy="58.6" rx="2.4" ry="3"/><circle class="shine" cx="102.9" cy="57.3" r="0.8"/><path class="lid happy" d="M99.3 59.8q2.7 -3.8 5.4 0"/><path class="lid closed" d="M99.3 58.4q2.7 3 5.4 0"/></g>
+                </g>
+                <path class="mouth m-smile" d="M86.5 65.6 q3.5 3 7 0"/>
+                <path class="mouth m-grin" d="M85.6 64.9 q4.4 5.4 8.8 0 z"/>
+                <path class="mouth m-wavy" d="M86.2 66.7 q1.9 -1.9 3.8 0 t3.8 0"/>
+                <path class="mouth m-frown" d="M87 67.5 q3 -2.4 6 0"/>
+                <circle class="mouth m-o" cx="90" cy="66.5" r="1.7"/>
+              </g>
+              <path class="fold"/><path class="fold"/><path class="fold"/><path class="fold"/>
+            </g></g>
+          </g>
+        </g>
+        <g class="h-glass"></g>
+      </svg>
+      <!-- Penny, to be pressed: over it while it stands there to be looked at, and gone once it has been -->
+      <button type="button" id="hello-penny" class="hello-tap" aria-label="Penny" hidden></button>
+    </main>
+  </template>
+
+  <template id="screen-office">
+    <!-- Scene one: the Dead Letter Office. No words: see penny/office.js. -->
+    <main class="office">
+      <!-- The one thing here that is not the scene: a door, to the rooms and the friends in them. -->
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
+      <p class="sr-only">Swipe up, or press the up arrow, to go on with the story.</p>
+      <svg class="office-stage penny-art" viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Penny, a plain letter, alone in a sorting room at night. The express mail is leaving, and the clock on the wall is racing.">
+        <path class="o-lamp-light" d="M100 16 L20 262 L180 262 Z"/>
+        <path class="o-lamp" d="M100 -600 V10 M92 16 q8 -9 16 0 z" stroke="#3b4d63" stroke-width="1.5"/>
+        <rect class="o-wall" x="50" y="36" width="100" height="100" rx="5"/>
+        <g class="o-clock"><circle cx="66" cy="18" r="9"/><path d="M66 10.5v1.6M66 23.9v1.6M58.5 18h1.6M71.9 18h1.6" fill="none"/><path class="o-hand" d="M66 18V11.8" fill="none"/></g>
+        <g class="o-map"><rect data-at="0,0" x="58" y="44" width="14" height="14" rx="3"/><rect data-at="1,0" x="75" y="44" width="14" height="14" rx="3"/><rect data-at="2,0" x="92" y="44" width="14" height="14" rx="3"/><rect data-at="3,0" x="109" y="44" width="14" height="14" rx="3"/><rect data-at="4,0" x="126" y="44" width="14" height="14" rx="3"/><rect data-at="0,1" x="58" y="61" width="14" height="14" rx="3"/><rect data-at="1,1" x="75" y="61" width="14" height="14" rx="3"/><rect data-at="2,1" x="92" y="61" width="14" height="14" rx="3"/><rect data-at="3,1" x="109" y="61" width="14" height="14" rx="3"/><rect data-at="4,1" x="126" y="61" width="14" height="14" rx="3"/><rect data-at="0,2" x="58" y="78" width="14" height="14" rx="3"/><rect data-at="1,2" x="75" y="78" width="14" height="14" rx="3"/><rect data-at="2,2" x="92" y="78" width="14" height="14" rx="3"/><rect data-at="3,2" x="109" y="78" width="14" height="14" rx="3"/><rect data-at="4,2" x="126" y="78" width="14" height="14" rx="3"/><rect data-at="0,3" x="58" y="95" width="14" height="14" rx="3"/><rect data-at="1,3" x="75" y="95" width="14" height="14" rx="3"/><rect data-at="2,3" x="92" y="95" width="14" height="14" rx="3"/><rect data-at="3,3" x="109" y="95" width="14" height="14" rx="3"/><rect data-at="4,3" x="126" y="95" width="14" height="14" rx="3"/><rect data-at="0,4" x="58" y="112" width="14" height="14" rx="3"/><rect data-at="1,4" x="75" y="112" width="14" height="14" rx="3"/><rect class="o-first" data-at="2,4" x="92" y="112" width="14" height="14" rx="3"/><rect data-at="3,4" x="109" y="112" width="14" height="14" rx="3"/><rect data-at="4,4" x="126" y="112" width="14" height="14" rx="3"/></g>
+        <g class="o-shelves"><rect class="o-hole" x="6" y="-300" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-300" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-278" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-278" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-256" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-256" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-234" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-234" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-212" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-212" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-190" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-190" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-168" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-168" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-146" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-146" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-124" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-124" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-102" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-102" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-80" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-80" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-58" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-58" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-36" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-36" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="-14" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="-14" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="8" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="8" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="30" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="30" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="52" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="52" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="74" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="74" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="96" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="96" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="118" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="118" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="140" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="140" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="162" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="162" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="184" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="184" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="206" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="206" width="15" height="19" rx="2"/><rect class="o-hole" x="6" y="228" width="15" height="19" rx="2"/><rect class="o-hole" x="23" y="228" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-300" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-300" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-278" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-278" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-256" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-256" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-234" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-234" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-212" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-212" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-190" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-190" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-168" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-168" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-146" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-146" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-124" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-124" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-102" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-102" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-80" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-80" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-58" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-58" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-36" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-36" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="-14" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="-14" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="8" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="8" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="30" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="30" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="52" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="52" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="74" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="74" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="96" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="96" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="118" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="118" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="140" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="140" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="162" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="162" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="184" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="184" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="206" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="206" width="15" height="19" rx="2"/><rect class="o-hole" x="160" y="228" width="15" height="19" rx="2"/><rect class="o-hole" x="177" y="228" width="15" height="19" rx="2"/></g>
+        <svg class="o-leaving" x="168" y="87" width="18" height="18" viewBox="0 0 24 24"><use href="#envelope"/></svg>
+        <rect class="o-floor" x="-2000" y="262" width="4200" height="60"/>
+        <g class="p-penny">
+          <ellipse class="shade" cx="0" cy="1" rx="26" ry="3"/>
+          <g class="act"><g class="bob"><g transform="scale(0.9) translate(-90 -76)">
+            <path class="foot" d="M76 76 q4 -4 8 0z"/><path class="foot" d="M96 76 q4 -4 8 0z"/>
+            <rect x="60" y="32" width="60" height="42" rx="5" fill="#f6f1e7" stroke="#22303c" stroke-width="2.6"/>
+            <path class="flap" d="M61.5 34 L90 55 L118.5 34"/>
+            <circle class="cheek" cx="71" cy="62" r="3.4"/><circle class="cheek" cx="109" cy="62" r="3.4"/>
+            <g class="eyes"><ellipse cx="78" cy="58" rx="2.3" ry="2.9"/><ellipse cx="102" cy="58" rx="2.3" ry="2.9"/></g>
+            <path class="mouth" d="M86.5 65 q3.5 3 7 0"/>
+            <path class="mouth low" d="M87 67.2 q3 -2.2 6 0"/>
+            <circle class="warmth" cx="90" cy="54.5" r="9"/>
+            <circle class="seal" cx="90" cy="54.5" r="4.6"/>
+            <path class="o-smudge" d="M100 68.5 q3 -1.4 6 0 t6 0" fill="none" stroke="#8a97a3" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+          </g></g></g>
+        </g>
+        <g class="o-motes"></g>
+        <g class="o-air"></g>
+      </svg>
+    </main>
+  </template>
+
+  <template id="screen-slow">
+    <!-- Scene two: what slow hands make. No words: see penny/slow.js. -->
+    <main class="office slow">
+      <a href="/" class="penny-back office-door" aria-label="Rooms and friends"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17"/><circle cx="14.6" cy="12.5" r="0.9" fill="currentColor" stroke="none"/></svg></a>
+      <p class="sr-only">Draw in the room with a finger, or with the arrow keys. What is drawn slowly stays, and grows; what is drawn fast fades. A finger held still opens a flower.</p>
+      <svg class="office-stage penny-art" viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Penny, in the sorting room, now quiet, watching what you draw in the lamplight">
+        <path class="o-lamp-light" d="M100 16 L20 262 L180 262 Z"/>
+        <path class="o-lamp" d="M100 -600 V10 M92 16 q8 -9 16 0 z" stroke="#3b4d63" stroke-width="1.5"/>
+        <g class="o-clock"><circle cx="66" cy="18" r="9"/><path d="M66 10.5v1.6M66 23.9v1.6M58.5 18h1.6M71.9 18h1.6" fill="none"/><path class="o-hand" d="M66 18V11.8" fill="none"/></g>
+        <rect class="o-floor" x="-2000" y="262" width="4200" height="60"/>
+      </svg>
+      <canvas class="slow-keep" aria-hidden="true"></canvas>
+      <canvas class="slow-pass" aria-hidden="true"></canvas>
+      <i class="slow-tip" aria-hidden="true"></i>
+      <button type="button" id="slow-portal" class="portal" aria-label="On, to the map" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
+    </main>
+  </template>
+
+  <template id="screen-sky">
+    <!-- The night: a picture of five lights, come to life. It is on no menu: it is a tag, hidden in the game, to be found (penny/tags.js). No words: see penny/sky.js. -->
+    <main class="sky">
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <p class="sr-only">A picture of the night, come to life. Its five lights twinkle and wander, and each has a note. Touch one to hear it, or anywhere else and the nearest answers; a finger held near them stirs them. With a keyboard, the keys 1 to 5 are the five lights, and the space bar is each of them in turn.</p>
+      <canvas class="sky-view" role="img" aria-label="Five dim lights on black. Three stars with four points fall in a line from the top left, each bigger than the last, with two small round lights beside them."></canvas>
+      <p id="sky-said" class="sr-only" role="status"></p>
+    </main>
+  </template>
+
+  <template id="screen-reel">
+    <!-- A reel: Marcus Pell, an extension ladder, says something heartfelt, and then something else. Swipe up for each line: see penny/reel.js. -->
+    <main class="reel" tabindex="-1" aria-label="A reel from marcus.pell. Swipe up, or press the down arrow, for each line.">
+      <svg class="reel-scene" viewBox="0 0 360 640" preserveAspectRatio="xMidYMax slice" role="img" aria-label="An aluminium extension ladder with a friendly face films himself in a tidy home office. A chart on the wall shows one line climbing away from another."></svg>
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <div class="reel-rail">
+        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20.5l-1.4-1.3C5.4 14.6 2 11.5 2 7.8 2 4.8 4.4 2.5 7.4 2.5c1.7 0 3.4.8 4.6 2.1 1.2-1.3 2.9-2.1 4.6-2.1 3 0 5.4 2.3 5.4 5.3 0 3.7-3.4 6.8-8.6 11.4z"/></svg>48.1K</span>
+        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 11.5a8.5 8 0 1 1 4.2 6.9L3 20l1.4-4.3a7.8 7.8 0 0 1-.9-4.2z"/></svg>611</span>
+        <!-- The one mark on the rail that does something: the phone's own share sheet, with the reel's address (penny/reel.js). -->
+        <button type="button" id="reel-share" aria-label="Share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L3 10.5l7 2.5 2.5 7z M10 13l5-5"/></svg><span aria-hidden="true">1,209</span></button>
+      </div>
+      <p id="reel-shared" class="reel-shared" role="status"></p>
+      <!-- It begins with a tap: a phone lets sound start only on a tap, and a swipe is not one (penny/reel.js). -->
+      <button type="button" id="reel-play" class="reel-play" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.6v12.8a1 1 0 0 0 1.5.86l10.4-6.4a1 1 0 0 0 0-1.72L8.5 4.74a1 1 0 0 0-1.5.86z"/></svg></button>
+      <div class="reel-low">
+        <button type="button" id="reel-next" class="reel-next" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>Swipe up</button>
+        <p id="reel-said" class="reel-said" aria-live="polite"></p>
+        <p id="reel-comment" class="reel-comment" hidden><i aria-hidden="true"></i><span>Go get that paper boiiiii!</span></p>
+        <p class="reel-who"><span class="reel-avatar" aria-hidden="true">MP</span><strong>marcus.pell</strong><span class="reel-follow" aria-hidden="true">Follow</span></p>
+        <p id="reel-paid" class="reel-paid" hidden>Paid partnership with Penny’s Energy</p>
+        <div id="reel-cap" class="reel-cap">
+          <p>Real talk about who gets to climb 🪜<span class="reel-cap-dots"> …</span><span class="reel-cap-rest" hidden> Not everyone starts on the same rung. Stay humble, stay hungry, stay hydrated. <span class="reel-tags">#Gratitude #Mindset #StepByStep #RiseAndGrind</span> <span class="reel-ad">#ad</span></span></p>
+          <button type="button" id="reel-more" aria-expanded="false">more</button>
+        </div>
+        <p class="reel-audio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg>marcus.pell · Original audio</p>
+      </div>
+      <div class="reel-bar" aria-hidden="true"><i id="reel-progress"></i></div>
+    </main>
+  </template>
+
+  <template id="screen-walk">
+    <!-- Walking the map with Penny. No words on this screen: see penny/walk.js. -->
+    <main class="walk">
+      <a href="/" class="penny-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5.5M11 6l-6 6 6 6"/></svg></a>
+      <!-- Back to the place before, and on to the place after: two tiles of the game's own, in the bottom corners. -->
+      <button type="button" id="walk-down" class="walk-step back" aria-label="Back to the place before" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+      <button type="button" id="walk-up" class="walk-step on" aria-label="On to the place after" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></button>
+      <button type="button" id="walk-trail" class="walk-trail" aria-label="The sound Penny is looking for, as far as it has been heard" hidden></button>
+      <p id="walk-feeling" class="sr-only" role="status"></p>
+      <div class="walk-ground">
+        <div class="map-far walk-map" aria-hidden="true"></div>
+        <div class="walk-light" aria-hidden="true"></div>
+        <div id="walk-known" class="walk-known" aria-hidden="true"></div>
+        <div id="walk-board" class="board walk-board" role="group" aria-label="A place on the map"></div>
+        <button type="button" id="walk-portal" class="portal" aria-label="On to the next place" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#envelope"/></svg></button>
+      </div>
+    </main>
+  </template>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <!-- The meadow, seen through a round window: sun on grass, and a daisy (shared/meadow.js). Its colours are the page's to set. -->
+    <symbol id="meadow-glimpse" viewBox="0 0 40 40">
+      <rect width="40" height="40" fill="var(--m-grout, #8cc771)"/>
+      <path fill="var(--m-grass, #b4e095)" d="M3 3h9.5v9.5H3zM14.5 3H24v9.5h-9.5zM26 3h9.5v9.5H26zM3 14.5h9.5V24H3zM14.5 14.5H24V24h-9.5zM26 14.5h9.5V24H26zM3 26h9.5v9.5H3zM14.5 26H24v9.5h-9.5zM26 26h9.5v9.5H26z"/>
+      <circle cx="11" cy="11" r="7.4" fill="var(--m-rays, #ffe98f)"/><circle cx="11" cy="11" r="5" fill="var(--m-sun, #ffd84d)"/>
+      <g fill="#fffdf8"><circle cx="28" cy="25" r="3.1"/><circle cx="33.5" cy="27" r="3.1"/><circle cx="31.6" cy="32.6" r="3.1"/><circle cx="25.6" cy="32.6" r="3.1"/><circle cx="23.6" cy="27" r="3.1"/></g>
+      <circle cx="28.6" cy="29" r="2.6" fill="#f8b93a"/>
+    </symbol>
+    <symbol id="mini-envelope" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="12.5" rx="1.6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M3.8 7 L12 13.2 L20.2 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="envelope" viewBox="0 0 24 24">
+      <rect x="2.5" y="5" width="19" height="14" rx="1.6" fill="#f6f1e7" stroke="#22303c" stroke-width="1.6"/>
+      <path d="M3.2 6 L12 13 L20.8 6" fill="none" stroke="#22303c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="14.2" r="2.3" fill="#c8442e"/>
+    </symbol>
+  </svg>
+
+  <script src="/version.js"></script>
+  <script src="/app.js"></script>
+  <script src="/splash.js"></script>
+  <script type="module" src="/shared/nav.js"></script>
+</body>
+</html>
