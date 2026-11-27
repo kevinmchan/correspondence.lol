@@ -60,7 +60,7 @@ const LINES = [
   { text: 'I opened up Wealthmart', mood: { pitch: 1.05, rate: 1.05, contour: 'up', lastGlide: 1.1 }, after: (s, e) => s.shopDoor(e + 0.05) },
   { text: 'and saw they were offering a free energy evaluator', mood: { pitch: 1.08, rate: 1.25, contour: 'hype', lastGlide: 1.08 }, after: (s, e) => s.sparkle(e) },
   { text: 'if you transferred 100k credits.', mood: { pitch: 1, rate: 0.95, contour: 'deflate', lastHold: 2.4, lastGlide: 0.72 }, after: (s, e) => s.sadTill(e + 0.05) },
-  { text: 'Now, I get why this deal makes sense from a business perspective.', mood: { pitch: 0.86, rate: 0.85, contour: 'hat' }, before: (s) => s.penClick(0) },
+  { text: 'Solid promo… makes sense.', mood: { pitch: 0.86, rate: 0.85, contour: 'hat' }, before: (s) => s.penClick(0) },
   { text: 'But man, it got me thinking,', mood: { pitch: 0.9, rate: 0.7, contour: 'fall', breath: 0.3, vib: 8, gain: 0.9 }, sincere: true,
     before: (s) => s.bed('pad', [261.63, 329.63, 392, 493.88], { gain: 0.03, attack: 1.6, cutoff: 1200 }) },
   // (his voice cannot say ⚡️: where the word would be, a small crackle of it; the owner, 27 November 2026)
