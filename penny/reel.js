@@ -12,7 +12,8 @@
 // be watched at any time from Reels on the home page's menu.
 //
 // Swipe up (scroll, or the arrow keys) for each line. The last line, then the
-// comment under it; then from the top again.
+// comment under it; then from the top again. The share mark on the rail opens
+// the phone's share sheet with the reel's address (/?reel).
 //
 // Sound. Marcus speaks as the app's people do, without words: a babble shaped
 // by the vowels of what he says (an "a" opens his mouth, an "ee" thins it, a
@@ -499,6 +500,33 @@ export function mount(root, life) {
     }
   });
   next.addEventListener('click', go);
+
+  // Share: the phone's own share sheet, with the reel's address. Where there is none (a computer, mostly), the address
+  // is copied, and a short line beside the rail says so; where it cannot be copied either, the line is the address.
+  const share = root.querySelector('#reel-share');
+  const shared = root.querySelector('#reel-shared');
+  const address = `${location.origin}/?reel`;
+  let sharedTimer = 0;
+  const tell = (words) => {
+    shared.textContent = words;
+    clearTimeout(sharedTimer);
+    sharedTimer = life.setTimeout(() => { shared.textContent = ''; }, 4000);
+  };
+  share.addEventListener('click', async () => {
+    const what = { title: 'marcus.pell', text: 'Real talk about who gets to climb 🪜', url: address };
+    if (navigator.share && (!navigator.canShare || navigator.canShare(what))) {
+      try {
+        await navigator.share(what);
+      } catch { /* put away without sharing: nothing to say */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(address);
+      tell('Link copied');
+    } catch {
+      tell(address);
+    }
+  });
 
   // His caption: its first line, and "more" for the rest (where the #ad is).
   more.addEventListener('click', () => {
