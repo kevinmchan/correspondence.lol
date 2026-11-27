@@ -505,7 +505,8 @@ async function states() {
       then: (page) => page.locator('#taste-behind-open').click(), settle: 'dialog#taste-behind[open] #lab-carried-row:not([hidden])', whole: ['#taste-behind-close'] },
     // The night, which is on no menu: it is a tag, hidden in the app (penny/tags.js). All of it is one picture, and the only thing to press is the way back.
     { name: 'the night', screen: 'sky', at: '/?sky', ready: '.sky-view', settle: '.sky[data-alive]', whole: ['.penny-back'] },
-    { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/?reel', ready: '.reel-cam', whole: ['.penny-back', '#reel-next', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, before its first line', screen: 'reel', at: '/?reel', ready: '.reel-cam', whole: ['.penny-back', '#reel-play', '#reel-more'] },
+    { name: 'Marcus Pell\'s reel, its first line said, and how it goes on: swipe up', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => page.locator('#reel-play').click(), settle: '#reel-next:not([hidden])', whole: ['#reel-said', '#reel-next', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, a line said', screen: 'reel', at: '/?reel', ready: '.reel-cam', then: (page) => lines(page, 1), settle: '#reel-said:not(:empty)', whole: ['#reel-said', '#reel-more'] },
     { name: 'Marcus Pell\'s reel, a line said large, centred on the screen and clear of the rail', screen: 'reel', at: '/?reel', ready: '.reel-cam', settle: '#reel-said:not(:empty)', whole: ['#reel-said'],
       then: async (page) => {

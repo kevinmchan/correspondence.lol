@@ -403,6 +403,7 @@ export function mount(root, life) {
   const scene = root.querySelector('.reel-scene');
   const said = root.querySelector('#reel-said');
   const next = root.querySelector('#reel-next');
+  const play = root.querySelector('#reel-play');
   const comment = root.querySelector('#reel-comment');
   const paid = root.querySelector('#reel-paid');
   const progress = root.querySelector('#reel-progress');
@@ -459,16 +460,24 @@ export function mount(root, life) {
     comment.hidden = index !== LINES.length;
     if (index === LINES.length) save(WATCHED_KEY, true); // watched to its end: it leaves the feed
     paid.hidden = index < PAID_FROM;
-    if (!next.hidden) {
-      if (document.activeElement === next) main.focus({ preventScroll: true }); // (the focus does not go with it)
-      next.hidden = true;
-    }
+    // (the play button goes once it has begun; "Swipe up" is shown after the first line, to say how it goes on)
+    for (const gone of [play, next]) if (document.activeElement === gone) main.focus({ preventScroll: true }); // (the focus does not go with it)
+    play.hidden = true;
+    next.hidden = index !== 0;
     progress.style.transform = `scaleX(${(index + 1) / STEPS})`;
   }
   const advance = () => say(at + 1 >= STEPS ? 0 : at + 1);
 
   // Swipe up, scroll, or a key, for the next line. Not quicker than a line can start.
+  // It begins with a tap on the play button (or a key): a phone lets sound start only on a tap, and a swipe is not
+  // one, so a reel begun by a swipe would be silent to its end. A swipe before then nudges the play button instead.
   let last = -Infinity; // (the first swipe always counts, however soon after the screen came up)
+  const nudge = () => {
+    play.classList.remove('nudge');
+    void play.offsetWidth;
+    play.classList.add('nudge');
+  };
+  const swiped = () => (at < 0 ? nudge() : go());
   const go = () => {
     const now = performance.now();
     if (now - last < 450) return;
@@ -481,7 +490,7 @@ export function mount(root, life) {
     wheel = Math.max(0, wheel + event.deltaY);
     if (wheel > 40) {
       wheel = 0;
-      go();
+      swiped();
     }
   }, { passive: false });
   let from = null;
@@ -490,7 +499,7 @@ export function mount(root, life) {
   life.on(main, 'touchend', (event) => {
     const up = from === null ? 0 : from - event.changedTouches[0].clientY;
     from = null;
-    if (up > 30) go();
+    if (up > 30) swiped();
   });
   life.on(document, 'keydown', (event) => { // (anywhere on the screen: whatever has the focus, so long as it is not a thing to press)
     if (event.target.closest?.('button, a, input, textarea')) return;
@@ -500,6 +509,7 @@ export function mount(root, life) {
     }
   });
   next.addEventListener('click', go);
+  play.addEventListener('click', go);
 
   // Share: the phone's own share sheet, with the reel's address. Where there is none (a computer, mostly), the address
   // is copied, and a short line beside the rail says so; where it cannot be copied either, the line is the address.

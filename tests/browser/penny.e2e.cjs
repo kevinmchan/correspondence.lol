@@ -2845,11 +2845,20 @@ async function main() {
       await page.waitForSelector('.screen-reel .reel-cam');
       await page.waitForFunction(() => document.querySelectorAll('#screens .screen').length === 1);
       assert.equal(await page.locator('#reel-said').textContent(), '', 'nothing said until it is asked for');
-      assert.equal(await page.locator('#reel-next').isVisible(), true, 'and the way on is shown');
+      assert.equal(await page.locator('#reel-play').isVisible(), true, 'it begins with a tap on play');
+      await page.mouse.move(200, 300);
+      await page.mouse.wheel(0, 120); // (a swipe is not a tap: sound could not start on it, so it does not begin the reel)
+      await page.waitForFunction(() => document.querySelector('#reel-play').classList.contains('nudge'));
+      assert.equal(await page.locator('#reel-said').textContent(), '', 'a swipe first only nudges the play button');
+      await page.waitForTimeout(470);
       const said = [];
       const paidAt = [];
       for (let i = 0; i < 19; i += 1) {
-        if (i === 0) await page.locator('#reel-next').click();
+        if (i === 0) {
+          await page.locator('#reel-play').click();
+          await page.waitForSelector('#reel-next:not([hidden])'); // (after the first line, how it goes on)
+          assert.equal(await page.locator('#reel-play').isHidden(), true, 'and play has gone');
+        }
         else if (i === 1) { await page.mouse.move(200, 300); await page.mouse.wheel(0, 120); } // (a scroll, as a swipe up)
         else await page.keyboard.press('ArrowDown');
         await page.waitForFunction((n) => document.querySelector('#reel-progress').style.transform.includes(`${n}`), String(((i % 18) + 1) / 18).slice(0, 5));
