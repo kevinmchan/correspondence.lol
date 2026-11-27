@@ -62,7 +62,8 @@ const LINES = [
   { text: 'Now, I get why this deal makes sense from a business perspective.', mood: { pitch: 0.86, rate: 0.85, contour: 'hat' }, before: (s) => s.penClick(0) },
   { text: 'But man, it got me thinking,', mood: { pitch: 0.9, rate: 0.7, contour: 'fall', breath: 0.3, vib: 8, gain: 0.9 }, sincere: true,
     before: (s) => s.bed('pad', [261.63, 329.63, 392, 493.88], { gain: 0.03, attack: 1.6, cutoff: 1200 }) },
-  { text: 'it sure does pay to have money.', mood: { pitch: 0.86, rate: 0.7, contour: 'fall', breath: 0.25, vib: 16, lastHold: 2.4, lastGlide: 0.9 }, sincere: true, after: (s, e) => s.warmBell(e) },
+  // (his voice cannot say ⚡️: where the word would be, a small crackle of it; the owner, 27 November 2026)
+  { text: 'it sure does pay to have ⚡️.', mood: { pitch: 0.86, rate: 0.7, contour: 'fall', breath: 0.25, vib: 16, lastHold: 1.3, lastGlide: 0.95 }, sincere: true, after: (s, e) => { s.zap(e + 0.06); s.warmBell(e + 0.6); } },
   { text: 'Am I a little salty that I didn’t have the credits to accept the offer.', mood: { pitch: 1.14, rate: 1.4, contour: 'hat', vib: 22, vibRate: 7.5, gain: 0.65 }, sincere: true },
   { text: 'Maybe?', mood: { pitch: 1.22, rate: 0.85, contour: 'flat', lastHold: 2.6, lastGlide: 1.55, gain: 0.6 }, sincere: true, after: (s, e) => s.squeak(e + 0.35) },
   // (the sincere music stops dead, and a drumroll begins)
@@ -279,6 +280,13 @@ function soundsFor(life) {
       tone(m, { at: at + 0.25, freq: 233, to: 150, dur: 0.7, type: 'triangle', gain: 0.07 });
     },
     penClick(at) { const m = effects(); if (m) { hiss(m, { at, dur: 0.018, type: 'highpass', freq: 4000, gain: 0.09 }); hiss(m, { at: at + 0.09, dur: 0.015, type: 'highpass', freq: 3500, gain: 0.07 }); } },
+    zap(at) { // ⚡️, said: a short crackle with a buzz under it
+      const m = effects();
+      if (!m) return;
+      for (const [t, f, g] of [[0, 5200, 0.1], [0.05, 3800, 0.08], [0.09, 6400, 0.07], [0.16, 4600, 0.09], [0.21, 3000, 0.05]]) hiss(m, { at: at + t, dur: 0.035, type: 'highpass', freq: f, gain: g });
+      tone(m, { at, freq: 120, to: 60, dur: 0.3, type: 'sawtooth', gain: 0.045 });
+      tone(m, { at: at + 0.02, freq: 1760, to: 2640, dur: 0.12, type: 'square', gain: 0.012 });
+    },
     warmBell(at) { const m = effects(); if (m) { bell(m, at, 523.25, 0.05, 2.6); bell(m, at + 0.02, 659.25, 0.03, 2.4); } },
     squeak(at) { const m = effects(); if (m) tone(m, { at, freq: 1500, to: 2400, dur: 0.12, gain: 0.03 }); },
     drumroll(at, dur) { // music: a snare that gathers itself
